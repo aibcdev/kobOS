@@ -1,0 +1,81 @@
+/* Custom Reset, Variable Tokens & Supporting Animations */
+@import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'SuisseIntl';
+  src: url('https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7d3c/69b9330c8b70142e4e5f7dba_SuisseIntl-Regular.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'SuisseIntl';
+  src: url('https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7daf_SuisseIntl-Medium.woff2') format('woff2');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'SuisseIntl';
+  src: url('https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7db5_SuisseIntl-Bold.woff2') format('woff2');
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'STKBureauSans';
+  src: url('https://cdn.prod.website-files.com/69b9330c8b70142e4e5f8364_STKBureauSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'STKBureauSans';
+  src: url('https://cdn.prod.website-files.com/69b9330c8b70142e4e5f8363_STKBureauSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+}
+
+:root {
+  --color-primary: #094413;
+  --color-accent: #088924;
+  --color-bg: #f9f3ed;
+  --color-card: #f6eee5;
+  --color-card-light: #fbf8f5;
+  --color-text: #2c2c2c;
+  --font-heading: 'STKBureauSans', 'Inter', sans-serif;
+  --font-body: 'SuisseIntl', 'Inter', sans-serif;
+  --font-mono: 'Fragment Mono', monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+.font-mono-brand {
+  font-family: var(--font-mono);
+}
+
+/* Custom fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth CSS Marquee Loop */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}

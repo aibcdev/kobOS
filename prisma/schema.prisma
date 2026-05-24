@@ -1,0 +1,547 @@
+generator client {
+  provider      = "prisma-client-js"
+  // Netlify / AWS-style Linux runtimes (local stays "native")
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["kob"]
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  @@schema("kob")
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  @@schema("kob")
+}
+
+enum InsightType {
+  SEO_OPPORTUNITY
+  TRAFFIC_DROP
+  CAMPAIGN_IDEA
+  SLOW_DAY_ALERT
+  TREND_ALERT
+  MENU_PERFORMANCE
+  LOCAL_SEARCH_GAP
+  COMPETITOR_WARNING
+  @@schema("kob")
+}
+
+enum InsightPriority {
+  LOW
+  MEDIUM
+  HIGH
+  @@schema("kob")
+}
+
+enum InsightStatus {
+  OPEN
+  DISMISSED
+  DONE
+  @@schema("kob")
+}
+
+enum RecommendationType {
+  CREATE_BLOG
+  CREATE_CAMPAIGN
+  UPDATE_HOMEPAGE
+  RUN_PROMOTION
+  GENERATE_SEO_PAGE
+  SEND_EMAIL
+  POST_SOCIAL
+  OPTIMIZE_MENU
+  @@schema("kob")
+}
+
+enum ContentType {
+  SEO_BLOG
+  LOCATION_PAGE
+  MENU_DESCRIPTIONS
+  EVENT_PAGE
+  EMAIL_CAMPAIGN
+  INSTAGRAM_CAPTION
+  TIKTOK_CONCEPT
+  GOOGLE_BUSINESS_POST
+  GROWTH_FOOD_ANALYSIS
+  GROWTH_WEBSITE_PLAN
+  GROWTH_REVIEW_REPLY
+  @@schema("kob")
+}
+
+enum ContentStatus {
+  DRAFT
+  READY
+  FAILED
+  @@schema("kob")
+}
+
+enum CampaignType {
+  PROMOTIONAL
+  ENGAGEMENT
+  SEO_PUSH
+  @@schema("kob")
+}
+
+enum CampaignChannel {
+  EMAIL
+  SMS
+  INSTAGRAM
+  FACEBOOK
+  GOOGLE_POST
+  WEBSITE_BANNER
+  @@schema("kob")
+}
+
+enum CampaignLifecycle {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  @@schema("kob")
+}
+
+enum IntegrationProvider {
+  GOOGLE_ANALYTICS
+  GOOGLE_SEARCH_CONSOLE
+  INSTAGRAM
+  TIKTOK
+  OPENTABLE
+  RESY
+  TOAST
+  SQUARE
+  SHOPIFY
+  @@schema("kob")
+}
+
+enum WebsiteEventType {
+  CLICK
+  SCROLL_DEPTH
+  BOUNCE
+  CTA_CONVERT
+  @@schema("kob")
+}
+
+enum AssetType {
+  FOOD_PHOTO
+  VIDEO
+  LOGO
+  BRANDING
+  WEBSITE_SCREENSHOT
+  @@schema("kob")
+}
+
+enum ReviewSource {
+  GOOGLE
+  YELP
+  OTHER
+  @@schema("kob")
+}
+
+enum ReviewReplyStatus {
+  DRAFT
+  APPROVED
+  POSTED
+  @@schema("kob")
+}
+
+enum AgentActionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  SKIPPED
+  @@schema("kob")
+}
+
+enum OutboundLeadStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  CONTACTED
+  RESPONDED
+  CONVERTED
+  ARCHIVED
+  @@schema("kob")
+}
+
+model Organization {
+  id           String       @id @default(cuid())
+  name         String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurants  Restaurant[]
+  @@schema("kob")
+}
+
+model User {
+  id          String       @id @db.Uuid
+  email       String       @unique
+  name        String?
+  avatarUrl   String?
+  role        Role         @default(OWNER)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships TeamMember[]
+  @@schema("kob")
+}
+
+model TeamMember {
+  id           String     @id @default(cuid())
+  userId       String     @db.Uuid
+  restaurantId String
+  role         Role       @default(MEMBER)
+  createdAt    DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model Restaurant {
+  id                 String            @id @default(cuid())
+  organizationId     String?
+  name               String
+  slug               String            @unique
+  cuisineType        String?
+  city               String?
+  state              String?
+  timezone           String            @default("America/Chicago")
+  website            String?
+  logo               String?
+  subscriptionPlan   SubscriptionPlan  @default(FREE)
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+  vibe               String?
+  googleBusinessUrl  String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  organization       Organization?     @relation(fields: [organizationId], references: [id])
+  visibilityAudits   VisibilityAudit[]
+  members            TeamMember[]
+  integrations       Integration[]
+  insights           GrowthInsight[]
+  recommendations    Recommendation[]
+  contents           GeneratedContent[]
+  campaigns          Campaign[]
+  keywords           Keyword[]
+  websiteEvents      WebsiteEvent[]
+  digestRuns         DigestRun[]
+  dailyScans         DailyScan[]
+  assets             Asset[]
+  customerReviews    CustomerReview[]
+  reviewerProfiles   ReviewerProfile[]
+  agentActions       AgentAction[]
+  outboundLeads      OutboundLead[]
+
+  @@index([organizationId])
+  @@schema("kob")
+}
+
+model Integration {
+  id                     String              @id @default(cuid())
+  restaurantId           String
+  provider               IntegrationProvider
+  encryptedAccessToken   String?
+  encryptedRefreshToken  String?
+  metadata               Json                @default("{}")
+  connectedAt            DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  restaurant             Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, provider])
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model GrowthInsight {
+  id           String          @id @default(cuid())
+  restaurantId String
+  type         InsightType
+  priority     InsightPriority @default(MEDIUM)
+  title        String
+  description  String
+  data         Json            @default("{}")
+  status       InsightStatus   @default(OPEN)
+  createdAt    DateTime        @default(now())
+  restaurant   Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  recommendations Recommendation[]
+
+  @@index([restaurantId, status])
+  @@index([createdAt])
+  @@schema("kob")
+}
+
+model Recommendation {
+  id            String              @id @default(cuid())
+  restaurantId  String
+  insightId     String?
+  type          RecommendationType
+  title         String
+  action        String
+  aiSummary     String?
+  impactScore   Int                 @default(50)
+  createdAt     DateTime            @default(now())
+  restaurant    Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  insight       GrowthInsight?       @relation(fields: [insightId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId])
+  @@index([insightId])
+  @@schema("kob")
+}
+
+model GeneratedContent {
+  id           String       @id @default(cuid())
+  restaurantId String
+  type         ContentType
+  prompt       String
+  output       String       @default("")
+  status       ContentStatus @default(DRAFT)
+  published    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model Campaign {
+  id           String             @id @default(cuid())
+  restaurantId String
+  type         CampaignType
+  title        String
+  channel      CampaignChannel
+  status       CampaignLifecycle @default(DRAFT)
+  scheduledAt  DateTime?
+  payload      Json              @default("{}")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, status])
+  @@schema("kob")
+}
+
+model Keyword {
+  id               String      @id @default(cuid())
+  restaurantId     String
+  keyword          String
+  ranking          Int?
+  searchVolume     Int?
+  opportunityScore Float?
+  createdAt        DateTime    @default(now())
+  restaurant       Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model WebsiteEvent {
+  id           String           @id @default(cuid())
+  restaurantId String
+  type         WebsiteEventType
+  metadata     Json             @default("{}")
+  createdAt    DateTime         @default(now())
+  restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model DigestRun {
+  id           String      @id @default(cuid())
+  restaurantId String
+  snapshot     Json       @default("{}")
+  ranAt        DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, ranAt])
+  @@schema("kob")
+}
+
+model DemoRequest {
+  id             String   @id @default(cuid())
+  firstName      String
+  lastName       String
+  email          String
+  restaurantName String
+  addressLine1   String?
+  city           String?
+  postalCode     String?
+  phone          String?
+  message        String?
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([email])
+  @@schema("kob")
+}
+
+model DailyScan {
+  id                String     @id @default(cuid())
+  restaurantId      String
+  scanDate          DateTime   @db.Date
+  visibilityScore   Int?
+  visualHealthScore Int?
+  reviewHealthScore Int?
+  briefingJson      Json       @default("{}")
+  createdAt         DateTime   @default(now())
+  restaurant        Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, scanDate])
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model Asset {
+  id           String     @id @default(cuid())
+  restaurantId String
+  type         AssetType
+  url          String?
+  metadata     Json       @default("{}")
+  uploadedAt   DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, type])
+  @@schema("kob")
+}
+
+model CustomerReview {
+  id                 String       @id @default(cuid())
+  restaurantId      String
+  source              ReviewSource
+  externalReviewId    String?
+  reviewerName        String?
+  rating              Int
+  body                String       @default("")
+  reviewedAt          DateTime?
+  replied             Boolean      @default(false)
+  relationshipScore   Int          @default(0)
+  restaurant          Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  replies             ReviewReply[]
+
+  @@unique([source, externalReviewId])
+  @@index([restaurantId, reviewedAt])
+  @@schema("kob")
+}
+
+model ReviewReply {
+  id        String            @id @default(cuid())
+  reviewId  String
+  replyText String            @default("")
+  status    ReviewReplyStatus @default(DRAFT)
+  postedAt  DateTime?
+  review    CustomerReview    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@schema("kob")
+}
+
+model ReviewerProfile {
+  id             String     @id @default(cuid())
+  restaurantId String
+  name           String
+  contactInfo    Json       @default("{}")
+  notes          String?
+  totalVisits    Int        @default(0)
+  influenceScore Int        @default(0)
+  lastContactAt  DateTime?
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model AgentAction {
+  id            String            @id @default(cuid())
+  restaurantId String
+  actionType    String
+  description   String
+  status        AgentActionStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  restaurant    Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
+  @@schema("kob")
+}
+
+model OutboundLead {
+  id                     String             @id @default(cuid())
+  workspaceRestaurantId  String?
+  city                   String?
+  restaurantName         String?
+  websiteUrl             String?
+  contactEmail           String?
+  insightSummary         String?
+  messageSubject         String?
+  messageBody            String?
+  suggestedTone          String?
+  status                 OutboundLeadStatus @default(DRAFT)
+  createdAt              DateTime           @default(now())
+  workspaceRestaurant    Restaurant?      @relation(fields: [workspaceRestaurantId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([workspaceRestaurantId, status, createdAt])
+  @@schema("kob")
+}
+
+model StripeWebhookEvent {
+  id        String   @id
+  type      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@schema("kob")
+}
+
+/** Public visibility audit (grader funnel); no auth required to create. */
+model VisibilityAudit {
+  id                String    @id @default(cuid())
+  restaurantId      String?
+  restaurant        Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+  restaurantName    String
+  city              String
+  websiteUrl        String?
+  overallScore      Int
+  seoScore          Int
+  designScore       Int
+  mobileScore       Int
+  conversionScore   Int
+  resultPayload     Json      @default("{}")
+  leadEmail         String?
+  leadPhone         String?
+  leadCapturedAt    DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  siteScan          SiteScan?
+
+  @@index([createdAt])
+  @@index([restaurantId])
+  @@schema("kob")
+}
+
+model SiteScan {
+  id                   String          @id @default(cuid())
+  visibilityAuditId    String          @unique
+  visibilityAudit      VisibilityAudit @relation(fields: [visibilityAuditId], references: [id], onDelete: Cascade)
+  browserbaseSessionId String?
+  screenshotUrls       Json            @default("[]")
+  rawStagehandJson     Json?
+  visualMetricsJson    Json?
+  status               String          @default("completed")
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  @@schema("kob")
+}

@@ -1,0 +1,643 @@
+import { cron } from "inngest";
+import { persistAiRecommendations } from "@/lib/ai/recommendations";
+import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
+import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
+import { buildAuditPayloadAndRow } from "@/lib/audit/build-result";
+import { enrichAuditNarrative } from "@/lib/audit/enrich-openai";
+import { fetchMediaAssetsForVision } from "@/lib/audit/collect-media-assets";
+import { mergeBenchmarkV1MediaIntoPayload, runGeminiBenchmarkV1Media } from "@/lib/audit/gemini-benchmark-media";
+import { mergeBenchmarkV1IntoPayload, runGeminiBenchmarkV1 } from "@/lib/audit/gemini-benchmark-score";
+import { parseAuditPayload } from "@/lib/audit/types";
+import { executeAuditPipeline } from "@/lib/audit/execute-audit-pipeline";
+import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
+import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
+import { auditPageTextPreview } from "@/lib/audit/website-analysis-pipeline";
+import { fetchRenderedPageWithRetry, isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
+import {
+  type StagehandRenderedPage,
+  fetchRenderedPageViaStagehandWithRetry,
+  isStagehandAuditEnabled,
+} from "@/lib/browserbase/stagehand-scan";
+import { saveDigestRun } from "@/lib/digest/build-snapshot";
+import { prisma } from "@/lib/db/prisma";
+import { generateOutboundDraft } from "@/lib/growth-agent/generate-outbound-draft";
+import { persistOutboundDraftLeads } from "@/lib/growth-agent/persist-outbound-leads";
+import { detectInsightsFromRules } from "@/lib/growth/detect";
+import { summarizeMetadata } from "@/lib/growth/normalize";
+import { type Integration, OutboundLeadStatus } from "@prisma/client";
+import { inngest } from "./client";
+
+export type GrowthNormalizationData = {
+  restaurantId: string;
+};
+
+/** Hourly ingestion entrypoint — fans out normalization jobs per restaurant. */
+export const ingestionHourly = inngest.createFunction(
+  {
+    id: "growth-ingestion-hourly",
+    name: "Growth · hourly ingestion",
+    triggers: [cron("5 * * * *")],
+  },
+  async ({ step }) => {
+    const restaurants = await step.run("list-restaurants", () =>
+      prisma.restaurant.findMany({ select: { id: true } }),
+    );
+
+    await step.run("enqueue-normalizations", async () => {
+      if (!restaurants.length) {
+        return 0;
+      }
+      await inngest.send(
+        restaurants.map((r) => ({
+          name: "growth/normalization.requested",
+          data: { restaurantId: r.id } satisfies GrowthNormalizationData,
+        })),
+      );
+      return restaurants.length;
+    });
+
+    return { restaurants: restaurants.length };
+  },
+);
+
+export const normalizationRequested = inngest.createFunction(
+  {
+    id: "growth-normalization",
+    name: "Growth · normalization",
+    triggers: [{ event: "growth/normalization.requested" }],
+  },
+  async ({ event, step }) => {
+    const restaurantId = event.data.restaurantId;
+    if (!restaurantId || typeof restaurantId !== "string") {
+      throw new Error("growth/normalization.requested missing restaurantId");
+    }
+
+    const summary = await step.run("load-integrations-metadata", async () => {
+      const integrations: Integration[] = await prisma.integration.findMany({
+        where: { restaurantId },
+      });
+      return integrations.map((int) => ({
+        provider: int.provider,
+        metadataSummary: summarizeMetadata(int.metadata),
+        connectedAt: int.connectedAt.toISOString(),
+      }));
+    });
+
+    await step.run("emit-post-normalization-events", async () => {
+      await inngest.send([
+        {
+          name: "growth/insight.detection.requested",
+          data: { restaurantId },
+        },
+        {
+          name: "growth/normalization.completed",
+          data: { restaurantId, integrationProfiles: summary },
+        },
+      ]);
+    });
+
+    return { restaurantId };
+  },
+);
+
+export const insightDetection = inngest.createFunction(
+  {
+    id: "growth-insight-detection",
+    name: "Growth · insight detection",
+    triggers: [{ event: "growth/insight.detection.requested" }],
+  },
+  async ({ event, step }) => {
+    const restaurantId = event.data.restaurantId;
+    if (!restaurantId || typeof restaurantId !== "string") {
+      throw new Error("growth/insight.detection.requested missing restaurantId");
+    }
+
+    const created = await step.run("detect-rules", async () => detectInsightsFromRules(restaurantId));
+
+    await step.run("enqueue-ai-recommendations", async () => {
+      await inngest.send({
+        name: "growth/recommendations.ai.requested",
+        data: { restaurantId },
+      });
+    });
+
+    return { restaurantId, created };
+  },
+);
+
+export const aiRecommendations = inngest.createFunction(
+  {
+    id: "growth-ai-recommendations",
+    name: "Growth · AI recommendations",
+    triggers: [{ event: "growth/recommendations.ai.requested" }],
+  },
+  async ({ event, step }) => {
+    const restaurantId = event.data.restaurantId;
+    if (!restaurantId || typeof restaurantId !== "string") {
+      throw new Error("growth/recommendations.ai.requested missing restaurantId");
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return { restaurantId, skipped: true, reason: "no_openai_key" };
+    }
+
+    if (process.env.GROWTH_AUTO_AI_RECOMMENDATIONS !== "1") {
+      return { restaurantId, skipped: true, reason: "growth_auto_ai_recommendations_off" };
+    }
+
+    const { created } = await step.run("openai-write-recommendations", async () =>
+      persistAiRecommendations(restaurantId),
+    );
+
+    return { restaurantId, created };
+  },
+);
+
+export const auditRunPipeline = inngest.createFunction(
+  {
+    id: "audit-run-pipeline",
+    name: "Audit · background run",
+    triggers: [{ event: "audit/run.requested" }],
+  },
+  async ({ event, step }) => {
+    const auditId = event.data.auditId;
+    const websiteUrl = event.data.websiteUrl;
+    if (!auditId || typeof auditId !== "string") {
+      throw new Error("audit/run.requested missing auditId");
+    }
+    if (!websiteUrl || typeof websiteUrl !== "string") {
+      throw new Error("audit/run.requested missing websiteUrl");
+    }
+
+    const siteScope = event.data.siteScope === "multiple" ? "multiple" : "one";
+    const userSocial = (event.data.userSocial ?? null) as AuditUserSocialInput | null;
+    const userImageUrls = Array.isArray(event.data.userImageUrls)
+      ? (event.data.userImageUrls as string[])
+      : null;
+    const place =
+      event.data.placePlaceId ||
+      event.data.placeLat != null ||
+      event.data.placeLng != null ||
+      event.data.placeFormattedAddress
+        ? {
+            placeId: typeof event.data.placePlaceId === "string" ? event.data.placePlaceId : undefined,
+            formattedAddress:
+              typeof event.data.placeFormattedAddress === "string" ? event.data.placeFormattedAddress : undefined,
+            lat: typeof event.data.placeLat === "number" ? event.data.placeLat : null,
+            lng: typeof event.data.placeLng === "number" ? event.data.placeLng : null,
+          }
+        : null;
+
+    await step.run("execute-audit-pipeline", () =>
+      executeAuditPipeline(auditId, {
+        websiteUrl,
+        siteScope,
+        userSocial,
+        userImageUrls,
+        place,
+      }),
+    );
+
+    return { auditId };
+  },
+);
+
+export const auditBrowserbaseScan = inngest.createFunction(
+  {
+    id: "audit-browserbase-scan",
+    name: "Audit · Browserbase render",
+    triggers: [{ event: "audit/browserbase.requested" }],
+  },
+  async ({ event, step }) => {
+    const auditId = event.data.auditId;
+    if (!auditId || typeof auditId !== "string") {
+      throw new Error("audit/browserbase.requested missing auditId");
+    }
+
+    if (!isBrowserbaseConfigured()) {
+      return { auditId, skipped: true, reason: "no_browserbase" };
+    }
+
+    const result = await step.run("browserbase-render-and-merge", async () => {
+      const audit = await prisma.visibilityAudit.findUnique({ where: { id: auditId } });
+      if (!audit?.websiteUrl?.trim()) {
+        return { ok: false as const, reason: "no_url" };
+      }
+
+      const prev = parseAuditPayload(audit.resultPayload);
+      if (!prev) {
+        return { ok: false as const, reason: "bad_payload" };
+      }
+
+      try {
+        const useStagehand = isStagehandAuditEnabled();
+        const page = useStagehand
+          ? await fetchRenderedPageViaStagehandWithRetry(
+              audit.websiteUrl.trim(),
+              { restaurantName: audit.restaurantName, city: audit.city },
+              2,
+            )
+          : await fetchRenderedPageWithRetry(audit.websiteUrl.trim(), 2);
+        const analysis = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
+          httpStatus: page.statusCode ?? undefined,
+        });
+
+        const userUrls =
+          prev.evidencePack?.imageCandidates
+            ?.filter((c) => c.source === "user:supplied")
+            .map((c) => c.url) ?? undefined;
+
+        const stagehandExtraction: StagehandRenderedPage["stagehandExtraction"] | undefined = useStagehand
+          ? (page as StagehandRenderedPage).stagehandExtraction
+          : undefined;
+
+        let { payload } = buildAuditPayloadAndRow(
+          {
+            restaurantName: audit.restaurantName,
+            city: audit.city,
+            websiteUrl: audit.websiteUrl,
+            userSocial: prev.evidencePack?.userSocial,
+            userImageUrls: userUrls?.length ? userUrls : undefined,
+            multiSiteOrigins: prev.evidencePack?.multiSiteOrigins ?? null,
+          },
+          analysis,
+          {
+            browserbaseScan: {
+              sessionId: page.sessionId,
+              capturedAt: new Date().toISOString(),
+              finalUrl: page.finalUrl,
+              mode: "async-complete",
+              approximateMarkdownSnippet: auditPageTextPreview(page.html),
+              screenshotPublicUrl: page.screenshotPublicUrl,
+            },
+            scanStatus: "ready",
+            deferInitialAiJobs: false,
+            visualMetrics: page.visualMetrics,
+            stagehandExtraction,
+          },
+        );
+
+        payload = await applyAuditScoringV2(payload, {
+          networkFacts: page.networkFacts,
+          visualMetrics: page.visualMetrics,
+          stagehandExtraction,
+        });
+
+        await prisma.visibilityAudit.update({
+          where: { id: auditId },
+          data: {
+            overallScore: payload.scores.overall,
+            seoScore: payload.scores.seo,
+            designScore: payload.scores.design,
+            mobileScore: payload.scores.mobile,
+            conversionScore: payload.scores.conversion,
+            resultPayload: payload as object,
+          },
+        });
+
+        await upsertSiteScanForAudit(auditId, payload);
+
+        return { ok: true as const };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const failed = {
+          ...prev,
+          scanStatus: "failed" as const,
+          browserbaseScan: {
+            capturedAt: new Date().toISOString(),
+            finalUrl: audit.websiteUrl ?? undefined,
+            mode: "async-failed" as const,
+            errorMessage: msg.slice(0, 500),
+          },
+        };
+        await prisma.visibilityAudit.update({
+          where: { id: auditId },
+          data: { resultPayload: failed },
+        });
+        return { ok: false as const, error: msg };
+      }
+    });
+
+    if (result.ok === true) {
+      await step.run("enqueue-post-scan-ai", async () => {
+        const sends: { name: string; data: Record<string, string> }[] = [];
+        if (process.env.OPENAI_API_KEY) {
+          sends.push({ name: "audit/enrichment.requested", data: { auditId } });
+        }
+        if (process.env.GEMINI_API_KEY?.trim()) {
+          sends.push({ name: "audit/gemini-benchmark.requested", data: { auditId } });
+        }
+        if (sends.length) {
+          for (const s of sends) {
+            await inngest.send(s);
+          }
+        }
+        return sends.length;
+      });
+    }
+
+    return { auditId, result };
+  },
+);
+
+export const auditEnrichment = inngest.createFunction(
+  {
+    id: "audit-enrichment",
+    name: "Audit · AI narrative",
+    triggers: [{ event: "audit/enrichment.requested" }],
+  },
+  async ({ event, step }) => {
+    const auditId = event.data.auditId;
+    if (!auditId || typeof auditId !== "string") {
+      throw new Error("audit/enrichment.requested missing auditId");
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return { auditId, skipped: true };
+    }
+
+    await step.run("openai-narrative", async () => {
+      const audit = await prisma.visibilityAudit.findUnique({ where: { id: auditId } });
+      if (!audit) return { ok: false as const };
+      const payload = parseAuditPayload(audit.resultPayload);
+      if (!payload) return { ok: false as const };
+
+      const narrative = await enrichAuditNarrative(payload, {
+        restaurantName: audit.restaurantName,
+        city: audit.city,
+      });
+      if (!narrative) return { ok: true as const, unchanged: true };
+
+      const next = { ...payload, aiNarrative: narrative };
+      await prisma.visibilityAudit.update({
+        where: { id: auditId },
+        data: { resultPayload: next },
+      });
+      return { ok: true as const };
+    });
+
+    return { auditId };
+  },
+);
+
+export const auditGeminiBenchmark = inngest.createFunction(
+  {
+    id: "audit-gemini-benchmark",
+    name: "Audit · Gemini absolute benchmark",
+    triggers: [{ event: "audit/gemini-benchmark.requested" }],
+  },
+  async ({ event, step }) => {
+    const auditId = event.data.auditId;
+    if (!auditId || typeof auditId !== "string") {
+      throw new Error("audit/gemini-benchmark.requested missing auditId");
+    }
+
+    if (!process.env.GEMINI_API_KEY?.trim()) {
+      return { auditId, skipped: true, reason: "no_gemini_key" };
+    }
+
+    await step.run("gemini-benchmark-score", async () => {
+      const audit = await prisma.visibilityAudit.findUnique({ where: { id: auditId } });
+      if (!audit) return { ok: false as const, reason: "not_found" };
+      const payload = parseAuditPayload(audit.resultPayload);
+      if (!payload?.evidencePack) return { ok: false as const, reason: "no_evidence_pack" };
+
+      const result = await runGeminiBenchmarkV1(payload.evidencePack);
+      if (!result.ok) {
+        const failedPayload = {
+          ...payload,
+          benchmarkV1Status: "failed" as const,
+          benchmarkV1Error: result.error,
+          benchmarkV1: null,
+          benchmarkV1MediaStatus: "skipped" as const,
+          benchmarkV1Media: null,
+          benchmarkV1MediaError: undefined,
+        };
+        await prisma.visibilityAudit.update({
+          where: { id: auditId },
+          data: { resultPayload: failedPayload },
+        });
+        return { ok: false as const, error: result.error };
+      }
+
+      let merged = mergeBenchmarkV1IntoPayload(payload, result.data);
+      const candidates = merged.evidencePack?.imageCandidates ?? [];
+
+      if (candidates.length === 0) {
+        merged = {
+          ...merged,
+          benchmarkV1MediaStatus: "skipped",
+          benchmarkV1Media: null,
+          benchmarkV1MediaError: undefined,
+        };
+      } else {
+        const { assets, errors } = await fetchMediaAssetsForVision(candidates);
+        merged = {
+          ...merged,
+          evidencePack: merged.evidencePack
+            ? {
+                ...merged.evidencePack,
+                mediaAssetsMeta: assets.map((a) => a.meta),
+              }
+            : merged.evidencePack,
+        };
+
+        if (assets.length === 0) {
+          merged = {
+            ...merged,
+            benchmarkV1MediaStatus: "failed",
+            benchmarkV1Media: null,
+            benchmarkV1MediaError: errors.length ? errors.join("; ") : "Could not fetch images for vision scoring",
+          };
+        } else {
+          const mediaRes = await runGeminiBenchmarkV1Media(merged.evidencePack!, assets);
+          if (!mediaRes.ok) {
+            merged = {
+              ...merged,
+              benchmarkV1MediaStatus: "failed",
+              benchmarkV1Media: null,
+              benchmarkV1MediaError: mediaRes.error,
+            };
+          } else {
+            merged = mergeBenchmarkV1MediaIntoPayload(merged, mediaRes.data);
+          }
+        }
+      }
+
+      await prisma.visibilityAudit.update({
+        where: { id: auditId },
+        data: {
+          resultPayload: merged,
+          overallScore: merged.scores.overall,
+          seoScore: merged.scores.seo,
+          designScore: merged.scores.design,
+          mobileScore: merged.scores.mobile,
+          conversionScore: merged.scores.conversion,
+        },
+      });
+      return { ok: true as const };
+    });
+
+    return { auditId };
+  },
+);
+
+export const dailyDigestCron = inngest.createFunction(
+  {
+    id: "growth-daily-digest",
+    name: "Growth · daily digest",
+    triggers: [cron("15 13 * * *")],
+  },
+  async ({ step }) => {
+    const restaurants = await step.run("list-restaurants", () =>
+      prisma.restaurant.findMany({ select: { id: true } }),
+    );
+
+    for (const r of restaurants) {
+      await step.run(`digest-${r.id}`, async () => saveDigestRun(r.id));
+    }
+
+    return { count: restaurants.length };
+  },
+);
+
+/** Draft outbound leads when `OUTBOUND_SCAN_CITY` is set — human approval still required before any send. */
+export const outboundDraftDaily = inngest.createFunction(
+  {
+    id: "outbound-draft-daily",
+    name: "Outbound · draft daily",
+    triggers: [cron("45 14 * * *"), { event: "outbound/daily.requested" }],
+  },
+  async ({ step }) => {
+    const city = process.env.OUTBOUND_SCAN_CITY?.trim();
+    if (!city) {
+      return { skipped: true as const, reason: "OUTBOUND_SCAN_CITY not set" };
+    }
+
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID not set (required to persist leads per workspace)" };
+    }
+
+    const draft = await step.run("generate-outbound-draft", async () => {
+      const result = await generateOutboundDraft({ city, max: 20 });
+      if (!result.ok) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    });
+
+    const inserted = await step.run("persist-outbound-leads", async () => {
+      const rows = await persistOutboundDraftLeads(workspaceId, city, draft.leads);
+      return rows.length;
+    });
+
+    await step.run("resend-outbound-summary", async () => {
+      const key = process.env.RESEND_API_KEY?.trim();
+      const to = process.env.OUTBOUND_RESEND_NOTIFY_EMAIL?.trim();
+      if (!key || !to) {
+        return { skipped: true as const, reason: "resend_or_notify_email_missing" };
+      }
+      const { Resend } = await import("resend");
+      const resend = new Resend(key);
+      const from =
+        process.env.RESEND_FROM_EMAIL?.trim() ||
+        "KOB Growth <onboarding@resend.dev>";
+      const { error } = await resend.emails.send({
+        from,
+        to: [to],
+        subject: `KOB outbound: ${String(inserted)} draft(s) · ${city}`,
+        html: `<p>${String(inserted)} outbound lead draft(s) were created for <strong>${city}</strong>. Approve and send from the dashboard.</p>`,
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      return { sent: true as const };
+    });
+
+    return { city, inserted };
+  },
+);
+
+/** Sends Resend emails for human-approved leads with `contactEmail` set (batch + polite delay). */
+export const outboundSendApprovedDaily = inngest.createFunction(
+  {
+    id: "outbound-send-approved",
+    name: "Outbound · send approved",
+    triggers: [cron("55 14 * * *"), { event: "outbound/send.requested" }],
+  },
+  async ({ step }) => {
+    const key = process.env.RESEND_API_KEY?.trim();
+    if (!key) {
+      return { skipped: true as const, reason: "RESEND_API_KEY missing" };
+    }
+
+    const batch = Math.min(25, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH?.trim() || "25")));
+
+    const leads = await step.run("list-approved-with-email", async () => {
+      const rows = await prisma.outboundLead.findMany({
+        where: {
+          status: OutboundLeadStatus.APPROVED,
+          contactEmail: { not: null },
+          messageBody: { not: null },
+        },
+        take: batch * 2,
+        orderBy: { createdAt: "asc" },
+      });
+      const withEmail = rows.filter((r) => r.contactEmail?.trim());
+      return withEmail.slice(0, batch);
+    });
+
+    if (!leads.length) {
+      return { sent: 0 as const, message: "no_eligible_leads" as const };
+    }
+
+    const from =
+      process.env.RESEND_FROM_EMAIL?.trim() ||
+      "KOB Growth <onboarding@resend.dev>";
+
+    let sent = 0;
+    for (let i = 0; i < leads.length; i++) {
+      const lead = leads[i]!;
+      await step.run(`resend-${lead.id}`, async () => {
+        const { Resend } = await import("resend");
+        const resend = new Resend(key);
+        const to = lead.contactEmail!.trim();
+        const subject = lead.messageSubject?.trim() || "A note from KOB";
+        const html = `<div style="font-family:system-ui,sans-serif;max-width:600px;line-height:1.5">${(lead.messageBody || "")
+          .split("\n")
+          .map((line) => `<p>${line || " "}</p>`)
+          .join("")}</div>`;
+        const { error } = await resend.emails.send({ from, to: [to], subject, html });
+        if (error) {
+          throw new Error(error.message);
+        }
+        await prisma.outboundLead.update({
+          where: { id: lead.id },
+          data: { status: OutboundLeadStatus.SENT },
+        });
+        return { ok: true as const };
+      });
+      sent++;
+      if (i < leads.length - 1) {
+        await step.sleep(`outbound-delay-${i}`, "2.5s");
+      }
+    }
+
+    return { sent, processed: leads.length };
+  },
+);
+
+export const functions = [
+  ingestionHourly,
+  normalizationRequested,
+  insightDetection,
+  aiRecommendations,
+  auditRunPipeline,
+  auditBrowserbaseScan,
+  auditEnrichment,
+  auditGeminiBenchmark,
+  dailyDigestCron,
+  outboundDraftDaily,
+  outboundSendApprovedDaily,
+];

@@ -20,6 +20,10 @@
 # production
 /build
 
+# Owner crawl artifacts (HTML dumps; keep README)
+downloads/owner-crawl/*/
+!downloads/owner-crawl/README.md
+
 # misc
 .DS_Store
 *.pem
@@ -32,9 +36,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# Netlify CLI (local link / state)
+.netlify/
 
 # typescript
 *.tsbuildinfo

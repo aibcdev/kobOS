@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Helvetica Neue LT Pro';
+    src: url('https://sundayapp.com/static/fonts/helveticaneueltpro-roman.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+    animation: marquee 30s linear infinite;
+}
+
+/* Hover fill animation for primary buttons */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    background-color: theme('colors.primary');
+    transition: width 0.3s ease;
+    z-index: -1;
+}
+.btn-primary:hover::before {
+    width: 100%;
+}
+.btn-primary:hover {
+    color: theme('colors.background');
+    border-color: theme('colors.primary');
+}
+
+/* Secondary button invert scale */
+.btn-secondary {
+    transition: all 0.3s ease;
+}
+.btn-secondary:hover {
+    background-color: theme('colors.text');
+    color: theme('colors.background');
+    transform: scale(1.05);
+}
+.dark .btn-secondary:hover {
+    background-color: theme('colors.background');
+    color: theme('colors.dark-bg');
+}
+
+/* Glassmorphism */
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}

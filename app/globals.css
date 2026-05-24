@@ -1,26 +1,433 @@
+@import url("https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
+@font-face {
+  font-family: "SuisseIntl";
+  src: url("https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7d3c/69b9330c8b70142e4e5f7dba_SuisseIntl-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "SuisseIntl";
+  src: url("https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7d3c/69b9330c8b70142e4e5f7daf_SuisseIntl-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+}
+@font-face {
+  font-family: "SuisseIntl";
+  src: url("https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7d3c/69b9330c8b70142e4e5f7db5_SuisseIntl-Bold.woff2")
+    format("woff2");
+  font-weight: 600;
+}
+@font-face {
+  font-family: "STKBureauSans";
+  src: url("https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7d3c/69b9330c8b70142e4e5f8364_STKBureauSans-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "STKBureauSans";
+  src: url("https://cdn.prod.website-files.com/69b9330c8b70142e4e5f7d3c/69b9330c8b70142e4e5f8363_STKBureauSans-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+}
+
+/*
+ * Font stacks — SaaS template + Owner tokens
+ */
+html {
+  --font-head: "STKBureauSans", var(--font-dm-sans), "DM Sans", "STK Bureau Sans", Inter, Arial, sans-serif;
+  --font-body: "SuisseIntl", Helvetica, Arial, "Hiragino Sans GB", STXihei, "Microsoft YaHei", "WenQuanYi Micro Hei",
+    Hind, "MS Gothic", "Apple SD Gothic Neo", NanumBarunGothic, sans-serif;
+  --font-mono-brand: "Fragment Mono", ui-monospace, monospace;
+}
+
+.font-heading {
+  font-family: var(--font-head);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono-brand {
+  font-family: var(--font-mono-brand);
+}
+
+/* Token map: /downloads/owner.com-DESIGN.md */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #094413;
+  --color-primary-active: #06330e;
+  --color-primary-hover: #0c5518;
+  --color-accent: #088924;
+  --color-accent-active: #066b1b;
+
+  --color-canvas: #c2edce;
+  --color-surface-soft: #ffffff;
+  --color-surface-warm: #fbf8f5;
+  --color-surface-beige: #f6eee5;
+  --color-surface-cream: #f9f3ed;
+  --color-surface-elevated: #ffffff;
+
+  --color-ink: #2c2c2c;
+  --color-body: #2c2c2c;
+  --color-body-black: #000000;
+  --color-muted: rgba(44, 44, 44, 0.85);
+  --color-muted-medium: rgba(44, 44, 44, 0.5);
+  --color-muted-soft: rgba(44, 44, 44, 0.1);
+  --color-muted-faint: rgba(44, 44, 44, 0.05);
+  --color-on-primary: #ffffff;
+  --color-on-dark: #ffffff;
+  --color-on-surface: #2c2c2c;
+  --color-text-inverse: #ffffff;
+  --color-text-inverse-muted: rgba(255, 255, 255, 0.85);
+  --color-text-inverse-soft: rgba(255, 255, 255, 0.5);
+  --color-text-warm: #f9f3ed;
+
+  --color-hairline: rgba(44, 44, 44, 0.1);
+  --color-border-soft: rgba(44, 44, 44, 0.05);
+  --color-border-inset: rgba(44, 44, 44, 0.1);
+
+  --color-error: #c13515;
+  --color-success: #088924;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
+
+  --color-surface-dark: #2c2c2c;
+  --color-surface-dark-hover: #1f1f1f;
+
+  --radius-sm: 12px;
+  --radius-default: 16px;
+  --radius-md: 24px;
+  --radius-lg: 32px;
+  --radius-xl: 64px;
+  --radius-pill: 9999px;
+  --radius-image-hero: clamp(1rem, 3vw, var(--radius-md));
+
+  --spacing-xxs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+  --spacing-xxl: 104px;
+  --spacing-section: 80px;
+
+  --shadow-inset-hairline: inset 0 -1px 0 0 rgba(44, 44, 44, 0.1);
+  --shadow-card-elevated: 0 12px 24px 0 rgba(61, 60, 60, 0.2);
+
+  --ease-standard: cubic-bezier(0.38, 0.005, 0.215, 1);
+  --ease-decelerate: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-bounce: cubic-bezier(0.625, 0.05, 0, 1);
+  --ease-out: var(--ease-decelerate);
+
+  --duration-fast: 300ms;
+  --duration-medium: 350ms;
+
+  --background: var(--color-surface-soft);
+  --foreground: var(--color-ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Typography tokens — downloads/owner.com-DESIGN.md § typography (display-xl … label-md) */
+.type-display-xl {
+  font-family: var(--font-head);
+  font-size: 88px;
+  font-weight: 600;
+  line-height: 83.6px;
+  letter-spacing: -3.52px;
+  color: var(--color-ink);
+}
+
+.type-display-lg {
+  font-family: var(--font-head);
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -1.44px;
+  color: var(--color-ink);
+}
+
+.type-title-md {
+  font-family: var(--font-head);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+
+.type-title-sm {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+.type-body-md {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: normal;
+  color: var(--color-body);
+}
+
+.type-body-sm {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--color-body);
+}
+
+.type-caption {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.38;
+  letter-spacing: 0;
+}
+
+.type-button {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.type-label-md {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* owner.com-DESIGN.md § responsive: display-xl scales ~48–56px on small viewports */
+@media (max-width: 767px) {
+  .type-display-xl {
+    font-size: clamp(2.75rem, 9vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.06em;
   }
 }
 
+.font-head {
+  font-family: var(--font-head);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-head);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface-soft);
+  color: var(--color-body);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes grader-laser-y {
+  0% {
+    top: 12%;
+  }
+  50% {
+    top: 78%;
+  }
+  100% {
+    top: 12%;
+  }
+}
+
+.grader-laser-line {
+  animation: grader-laser-y 2.4s ease-in-out infinite;
+}
+
+@keyframes grader-reviews-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.grader-reviews-track {
+  animation: grader-reviews-scroll 12s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grader-reviews-track {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grader-laser-line {
+    animation: none;
+    top: 45%;
+  }
+}
+
+@keyframes audit-fix-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.audit-fix-card-in {
+  animation: audit-fix-card-in 0.5s var(--ease-standard) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audit-fix-card-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes home-marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.home-marquee-track {
+  animation: home-marquee-x 55s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-marquee-track {
+    animation: none;
+  }
+}
+
+/* Independent restaurant landing template (ported from vendor zip) */
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-marquee-track {
+  width: max-content;
+  animation: landing-marquee 45s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee-track {
+    animation: none;
+  }
+}
+
+.landing-btn-primary {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.landing-btn-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background-color: var(--color-accent);
+  transition: width 0.35s var(--ease-standard);
+  z-index: -1;
+}
+
+.landing-btn-primary:hover::before {
+  width: 100%;
+}
+
+.landing-glass-card {
+  backdrop-filter: blur(16px);
+}
+
+/* SaaS landing template (components/marketing/saas) */
+@keyframes saas-marquee-track {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: saas-marquee-track 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes saas-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: saas-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

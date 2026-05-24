@@ -1,0 +1,1 @@
+-- Optional seed for `supabase db reset` (disabled in config). KOB uses Prisma for schema/migrations.
