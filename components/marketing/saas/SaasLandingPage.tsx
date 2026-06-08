@@ -1,3 +1,4 @@
+import { SaasOwnerComparison } from "./SaasOwnerComparison";
 import { SaasBeliefs } from "./SaasBeliefs";
 import { SaasBrandGrid } from "./SaasBrandGrid";
 import { SaasEcosystemTabs } from "./SaasEcosystemTabs";
@@ -15,10 +16,11 @@ export function SaasLandingPage() {
       <SaasHeroSection />
       <SaasIndustryStatsBand />
       <SaasTrustBand />
+      <SaasOwnerComparison />
       <SaasBenefitTabs
         eyebrow="How KOB helps"
-        title="Fix visibility. Grow direct orders."
-        subtitle="One platform for your site, search, ordering, and weekly AI priorities."
+        title="Never miss a beat online."
+        subtitle="Reviews, holidays, hours, and posts—handled with a daily list you approve in one tap."
         tabs={WEBSITE_SALES_TABS}
       />
       <SaasEcosystemTabs />

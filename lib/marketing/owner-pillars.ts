@@ -1,41 +1,40 @@
 /**
- * Product pillars aligned with Owner.com crawl (20260521-0941).
- * Refresh after `npm run crawl:owner:free` — see `npm run marketing:check-owner`.
+ * Product areas reframed as daily tasks—not revenue SKUs.
  */
 export const ownerProductPillars = [
   {
     slug: "website",
-    title: "AI website builder",
-    headline: "Websites that rank locally and convert on mobile.",
+    title: "Your online shop window",
+    headline: "Guests judge you online before they walk in.",
     description:
-      "Hospitality-first layouts, menus, and CTAs—plus an AI scan that shows what to fix before you spend on redesigns.",
+      "KOB checks your site and listing—photos, menu, hours, mobile speed—and adds fixes to your daily task list.",
     href: "/features/website",
     ownerPath: "/restaurant-website-ai",
   },
   {
     slug: "online-ordering",
-    title: "Online ordering",
-    headline: "Your online ordering should grow your business.",
+    title: "Booking & ordering paths",
+    headline: "Make it obvious how to book or order.",
     description:
-      "Ordering flows proven to grow direct sales—so you keep margin instead of feeding third-party apps every week.",
+      "Confusing buttons and buried menus lose guests. Your scan flags what's hard to find—we tell you what to fix.",
     href: "/features/online-ordering",
     ownerPath: "/online-ordering",
   },
   {
     slug: "delivery",
-    title: "Delivery you own",
-    headline: "Profitable delivery and a great guest experience.",
+    title: "Listings & hours",
+    headline: "Wrong hours cost covers.",
     description:
-      "Save on delivery-app fees with direct ordering paths guests actually use—commission stays with you.",
+      "Bank holidays, seasonal hours, delivery zones—KOB reminds you early and drafts updates before guests notice.",
     href: "/features/delivery",
     ownerPath: "/delivery",
   },
   {
     slug: "marketing",
-    title: "Automatic marketing",
-    headline: "Marketing that runs while you run the floor.",
+    title: "Posts & promotions",
+    headline: "Social and email without the scramble.",
     description:
-      "Campaigns and local promos tied to what your AI report flags—so fixes on site and search ship together.",
+      "Holiday posts, slow-week promos, review replies—prepared as drafts you approve. Nothing goes live without you.",
     href: "/dashboard/marketing",
     ownerPath: "/automatic-marketing",
   },

@@ -7,6 +7,7 @@ import { auditCard, auditCardMuted } from "@/lib/marketing/audit-theme";
 import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
 import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
+import { marketingCopy } from "@/lib/marketing/copy";
 
 export function AuditResultsContent({
   audit,
@@ -98,6 +99,9 @@ export function AuditResultsContent({
       {unlocked ? (
         <div className="mx-auto max-w-[90rem] border-t border-[var(--color-hairline)] bg-[#f9fafb] px-6 py-12 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
           <div className="max-w-3xl space-y-14">
+            <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
+              {marketingCopy.auditUpgrade.body}
+            </p>
             <section>
               <h2 className="font-head text-xl font-semibold">Opportunities</h2>
               <ul className="mt-4 space-y-3">

@@ -126,7 +126,7 @@ export function AuditUnlockModal({
             ) : null}
             {teaser?.revenueLeakCount ? (
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                {teaser.revenueLeakCount} revenue leaks found in your audit
+                {teaser.revenueLeakCount} things guests notice in your audit
               </p>
             ) : null}
           </div>
@@ -142,7 +142,7 @@ export function AuditUnlockModal({
         </div>
         <p className="mt-4 text-center text-xs leading-relaxed text-[var(--color-muted-medium)]">
           {marketingCopy.auditUnlock.legal}{" "}
-          <Link href="/" className="underline underline-offset-2">
+          <Link href="/privacy" className="underline underline-offset-2">
             Privacy policy
           </Link>
         </p>

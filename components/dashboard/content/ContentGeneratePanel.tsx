@@ -15,7 +15,7 @@ export function ContentGeneratePanel({ restaurantId }: { restaurantId: string })
       const res = await fetch("/api/content/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, type, prompt: `Create ${label} for this restaurant based on today's Chief of Staff priorities.` }),
+        body: JSON.stringify({ restaurantId, type, prompt: `Create ${label} for this restaurant based on today's task list priorities.` }),
       });
       const body = (await res.json()) as { error?: string; outputPreview?: string };
       if (res.ok) {

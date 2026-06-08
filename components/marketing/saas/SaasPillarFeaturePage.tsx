@@ -32,28 +32,28 @@ const PILLAR_IMAGES: Record<OwnerProductPillar["slug"], { src: string; alt: stri
 function pillarBulletsFor(slug: OwnerProductPillar["slug"]): SaasCardItem[] {
   const map: Record<OwnerProductPillar["slug"], SaasCardItem[]> = {
     website: [
-      { title: "Sales-first layouts", description: "Menus, hours, and book/order CTAs above the fold—not buried in PDFs." },
-      { title: "AI-ranked fixes", description: "Your free report shows what to change before you redesign." },
-      { title: "Mobile speed", description: "Pages that load fast enough guests do not bounce to competitors." },
-      { title: "On-brand copy", description: "Words that match your room—structured for Google and guests." },
+      { title: "Free scan first", description: "See what guests notice on your site before you spend on a redesign." },
+      { title: "Daily fix list", description: "Photos, speed, and menu clarity—added to your morning tasks." },
+      { title: "Mobile matters", description: "Most guests check on a phone. We flag what looks off." },
+      { title: "Plain language", description: "No SEO jargon—just what to change and why." },
     ],
     "online-ordering": [
-      { title: "Direct orders", description: "Guests order on your site—not a marketplace that takes a cut." },
-      { title: "Clear menus", description: "Modifiers, allergens, and upsells without confusing checkout." },
-      { title: "Pickup & dine-in", description: "Paths that match how you actually operate." },
-      { title: "Tied to the AI report", description: "See ordering leaks alongside SEO and photos." },
+      { title: "Clear book/order buttons", description: "Guests should not hunt for how to reserve or order." },
+      { title: "Menu visibility", description: "If the menu is hard to find, we add a task to fix it." },
+      { title: "Matches how you operate", description: "Pickup, dine-in, delivery—whatever you actually offer." },
+      { title: "Tied to your scan", description: "Issues from your report become tasks—not a separate product pitch." },
     ],
     delivery: [
-      { title: "Keep margin", description: "Push guests to direct delivery instead of app fees every month." },
-      { title: "Own the experience", description: "Branded tracking and comms—not a generic aggregator screen." },
-      { title: "Zone clarity", description: "Fees and ETAs guests understand before they pay." },
-      { title: "Works with your site", description: "One story from search → menu → order." },
+      { title: "Hours that stay current", description: "Bank holidays and seasonal changes flagged early." },
+      { title: "Listing accuracy", description: "Google hours and delivery info guests rely on." },
+      { title: "Holiday reminders", description: "Draft posts and closure notes before the busy weekend." },
+      { title: "One less app to check", description: "Tasks land in the same daily list as reviews and posts." },
     ],
     marketing: [
-      { title: "Weekly priorities", description: "Growth Agent ranks what to publish and where." },
-      { title: "Local promos", description: "Offers matched to neighbourhood search intent." },
-      { title: "Review momentum", description: "Reply patterns that protect reputation on Google." },
-      { title: "Measure what moved", description: "Know which fixes shifted discovery and orders." },
+      { title: "Review replies", description: "Draft responses you approve—nothing posts automatically." },
+      { title: "Holiday posts", description: "Mother's Day, Valentine's, bank holidays—prepared ahead." },
+      { title: "Slow-week prompts", description: "Gentle nudges when you have not posted in a while." },
+      { title: "Your tone", description: "Pick how your helper writes—warm, direct, or concise." },
     ],
   };
   return map[slug];

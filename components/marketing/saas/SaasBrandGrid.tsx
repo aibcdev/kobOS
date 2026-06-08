@@ -14,7 +14,7 @@ export function SaasBrandGrid() {
           <span className="font-mono-brand mb-2 block text-xs font-semibold uppercase tracking-wider text-[#088924]">
             RESTAURANT FIRST TECH
           </span>
-          <h2 className="font-heading text-3xl font-semibold tracking-tight text-[#2c2c2c] md:text-5xl">The same technology big brands use, built for you.</h2>
+          <h2 className="font-heading text-3xl font-semibold tracking-tight text-[#2c2c2c] md:text-5xl">An extra pair of hands for your online presence.</h2>
         </div>
 
         <div className="grid grid-cols-1 gap-6 text-left lg:grid-cols-3">
@@ -27,7 +27,7 @@ export function SaasBrandGrid() {
                 Your restaurant website is your digital storefront
               </h3>
               <p className="mt-3 max-w-lg text-sm text-[#2c2c2c]/75 md:text-base">
-                Fully customized websites optimized to rank high on search engines. Built specifically to secure first-click direct orders instead of third-party platform diversion.
+                We check what guests see online—photos, menu, hours, reviews—and turn gaps into a daily task list you approve in one tap.
               </p>
             </div>
 

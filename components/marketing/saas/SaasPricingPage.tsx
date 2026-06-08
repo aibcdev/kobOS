@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import {
+  LAUNCH_PRICING,
   PRICING_FAQ,
   PRICING_INCLUDED_FEATURES,
   PRICING_PLANS,
@@ -9,6 +10,7 @@ import { marketingCopy } from "@/lib/marketing/copy";
 
 import { SaasFaqAccordion } from "./SaasFaqAccordion";
 import { SaasIcon } from "./SaasIcon";
+import { SaasOwnerComparison } from "./SaasOwnerComparison";
 import { SaasPageHero } from "./SaasPageHero";
 
 export function SaasPricingPage() {
@@ -20,7 +22,12 @@ export function SaasPricingPage() {
         description={`${marketingCopy.pricing.subline} ${marketingCopy.pricing.feeLine}`}
       />
 
-      <section className="px-6 pb-8">
+      <section className="px-6 pb-4">
+        {LAUNCH_PRICING.active ? (
+          <p className="mx-auto mb-8 max-w-xl text-center text-sm font-medium text-[#094413]">
+            {LAUNCH_PRICING.label}: {LAUNCH_PRICING.detail}
+          </p>
+        ) : null}
         <div className="mx-auto grid max-w-[83rem] gap-8 md:grid-cols-2">
           {PRICING_PLANS.map((plan) => (
             <div
@@ -38,9 +45,12 @@ export function SaasPricingPage() {
               ) : null}
               <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">{plan.name}</h2>
               <p className="mt-2 text-sm text-[#2c2c2c]/70">{plan.description}</p>
-              <p className="mt-6 flex items-baseline gap-1">
+              <p className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="font-heading text-5xl font-semibold tracking-tight text-[#094413]">${plan.priceMonthly}</span>
                 <span className="text-sm text-[#2c2c2c]/60">/ month</span>
+                {plan.regularPriceMonthly && LAUNCH_PRICING.active ? (
+                  <span className="text-base text-[#2c2c2c]/40 line-through">${plan.regularPriceMonthly}/mo later</span>
+                ) : null}
               </p>
               <p className="mt-2 text-sm font-medium text-[#088924]">{plan.priceNote}</p>
               <Link
@@ -58,10 +68,12 @@ export function SaasPricingPage() {
           ))}
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-[#2c2c2c]/55">
-          KOB pricing is roughly half typical all-in-one hospitality platforms. Exact fees may vary by region and payment
-          setup.
+          Founding rates for the first {LAUNCH_PRICING.foundingSlots} restaurants—roughly 80% below typical platforms
+          like Owner.com ($249–$499/mo).
         </p>
       </section>
+
+      <SaasOwnerComparison />
 
       <section className="bg-[#fbf8f5] px-6 py-20 md:py-24">
         <div className="mx-auto max-w-[83rem]">

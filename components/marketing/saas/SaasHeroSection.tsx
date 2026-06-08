@@ -116,14 +116,14 @@ export function SaasHeroSection() {
 
           <div className="absolute left-16 top-1/3 hidden max-w-[180px] -rotate-3 rounded-2xl bg-[#fbf8f5]/90 p-4 text-left shadow-xl backdrop-blur-md transition-transform duration-300 hover:rotate-0 lg:block">
             <SaasIcon icon="solar:graph-up-linear" className="mb-1 text-2xl text-[#088924]" />
-            <h4 className="font-heading text-lg font-bold tracking-tight text-[#094413]">More direct orders</h4>
-            <p className="text-[11px] leading-normal text-[#2c2c2c]/70">Guests order on your site—not only on marketplaces</p>
+            <h4 className="font-heading text-lg font-bold tracking-tight text-[#094413]">Daily task list</h4>
+            <p className="text-[11px] leading-normal text-[#2c2c2c]/70">Reviews, holidays, hours—what needs your OK today</p>
           </div>
 
           <div className="absolute bottom-1/4 right-16 hidden max-w-[200px] rotate-3 rounded-2xl bg-[#fbf8f5]/90 p-4 text-left shadow-xl backdrop-blur-md transition-transform duration-300 hover:rotate-0 lg:block">
-            <SaasIcon icon="solar:dollar-linear" className="mb-1 text-2xl text-[#088924]" />
-            <h4 className="font-heading text-lg font-bold tracking-tight text-[#094413]">Zero commission</h4>
-            <p className="text-[11px] leading-normal text-[#2c2c2c]/70">Keep margin on repeat visits with direct checkout</p>
+            <SaasIcon icon="solar:bell-linear" className="mb-1 text-2xl text-[#088924]" />
+            <h4 className="font-heading text-lg font-bold tracking-tight text-[#094413]">Never miss a beat</h4>
+            <p className="text-[11px] leading-normal text-[#2c2c2c]/70">We watch your online presence so you can run the floor</p>
           </div>
         </div>
       </div>

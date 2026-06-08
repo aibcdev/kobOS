@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import type { ChiefOfStaffTaskDto } from "@/lib/chief-of-staff/types";
 
 function sourceLabel(source: ChiefOfStaffTaskDto["source"], requiresIntegration: string | null) {
-  if (requiresIntegration) return "Connect to enable";
+  if (requiresIntegration) return "Connect in Settings";
   if (source === "AUDIT") return "From your audit";
   if (source === "AI") return "AI suggestion";
   return "Suggested";
@@ -50,6 +51,14 @@ export function TaskRow({
             {sourceLabel(task.source, task.requiresIntegration)}
           </span>
         </div>
+        {!done && !task.requiresIntegration ? (
+          <p className="mt-2 text-[10px] text-[#aaa]">Approve prepares a draft for you to review—nothing posts automatically.</p>
+        ) : null}
+        {task.requiresIntegration ? (
+          <Link href="/dashboard/settings" className="mt-2 inline-block text-[11px] font-medium text-[var(--color-primary)] underline">
+            Connect in Settings →
+          </Link>
+        ) : null}
       </div>
     </article>
   );

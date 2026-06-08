@@ -62,6 +62,11 @@ npm run launch:check
 | `OUTBOUND_SALES_MODE` | `1` |
 | `OUTBOUND_WORKSPACE_RESTAURANT_ID` | From `npm run sales:bootstrap` |
 | `CRON_SECRET` | `openssl rand -hex 32` (optional if using Inngest cloud crons only) |
+| `STRIPE_SECRET_KEY` | Stripe Dashboard → Developers → API keys |
+| `STRIPE_WEBHOOK_SECRET` | Stripe → Webhooks → `https://trykob.com/api/stripe/webhook` |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
+| `STRIPE_PRICE_STARTER` | Stripe product price ID (or `STRIPE_GROWTH_PRICE_ID`) |
+| `STRIPE_TRIAL_DAYS` | `7` |
 
 **Do not** paste secrets into git. Set only in Netlify UI.
 

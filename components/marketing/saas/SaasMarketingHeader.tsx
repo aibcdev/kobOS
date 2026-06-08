@@ -47,8 +47,8 @@ export function SaasMarketingHeader() {
               >
                 <SaasIcon icon="solar:laptop-minimalistic-linear" className="mt-0.5 text-xl text-[#088924]" />
                 <div>
-                  <p className="text-sm font-medium text-[#094413]">AI website</p>
-                  <p className="text-xs text-[#2c2c2c]/60">Built for search and direct orders</p>
+                  <p className="text-sm font-medium text-[#094413]">Your online shop window</p>
+                  <p className="text-xs text-[#2c2c2c]/60">What guests see before they book</p>
                 </div>
               </Link>
               <Link
@@ -57,8 +57,8 @@ export function SaasMarketingHeader() {
               >
                 <SaasIcon icon="solar:global-linear" className="mt-0.5 text-xl text-[#088924]" />
                 <div>
-                  <p className="text-sm font-medium text-[#094413]">Online ordering</p>
-                  <p className="text-xs text-[#2c2c2c]/60">Direct ordering on your channels</p>
+                  <p className="text-sm font-medium text-[#094413]">Booking & ordering</p>
+                  <p className="text-xs text-[#2c2c2c]/60">Make it obvious how to book</p>
                 </div>
               </Link>
               <Link
@@ -67,8 +67,8 @@ export function SaasMarketingHeader() {
               >
                 <SaasIcon icon="solar:smartphone-linear" className="mt-0.5 text-xl text-[#088924]" />
                 <div>
-                  <p className="text-sm font-medium text-[#094413]">Branding</p>
-                  <p className="text-xs text-[#2c2c2c]/60">Consistent brand across touchpoints</p>
+                  <p className="text-sm font-medium text-[#094413]">Posts & promotions</p>
+                  <p className="text-xs text-[#2c2c2c]/60">Holiday and social drafts to approve</p>
                 </div>
               </Link>
             </div>

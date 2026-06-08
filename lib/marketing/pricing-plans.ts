@@ -1,4 +1,4 @@
-/** KOB pricing — ~50% below Owner.com Flex ($249+5%) and Flat ($499). */
+/** KOB launch pricing vs Owner.com (Flex $249+5%, Flat $499). */
 
 export type PricingTierId = "flex" | "flat";
 
@@ -7,73 +7,152 @@ export type PricingPlan = {
   name: string;
   badge?: string;
   priceMonthly: number;
+  /** Shown as strikethrough when launch pricing is active */
+  regularPriceMonthly?: number;
   priceNote: string;
   description: string;
   stripeTier: "starter" | "pro";
   highlight?: boolean;
 };
 
+/** Founding offer — first venues on trykob.com */
+export const LAUNCH_PRICING = {
+  active: true,
+  label: "Founding member pricing",
+  detail: "Lock in this rate as one of our first 10 restaurants.",
+  foundingSlots: 10,
+} as const;
+
 export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "flex",
     name: "Flex",
-    badge: "Flexible",
-    priceMonthly: 125,
+    badge: "Founding rate",
+    priceMonthly: 49,
+    regularPriceMonthly: 125,
     priceNote: "+ 2.5% platform fee per order",
     description:
-      "Lower monthly cost with a small per-order fee. Your costs scale with sales—ideal when you're growing online volume.",
+      "Low monthly cost while you grow. Your daily helper watches reviews, holidays, and listings—you approve fixes in one tap.",
     stripeTier: "starter",
   },
   {
     id: "flat",
     name: "Flat",
-    badge: "Predictable",
-    priceMonthly: 250,
+    badge: "Founding rate",
+    priceMonthly: 99,
+    regularPriceMonthly: 250,
     priceNote: "No additional order fees",
     description:
-      "Fixed monthly cost with no restaurant fees on orders. Best when you do $2.5k+/mo in direct online sales.",
+      "One predictable monthly price. Best when you want zero per-order fees and a daily list of what needs doing online.",
     stripeTier: "pro",
     highlight: true,
   },
 ];
 
+export type ComparisonCell = "kob" | "owner" | "both";
+
+export type ComparisonRow = {
+  label: string;
+  kob: string;
+  owner: string;
+  kobWins?: boolean;
+};
+
+/** Structured KOB vs Owner.com — homepage + pricing reference */
+export const OWNER_COMPARISON = {
+  competitor: "Owner.com",
+  headline: "Same kind of help. Lower price. Built for busy owners.",
+  subline:
+    "Owner.com charges premium rates for a full growth stack. KOB starts with a free scan and a daily helper—so you never miss reviews, holidays, or listing updates.",
+  ownerFlexNote: "$249/mo + 5% per order",
+  ownerFlatNote: "$499/mo flat",
+  rows: [
+    {
+      label: "Monthly (flex-style plan)",
+      kob: "$49/mo founding",
+      owner: "$249/mo",
+      kobWins: true,
+    },
+    {
+      label: "Per-order fee (flex plan)",
+      kob: "2.5%",
+      owner: "5%",
+      kobWins: true,
+    },
+    {
+      label: "Monthly (flat plan)",
+      kob: "$99/mo founding",
+      owner: "$499/mo",
+      kobWins: true,
+    },
+    {
+      label: "Free online scan before you pay",
+      kob: "Yes — about 1 minute",
+      owner: "Demo-led sales",
+      kobWins: true,
+    },
+    {
+      label: "Daily task list (reviews, holidays, hours)",
+      kob: "Yes — approve in one tap",
+      owner: "Product modules to manage",
+      kobWins: true,
+    },
+    {
+      label: "Plain English — no agency jargon",
+      kob: "Built in",
+      owner: "Varies",
+      kobWins: true,
+    },
+    {
+      label: "7-day free trial",
+      kob: "Yes",
+      owner: "Varies",
+      kobWins: true,
+    },
+    {
+      label: "Long-term contract",
+      kob: "No — cancel anytime",
+      owner: "Varies",
+      kobWins: true,
+    },
+  ] satisfies ComparisonRow[],
+} as const;
+
 export const PRICING_INCLUDED_FEATURES = [
-  { title: "AI-optimised website", detail: "Built to rank on Google. Most venues see stronger local visibility within weeks." },
-  { title: "Online ordering", detail: "Turn more visitors into customers with a fast, branded checkout." },
-  { title: "Branded mobile app", detail: "Guests who use your app reorder more often—without marketplace fees." },
-  { title: "Automated SEO pages", detail: "Local landing pages that capture high-intent searches in your area." },
-  { title: "Loyalty & rewards", detail: "Repeat-order programs like the big chains—on your brand." },
-  { title: "AI-powered marketing", detail: "Email and SMS campaigns tuned from your Growth Agent priorities." },
-  { title: "Direct catering orders", detail: "Catering menus, easy ordering, and pages local businesses can find." },
-  { title: "Free AI visibility audit", detail: "Ongoing scans show what's broken before you spend on redesigns." },
-  { title: "Setup & migration", detail: "We help you switch from your old site or marketplace listing." },
-  { title: "Chargeback protection", detail: "Stay protected from fraudulent chargebacks on direct orders." },
-  { title: "24/7 support", detail: "Hospitality runs late—we're here when you need us." },
+  { title: "Free online scan", detail: "See what guests notice before you spend a penny." },
+  { title: "Daily task helper", detail: "Reviews, holidays, hours, and posts—in a list you approve each morning." },
+  { title: "Draft replies & posts", detail: "We prepare copy. Nothing goes live until you say so." },
+  { title: "UK holiday calendar", detail: "Bank holidays and busy weekends flagged early." },
+  { title: "Listing & photo checks", detail: "Flags when Google or your site looks off vs competitors." },
+  { title: "Plain-English briefings", detail: "What needs doing, why, and how long—no SEO deck required." },
+  { title: "7-day free trial", detail: "Start after your scan. Cancel anytime." },
+  { title: "Founding member rate", detail: "Lock in $49 or $99/mo as one of our first 10 restaurants." },
+  { title: "Email support", detail: "Real humans when you need help." },
 ] as const;
 
 export const PRICING_FAQ = [
   {
+    q: "What is founding member pricing?",
+    a: "Our first 10 restaurants lock in $49/mo (Flex) or $99/mo (Flat)—well below typical all-in-one platforms like Owner.com ($249–$499/mo). When founding spots fill, standard pricing applies.",
+  },
+  {
     q: "What is included with KOB?",
-    a: "Both plans include the full platform: AI website, online ordering, branded app, SEO pages, loyalty, marketing automations, and your free visibility audit. The difference is how you pay—Flex has a lower subscription plus a small per-order fee; Flat is one predictable monthly price.",
+    a: "Free scan, daily task list, draft replies and posts, holiday reminders, and listing checks. Flex adds 2.5% on direct orders; Flat has no order fees.",
   },
   {
     q: "What fees do restaurants pay on orders?",
-    a: "On Flat, you pay only your monthly subscription—no restaurant fees on orders. On Flex, you pay $125/month plus 2.5% on direct orders. Guests may see a small order support fee (similar to industry norms, but lower than typical marketplace markups).",
+    a: "On Flat, you pay only your monthly subscription. On Flex, you pay $49/mo founding rate plus 2.5% on direct orders—half the typical 5% flex fee on comparable platforms.",
   },
   {
-    q: "Can I switch plans?",
-    a: "Yes. Many venues start on Flex and move to Flat as direct orders grow. Switch anytime from your billing page.",
+    q: "How is KOB different from Owner.com?",
+    a: "Owner.com sells a full revenue stack at premium prices. KOB focuses on never missing a beat online—reviews, holidays, hours, posts—with a daily list you approve. Lower price, simpler story.",
   },
   {
     q: "Do you require contracts?",
-    a: "No long-term contracts. Month-to-month billing. Cancel when you want—no cancellation fees.",
+    a: "No long-term contracts. Month-to-month. Cancel when you want.",
   },
   {
     q: "How long does setup take?",
-    a: "Many restaurants launch within one to two weeks. Have your domain, Google Business Profile, and menu ready to move faster.",
-  },
-  {
-    q: "Should I stop using delivery apps?",
-    a: "Most customers use apps for discovery, then steer guests to order on their KOB site and app—keeping margin on repeat visits.",
+    a: "Run a free scan in about a minute. Trial signup takes a few minutes. Your first daily task list appears after you connect your restaurant.",
   },
 ] as const;

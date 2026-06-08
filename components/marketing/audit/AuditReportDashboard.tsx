@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { VisibilityAudit } from "@prisma/client";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AuditFunnelHeader } from "@/components/marketing/audit/AuditFunnelHeader";
 import { AuditPerceptionGapTable } from "@/components/marketing/audit/AuditPerceptionGapTable";
 import { AuditPerceptionHero } from "@/components/marketing/audit/AuditPerceptionHero";
@@ -224,6 +224,7 @@ export function AuditReportDashboard({
   scanStillRunning?: boolean;
 }) {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
+  const [shareLabel, setShareLabel] = useState<string | null>(null);
   const { data } = useAuditBenchmarkPoll(audit.id, benchmarkInitial, { unlocked });
   const scoresReady = unlocked && isAuditScoresReady({ scoresPending: data.scoresPending, scanStatus: data.scanStatus });
   const overall = scoresReady ? data.overallScore : audit.overallScore;
@@ -240,6 +241,31 @@ export function AuditReportDashboard({
   const restaurantDisplay = decodeHtmlEntities(audit.restaurantName);
   const locationLabel = `${restaurantDisplay}, ${audit.city}`;
   const trialCheckoutHref = `/audit/${audit.id}/upgrade/checkout`;
+  const reportUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/audit/${audit.id}` : `/audit/${audit.id}`;
+
+  const shareReport = useCallback(async () => {
+    const url = typeof window !== "undefined" ? window.location.href : reportUrl;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: `${restaurantDisplay} — KOB perception report`,
+          url,
+        });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShareLabel(marketingCopy.auditReport.shareCopied);
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareLabel(marketingCopy.auditReport.shareCopied);
+      } catch {
+        setShareLabel(marketingCopy.auditReport.shareFailed);
+      }
+    }
+    window.setTimeout(() => setShareLabel(null), 3000);
+  }, [reportUrl, restaurantDisplay]);
 
   const issueIcons = ["🔴", "🟠", "🟡"] as const;
   const reviewsScore = reviewsHealthScore(data, payload);
@@ -274,34 +300,45 @@ export function AuditReportDashboard({
             </div>
           </div>
           <nav className="space-y-1" aria-label="Report sections">
-            {NAV.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActiveNav(item.id)}
-                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
-                  activeNav === item.id
-                    ? "border-l-2 border-[var(--color-primary)] bg-white text-[var(--color-primary)] shadow-sm"
-                    : "text-[var(--color-muted)] hover:bg-white/80"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+            {NAV.map((item) => {
+              const navLocked = !unlocked && item.id !== "overview";
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  disabled={navLocked}
+                  title={navLocked ? marketingCopy.auditReport.unlockNavHint : undefined}
+                  onClick={() => {
+                    if (!navLocked) setActiveNav(item.id);
+                  }}
+                  className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                    navLocked
+                      ? "cursor-not-allowed text-[var(--color-muted)]/50"
+                      : activeNav === item.id
+                        ? "border-l-2 border-[var(--color-primary)] bg-white text-[var(--color-primary)] shadow-sm"
+                        : "text-[var(--color-muted)] hover:bg-white/80"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </nav>
 
           <div className="mt-10 rounded-[var(--radius-md)] bg-[var(--color-ink)] p-4 text-[var(--color-text-inverse)]">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">AI advisor</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">
+              {marketingCopy.auditReport.dailyHelperLabel}
+            </p>
             <p className="mt-2 text-sm leading-snug">
               {perception?.overallSummary?.slice(0, 160) ??
                 "See the gap between how good you are in the room—and how you look online."}
             </p>
             {unlocked ? (
               <Link
-                href="/dashboard"
+                href={trialCheckoutHref}
                 className="mt-4 flex w-full items-center justify-center rounded-xl bg-white/10 py-2 text-xs font-semibold text-white no-underline hover:bg-white/20"
               >
-                Fix now
+                {marketingCopy.cta.startTrial}
               </Link>
             ) : (
               <p className="mt-4 text-center text-xs font-semibold text-white/90">
@@ -320,8 +357,12 @@ export function AuditReportDashboard({
               <span className="truncate text-sm font-medium">{locationLabel}</span>
             </div>
             <div className="flex items-center gap-3">
-              <button type="button" className="text-sm font-medium text-[var(--color-muted)]">
-                Share report
+              <button
+                type="button"
+                onClick={() => void shareReport()}
+                className="text-sm font-medium text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+              >
+                {shareLabel ?? "Share report"}
               </button>
               {unlocked ? (
                 <Link

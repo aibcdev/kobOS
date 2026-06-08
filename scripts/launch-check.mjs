@@ -48,7 +48,12 @@ const productionOnly = [
   "INNGEST_EVENT_KEY",
   "OUTBOUND_WORKSPACE_RESTAURANT_ID",
   "HUNTER_API_KEY",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
 ];
+
+const stripePriceKeys = ["STRIPE_GROWTH_PRICE_ID", "STRIPE_PRICE_STARTER"];
 
 let failed = false;
 
@@ -77,6 +82,16 @@ if (production) {
       console.log(`  ✗ ${key} (required for launch)`);
       failed = true;
     }
+  }
+  const hasPrice = stripePriceKeys.some((k) => env[k]?.trim());
+  if (hasPrice) {
+    console.log(`  ✓ Stripe price (${stripePriceKeys.find((k) => env[k]?.trim())})`);
+  } else {
+    console.log("  ✗ STRIPE_GROWTH_PRICE_ID or STRIPE_PRICE_STARTER (required for trial checkout)");
+    failed = true;
+  }
+  if (!env.STRIPE_TRIAL_DAYS?.trim()) {
+    console.log("  ○ STRIPE_TRIAL_DAYS (optional — default 7 in code)");
   }
 } else {
   console.log("\n── Production-only (set before go-live) ──\n");
@@ -116,6 +131,15 @@ console.log(`
   NETLIFY_PRODUCTION_URL=${domain}
   RESEND_FROM_EMAIL=KOB <hello@trykob.com>
   RESEND_AUTH_FROM_EMAIL=KOB <hello@trykob.com>
+
+── Stripe (trial checkout) — add to Netlify as secrets ──
+
+  STRIPE_SECRET_KEY=sk_live_...
+  STRIPE_WEBHOOK_SECRET=whsec_...
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+  STRIPE_PRICE_STARTER=price_...   (or STRIPE_GROWTH_PRICE_ID)
+  STRIPE_TRIAL_DAYS=7
+  Webhook endpoint: ${domain}/api/stripe/webhook
 
 ── After deploy ──
 

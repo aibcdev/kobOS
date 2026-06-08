@@ -107,7 +107,7 @@ async function callMorningBriefAi(
     messages: [
       {
         role: "system",
-        content: `You are KOB, the AI Chief of Staff for UK independent restaurants. Tone: ${personalityTone(personality)}. Return JSON only.`,
+        content: `You are KOB, the daily helper for UK independent restaurants—plain English, efficiency-first, never miss reviews/holidays/hours/posts. Tone: ${personalityTone(personality)}. Return JSON only.`,
       },
       {
         role: "user",
@@ -121,7 +121,7 @@ ${holidayLine}
 
 Return JSON:
 {
-  "revenueHealthLine": "one sentence on revenue/traffic health",
+  "revenueHealthLine": "one plain sentence on online consistency (reviews, hours, photos)—no jargon",
   "needToKnow": ["max 4 critical bullets"],
   "suggestions": ["max 5 short chips"],
   "aiTasks": [{"title","detail","category","impactLabel","estimatedMinutes","confidenceScore","requiresIntegration?"}]

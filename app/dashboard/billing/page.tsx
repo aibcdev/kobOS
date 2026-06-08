@@ -37,7 +37,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
       {sp.checkout === "success" ? (
         <div className={`mt-6 ${appCardSurface} border-emerald-200 bg-emerald-50`}>
-          <p className="type-body-sm text-emerald-900">Trial started. Your Chief of Staff is ready.</p>
+          <p className="type-body-sm text-emerald-900">Trial started — check today&apos;s task list.</p>
           <Link
             href={`/dashboard?r=${encodeURIComponent(restaurantId)}&welcome=1`}
             className="mt-3 inline-block font-semibold text-[var(--color-primary)] underline underline-offset-2"

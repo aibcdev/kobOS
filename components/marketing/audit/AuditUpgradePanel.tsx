@@ -23,10 +23,9 @@ export function AuditUpgradePanel({
   return (
     <section className="mt-16 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-gradient-to-br from-[var(--color-surface-cream)] to-[var(--color-surface-soft)] p-8 shadow-[var(--shadow-card-elevated)] md:p-10">
       <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-primary)]">Next step</p>
-      <h2 className="type-title-md mt-2 md:text-[1.75rem]">Put {restaurantName} on autopilot</h2>
+      <h2 className="type-title-md mt-2 md:text-[1.75rem]">{marketingCopy.auditUpgrade.headline}</h2>
       <p className="type-body-md mt-3 max-w-xl leading-relaxed text-[var(--color-muted)]">
-        You unlocked the full audit. Start your 7-day free trial to turn these fixes into a weekly growth plan in your
-        dashboard.
+        {marketingCopy.auditUpgrade.body.replace("Your free scan", `${restaurantName}: your free scan`)}
       </p>
       <ul className="mt-6 space-y-2">
         {BULLETS.map((b) => (

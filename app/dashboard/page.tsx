@@ -14,10 +14,10 @@ import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-memb
 
 export const metadata: Metadata = {
   title: "Today · KOB",
-  description: "Your AI Chief of Staff — what needs attention today, why it matters, and one-click approval.",
+  description: "What needs your OK today — plain English tasks from your online presence.",
   openGraph: {
-    title: "Today · KOB Chief of Staff",
-    description: "Morning brief, tasks, and revenue opportunities for your restaurant.",
+    title: "Today · KOB",
+    description: "Daily tasks for reviews, holidays, hours, and posts—approve in one tap.",
   },
 };
 

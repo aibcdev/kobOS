@@ -20,6 +20,7 @@
     "db:setup": "dotenv -e .env -e .env.local -- prisma db push",
     "db:doctor": "node scripts/db-doctor.mjs",
     "sales:bootstrap": "dotenv -e .env -e .env.local -- node scripts/bootstrap-sales-workspace.mjs",
+    "stripe:bootstrap": "dotenv -e .env -e .env.local -- node scripts/bootstrap-stripe.mjs",
     "sales:link-user": "dotenv -e .env -e .env.local -- node scripts/link-sales-user.mjs",
     "setup:auth-urls": "node scripts/print-supabase-auth-config.mjs",
     "auth:test-email": "node scripts/test-supabase-auth-email.mjs",

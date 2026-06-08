@@ -31,15 +31,15 @@ export function SaasWebsiteFeaturePage() {
   return (
     <>
       <SaasPageHero
-        eyebrow="AI website"
-        title="Restaurant websites built to win search—and direct orders"
-        description="Pages, menus, and CTAs structured the way guests actually decide. Mobile-first, fast, and tied to your free visibility scan."
+        eyebrow="Your online shop window"
+        title="Guests judge you online before they walk in"
+        description="We check your site and listing, flag what looks off, and add fixes to your daily task list. Start with a free scan."
       />
 
       <SaasBenefitTabs
-        eyebrow="Built for sales"
-        title="Designed to turn traffic into orders"
-        subtitle="Layouts tested across hundreds of independent venues—not generic brochure sites."
+        eyebrow="How KOB helps"
+        title="Never miss a beat online"
+        subtitle="Reviews, holidays, hours, and posts—handled with tasks you approve in one tap."
         tabs={WEBSITE_SALES_TABS}
         variant="underline"
       />

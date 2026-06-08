@@ -74,7 +74,7 @@ const urlArg =
   process.argv.find((a) => a.startsWith("--url="))?.slice(6) ||
   (process.argv.includes("--url") ? process.argv[process.argv.indexOf("--url") + 1] : null);
 
-const httpPaths = ["/", "/audit", "/login", "/auth/confirm", "/pricing", "/api/inngest"];
+const httpPaths = ["/", "/audit", "/login", "/auth/confirm", "/pricing", "/privacy", "/api/inngest"];
 
 if (urlArg) {
   const base = urlArg.replace(/\/$/, "");

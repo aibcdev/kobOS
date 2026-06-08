@@ -44,13 +44,12 @@ export function ActionCardsColumn({
 
       {summary.revenueOpportunityLow != null ? (
         <div className={`${cosCard} p-6`}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#888]">Revenue opportunity</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#888]">From your scan</p>
           <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">
-            {summary.revenueHeadline ?? "Guests may be slipping away before they book"}
+            {summary.revenueHeadline ?? "Guests may notice gaps before they book"}
           </p>
           <p className="mt-2 text-sm text-[#666]">
-            Your audit flagged gaps that cost covers online. Approve fixes in the task list to protect revenue you
-            already earn.
+            Your free scan flagged what looks off online. Approve tasks in the list—we prepare drafts for you to review.
           </p>
           {opp ? <p className="mt-3 text-2xl font-semibold tabular-nums text-[#ea580c]">{opp}/mo</p> : null}
           {onApproveTopFix ? (

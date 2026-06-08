@@ -38,7 +38,7 @@ export function SettingsRestaurantUrls({
   return (
     <form onSubmit={(e) => void save(e)} className={`mt-10 ${appCardSurface}`}>
       <h2 className="type-title-sm">Restaurant online</h2>
-      <p className="type-body-sm mt-2 text-[var(--color-muted)]">Used by your audit, website strategist, and Chief of Staff.</p>
+      <p className="type-body-sm mt-2 text-[var(--color-muted)]">Used by your free scan and daily task list.</p>
       <label className="mt-4 block type-body-sm">
         Website URL
         <input

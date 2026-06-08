@@ -36,7 +36,13 @@ function loadEnvFile(name) {
   return out;
 }
 
-const env = { ...loadEnvFile(".env"), ...loadEnvFile(".env.local") };
+const env = {
+  ...loadEnvFile(".env"),
+  ...loadEnvFile(".env.local"),
+  ...Object.fromEntries(
+    Object.entries(process.env).filter(([, v]) => typeof v === "string" && v.trim()),
+  ),
+};
 const base = (env.AUDIT_GOLDEN_BASE_URL || env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(
   /\/$/,
   "",

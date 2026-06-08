@@ -92,7 +92,10 @@ export function ChiefOfStaffHome({
   );
 
   const approveHoliday = useCallback(async () => {
-    if (previewMode) return;
+    if (previewMode) {
+      showToast({ message: "Preview mode — approve works after sign-in.", tone: "info" });
+      return;
+    }
     setHolidayBusy(true);
     try {
       const res = await fetch("/api/chief-of-staff/tasks/approve-batch", {
@@ -184,7 +187,7 @@ export function ChiefOfStaffHome({
     <div className={`-mx-4 -mt-2 min-h-[calc(100vh-4rem)] px-4 py-6 sm:-mx-6 sm:px-6 ${cosCanvas}`}>
       {welcome ? (
         <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Welcome — your Chief of Staff is ready for {restaurantName}.
+          Welcome — your daily helper is ready for {restaurantName}.
         </p>
       ) : null}
 
