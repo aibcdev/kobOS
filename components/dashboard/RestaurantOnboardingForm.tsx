@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { appBtnPrimary, appCardSurface, appInput } from "@/lib/app-ui-classes";
+import { marketingCopy } from "@/lib/marketing/copy";
 
 export function RestaurantOnboardingForm() {
   const router = useRouter();
@@ -86,6 +87,9 @@ export function RestaurantOnboardingForm() {
           placeholder="https://"
           className={appInput}
         />
+        <span className="type-caption mt-1 block text-[var(--color-muted-medium)]">
+          {marketingCopy.dashboardOnboarding.websiteHint}
+        </span>
       </label>
       {error ? <p className="type-body-sm text-[var(--color-error)]">{error}</p> : null}
       <button type="submit" disabled={busy} className={`${appBtnPrimary} w-full sm:w-auto`}>

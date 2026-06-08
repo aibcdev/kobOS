@@ -37,15 +37,33 @@ Supabase → Authentication → URL configuration
 Site URL (primary live site):
   ${netlifyHint || appUrl}
 
-Redirect URLs — add each line (keep localhost for dev):
-  http://localhost:3000/auth/callback
-  http://127.0.0.1:3000/auth/callback
-${netlifyHint ? `  ${netlifyHint}/auth/callback` : "  https://YOUR-SITE.netlify.app/auth/callback  ← replace with your Netlify URL"}
-
-Optional wildcard (if your project allows **):
+Redirect URLs — add these (wildcard required for magic links):
   http://localhost:3000/**
-${netlifyHint ? `  ${netlifyHint}/**` : "  https://YOUR-SITE.netlify.app/**"}
+  http://127.0.0.1:3000/**
+${netlifyHint ? `  ${netlifyHint}/**` : "  https://YOUR-SITE.netlify.app/**  ← your Netlify URL"}
+
+Also fine to keep (exact paths):
+  http://localhost:3000/auth/confirm
+  http://localhost:3000/auth/callback
+  http://127.0.0.1:3000/auth/confirm
+  http://127.0.0.1:3000/auth/callback
+${netlifyHint ? `  ${netlifyHint}/auth/confirm` : ""}
+${netlifyHint ? `  ${netlifyHint}/auth/callback` : ""}
 
 Tip: set NETLIFY_PRODUCTION_URL=https://your-site.netlify.app in .env.local
      then re-run: npm run setup:auth-urls
+
+Supabase → Authentication → Email Templates → Magic Link
+============================================================
+Replace the link in the email body with this (one line):
+
+  <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Log in to KOB</a>
+
+RedirectTo must land on /auth/confirm (the app sends that automatically).
+
+Do NOT use {{ .ConfirmationURL }} — that forces PKCE and breaks Gmail.
+
+Easiest sign-in: paste the numeric code from the email on the login page (no link needed).
+
+After saving the template, request a NEW sign-in email (old emails will not work).
 `);

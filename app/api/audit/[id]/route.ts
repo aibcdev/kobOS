@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { parseAuditPayload } from "@/lib/audit/types";
+import {
+  buildPerceptionTeaserFromPayload,
+  buildScanPreviewFromPayload,
+} from "@/lib/marketing/audit-scan-preview";
 import { prisma } from "@/lib/db/prisma";
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -33,14 +37,18 @@ export async function GET(req: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 500 });
   }
 
-  const unlocked = Boolean(audit.leadCapturedAt) || scanningPoll;
+  const leadUnlocked = Boolean(audit.leadCapturedAt);
+  const unlocked = leadUnlocked || scanningPoll;
+  const scanPreview = scanningPoll ? buildScanPreviewFromPayload(payload) : undefined;
+  const perceptionTeaser =
+    !leadUnlocked && !scanningPoll ? buildPerceptionTeaserFromPayload(payload, audit.overallScore) : undefined;
 
   return NextResponse.json({
     restaurantName: audit.restaurantName,
     city: audit.city,
     websiteUrl: audit.websiteUrl,
     updatedAt: audit.updatedAt.toISOString(),
-    locked: !unlocked,
+    locked: !leadUnlocked,
     scoresPending: payload.scoresPending ?? false,
     benchmarkV1Status: unlocked ? payload.benchmarkV1Status : "pending",
     benchmarkV1: unlocked ? (payload.benchmarkV1 ?? null) : null,
@@ -48,6 +56,12 @@ export async function GET(req: Request, { params }: RouteParams) {
     benchmarkV1MediaStatus: unlocked ? payload.benchmarkV1MediaStatus : "pending",
     benchmarkV1Media: unlocked ? (payload.benchmarkV1Media ?? null) : null,
     benchmarkV1MediaError: unlocked ? payload.benchmarkV1MediaError : undefined,
+    perceptionAuditV1Status: unlocked
+      ? payload.perceptionAuditV1Status
+      : (perceptionTeaser?.perceptionAuditV1Status ?? "pending"),
+    perceptionAuditV1: unlocked ? (payload.perceptionAuditV1 ?? null) : null,
+    perceptionAuditV1Error: unlocked ? payload.perceptionAuditV1Error : undefined,
+    perceptionTeaser: perceptionTeaser ?? undefined,
     scanStatus: payload.scanStatus,
     browserbaseScan: unlocked ? (payload.browserbaseScan ?? null) : null,
     evidencePack: unlocked && payload.evidencePack
@@ -71,5 +85,6 @@ export async function GET(req: Request, { params }: RouteParams) {
           source: c.source,
         }))
       : undefined,
+    scanPreview,
   });
 }

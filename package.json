@@ -19,6 +19,10 @@
     "db:migrate": "dotenv -e .env -e .env.local -- prisma migrate deploy",
     "db:setup": "dotenv -e .env -e .env.local -- prisma db push",
     "db:doctor": "node scripts/db-doctor.mjs",
+    "sales:bootstrap": "dotenv -e .env -e .env.local -- node scripts/bootstrap-sales-workspace.mjs",
+    "sales:link-user": "dotenv -e .env -e .env.local -- node scripts/link-sales-user.mjs",
+    "setup:auth-urls": "node scripts/print-supabase-auth-config.mjs",
+    "auth:test-email": "node scripts/test-supabase-auth-email.mjs",
     "db:push": "dotenv -e .env -e .env.local -- prisma db push",
     "netlify": "netlify",
     "netlify:dev": "netlify dev",
@@ -37,8 +41,9 @@
     "crawl:owner": "dotenv -e .env -e .env.local -- npx tsx scripts/crawl-owner-com.ts",
     "crawl:owner:free": "dotenv -e .env -e .env.local -- npx tsx scripts/crawl-owner-com-free.ts",
     "marketing:check-owner": "node scripts/marketing-check-owner-copy.mjs",
-    "setup:auth-urls": "node scripts/print-supabase-auth-config.mjs",
-    "smoke:check": "node scripts/smoke-check.mjs"
+    "smoke:check": "node scripts/smoke-check.mjs",
+    "launch:check": "node scripts/launch-check.mjs",
+    "audit:golden-path": "dotenv -e .env -e .env.local -- node scripts/audit-golden-path.mjs"
   },
   "dependencies": {
     "@browserbasehq/sdk": "^2.11.0",

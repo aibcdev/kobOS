@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
+import { SettingsPersonality } from "@/components/dashboard/settings/SettingsPersonality";
+import { SettingsRestaurantUrls } from "@/components/dashboard/settings/SettingsRestaurantUrls";
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
@@ -27,6 +29,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     orderBy: { connectedAt: "desc" },
   });
 
+  const restaurantRow = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { aiPersonality: true, website: true, googleBusinessUrl: true },
+  });
+
   return (
     <div className="mx-auto max-w-3xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Settings &amp; integrations</h1>
@@ -48,6 +55,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           ))}
         </ul>
       )}
+
+      <SettingsRestaurantUrls
+        restaurantId={restaurantId}
+        website={restaurantRow?.website ?? null}
+        googleBusinessUrl={restaurantRow?.googleBusinessUrl ?? null}
+      />
+
+      <SettingsPersonality restaurantId={restaurantId} initial={restaurantRow?.aiPersonality ?? "BALANCED"} />
 
       <div className={`mt-10 ${appCardSurface}`}>
         <p className="type-body-sm text-[var(--color-muted)]">

@@ -15,9 +15,12 @@ export function SaasFinalCta() {
             <span className="font-mono-brand mb-4 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#088924]">
               READY TO SCALE?
             </span>
-            <h2 className="font-heading mb-8 text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
+            <h2 className="font-heading mb-4 text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
               Take control of your digital sales channel today.
             </h2>
+            <p className="mb-8 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
+              {marketingCopy.finalCtaSubline}
+            </p>
 
             <div className="flex w-full flex-col justify-center gap-4 sm:flex-row">
               <Link

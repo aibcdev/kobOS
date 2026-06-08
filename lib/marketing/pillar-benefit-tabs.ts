@@ -13,7 +13,7 @@ export const WEBSITE_SALES_TABS: BenefitTab[] = [
     id: "proven-design",
     label: "Proven layout",
     headline: "Your site should convert—not just look pretty",
-    body: "KOB builds pages around how guests actually decide: menu clarity, hours, location, and one obvious way to order or book.",
+    body: "77% of guests check your site before they visit or order. KOB builds pages around how guests actually decide: menu clarity, hours, location, and one obvious way to order or book.",
     bullets: [
       "Hero, menu, and CTA structure tested across hundreds of venues",
       "Mobile-first—most of your traffic is on a phone",
@@ -26,7 +26,7 @@ export const WEBSITE_SALES_TABS: BenefitTab[] = [
     id: "google-seo",
     label: "Google-ready SEO",
     headline: "Built so Google can find and rank you",
-    body: "Structured data, clean headings, and local signals—so you show up when people search near you.",
+    body: "57% visit mainly to see the menu. Structured data, clean headings, and local signals—so you show up when people search near you.",
     bullets: [
       "Schema and meta hygiene handled for you",
       "Local pages for neighbourhood searches",
@@ -39,7 +39,7 @@ export const WEBSITE_SALES_TABS: BenefitTab[] = [
     id: "always-improving",
     label: "Keeps improving",
     headline: "Your site learns from what works",
-    body: "When we find a better pattern for hospitality sites, your presence gets the update—without a full rebuild.",
+    body: "Venues with strong menu photos see 70%+ more orders. When we find a better pattern for hospitality sites, your presence gets the update—without a full rebuild.",
     bullets: [
       "Growth Agent weekly priorities",
       "Benchmark against strong brands in your category",

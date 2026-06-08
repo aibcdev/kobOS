@@ -4,6 +4,8 @@ import { AuditReportDashboard } from "@/components/marketing/audit/AuditReportDa
 import { AuditUnlockModal } from "@/components/marketing/audit/AuditUnlockModal";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { auditCard, auditCardMuted } from "@/lib/marketing/audit-theme";
+import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
+import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
 
 export function AuditResultsContent({
@@ -31,6 +33,7 @@ export function AuditResultsContent({
   payload: AuditResultPayload;
 }) {
   const unlocked = Boolean(audit.leadCapturedAt);
+  const perceptionTeaser = buildPerceptionTeaserFromPayload(payload, audit.overallScore);
 
   const benchmarkInitial: AuditBenchmarkPollSnapshot = {
     scoresPending: payload.scoresPending,
@@ -40,6 +43,9 @@ export function AuditResultsContent({
     benchmarkV1MediaStatus: payload.benchmarkV1MediaStatus,
     benchmarkV1Media: payload.benchmarkV1Media ?? null,
     benchmarkV1MediaError: payload.benchmarkV1MediaError,
+    perceptionAuditV1Status: payload.perceptionAuditV1Status,
+    perceptionAuditV1: payload.perceptionAuditV1 ?? null,
+    perceptionAuditV1Error: payload.perceptionAuditV1Error,
     scanStatus: payload.scanStatus,
     browserbaseScan: payload.browserbaseScan ?? null,
     evidencePack: payload.evidencePack
@@ -54,9 +60,22 @@ export function AuditResultsContent({
     designScore: audit.designScore,
     mobileScore: audit.mobileScore,
     conversionScore: audit.conversionScore,
+    perceptionTeaser,
   };
 
   const competitorNames = payload.competitors.slice(0, 2).map((c) => c.name);
+  const perception = payload.perceptionAuditV1;
+  const ownerHero =
+    perception?.ownerHero ??
+    (perception ? buildOwnerHeroFallback(payload, perception) : perceptionTeaser.ownerHero);
+
+  const unlockTeaser = {
+    score: perception?.digitalPositioningScore ?? perceptionTeaser.digitalPositioningScore,
+    leakPercentLow: ownerHero?.bookingLeakPercentLow,
+    leakPercentHigh: ownerHero?.bookingLeakPercentHigh,
+    revenueLeakCount: perception?.revenueLeaks?.length ?? perceptionTeaser.revenueLeakCount,
+    screenshotUrl: perceptionTeaser.screenshotUrl,
+  };
 
   return (
     <>
@@ -64,6 +83,7 @@ export function AuditResultsContent({
         auditId={audit.id}
         restaurantName={audit.restaurantName}
         competitorNames={competitorNames}
+        teaser={unlockTeaser}
         open={!unlocked}
       />
 

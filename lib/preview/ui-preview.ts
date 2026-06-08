@@ -48,6 +48,7 @@ export function getPreviewRestaurant(): Restaurant {
     stripeSubscriptionId: null,
     vibe: null,
     googleBusinessUrl: null,
+    aiPersonality: "BALANCED",
     createdAt: new Date(0),
     updatedAt: new Date(0),
   };

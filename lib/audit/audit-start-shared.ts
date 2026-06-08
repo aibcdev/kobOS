@@ -7,6 +7,7 @@ import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import { normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
 import { checkAuditRunRateLimit, clientIpFromHeaders } from "@/lib/audit/rate-limit";
 import { executeAuditPipeline } from "@/lib/audit/execute-audit-pipeline";
+import { validateAuditRuntimeEnv } from "@/lib/audit/validate-audit-runtime";
 import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
 
@@ -65,6 +66,14 @@ export async function handleAuditStart(req: Request) {
   const parsed = parseAuditStartBody(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const envCheck = validateAuditRuntimeEnv();
+  if (!envCheck.ok) {
+    return NextResponse.json(
+      { code: envCheck.issue.code, error: envCheck.issue.error },
+      { status: 503 },
+    );
   }
 
   const websiteUrl = normalizeAuditWebsiteUrl(parsed.data.websiteUrl);
@@ -136,6 +145,7 @@ export async function handleAuditStart(req: Request) {
             userImageUrls: userImageUrls ?? null,
             place: place
               ? {
+                  name: place.name,
                   placeId: place.placeId,
                   formattedAddress: place.formattedAddress,
                   lat: place.lat ?? null,

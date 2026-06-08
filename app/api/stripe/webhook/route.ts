@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { Prisma, SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
 import { getStripe } from "@/lib/billing/stripe-server";
 import { syncRestaurantFromStripeSubscription } from "@/lib/billing/sync-stripe-subscription";
+import { hydrateRestaurantFromLinkedAudit } from "@/lib/restaurant/hydrate-from-audit";
 
 export const runtime = "nodejs";
 
@@ -53,6 +55,8 @@ export async function POST(req: Request) {
           const full = await stripe.subscriptions.retrieve(subId);
           await syncRestaurantFromStripeSubscription(full);
         }
+        void hydrateRestaurantFromLinkedAudit(restaurantId).catch((e) => console.error("[stripe] hydrate", e));
+        void ensureTodayBrief(restaurantId).catch((e) => console.error("[stripe] brief", e));
         break;
       }
       case "customer.subscription.created":

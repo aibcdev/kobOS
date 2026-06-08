@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { ownerBtnPrimary, ownerBtnSecondary } from "@/lib/marketing/owner-ui-classes";
+import { marketingCopy } from "@/lib/marketing/copy";
 
-const BULLETS = [
-  "Full keyword roadmap & 30/60/90 plan",
-  "Competitor deep dive for your city",
-  "AI Growth Agent — weekly priorities",
-  "7-day free trial · cancel anytime",
-] as const;
+const BULLETS = marketingCopy.auditUpgrade.bullets;
 
 export function AuditUpgradePanel({
   auditId,

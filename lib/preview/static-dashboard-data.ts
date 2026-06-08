@@ -1,6 +1,9 @@
 import type { OverviewMetrics } from "@/lib/dashboard/overview-metrics";
 import type { buildDigestSnapshot } from "@/lib/digest/build-snapshot";
+import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
 import { getPreviewRestaurant } from "@/lib/preview/ui-preview";
+
+export { getPreviewChiefOfStaffBrief };
 
 export type DigestSnapshot = Awaited<ReturnType<typeof buildDigestSnapshot>>;
 

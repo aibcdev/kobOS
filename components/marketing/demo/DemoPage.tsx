@@ -18,7 +18,7 @@ const DEMO_FEATURES = [
   },
   {
     title: "Direct ordering paths",
-    desc: "Clear book-and-order flows so margin stays with you.",
+    desc: marketingCopy.demo.photosFeatureDesc,
   },
   {
     title: "Reviews & reputation",

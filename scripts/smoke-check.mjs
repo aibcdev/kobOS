@@ -33,7 +33,9 @@ const required = [
   "NEXT_PUBLIC_APP_URL",
 ];
 
-const recommended = ["GEMINI_API_KEY"];
+const auditRequired = ["GOOGLE_PLACES_API_KEY", "GEMINI_API_KEY"];
+
+const inngestRecommended = ["INNGEST_SIGNING_KEY", "INNGEST_EVENT_KEY"];
 
 const env = { ...loadEnvFile(".env"), ...loadEnvFile(".env.local") };
 let failed = false;
@@ -49,23 +51,37 @@ for (const key of required) {
   }
 }
 
-for (const key of recommended) {
+console.log("\nAudit funnel (required for UK launch):\n");
+for (const key of auditRequired) {
   if (env[key]?.trim()) {
     console.log(`  ✓ ${key}`);
   } else {
-    console.log(`  ○ ${key} (optional — audits skip Gemini without it)`);
+    console.log(`  ✗ ${key} (missing — /api/audit/start returns 503)`);
+    failed = true;
   }
 }
 
-const urlArg = process.argv.find((a) => a.startsWith("--url="))?.slice(6) ||
+console.log("\nBackground jobs:\n");
+for (const key of inngestRecommended) {
+  if (env[key]?.trim()) {
+    console.log(`  ✓ ${key}`);
+  } else {
+    console.log(`  ○ ${key} (optional locally if npm run dev:audit; required in production)`);
+  }
+}
+
+const urlArg =
+  process.argv.find((a) => a.startsWith("--url="))?.slice(6) ||
   (process.argv.includes("--url") ? process.argv[process.argv.indexOf("--url") + 1] : null);
+
+const httpPaths = ["/", "/audit", "/login", "/auth/confirm", "/pricing", "/api/inngest"];
 
 if (urlArg) {
   const base = urlArg.replace(/\/$/, "");
   console.log(`\nKOB smoke check — HTTP (${base})\n`);
-  for (const path of ["/", "/audit", "/api/inngest"]) {
+  for (const path of httpPaths) {
     try {
-      const res = await fetch(`${base}${path}`, { method: path === "/api/inngest" ? "GET" : "GET" });
+      const res = await fetch(`${base}${path}`, { method: "GET" });
       const ok = res.status < 500;
       console.log(`  ${ok ? "✓" : "✗"} GET ${path} → ${res.status}`);
       if (!ok) failed = true;
@@ -76,15 +92,17 @@ if (urlArg) {
   }
   console.log(`
 Manual checks on ${base}:
-  1. Run a visibility audit at ${base}/audit
-  2. Supabase → VisibilityAudit table has a new row
-  3. With Inngest connected, scores update from pending → ready
-  4. Magic link login at ${base}/login (Supabase redirect URLs must include ${base}/auth/callback)
+  1. Run a UK visibility audit at ${base}/audit (pick restaurant from Google dropdown)
+  2. Confirm competitors show real venue names (not estimated placeholders)
+  3. Supabase → VisibilityAudit has a new row; benchmark moves pending → ready (Inngest)
+  4. Login / magic link on production URL (Supabase redirect ${base}/** and /auth/confirm)
+  5. npm run audit:golden-path -- (with AUDIT_GOLDEN_BASE_URL=${base}) after deploy
 `);
 }
 
 if (failed) {
+  console.error("\nSmoke check failed.\n");
   process.exit(1);
 }
 
-console.log("\nEnvironment OK.\n");
+console.log("\nSmoke check passed.\n");

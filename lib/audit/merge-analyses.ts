@@ -102,5 +102,6 @@ export function mergeWebsiteAnalyses(analyses: WebsiteAnalysis[]): WebsiteAnalys
       contentFingerprint: primary.pageEvidence.contentFingerprint,
       imageCandidates,
     },
+    engagementSignals: primary.engagementSignals,
   };
 }

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
-import { appCardSurface, appCodeInline } from "@/lib/app-ui-classes";
+import { ContentGeneratePanel } from "@/components/dashboard/content/ContentGeneratePanel";
+import { appCardSurface } from "@/lib/app-ui-classes";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { prisma } from "@/lib/db/prisma";
@@ -31,9 +32,10 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
     <div className="mx-auto max-w-4xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Content engine</h1>
       <p className="type-body-md mt-2 text-[var(--color-muted)]">
-        Generated assets for {restaurant.name}. Create via{" "}
-        <code className={appCodeInline}>POST /api/content/generate</code>.
+        Generated assets for {restaurant.name}. Approve tasks on Today to auto-create drafts here.
       </p>
+
+      <ContentGeneratePanel restaurantId={restaurantId} />
 
       {items.length === 0 ? (
         <p className={`type-body-sm mt-8 text-[var(--color-muted)] ${appCardSurface}`}>No generated content yet.</p>

@@ -147,7 +147,7 @@ export function SaasEcosystemTabs() {
                 <ul className="space-y-3 text-xs font-medium text-[#2c2c2c] md:text-sm">
                   <li className="flex items-center gap-2.5">
                     <SaasIcon icon="solar:verified-check-linear" className="text-lg text-[#088924]" />
-                    AI text messaging triggers for lapsed diners
+                    AI text messaging triggers for lapsed guests
                   </li>
                   <li className="flex items-center gap-2.5">
                     <SaasIcon icon="solar:verified-check-linear" className="text-lg text-[#088924]" />

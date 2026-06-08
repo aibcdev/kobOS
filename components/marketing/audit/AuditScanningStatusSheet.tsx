@@ -1,13 +1,19 @@
 "use client";
 
+import type { AuditScanDesignTip } from "@/lib/marketing/audit-scan-tips";
+
 export function AuditScanningStatusSheet({
   progress,
   statusLine,
   secondsRemaining,
+  contextLine,
+  designTip,
 }: {
   progress: number;
   statusLine: string;
   secondsRemaining: number;
+  contextLine?: string;
+  designTip?: AuditScanDesignTip;
 }) {
   const pct = Math.min(100, Math.max(0, progress));
 
@@ -20,7 +26,7 @@ export function AuditScanningStatusSheet({
             style={{ width: `${pct}%` }}
           />
         </div>
-        <div className="flex items-center gap-4 px-5 py-4">
+        <div className="flex items-start gap-4 px-5 py-4">
           <span
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-accent)] border-t-transparent"
             aria-hidden
@@ -32,6 +38,16 @@ export function AuditScanningStatusSheet({
             <p className="type-caption mt-0.5 text-[var(--color-muted-medium)]">
               {secondsRemaining > 0 ? `${secondsRemaining} seconds remaining` : "Finishing up…"}
             </p>
+            {designTip ? (
+              <div key={designTip.id} className="mt-2 border-t border-[var(--color-hairline)] pt-2">
+                <p className="type-caption font-medium text-[var(--color-primary)]">{designTip.title}</p>
+                <p className="type-caption mt-0.5 line-clamp-2 leading-snug text-[var(--color-muted)]">
+                  {designTip.body}
+                </p>
+              </div>
+            ) : contextLine ? (
+              <p className="type-caption mt-1 text-[var(--color-muted-medium)]">{contextLine}</p>
+            ) : null}
           </div>
         </div>
       </div>

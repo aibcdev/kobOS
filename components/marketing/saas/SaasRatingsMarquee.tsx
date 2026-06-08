@@ -2,14 +2,7 @@ import { marketingCopy } from "@/lib/marketing/copy";
 
 import { SaasIcon } from "./SaasIcon";
 
-const QUOTES = [
-  "Finally a clear list of what to fix on our site—without paying an agency first.",
-  "The scan showed gaps we did not know about on Google and mobile.",
-  "Direct ordering on our own brand feels professional—and guests use it.",
-  "Weekly priorities from the Growth Agent keep us focused.",
-  "Setup was faster than our last website rebuild.",
-  "We still use delivery apps for discovery, but repeat orders come direct.",
-] as const;
+const QUOTES = marketingCopy.marqueeQuotes;
 
 function QuoteCard({ quote }: { quote: string }) {
   return (
@@ -25,7 +18,10 @@ export function SaasRatingsMarquee() {
   const track = [...QUOTES, ...QUOTES];
 
   return (
-    <section className="relative mx-6 my-12 overflow-hidden rounded-[3rem] bg-[#094413] py-24 text-center text-[#fbf8f5] shadow-inner">
+    <section
+      id="success-stories"
+      className="relative mx-6 my-12 overflow-hidden rounded-[3rem] bg-[#094413] py-24 text-center text-[#fbf8f5] shadow-inner"
+    >
       <div className="mx-auto max-w-[83rem] px-6">
         <div className="mb-6 flex justify-center gap-1">
           {Array.from({ length: 5 }).map((_, i) => (

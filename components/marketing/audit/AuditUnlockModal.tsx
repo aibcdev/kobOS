@@ -5,8 +5,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { AuditLeadFormFields } from "@/components/marketing/audit/AuditLeadFormFields";
 import { auditModalPanel } from "@/lib/marketing/audit-theme";
+import { onlineHealthLabel } from "@/lib/marketing/audit-grader-phases";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
+
+export type AuditUnlockTeaser = {
+  score?: number | null;
+  leakPercentLow?: number;
+  leakPercentHigh?: number;
+  revenueLeakCount?: number;
+  screenshotUrl?: string | null;
+};
 
 function competitorSubtitle(names: string[]) {
   const a = names[0] ?? "local leaders";
@@ -16,20 +25,33 @@ function competitorSubtitle(names: string[]) {
     .replace("{competitorB}", b);
 }
 
+function scoreTeaserLabel(score: number): string {
+  if (score < 45) return "Critical gap";
+  if (score < 65) return "Needs attention";
+  return onlineHealthLabel(score);
+}
+
 export function AuditUnlockModal({
   auditId,
   restaurantName,
   competitorNames = [],
+  teaser,
   open,
 }: {
   auditId: string;
   restaurantName: string;
   competitorNames?: string[];
+  teaser?: AuditUnlockTeaser;
   open: boolean;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
   const displayName = decodeHtmlEntities(restaurantName);
+  const score = teaser?.score;
+  const hasLeak =
+    teaser?.leakPercentLow != null &&
+    teaser?.leakPercentHigh != null &&
+    teaser.leakPercentHigh > teaser.leakPercentLow;
 
   useEffect(() => {
     if (!open) return;
@@ -61,15 +83,26 @@ export function AuditUnlockModal({
       aria-labelledby="audit-unlock-title"
     >
       <div ref={dialogRef} className={`relative w-full max-w-md ${auditModalPanel}`}>
-        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-muted-faint)] text-[var(--color-muted)]">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+        {teaser?.screenshotUrl ? (
+          <div className="mx-auto h-16 w-28 overflow-hidden rounded-lg border border-[var(--color-hairline)] shadow-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={teaser.screenshotUrl}
+              alt=""
+              className="h-full w-full object-cover object-top"
             />
-          </svg>
-        </div>
+          </div>
+        ) : (
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-muted-faint)] text-[var(--color-muted)]">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+              />
+            </svg>
+          </div>
+        )}
         <h2
           id="audit-unlock-title"
           className="mt-4 text-center font-head text-2xl font-semibold tracking-tight text-[var(--color-ink)]"
@@ -79,6 +112,26 @@ export function AuditUnlockModal({
         <p className="mt-2 text-center text-sm leading-relaxed text-[var(--color-muted)]">
           {competitorSubtitle(competitorNames)}
         </p>
+
+        {score != null && Number.isFinite(score) ? (
+          <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-cream)]/50 px-4 py-3 text-center">
+            <p className="font-head text-3xl font-semibold tabular-nums text-[var(--color-ink)]">{score}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+              Digital positioning · {scoreTeaserLabel(score)}
+            </p>
+            {hasLeak ? (
+              <p className="mt-2 text-sm font-medium text-[#ea580c]">
+                {teaser!.leakPercentLow}–{teaser!.leakPercentHigh}% booking leak estimated
+              </p>
+            ) : null}
+            {teaser?.revenueLeakCount ? (
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                {teaser.revenueLeakCount} revenue leaks found in your audit
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-cream)]/40 p-5">
           <AuditLeadFormFields
             auditId={auditId}

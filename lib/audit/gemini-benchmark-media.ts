@@ -168,6 +168,12 @@ export async function runGeminiBenchmarkV1Media(
     websiteUrl: evidencePack.websiteUrl,
     urlSignals: evidencePack.urlSignals,
     mediaAssetsMeta: fetched.map((f) => f.meta),
+    foodImageAnalysis: evidencePack.foodImageAnalysis ?? null,
+    sharpnessTiers: evidencePack.foodImageAnalysis?.images.map((i) => ({
+      ref: i.ref,
+      tier: i.qualityTier,
+      sharpnessScore: i.sharpnessScore,
+    })),
     videoPosters,
     hasVideoPosters,
     videoAnalysisNote:
@@ -262,11 +268,13 @@ export function mergeBenchmarkV1MediaIntoPayload(
   }
 
   const visual = media.visualBrandQuality.score;
+  const foodScore = payload.evidencePack?.foodImageAnalysis?.aggregate.foodPhotographyScore;
+  const blendedVisual = foodScore != null ? Math.round(visual * 0.55 + foodScore * 0.45) : visual;
   const web = b.websiteExperience.score;
-  const blendedDesign = Math.round(Math.min(100, Math.max(0, web * 0.65 + visual * 0.35)));
+  const blendedDesign = Math.round(Math.min(100, Math.max(0, web * 0.55 + blendedVisual * 0.45)));
 
   const overall = Math.round(
-    (b.seo.score + b.websiteExperience.score + b.brandSocialPresence.score + payload.scores.mobile + payload.scores.conversion + visual) / 6,
+    (b.seo.score + b.websiteExperience.score + b.brandSocialPresence.score + payload.scores.mobile + payload.scores.conversion + blendedVisual) / 6,
   );
 
   return {

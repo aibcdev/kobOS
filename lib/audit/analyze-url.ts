@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import type { AuditEngagementSignals } from "@/lib/audit/engagement-signals";
+import { computeEngagementSignals } from "@/lib/audit/engagement-signals";
 
 export type UrlSignals = {
   fetched: boolean;
@@ -194,6 +196,7 @@ export function extractImageCandidates(html: string, pageUrl: string): ImageCand
 export type WebsiteAnalysis = {
   signals: UrlSignals;
   pageEvidence: PageEvidenceExtras;
+  engagementSignals?: AuditEngagementSignals;
 };
 
 const emptySignals = (): UrlSignals => ({
@@ -292,10 +295,11 @@ export function analyzeWebsiteFromHtml(
       contentFingerprint,
       imageCandidates,
     },
+    engagementSignals: computeEngagementSignals(html, signals),
   };
 }
 
-const AUDIT_FETCH_TIMEOUT_MS = 8000;
+const AUDIT_FETCH_TIMEOUT_MS = Number(process.env.AUDIT_FETCH_TIMEOUT_MS) || 18_000;
 const AUDIT_USER_AGENT =
   "KOB-VisibilityAudit/1.0 (+https://kob.example; contact@kob.example)";
 

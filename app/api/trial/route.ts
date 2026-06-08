@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { createFreeTrialSubscription } from "@/lib/billing/free-trial-subscription";
+import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
 import { getStripeGrowthPriceId, getStripePricePro, requireStripe } from "@/lib/billing/stripe-server";
 import { createSubscriptionCheckoutSession } from "@/lib/billing/checkout-subscription-session";
 import { prisma } from "@/lib/db/prisma";
+import { hydrateRestaurantFromLinkedAudit } from "@/lib/restaurant/hydrate-from-audit";
 import { slugify } from "@/lib/utils/slugify";
 
 export const runtime = "nodejs";
@@ -102,6 +104,10 @@ export async function POST(req: Request) {
       return created;
     });
 
+    if (parsed.data.visibilityAuditId) {
+      await hydrateRestaurantFromLinkedAudit(restaurant.id);
+    }
+
     const origin =
       process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
       new URL(req.url).origin ||
@@ -115,7 +121,7 @@ export async function POST(req: Request) {
         existingStripeCustomerId: restaurant.stripeCustomerId,
         priceId,
         origin,
-        successPath: `/dashboard/billing?r=${encodeURIComponent(restaurant.id)}&checkout=success`,
+        successPath: `/dashboard?r=${encodeURIComponent(restaurant.id)}&welcome=1`,
         cancelPath: `/dashboard/billing?r=${encodeURIComponent(restaurant.id)}&checkout=cancel`,
       });
       if (!checkout.url) {
@@ -131,6 +137,9 @@ export async function POST(req: Request) {
     }
 
     const trial = await createFreeTrialSubscription(email, restaurant.id);
+    if (parsed.data.visibilityAuditId) {
+      void ensureTodayBrief(restaurant.id).catch((e) => console.error("[api/trial] brief", e));
+    }
     return NextResponse.json({
       success: true,
       mode: "direct",

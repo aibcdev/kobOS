@@ -1,3 +1,5 @@
+import { auditPlacesRegionCodes } from "@/lib/places/audit-places-config";
+
 const AUTocomplete_URL = "https://places.googleapis.com/v1/places:autocomplete";
 
 export type PlaceSuggestion = {
@@ -21,13 +23,8 @@ function getApiKey(): string | null {
 }
 
 function regionCodesFromEnv(): string[] | undefined {
-  const raw = process.env.PLACES_AUTOCOMPLETE_REGIONS?.trim();
-  if (!raw) return undefined;
-  const parts = raw
-    .split(/[,;\s]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter((s) => /^[A-Z]{2}$/.test(s));
-  return parts.length ? parts : undefined;
+  const codes = auditPlacesRegionCodes();
+  return codes.length ? codes : undefined;
 }
 
 export async function placesAutocompleteNew(input: string): Promise<PlaceSuggestion[]> {
@@ -128,6 +125,60 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
   };
 }
 
+/** Reviews + rating for perception audit enrichment. */
+export async function placesPlaceAuditEnrichment(
+  placeId: string,
+): Promise<import("@/lib/audit/evidence-pack").AuditGooglePlaceEvidence | null> {
+  const key = getApiKey();
+  if (!key || !placeId.trim()) return null;
+
+  const id = placeId.trim();
+  const pathId = encodeURIComponent(id);
+  const url = `https://places.googleapis.com/v1/places/${pathId}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask": "id,rating,userRatingCount,photos,reviews",
+    },
+  });
+
+  if (!res.ok) {
+    console.warn("[places] audit enrichment HTTP", res.status);
+    return null;
+  }
+
+  const json = (await res.json()) as {
+    id?: string;
+    rating?: number;
+    userRatingCount?: number;
+    photos?: unknown[];
+    reviews?: Array<{
+      text?: { text?: string };
+      rating?: number;
+      publishTime?: string;
+    }>;
+  };
+
+  const reviews = (json.reviews ?? [])
+    .map((r) => ({
+      text: (r.text?.text ?? "").trim().slice(0, 500),
+      rating: typeof r.rating === "number" ? r.rating : 0,
+      publishTime: r.publishTime ?? null,
+    }))
+    .filter((r) => r.text.length > 0)
+    .slice(0, 8);
+
+  return {
+    placeId: json.id ?? id,
+    rating: json.rating ?? null,
+    reviewCount: json.userRatingCount ?? null,
+    photoCount: json.photos?.length ?? 0,
+    reviews,
+  };
+}
+
 export type NearbyPlace = {
   placeId: string;
   name: string;
@@ -167,9 +218,10 @@ export async function placesFindByWebsite(
     },
     body: JSON.stringify({
       textQuery,
-      languageCode: "en",
+      languageCode: "en-GB",
       maxResultCount: 5,
       includedType: "restaurant",
+      regionCode: auditPlacesRegionCodes()[0] ?? "GB",
     }),
   });
 
@@ -228,6 +280,8 @@ export async function placesSearchNearbyRestaurants(
     },
     body: JSON.stringify({
       includedTypes: ["restaurant"],
+      languageCode: "en-GB",
+      regionCode: auditPlacesRegionCodes()[0] ?? "GB",
       maxResultCount: Math.min(10, maxResults + 2),
       locationRestriction: {
         circle: {
@@ -254,6 +308,7 @@ export async function placesSearchNearbyRestaurants(
   };
 
   const exclude = excludeName?.trim().toLowerCase();
+  const excludeTokens = exclude ? exclude.split(/\s+/).filter((t) => t.length > 2) : [];
   const out: NearbyPlace[] = [];
 
   for (const p of json.places ?? []) {
@@ -261,7 +316,11 @@ export async function placesSearchNearbyRestaurants(
     const plat = p.location?.latitude;
     const plng = p.location?.longitude;
     if (!name || plat == null || plng == null) continue;
-    if (exclude && name.toLowerCase().includes(exclude)) continue;
+    const nameLower = name.toLowerCase();
+    if (exclude && (nameLower === exclude || nameLower.includes(exclude) || exclude.includes(nameLower))) {
+      continue;
+    }
+    if (excludeTokens.length && excludeTokens.every((t) => nameLower.includes(t))) continue;
     out.push({
       placeId: p.id ?? name,
       name,
@@ -274,4 +333,61 @@ export async function placesSearchNearbyRestaurants(
   }
 
   return out;
+}
+
+/** Geocode a UK city (and optional business name) when we have city text but no coordinates. */
+export async function placesGeocodeCityUk(
+  city: string,
+  restaurantName?: string,
+): Promise<{ lat: number; lng: number; city: string; placeId?: string } | null> {
+  const key = getApiKey();
+  const cityTrim = city.trim();
+  if (!key || !cityTrim || cityTrim === "Your area") return null;
+
+  const textQuery = restaurantName?.trim()
+    ? `${restaurantName} ${cityTrim} UK restaurant`.trim().slice(0, 200)
+    : `restaurants in ${cityTrim} UK`.slice(0, 200);
+
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.formattedAddress,places.location",
+    },
+    body: JSON.stringify({
+      textQuery,
+      languageCode: "en-GB",
+      maxResultCount: 3,
+      includedType: "restaurant",
+      regionCode: "GB",
+    }),
+  });
+
+  if (!res.ok) {
+    console.warn("[places] geocode city HTTP", res.status);
+    return null;
+  }
+
+  const json = (await res.json()) as {
+    places?: Array<{
+      id?: string;
+      formattedAddress?: string;
+      location?: { latitude?: number; longitude?: number };
+    }>;
+  };
+
+  const pick = json.places?.find((p) => p.location?.latitude != null && p.location?.longitude != null);
+  if (!pick?.location?.latitude || pick.location.longitude == null) return null;
+
+  const { cityFromFormattedAddress } = await import("@/lib/audit/create-pending-audit");
+  const resolvedCity = cityFromFormattedAddress(pick.formattedAddress ?? "") || cityTrim;
+
+  return {
+    lat: pick.location.latitude,
+    lng: pick.location.longitude,
+    city: resolvedCity,
+    placeId: pick.id,
+  };
 }

@@ -21,5 +21,11 @@ export function shouldSyncBrowserbaseRender(
   if (fetchSignals.status != null && fetchSignals.status >= 400) return true;
   if (isLikelySpaShell(fetchSignals, htmlSample)) return true;
   const thinShell = fetchSignals.htmlSizeKb < 80 && fetchSignals.imgCount < 2;
-  return thinShell;
+  if (thinShell) return true;
+  const weakSeoShell =
+    fetchSignals.fetched &&
+    !fetchSignals.hasMetaDescription &&
+    fetchSignals.h1Count === 0 &&
+    !fetchSignals.hasViewport;
+  return weakSeoShell;
 }

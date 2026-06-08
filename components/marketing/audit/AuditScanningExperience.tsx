@@ -5,17 +5,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AuditGraderHeader } from "@/components/marketing/audit/AuditGraderHeader";
 import { AuditScanningBusinessCard } from "@/components/marketing/audit/AuditScanningBusinessCard";
 import { AuditScanningMapPhase } from "@/components/marketing/audit/AuditScanningMapPhase";
-import { AuditScanningMobileLaser } from "@/components/marketing/audit/AuditScanningMobileLaser";
 import { AuditScanningReviewsScroll } from "@/components/marketing/audit/AuditScanningReviewsScroll";
 import { AuditScanningStatusSheet } from "@/components/marketing/audit/AuditScanningStatusSheet";
-import { AuditScanningWebsitePreview } from "@/components/marketing/audit/AuditScanningWebsitePreview";
+import { AuditScanningWebsiteMobileDual } from "@/components/marketing/audit/AuditScanningWebsiteMobileDual";
+import { AuditScanningDesignTipStrip } from "@/components/marketing/audit/AuditScanningDesignTipStrip";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { pickScanDesignTip } from "@/lib/marketing/audit-scan-tips";
+import type { AuditScanPreview } from "@/lib/marketing/audit-scan-preview";
 import {
   graderCoordsFromCity,
   graderCountdownSeconds,
   graderPhaseProgress,
   resolveGraderPhase,
   type GraderScanPhase,
+  type GraderScanSignals,
 } from "@/lib/marketing/audit-grader-phases";
 import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
 
@@ -34,6 +37,7 @@ type PollPayload = {
   benchmarkV1Status?: string;
   geoLocation?: { lat: number; lng: number; city?: string } | null;
   competitors?: { name: string; lat?: number; lng?: number; source?: string }[];
+  scanPreview?: AuditScanPreview;
 };
 
 const isDev = process.env.NODE_ENV === "development";
@@ -51,6 +55,16 @@ function statusLineForPhase(phase: GraderScanPhase, name: string, websiteHost: s
     case "reviews":
       return marketingCopy.scanning.reviewsStatus;
   }
+}
+
+function graderSignalsFromPreview(preview: AuditScanPreview | undefined): GraderScanSignals {
+  const s = preview?.scanSignals;
+  return {
+    hasGeo: s?.hasGeo,
+    hasGooglePlace: Boolean(preview?.googlePlace?.rating != null || preview?.googlePlace?.reviewCount != null),
+    hasPreviewImage: Boolean(preview?.previewImageUrl),
+    hasReviews: s?.hasReviews,
+  };
 }
 
 export function AuditScanningExperience({
@@ -73,6 +87,12 @@ export function AuditScanningExperience({
   const city = poll?.geoLocation?.city ?? poll?.city ?? initialCity;
   const website = poll?.websiteUrl ?? initialWebsiteUrl ?? "";
   const websiteHost = website.replace(/^https?:\/\//i, "").slice(0, 48);
+  const preview = poll?.scanPreview;
+  const previewImageUrl = preview?.previewImageUrl ?? null;
+  const businessPhotoUrl = preview?.heroImageUrl ?? preview?.screenshotUrl ?? null;
+  const googlePlace = preview?.googlePlace;
+  const scanSignals = useMemo(() => graderSignalsFromPreview(preview), [preview]);
+
   const fallbackCoords = useMemo(() => graderCoordsFromCity(city || "London"), [city]);
   const lat = poll?.geoLocation?.lat ?? fallbackCoords.lat;
   const lng = poll?.geoLocation?.lng ?? fallbackCoords.lng;
@@ -113,10 +133,12 @@ export function AuditScanningExperience({
   const pendingWarn = scanPending && elapsedMs > PENDING_WARN_MS;
   const scanReady = poll != null && poll.scanStatus === "ready" && !poll.scoresPending;
 
-  const phase = resolveGraderPhase(elapsedMs, scanReady);
-  const progressPct = graderPhaseProgress(elapsedMs, scanReady);
+  const phase = resolveGraderPhase(elapsedMs, scanReady, scanSignals);
+  const progressPct = graderPhaseProgress(elapsedMs, scanReady, scanSignals);
   const secondsRemaining = graderCountdownSeconds(elapsedMs, scanReady);
   const statusLine = statusLineForPhase(phase, displayName, websiteHost);
+  const showWebsiteMobile = phase === "website" || phase === "mobile";
+  const designTip = useMemo(() => pickScanDesignTip(elapsedMs), [elapsedMs]);
 
   const skipToResults = useCallback(() => {
     try {
@@ -146,7 +168,10 @@ export function AuditScanningExperience({
       <AuditGraderHeader />
 
       <main className="relative flex flex-1 flex-col px-4 pb-36 pt-6 sm:px-6">
-        <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center">
+        <AuditScanningDesignTipStrip tip={designTip} />
+        <div
+          className={`mx-auto flex w-full flex-1 flex-col justify-center ${showWebsiteMobile ? "max-w-3xl" : "max-w-2xl"}`}
+        >
           {phase === "map" ? (
             <AuditScanningMapPhase
               restaurantName={displayName}
@@ -157,11 +182,22 @@ export function AuditScanningExperience({
             />
           ) : null}
           {phase === "business" ? (
-            <AuditScanningBusinessCard restaurantName={displayName} city={city} lat={lat} lng={lng} />
+            <AuditScanningBusinessCard
+              restaurantName={displayName}
+              city={city}
+              lat={lat}
+              lng={lng}
+              rating={googlePlace?.rating}
+              reviewCount={googlePlace?.reviewCount}
+              photoUrl={businessPhotoUrl}
+            />
           ) : null}
-          {phase === "website" ? <AuditScanningWebsitePreview websiteUrl={website} /> : null}
-          {phase === "mobile" ? <AuditScanningMobileLaser /> : null}
-          {phase === "reviews" ? <AuditScanningReviewsScroll /> : null}
+          {showWebsiteMobile ? (
+            <AuditScanningWebsiteMobileDual websiteUrl={website} imageUrl={previewImageUrl} />
+          ) : null}
+          {phase === "reviews" ? (
+            <AuditScanningReviewsScroll reviews={googlePlace?.reviews} />
+          ) : null}
         </div>
 
         {scanFailed ? (
@@ -193,6 +229,7 @@ export function AuditScanningExperience({
         progress={progressPct}
         statusLine={statusLine}
         secondsRemaining={secondsRemaining}
+        designTip={designTip}
       />
     </div>
   );

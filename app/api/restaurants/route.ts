@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { prisma } from "@/lib/db/prisma";
+import { linkLatestAuditForEmail } from "@/lib/restaurant/hydrate-from-audit";
 import { slugify } from "@/lib/utils/slugify";
 
 const createSchema = z.object({
@@ -91,6 +92,11 @@ export async function POST(req: Request) {
 
       return created;
     });
+
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { email: true } });
+    if (user?.email) {
+      await linkLatestAuditForEmail(restaurant.id, user.email);
+    }
 
     return NextResponse.json({ restaurant }, { status: 201 });
   } catch (e) {

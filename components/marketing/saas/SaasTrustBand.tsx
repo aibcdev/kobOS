@@ -12,9 +12,7 @@ export function SaasTrustBand() {
         <h2 className="font-heading mx-auto max-w-3xl text-2xl font-semibold tracking-tight text-[#2c2c2c] md:text-4xl">
           {marketingCopy.trustLine}
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-sm text-[#2c2c2c]/65 md:text-base">
-          Independent restaurants, retailers, and food markets use KOB to fix visibility gaps and grow direct orders.
-        </p>
+        <p className="mx-auto mt-4 max-w-xl text-sm text-[#2c2c2c]/65 md:text-base">{marketingCopy.trustBandBody}</p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-[#2c2c2c]/40">
           {["Hospitality", "Retail", "Markets", "Cafés", "Quick service"].map((label) => (
             <span key={label} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
 import type { MediaAssetMetaV1 } from "@/lib/audit/evidence-pack";
 
-const FETCH_TIMEOUT_MS = 8000;
+const FETCH_TIMEOUT_MS = Number(process.env.AUDIT_MEDIA_FETCH_TIMEOUT_MS) || 12_000;
 const MAX_BYTES_PER_IMAGE = Math.floor(2.5 * 1024 * 1024);
 const MAX_TOTAL_BYTES = Math.floor(8 * 1024 * 1024);
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);

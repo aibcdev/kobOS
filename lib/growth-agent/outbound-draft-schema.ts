@@ -7,6 +7,7 @@ export const outboundLeadItemSchema = z.object({
   message_body: z.string(),
   suggested_tone: z.string(),
   channel: z.enum(["email", "instagram_dm"]),
+  website_url: z.string().optional().nullable(),
 });
 
 export const outboundDraftJsonSchema = z.object({

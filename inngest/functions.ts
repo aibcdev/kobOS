@@ -5,11 +5,15 @@ import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
 import { buildAuditPayloadAndRow } from "@/lib/audit/build-result";
 import { enrichAuditNarrative } from "@/lib/audit/enrich-openai";
 import { fetchMediaAssetsForVision } from "@/lib/audit/collect-media-assets";
+import { analyzeFoodImagesFromBuffers } from "@/lib/audit/analyze-food-images";
+import { runGeminiDesignQualityV1 } from "@/lib/audit/gemini-design-quality";
 import { mergeBenchmarkV1MediaIntoPayload, runGeminiBenchmarkV1Media } from "@/lib/audit/gemini-benchmark-media";
 import { mergeBenchmarkV1IntoPayload, runGeminiBenchmarkV1 } from "@/lib/audit/gemini-benchmark-score";
-import { parseAuditPayload } from "@/lib/audit/types";
+import { mergePerceptionAuditIntoPayload, runGeminiPerceptionAuditV1 } from "@/lib/audit/gemini-perception-audit";
+import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
 import { executeAuditPipeline } from "@/lib/audit/execute-audit-pipeline";
 import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
+import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
 import { auditPageTextPreview } from "@/lib/audit/website-analysis-pipeline";
 import { fetchRenderedPageWithRetry, isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
@@ -22,6 +26,9 @@ import { saveDigestRun } from "@/lib/digest/build-snapshot";
 import { prisma } from "@/lib/db/prisma";
 import { generateOutboundDraft } from "@/lib/growth-agent/generate-outbound-draft";
 import { persistOutboundDraftLeads } from "@/lib/growth-agent/persist-outbound-leads";
+import { importAuditLeadsToOutbound } from "@/lib/outbound/import-audit-leads";
+import { isUkColdOutboundMode } from "@/lib/outbound/icp-config";
+import { runUkColdPipeline } from "@/lib/outbound/run-uk-cold-pipeline";
 import { detectInsightsFromRules } from "@/lib/growth/detect";
 import { summarizeMetadata } from "@/lib/growth/normalize";
 import { type Integration, OutboundLeadStatus } from "@prisma/client";
@@ -178,8 +185,10 @@ export const auditRunPipeline = inngest.createFunction(
       event.data.placePlaceId ||
       event.data.placeLat != null ||
       event.data.placeLng != null ||
-      event.data.placeFormattedAddress
+      event.data.placeFormattedAddress ||
+      event.data.placeLabel
         ? {
+            name: typeof event.data.placeLabel === "string" ? event.data.placeLabel : undefined,
             placeId: typeof event.data.placePlaceId === "string" ? event.data.placePlaceId : undefined,
             formattedAddress:
               typeof event.data.placeFormattedAddress === "string" ? event.data.placeFormattedAddress : undefined,
@@ -244,8 +253,8 @@ export const auditBrowserbaseScan = inngest.createFunction(
 
         const userUrls =
           prev.evidencePack?.imageCandidates
-            ?.filter((c) => c.source === "user:supplied")
-            .map((c) => c.url) ?? undefined;
+            ?.filter((c: ImageCandidateUrl) => c.source === "user:supplied")
+            .map((c: ImageCandidateUrl) => c.url) ?? undefined;
 
         const stagehandExtraction: StagehandRenderedPage["stagehandExtraction"] | undefined = useStagehand
           ? (page as StagehandRenderedPage).stagehandExtraction
@@ -402,9 +411,10 @@ export const auditGeminiBenchmark = inngest.createFunction(
       const payload = parseAuditPayload(audit.resultPayload);
       if (!payload?.evidencePack) return { ok: false as const, reason: "no_evidence_pack" };
 
+      let merged: AuditResultPayload = payload;
       const result = await runGeminiBenchmarkV1(payload.evidencePack);
       if (!result.ok) {
-        const failedPayload = {
+        merged = {
           ...payload,
           benchmarkV1Status: "failed" as const,
           benchmarkV1Error: result.error,
@@ -413,14 +423,10 @@ export const auditGeminiBenchmark = inngest.createFunction(
           benchmarkV1Media: null,
           benchmarkV1MediaError: undefined,
         };
-        await prisma.visibilityAudit.update({
-          where: { id: auditId },
-          data: { resultPayload: failedPayload },
-        });
-        return { ok: false as const, error: result.error };
+      } else {
+        merged = mergeBenchmarkV1IntoPayload(payload, result.data);
       }
 
-      let merged = mergeBenchmarkV1IntoPayload(payload, result.data);
       const candidates = merged.evidencePack?.imageCandidates ?? [];
 
       if (candidates.length === 0) {
@@ -431,13 +437,16 @@ export const auditGeminiBenchmark = inngest.createFunction(
           benchmarkV1MediaError: undefined,
         };
       } else {
-        const { assets, errors } = await fetchMediaAssetsForVision(candidates);
+        const { assets, errors } = await fetchMediaAssetsForVision(candidates, 6);
+        const foodImageAnalysis = assets.length ? await analyzeFoodImagesFromBuffers(assets) : undefined;
         merged = {
           ...merged,
           evidencePack: merged.evidencePack
             ? {
                 ...merged.evidencePack,
+                version: 2,
                 mediaAssetsMeta: assets.map((a) => a.meta),
+                ...(foodImageAnalysis ? { foodImageAnalysis } : {}),
               }
             : merged.evidencePack,
         };
@@ -450,6 +459,21 @@ export const auditGeminiBenchmark = inngest.createFunction(
             benchmarkV1MediaError: errors.length ? errors.join("; ") : "Could not fetch images for vision scoring",
           };
         } else {
+          const designRes = await runGeminiDesignQualityV1(
+            merged.evidencePack!,
+            assets,
+            merged.browserbaseScan?.screenshotPublicUrl,
+          );
+          if (designRes.ok) {
+            merged = {
+              ...merged,
+              evidencePack: {
+                ...merged.evidencePack!,
+                designQualityAnalysis: designRes.data,
+              },
+            };
+          }
+
           const mediaRes = await runGeminiBenchmarkV1Media(merged.evidencePack!, assets);
           if (!mediaRes.ok) {
             merged = {
@@ -462,6 +486,18 @@ export const auditGeminiBenchmark = inngest.createFunction(
             merged = mergeBenchmarkV1MediaIntoPayload(merged, mediaRes.data);
           }
         }
+      }
+
+      const perceptionRes = await runGeminiPerceptionAuditV1(merged);
+      if (perceptionRes.ok) {
+        merged = mergePerceptionAuditIntoPayload(merged, perceptionRes.data);
+      } else {
+        merged = {
+          ...merged,
+          perceptionAuditV1Status: "failed",
+          perceptionAuditV1Error: perceptionRes.error,
+          perceptionAuditV1: null,
+        };
       }
 
       await prisma.visibilityAudit.update({
@@ -509,6 +545,10 @@ export const outboundDraftDaily = inngest.createFunction(
     triggers: [cron("45 14 * * *"), { event: "outbound/daily.requested" }],
   },
   async ({ step }) => {
+    if (isUkColdOutboundMode()) {
+      return { skipped: true as const, reason: "OUTBOUND_MODE=uk_cold uses outboundUkColdDaily" };
+    }
+
     const city = process.env.OUTBOUND_SCAN_CITY?.trim();
     if (!city) {
       return { skipped: true as const, reason: "OUTBOUND_SCAN_CITY not set" };
@@ -524,7 +564,7 @@ export const outboundDraftDaily = inngest.createFunction(
       if (!result.ok) {
         throw new Error(result.error);
       }
-      return result.data;
+      return { leads: result.data.leads, source: result.source };
     });
 
     const inserted = await step.run("persist-outbound-leads", async () => {
@@ -555,7 +595,7 @@ export const outboundDraftDaily = inngest.createFunction(
       return { sent: true as const };
     });
 
-    return { city, inserted };
+    return { city, inserted, source: draft.source };
   },
 );
 
@@ -628,6 +668,71 @@ export const outboundSendApprovedDaily = inngest.createFunction(
   },
 );
 
+/** UK cold: Places ICP → qualify → Hunter email → draft → queue for batch approval. */
+export const outboundUkColdDaily = inngest.createFunction(
+  {
+    id: "outbound-uk-cold-daily",
+    name: "Outbound · UK cold daily",
+    triggers: [cron("45 14 * * *"), { event: "outbound/uk-cold.requested" }],
+  },
+  async ({ step }) => {
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID not set" };
+    }
+
+    const result = await step.run("uk-cold-pipeline", () => runUkColdPipeline(workspaceId));
+
+    await step.run("resend-uk-cold-summary", async () => {
+      const key = process.env.RESEND_API_KEY?.trim();
+      const to = process.env.OUTBOUND_RESEND_NOTIFY_EMAIL?.trim();
+      if (!key || !to) {
+        return { skipped: true as const, reason: "resend_or_notify_email_missing" };
+      }
+      const { Resend } = await import("resend");
+      const resend = new Resend(key);
+      const from =
+        process.env.RESEND_FROM_EMAIL?.trim() ||
+        "KOB Growth <onboarding@resend.dev>";
+      const skipLines = Object.entries(result.skipped)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+      const { error } = await resend.emails.send({
+        from,
+        to: [to],
+        subject: `KOB UK cold: ${result.inserted} lead(s) ready · ${result.city}`,
+        html: `<p><strong>${result.inserted}</strong> UK cold lead(s) for <strong>${result.city}</strong> are in the approval queue.</p>
+<p>Discovered ${result.discovered}, qualified ${result.qualified}, enriched ${result.enriched}.</p>
+${skipLines ? `<p>Skipped: ${skipLines}</p>` : ""}
+<p>Approve the batch in the dashboard, then the send job runs.</p>`,
+      });
+      if (error) throw new Error(error.message);
+      return { sent: true as const };
+    });
+
+    return result;
+  },
+);
+
+/** Import yesterday's audit unlocks into the audit follow-up track. */
+export const outboundAuditImportDaily = inngest.createFunction(
+  {
+    id: "outbound-audit-import-daily",
+    name: "Outbound · audit import daily",
+    triggers: [cron("40 14 * * *"), { event: "outbound/audit-import.requested" }],
+  },
+  async ({ step }) => {
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID not set" };
+    }
+
+    return step.run("import-audit-leads", () =>
+      importAuditLeadsToOutbound(workspaceId, { max: 30, daysBack: 2 }),
+    );
+  },
+);
+
 export const functions = [
   ingestionHourly,
   normalizationRequested,
@@ -640,4 +745,6 @@ export const functions = [
   dailyDigestCron,
   outboundDraftDaily,
   outboundSendApprovedDaily,
+  outboundUkColdDaily,
+  outboundAuditImportDaily,
 ];

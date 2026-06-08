@@ -1,7 +1,11 @@
 import { cityFromFormattedAddress } from "@/lib/audit/create-pending-audit";
 import { extractLocationFromHtml } from "@/lib/audit/extract-location-from-html";
 import type { AuditGeoLocation } from "@/lib/audit/types";
-import { placesFindByWebsite, placesPlaceDetailsNew } from "@/lib/places/google-places-server";
+import {
+  placesFindByWebsite,
+  placesGeocodeCityUk,
+  placesPlaceDetailsNew,
+} from "@/lib/places/google-places-server";
 
 export type { AuditGeoLocation };
 
@@ -11,6 +15,7 @@ export type ResolveAuditLocationInput = {
   restaurantName: string;
   /** From audit start when user picked a Google listing */
   place?: {
+    name?: string;
     placeId?: string;
     formattedAddress?: string;
     lat?: number | null;
@@ -58,6 +63,18 @@ export async function resolveAuditLocation(input: ResolveAuditLocationInput): Pr
         source: hint.source,
       };
     }
+    if (hint?.city?.trim()) {
+      const geocoded = await placesGeocodeCityUk(hint.city, input.restaurantName);
+      if (geocoded) {
+        return {
+          lat: geocoded.lat,
+          lng: geocoded.lng,
+          city: geocoded.city !== "Your area" ? geocoded.city : input.fallbackCity,
+          source: "places_website",
+          placeId: geocoded.placeId,
+        };
+      }
+    }
   }
 
   const fromWebsite = await placesFindByWebsite(input.websiteUrl, input.restaurantName);
@@ -71,10 +88,16 @@ export async function resolveAuditLocation(input: ResolveAuditLocationInput): Pr
     };
   }
 
-  if (input.html) {
-    const hint = extractLocationFromHtml(input.html);
-    if (hint?.city) {
-      return null;
+  if (input.fallbackCity.trim() && input.fallbackCity !== "Your area") {
+    const geocoded = await placesGeocodeCityUk(input.fallbackCity, input.restaurantName);
+    if (geocoded) {
+      return {
+        lat: geocoded.lat,
+        lng: geocoded.lng,
+        city: geocoded.city,
+        source: "places_website",
+        placeId: geocoded.placeId,
+      };
     }
   }
 

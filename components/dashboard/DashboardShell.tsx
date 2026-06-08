@@ -7,17 +7,22 @@ import { appPillActive, appPillInactive } from "@/lib/app-ui-classes";
 
 export type DashboardRestaurantLite = { id: string; name: string; city: string | null };
 
-const NAV: { href: string; label: string }[] = [
+const NAV_PRIMARY: { href: string; label: string }[] = [
   { href: "/dashboard", label: "Today" },
-  { href: "/dashboard/brand", label: "Brand & Visuals" },
-  { href: "/dashboard/visuals", label: "Visuals" },
   { href: "/dashboard/website", label: "Website" },
-  { href: "/dashboard/redesign", label: "Redesign" },
   { href: "/dashboard/reviews", label: "Reviews" },
-  { href: "/dashboard/outbound", label: "Outbound" },
-  { href: "/dashboard/growth-agent", label: "Growth Agent" },
+  { href: "/dashboard/content", label: "Content" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
+
+const NAV_MORE: { href: string; label: string }[] = [
+  { href: "/dashboard/brand", label: "Brand & Visuals" },
+  { href: "/dashboard/outbound", label: "Outbound" },
+  { href: "/dashboard/growth-agent", label: "Growth Agent" },
+  { href: "/dashboard/billing", label: "Billing" },
+];
+
+const NAV = [...NAV_PRIMARY, ...NAV_MORE];
 
 function withRestaurant(path: string, restaurantId: string | null) {
   if (!restaurantId) return path;
@@ -51,7 +56,28 @@ export function DashboardShell({
           <p className="type-caption mt-1 text-[var(--color-muted-medium)]">Workspace</p>
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 px-2 pb-6">
-          {NAV.map((item) => {
+          {NAV_PRIMARY.map((item) => {
+            const target = withRestaurant(item.href, restaurantId);
+            const active =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard" || pathname === "/dashboard/"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                href={target}
+                className={`rounded-[var(--radius-default)] px-3 py-2 text-sm no-underline transition-colors ${
+                  active
+                    ? "bg-[var(--color-ink)] font-medium text-[var(--color-text-warm)]"
+                    : "text-[var(--color-muted)] hover:bg-[var(--color-surface-warm)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+          <p className="type-caption mb-1 mt-4 px-3 text-[var(--color-muted-medium)]">More</p>
+          {NAV_MORE.map((item) => {
             const target = withRestaurant(item.href, restaurantId);
             const active =
               item.href === "/dashboard"

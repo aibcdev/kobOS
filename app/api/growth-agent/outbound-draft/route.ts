@@ -2,9 +2,9 @@ import { SubscriptionPlan } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
-import { planMeetsMinimum } from "@/lib/billing/plan-access";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
+import { canUseOutboundWorkspace } from "@/lib/outbound/sales-access";
 import { generateOutboundDraft } from "@/lib/growth-agent/generate-outbound-draft";
 import { persistOutboundDraftLeads } from "@/lib/growth-agent/persist-outbound-leads";
 
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   if (!restaurant) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  if (!planMeetsMinimum(restaurant.subscriptionPlan, SubscriptionPlan.PRO)) {
+  if (!canUseOutboundWorkspace(restaurant.subscriptionPlan)) {
     return jsonUpgradeRequired(SubscriptionPlan.PRO, restaurant.subscriptionPlan);
   }
 
@@ -62,5 +62,6 @@ export async function POST(req: Request) {
     ok: true,
     inserted: created.length,
     ids: created.map((r) => r.id),
+    source: result.source,
   });
 }

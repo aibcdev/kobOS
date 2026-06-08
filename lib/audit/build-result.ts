@@ -8,12 +8,15 @@ import {
 } from "@/lib/audit/analyze-url";
 import { auditCityLabel, guessNameFromTitle, hostLabelFromUrl } from "@/lib/audit/derive-audit-labels";
 import { discoverSiblingOrigins } from "@/lib/audit/discover-related-sites";
+import { applyEvidencePackV2Fields, enrichEvidencePackV2 } from "@/lib/audit/enrich-evidence-pack";
 import { buildEvidencePackV1, type AuditUserSocialInput } from "@/lib/audit/evidence-pack";
+import type { AuditEngagementSignals } from "@/lib/audit/engagement-signals";
 import { mergeWebsiteAnalyses } from "@/lib/audit/merge-analyses";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { designScoreNudgeFromVisual } from "@/lib/audit/visual-intelligence";
 import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
 import { buildEstimatedCompetitors, fetchNearbyCompetitors } from "@/lib/audit/fetch-nearby-competitors";
+import { placesGeocodeCityUk } from "@/lib/places/google-places-server";
 import { resolveAuditLocation } from "@/lib/audit/resolve-audit-location";
 import type { AuditGeoLocation } from "@/lib/audit/types";
 import { runAuditWebsitePipeline } from "@/lib/audit/website-analysis-pipeline";
@@ -25,6 +28,7 @@ function clamp(n: number, min: number, max: number) {
 function scoreFromSignals(
   s: UrlSignals,
   hadUrlInput: boolean,
+  engagement?: AuditEngagementSignals | null,
 ): Pick<AuditResultPayload["scores"], "seo" | "design" | "mobile" | "conversion"> {
   if (!hadUrlInput) {
     return { seo: 32, design: 35, mobile: 34, conversion: 28 };
@@ -59,6 +63,12 @@ function scoreFromSignals(
   if (s.hasMailto) conversion += 8;
   if (s.hasBookOrReserveKeyword) conversion += 22;
   if (s.hasOpenTableOrResy) conversion += 20;
+
+  if (engagement) {
+    design += Math.round((engagement.dwellScore - 48) * 0.22);
+    conversion += Math.round((engagement.stayConnectedScore - 45) * 0.28);
+    if (engagement.contentDepth.hasMenuContent) conversion += 6;
+  }
 
   return {
     seo: clamp(seo, 18, 96),
@@ -208,23 +218,21 @@ function buildOpportunities(
 }
 
 
-function buildCompetitors(city: string, seed: string): AuditResultPayload["competitors"] {
-  return buildEstimatedCompetitors(city, seed);
-}
-
 async function resolveCityAndCompetitors(input: {
   restaurantName: string;
   city: string;
   websiteUrl: string;
   html?: string | null;
   place?: {
+    name?: string;
     placeId?: string;
     formattedAddress?: string;
     lat?: number | null;
     lng?: number | null;
   } | null;
 }): Promise<{ city: string; geoLocation: AuditGeoLocation | null; competitors: AuditResultPayload["competitors"] }> {
-  const geo = await resolveAuditLocation({
+  const displayName = input.place?.name?.trim() || input.restaurantName;
+  let geo = await resolveAuditLocation({
     html: input.html,
     websiteUrl: input.websiteUrl,
     restaurantName: input.restaurantName,
@@ -232,22 +240,55 @@ async function resolveCityAndCompetitors(input: {
     fallbackCity: input.city,
   });
 
-  const resolvedCity =
+  let resolvedCity =
     geo?.city && geo.city !== "Your area" ? geo.city : input.city !== "Your area" ? input.city : geo?.city ?? input.city;
 
-  const seed = input.restaurantName + input.websiteUrl;
-  const competitors =
+  if (!geo && resolvedCity !== "Your area") {
+    const geocoded = await placesGeocodeCityUk(resolvedCity, input.restaurantName);
+    if (geocoded) {
+      geo = {
+        lat: geocoded.lat,
+        lng: geocoded.lng,
+        city: geocoded.city,
+        source: "places_website",
+        placeId: geocoded.placeId,
+      };
+      resolvedCity = geocoded.city;
+    }
+  }
+
+  const seed = displayName + input.websiteUrl;
+  let competitors =
     geo != null
       ? await fetchNearbyCompetitors({
           lat: geo.lat,
           lng: geo.lng,
-          excludeName: input.restaurantName,
+          excludeName: displayName,
           city: resolvedCity,
           seed,
         })
-      : buildCompetitors(resolvedCity, seed);
+      : [];
+
+  if (competitors.length === 0 && geo != null && resolvedCity !== "Your area") {
+    competitors = buildEstimatedCompetitors(resolvedCity, seed);
+  }
 
   return { city: resolvedCity, geoLocation: geo, competitors };
+}
+
+async function attachGooglePlaceEvidence(
+  payload: AuditResultPayload,
+  placeId?: string | null,
+): Promise<AuditResultPayload> {
+  if (!payload.evidencePack) return payload;
+  const pid = placeId ?? payload.geoLocation?.placeId;
+  if (!pid) return payload;
+  const extras = await enrichEvidencePackV2({ placeId: pid, stagehandExtraction: payload.stagehandExtraction });
+  if (!extras.googlePlace) return payload;
+  return {
+    ...payload,
+    evidencePack: applyEvidencePackV2Fields(payload.evidencePack, extras),
+  };
 }
 
 function buildGated(
@@ -316,10 +357,11 @@ export function buildAuditPayloadAndRow(
     stagehandExtraction?: AuditResultPayload["stagehandExtraction"];
     competitors?: AuditResultPayload["competitors"];
     geoLocation?: AuditResultPayload["geoLocation"];
+    placeId?: string | null;
   },
 ): { payload: AuditResultPayload; row: Omit<Prisma.VisibilityAuditCreateInput, "id"> } {
   const signals = analysis.signals;
-  const evidencePack = buildEvidencePackV1({
+  const evidencePackBase = buildEvidencePackV1({
     restaurantName: input.restaurantName,
     city: input.city,
     websiteUrl: input.websiteUrl,
@@ -328,9 +370,15 @@ export function buildAuditPayloadAndRow(
     signals,
     pageEvidence: analysis.pageEvidence,
     multiSiteOrigins: input.multiSiteOrigins,
+    engagementSignals: analysis.engagementSignals,
+    stagehandExtraction: options?.stagehandExtraction,
   });
 
-  const scoresPart = scoreFromSignals(signals, Boolean(input.websiteUrl?.trim()));
+  const evidencePack = applyEvidencePackV2Fields(evidencePackBase, {
+    stagehandExtraction: options?.stagehandExtraction ?? undefined,
+  });
+
+  const scoresPart = scoreFromSignals(signals, Boolean(input.websiteUrl?.trim()), analysis.engagementSignals);
   const designAdj = options?.visualMetrics
     ? clamp(scoresPart.design + designScoreNudgeFromVisual(options.visualMetrics), 18, 96)
     : scoresPart.design;
@@ -344,7 +392,8 @@ export function buildAuditPayloadAndRow(
   const issues = buildIssues(signals, input.restaurantName, hadUrl);
   const opportunities = buildOpportunities(input.city, input.restaurantName, signals, hadUrl);
   const competitors =
-    options?.competitors ?? buildCompetitors(input.city, input.restaurantName + (input.websiteUrl ?? ""));
+    options?.competitors ??
+    buildEstimatedCompetitors(input.city, input.restaurantName + (input.websiteUrl ?? ""));
   const teaser = {
     headline: `${input.restaurantName} — modern guest-first layout`,
     subline: "Hero imagery, crisp typography, and a single dominant reservation path.",
@@ -380,6 +429,7 @@ export function buildAuditPayloadAndRow(
           benchmarkV1Status: "pending" as const,
           benchmarkV1MediaStatus:
             (evidencePack.imageCandidates?.length ?? 0) > 0 ? ("pending" as const) : ("skipped" as const),
+          perceptionAuditV1Status: "pending" as const,
         }
       : {}),
   };
@@ -438,6 +488,7 @@ export async function buildAuditResult(input: {
   userSocial?: AuditUserSocialInput | null;
   userImageUrls?: string[] | null;
   place?: {
+    name?: string;
     placeId?: string;
     formattedAddress?: string;
     lat?: number | null;
@@ -474,7 +525,9 @@ export async function buildAuditResult(input: {
     }
 
     const restaurantName =
-      guessNameFromTitle(pipelineInput.pageEvidence.titleSnippet) ?? hostLabelFromUrl(raw);
+      input.place?.name?.trim() ||
+      guessNameFromTitle(pipelineInput.pageEvidence.titleSnippet) ||
+      hostLabelFromUrl(raw);
 
     const { city: resolvedCity, geoLocation, competitors } = await resolveCityAndCompetitors({
       restaurantName,
@@ -507,8 +560,10 @@ export async function buildAuditResult(input: {
         stagehandExtraction: pipeline.stagehandExtraction,
         geoLocation,
         competitors,
+        placeId: input.place?.placeId ?? geoLocation?.placeId,
       },
     );
+    payload = await attachGooglePlaceEvidence(payload, input.place?.placeId ?? geoLocation?.placeId);
     payload = await finalizePayloadScores(payload, {
       networkFacts: pipeline.networkFacts,
       visualMetrics: pipeline.visualMetrics,
@@ -521,7 +576,9 @@ export async function buildAuditResult(input: {
 
   const [first, fetchedHtml] = await Promise.all([analyzeWebsiteFull(raw), fetchHtmlForAudit(raw)]);
   const restaurantName =
-    guessNameFromTitle(first.pageEvidence.titleSnippet) ?? hostLabelFromUrl(raw);
+    input.place?.name?.trim() ||
+    guessNameFromTitle(first.pageEvidence.titleSnippet) ||
+    hostLabelFromUrl(raw);
 
   const { city: resolvedCity, geoLocation, competitors } = await resolveCityAndCompetitors({
     restaurantName,
@@ -553,8 +610,10 @@ export async function buildAuditResult(input: {
       stagehandExtraction: pipeline.stagehandExtraction,
       geoLocation,
       competitors,
+      placeId: input.place?.placeId ?? geoLocation?.placeId,
     },
   );
+  payload = await attachGooglePlaceEvidence(payload, input.place?.placeId ?? geoLocation?.placeId);
   payload = await finalizePayloadScores(payload, {
     networkFacts: pipeline.networkFacts,
     visualMetrics: pipeline.visualMetrics,

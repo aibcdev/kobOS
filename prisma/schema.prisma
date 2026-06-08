@@ -7,21 +7,21 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["kob"]
+  schemas  = ["public"]
 }
 
 enum Role {
   OWNER
   ADMIN
   MEMBER
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum SubscriptionPlan {
   FREE
   STARTER
   PRO
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum InsightType {
@@ -33,21 +33,21 @@ enum InsightType {
   MENU_PERFORMANCE
   LOCAL_SEARCH_GAP
   COMPETITOR_WARNING
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum InsightPriority {
   LOW
   MEDIUM
   HIGH
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum InsightStatus {
   OPEN
   DISMISSED
   DONE
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum RecommendationType {
@@ -59,7 +59,7 @@ enum RecommendationType {
   SEND_EMAIL
   POST_SOCIAL
   OPTIMIZE_MENU
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum ContentType {
@@ -74,21 +74,21 @@ enum ContentType {
   GROWTH_FOOD_ANALYSIS
   GROWTH_WEBSITE_PLAN
   GROWTH_REVIEW_REPLY
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum ContentStatus {
   DRAFT
   READY
   FAILED
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum CampaignType {
   PROMOTIONAL
   ENGAGEMENT
   SEO_PUSH
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum CampaignChannel {
@@ -98,7 +98,7 @@ enum CampaignChannel {
   FACEBOOK
   GOOGLE_POST
   WEBSITE_BANNER
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum CampaignLifecycle {
@@ -107,7 +107,7 @@ enum CampaignLifecycle {
   ACTIVE
   PAUSED
   COMPLETED
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum IntegrationProvider {
@@ -120,7 +120,7 @@ enum IntegrationProvider {
   TOAST
   SQUARE
   SHOPIFY
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum WebsiteEventType {
@@ -128,7 +128,7 @@ enum WebsiteEventType {
   SCROLL_DEPTH
   BOUNCE
   CTA_CONVERT
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum AssetType {
@@ -137,21 +137,21 @@ enum AssetType {
   LOGO
   BRANDING
   WEBSITE_SCREENSHOT
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum ReviewSource {
   GOOGLE
   YELP
   OTHER
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum ReviewReplyStatus {
   DRAFT
   APPROVED
   POSTED
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum AgentActionStatus {
@@ -159,7 +159,7 @@ enum AgentActionStatus {
   COMPLETED
   FAILED
   SKIPPED
-  @@schema("kob")
+  @@schema("public")
 }
 
 enum OutboundLeadStatus {
@@ -171,7 +171,53 @@ enum OutboundLeadStatus {
   RESPONDED
   CONVERTED
   ARCHIVED
-  @@schema("kob")
+  @@schema("public")
+}
+
+enum OutboundLeadSource {
+  UK_COLD
+  AUDIT
+  MANUAL
+  LEGACY
+  @@schema("public")
+}
+
+enum AiPersonality {
+  BALANCED
+  WARM
+  DIRECT
+  CONCISE
+  SASSY
+  @@schema("public")
+}
+
+enum TaskSource {
+  AUDIT
+  AI
+  ENGINE
+  MANUAL
+  @@schema("public")
+}
+
+enum TaskStatus {
+  PENDING
+  APPROVED
+  DONE
+  DISMISSED
+  @@schema("public")
+}
+
+enum TaskCategory {
+  REVIEWS
+  SOCIAL
+  SEO
+  EMAIL
+  HOLIDAY
+  MENU
+  COMPETITOR
+  OPERATIONS
+  CONTENT
+  @@schema("public")
 }
 
 model Organization {
@@ -180,7 +226,7 @@ model Organization {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   restaurants  Restaurant[]
-  @@schema("kob")
+  @@schema("public")
 }
 
 model User {
@@ -192,7 +238,7 @@ model User {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   memberships TeamMember[]
-  @@schema("kob")
+  @@schema("public")
 }
 
 model TeamMember {
@@ -206,7 +252,7 @@ model TeamMember {
 
   @@unique([userId, restaurantId])
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model Restaurant {
@@ -225,6 +271,7 @@ model Restaurant {
   stripeSubscriptionId String?
   vibe               String?
   googleBusinessUrl  String?
+  aiPersonality      AiPersonality     @default(BALANCED)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   organization       Organization?     @relation(fields: [organizationId], references: [id])
@@ -244,9 +291,11 @@ model Restaurant {
   reviewerProfiles   ReviewerProfile[]
   agentActions       AgentAction[]
   outboundLeads      OutboundLead[]
+  chiefOfStaffTasks  ChiefOfStaffTask[]
+  dailyBriefSnapshots DailyBriefSnapshot[]
 
   @@index([organizationId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model Integration {
@@ -262,7 +311,7 @@ model Integration {
 
   @@unique([restaurantId, provider])
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model GrowthInsight {
@@ -280,7 +329,7 @@ model GrowthInsight {
 
   @@index([restaurantId, status])
   @@index([createdAt])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model Recommendation {
@@ -298,7 +347,7 @@ model Recommendation {
 
   @@index([restaurantId])
   @@index([insightId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model GeneratedContent {
@@ -314,7 +363,7 @@ model GeneratedContent {
   restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model Campaign {
@@ -331,7 +380,7 @@ model Campaign {
   restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId, status])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model Keyword {
@@ -345,7 +394,7 @@ model Keyword {
   restaurant       Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model WebsiteEvent {
@@ -357,7 +406,7 @@ model WebsiteEvent {
   restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model DigestRun {
@@ -368,7 +417,7 @@ model DigestRun {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId, ranAt])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model DemoRequest {
@@ -386,7 +435,7 @@ model DemoRequest {
 
   @@index([createdAt])
   @@index([email])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model DailyScan {
@@ -402,7 +451,7 @@ model DailyScan {
 
   @@unique([restaurantId, scanDate])
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model Asset {
@@ -415,7 +464,7 @@ model Asset {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId, type])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model CustomerReview {
@@ -434,7 +483,7 @@ model CustomerReview {
 
   @@unique([source, externalReviewId])
   @@index([restaurantId, reviewedAt])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model ReviewReply {
@@ -446,7 +495,7 @@ model ReviewReply {
   review    CustomerReview    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   @@index([reviewId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model ReviewerProfile {
@@ -461,7 +510,7 @@ model ReviewerProfile {
   restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model AgentAction {
@@ -474,12 +523,13 @@ model AgentAction {
   restaurant    Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId, createdAt])
-  @@schema("kob")
+  @@schema("public")
 }
 
 model OutboundLead {
   id                     String             @id @default(cuid())
   workspaceRestaurantId  String?
+  placeId                String?
   city                   String?
   restaurantName         String?
   websiteUrl             String?
@@ -489,12 +539,18 @@ model OutboundLead {
   messageBody            String?
   suggestedTone          String?
   status                 OutboundLeadStatus @default(DRAFT)
+  source                 OutboundLeadSource @default(LEGACY)
+  qualifyScore           Int?
+  reviewCount            Int?
+  enrichmentSource       String?
   createdAt              DateTime           @default(now())
   workspaceRestaurant    Restaurant?      @relation(fields: [workspaceRestaurantId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
   @@index([workspaceRestaurantId, status, createdAt])
-  @@schema("kob")
+  @@index([workspaceRestaurantId, source, status])
+  @@index([placeId])
+  @@schema("public")
 }
 
 model StripeWebhookEvent {
@@ -503,7 +559,7 @@ model StripeWebhookEvent {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
-  @@schema("kob")
+  @@schema("public")
 }
 
 /** Public visibility audit (grader funnel); no auth required to create. */
@@ -529,7 +585,47 @@ model VisibilityAudit {
 
   @@index([createdAt])
   @@index([restaurantId])
-  @@schema("kob")
+  @@schema("public")
+}
+
+/** Daily Chief of Staff brief + task queue for restaurant owners. */
+model ChiefOfStaffTask {
+  id                String        @id @default(cuid())
+  restaurantId      String
+  title             String
+  detail            String        @default("")
+  category          TaskCategory
+  source            TaskSource
+  status            TaskStatus    @default(PENDING)
+  impactLabel       String?
+  estimatedMinutes  Int           @default(5)
+  confidenceScore   Int           @default(75)
+  revenueLowGbp     Int?
+  revenueHighGbp    Int?
+  requiresIntegration String?
+  draftPayload      Json?
+  auditId           String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  restaurant        Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, status, createdAt])
+  @@schema("public")
+}
+
+model DailyBriefSnapshot {
+  id           String     @id @default(cuid())
+  restaurantId String
+  briefDate    DateTime   @db.Date
+  greeting     String
+  summaryJson  Json       @default("{}")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, briefDate])
+  @@index([restaurantId])
+  @@schema("public")
 }
 
 model SiteScan {
@@ -543,5 +639,5 @@ model SiteScan {
   status               String          @default("completed")
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
-  @@schema("kob")
+  @@schema("public")
 }

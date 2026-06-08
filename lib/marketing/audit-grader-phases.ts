@@ -11,17 +11,83 @@ const PHASE_MS: Record<GraderScanPhase, number> = {
   reviews: 20_000,
 };
 
+/** Minimum time to show each phase before advancing on signals. */
+const MIN_DWELL_MS: Record<GraderScanPhase, number> = {
+  map: 4_000,
+  business: 3_500,
+  website: 3_500,
+  mobile: 3_000,
+  reviews: 4_000,
+};
+
+export type GraderScanSignals = {
+  hasGeo?: boolean;
+  hasGooglePlace?: boolean;
+  hasPreviewImage?: boolean;
+  hasReviews?: boolean;
+};
+
 export const GRADER_COUNTDOWN_START_SEC = 36;
 
-export function resolveGraderPhase(elapsedMs: number, scanReady: boolean): GraderScanPhase {
+function signalReadyForAdvance(phase: GraderScanPhase, signals?: GraderScanSignals): boolean {
+  if (!signals) return false;
+  switch (phase) {
+    case "map":
+      return Boolean(signals.hasGeo);
+    case "business":
+      return Boolean(signals.hasGooglePlace || signals.hasGeo);
+    case "website":
+    case "mobile":
+      return Boolean(signals.hasPreviewImage);
+    case "reviews":
+      return Boolean(signals.hasReviews);
+  }
+}
+
+/** Resolve phase with optional pipeline signals (early advance when data lands). */
+export function resolveGraderPhase(
+  elapsedMs: number,
+  scanReady: boolean,
+  signals?: GraderScanSignals,
+): GraderScanPhase {
   if (scanReady) return "reviews";
-  let t = elapsedMs;
-  for (const phase of PHASE_ORDER) {
-    const dur = PHASE_MS[phase];
-    if (t < dur) return phase;
-    t -= dur;
+
+  let cursor = 0;
+  for (let i = 0; i < PHASE_ORDER.length; i++) {
+    const phase = PHASE_ORDER[i]!;
+    const maxEnd = cursor + PHASE_MS[phase];
+
+    if (elapsedMs < cursor) return PHASE_ORDER[Math.max(0, i - 1)]!;
+
+    const dwell = elapsedMs - cursor;
+    const minMet = dwell >= MIN_DWELL_MS[phase];
+    const signalOk = signalReadyForAdvance(phase, signals);
+    const timedOut = elapsedMs >= maxEnd;
+
+    if (!timedOut && !(minMet && signalOk)) {
+      return phase;
+    }
+
+    cursor = timedOut ? maxEnd : elapsedMs;
   }
   return "reviews";
+}
+
+function phaseWindow(elapsedMs: number, scanReady: boolean, signals?: GraderScanSignals) {
+  const phase = resolveGraderPhase(elapsedMs, scanReady, signals);
+  let cursor = 0;
+  for (const p of PHASE_ORDER) {
+    const maxEnd = cursor + PHASE_MS[p];
+    const dwell = elapsedMs - cursor;
+    const minMet = dwell >= MIN_DWELL_MS[p];
+    const signalOk = signalReadyForAdvance(p, signals);
+    const timedOut = elapsedMs >= maxEnd;
+    if (p === phase) {
+      return { phase, start: cursor, end: maxEnd, dwell };
+    }
+    cursor = timedOut ? maxEnd : minMet && signalOk ? elapsedMs : maxEnd;
+  }
+  return { phase: "reviews" as const, start: cursor, end: cursor + PHASE_MS.reviews, dwell: 0 };
 }
 
 export function graderCountdownSeconds(elapsedMs: number, scanReady: boolean): number {
@@ -30,34 +96,34 @@ export function graderCountdownSeconds(elapsedMs: number, scanReady: boolean): n
   return Math.max(0, GRADER_COUNTDOWN_START_SEC - elapsedSec);
 }
 
-export function graderPhaseProgress(elapsedMs: number, scanReady: boolean): number {
+export function graderPhaseProgress(
+  elapsedMs: number,
+  scanReady: boolean,
+  signals?: GraderScanSignals,
+): number {
   if (scanReady) return 100;
-  let acc = 0;
-  const total = PHASE_ORDER.reduce((s, p) => s + PHASE_MS[p], 0);
-  for (const phase of PHASE_ORDER) {
-    const dur = PHASE_MS[phase];
-    if (elapsedMs < acc + dur) {
-      const phaseIdx = PHASE_ORDER.indexOf(phase);
-      const base = (phaseIdx / PHASE_ORDER.length) * 100;
-      const within = (elapsedMs - acc) / dur;
-      return Math.min(92, base + within * (100 / PHASE_ORDER.length));
-    }
-    acc += dur;
-  }
-  return 92;
+  const phase = resolveGraderPhase(elapsedMs, scanReady, signals);
+  const phaseIdx = PHASE_ORDER.indexOf(phase);
+  const { start, end } = phaseWindow(elapsedMs, scanReady, signals);
+  const dur = Math.max(1, end - start);
+  const within = Math.min(1, (elapsedMs - start) / dur);
+  const base = (phaseIdx / PHASE_ORDER.length) * 100;
+  return Math.min(92, base + within * (100 / PHASE_ORDER.length));
 }
 
-/** Deterministic map center when Places lat/lng unavailable. */
+import { UK_MAP_CENTER } from "@/lib/places/audit-places-config";
+
+/** Deterministic map center when Places lat/lng unavailable (UK-biased). */
 export function graderCoordsFromCity(city: string): { lat: number; lng: number } {
   let h = 0;
   for (const c of city) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const lat = 40.72 + (h % 80) / 1000;
-  const lng = -73.98 + ((h >> 8) % 80) / 1000;
+  const lat = UK_MAP_CENTER.lat + ((h % 100) - 50) / 800;
+  const lng = UK_MAP_CENTER.lng + (((h >> 8) % 100) - 50) / 800;
   return { lat, lng };
 }
 
 export function onlineHealthLabel(score: number): "Poor" | "Fair" | "Good" {
   if (score < 50) return "Poor";
-  if (score < 70) return "Fair";
+  if (score < 80) return "Fair";
   return "Good";
 }

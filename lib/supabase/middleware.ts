@@ -42,7 +42,7 @@ export async function updateSession(request: NextRequest) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      url.searchParams.set("redirect", path);
+      url.searchParams.set("next", path);
       return NextResponse.redirect(url);
     }
   }

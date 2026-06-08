@@ -1,4 +1,5 @@
 import { getOverviewMetrics } from "@/lib/dashboard/overview-metrics";
+import { parseAuditPayload } from "@/lib/audit/types";
 import { buildDigestSnapshot } from "@/lib/digest/build-snapshot";
 import { prisma } from "@/lib/db/prisma";
 
@@ -31,7 +32,7 @@ function summarizeAssets(rows: { type: string; _count: { _all: number } }[]): st
 }
 
 export async function buildGrowthAgentBriefingContext(restaurantId: string): Promise<GrowthAgentBriefingContext | null> {
-  const [restaurant, digest, metrics, keywords, assetGroups, reviews, latestScan, linkedSiteScan] =
+  const [restaurant, digest, metrics, keywords, assetGroups, reviews, latestScan, linkedSiteScan, linkedAudit] =
     await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
     buildDigestSnapshot(restaurantId),
@@ -72,6 +73,10 @@ export async function buildGrowthAgentBriefingContext(restaurantId: string): Pro
         },
       },
     }),
+    prisma.visibilityAudit.findFirst({
+      where: { restaurantId },
+      orderBy: { updatedAt: "desc" },
+    }),
   ]);
 
   if (!restaurant) return null;
@@ -95,21 +100,33 @@ export async function buildGrowthAgentBriefingContext(restaurantId: string): Pro
     const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
     const snippet = reviews[0]?.body?.slice(0, 120) ?? "";
     reviewSummary = `Last ${reviews.length} reviews avg ${avg.toFixed(1)}★. Latest: "${snippet}${snippet.length >= 120 ? "…" : ""}"`;
+  } else if (linkedAudit) {
+    const payload = parseAuditPayload(linkedAudit.resultPayload);
+    const gp = payload?.evidencePack?.googlePlace;
+    if (gp?.reviews?.length) {
+      reviewSummary = `Audit found ${gp.reviewCount ?? gp.reviews.length} Google reviews at ${gp.rating?.toFixed(1) ?? "?"}★.`;
+    }
   }
 
-  const websiteNotes = restaurant.website
-    ? `Site URL on file; ${keywords.length ? `${keywords.length} tracked keywords` : "add keywords for crawl context"}.`
+  const auditWebsite = linkedAudit?.websiteUrl?.trim() || linkedSiteScan?.visibilityAudit?.websiteUrl?.trim();
+  const effectiveWebsite = restaurant.website?.trim() || auditWebsite || null;
+
+  const websiteNotes = effectiveWebsite
+    ? `Site URL on file (${effectiveWebsite}); ${keywords.length ? `${keywords.length} tracked keywords` : "add keywords for crawl context"}.`
     : "No website URL — add it for redesign and crawl workflows.";
 
+  let visibilityScore = metrics.visibilityScore;
+  if (visibilityScore == null && linkedAudit) {
+    visibilityScore = linkedAudit.overallScore;
+  }
+
   let latestLinkedAuditSnapshot = "No Visibility Audit linked to this workspace yet — run the public grader and connect it during signup/trial.";
-  if (linkedSiteScan?.visibilityAudit) {
-    const a = linkedSiteScan.visibilityAudit;
-    const payload = a.resultPayload as { visualMetrics?: unknown } | null;
-    const visual =
-      linkedSiteScan.visualMetricsJson != null
-        ? linkedSiteScan.visualMetricsJson
-        : (payload?.visualMetrics ?? null);
-    latestLinkedAuditSnapshot = `Linked audit overall ${a.overallScore}/100, design ${a.designScore}/100. Site: ${a.websiteUrl ?? "n/a"}. Visual metrics snapshot: ${typeof visual === "object" ? JSON.stringify(visual).slice(0, 900) : String(visual ?? "n/a")}`;
+  const auditForSnapshot = linkedSiteScan?.visibilityAudit ?? linkedAudit;
+  if (auditForSnapshot) {
+    const a = auditForSnapshot;
+    const payload = parseAuditPayload("resultPayload" in a ? a.resultPayload : null);
+    const perception = payload?.perceptionAuditV1;
+    latestLinkedAuditSnapshot = `Linked audit overall ${a.overallScore}/100, design ${a.designScore}/100. Site: ${a.websiteUrl ?? effectiveWebsite ?? "n/a"}. ${perception?.ownerHero?.revenueHeadline ?? ""}`;
   }
 
   return {
@@ -118,9 +135,9 @@ export async function buildGrowthAgentBriefingContext(restaurantId: string): Pro
     city: restaurant.city,
     state: restaurant.state,
     vibe: restaurant.vibe,
-    website: restaurant.website,
+    website: effectiveWebsite,
     googleBusinessUrl: restaurant.googleBusinessUrl,
-    visibilityScore: metrics.visibilityScore,
+    visibilityScore,
     trafficEventsThisWeek: metrics.trafficEventsThisWeek,
     trafficEventsPrevWeek: metrics.trafficEventsPrevWeek,
     trafficChangeLabel,

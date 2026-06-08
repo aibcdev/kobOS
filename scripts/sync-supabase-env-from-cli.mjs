@@ -70,17 +70,29 @@ function getPoolerBaseUrl() {
   return "";
 }
 
-function getAnonKey(ref) {
+function getProjectApiKeys(ref) {
   const out = execSync(`npx supabase projects api-keys --project-ref ${ref} -o json`, {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const keys = JSON.parse(out);
+  return JSON.parse(out);
+}
+
+function getAnonKey(ref) {
+  const keys = getProjectApiKeys(ref);
   const legacy = keys.find((k) => k.name === "anon" && k.type === "legacy");
   if (legacy?.api_key) return legacy.api_key;
   const publishable = keys.find((k) => k.type === "publishable");
   return publishable?.api_key ?? "";
+}
+
+function getServiceRoleKey(ref) {
+  const keys = getProjectApiKeys(ref);
+  const legacy = keys.find((k) => k.name === "service_role" && k.type === "legacy");
+  if (legacy?.api_key) return legacy.api_key;
+  const secret = keys.find((k) => k.type === "secret" || k.name === "service_role");
+  return secret?.api_key ?? "";
 }
 
 function buildDatabaseUrl(poolerBase, password) {
@@ -107,7 +119,23 @@ function isDeadDirectSupabaseHost(hostname) {
   return /^db\.[a-z0-9]+\.supabase\.co$/i.test(hostname);
 }
 
-const ref = getLinkedRef();
+let envText = readText(envLocalPath);
+if (!envText) {
+  console.error("Missing .env.local — copy from .env.example first.");
+  process.exit(1);
+}
+
+const envMap = loadEnvMap(envText);
+const forcedRef = process.env.SUPABASE_PROJECT_REF?.trim() || envMap.get("SUPABASE_PROJECT_REF")?.replace(/^["']|["']$/g, "");
+const linkedRef = getLinkedRef();
+
+if (forcedRef && linkedRef && forcedRef !== linkedRef) {
+  console.log(`Skipping sync: .env.local targets Kob (${forcedRef}) but CLI is linked to ${linkedRef}.`);
+  console.log("Keep DATABASE_URL and API keys from the Kob dashboard — do not run sync-env for this project.");
+  process.exit(0);
+}
+
+const ref = forcedRef || linkedRef;
 if (!ref) {
   console.error("No linked Supabase project. Run: npm run supabase:link");
   process.exit(1);
@@ -120,13 +148,7 @@ if (!anonKey) {
 }
 
 const supabaseUrl = `https://${ref}.supabase.co`;
-let envText = readText(envLocalPath);
-if (!envText) {
-  console.error("Missing .env.local — copy from .env.example first.");
-  process.exit(1);
-}
 
-const envMap = loadEnvMap(envText);
 const dbPassword =
   process.env.SUPABASE_DB_PASSWORD?.trim() ||
   envMap.get("SUPABASE_DB_PASSWORD")?.replace(/^["']|["']$/g, "") ||
@@ -135,6 +157,15 @@ const dbPassword =
 
 envText = upsertEnvLine(envText, "NEXT_PUBLIC_SUPABASE_URL", supabaseUrl);
 envText = upsertEnvLine(envText, "NEXT_PUBLIC_SUPABASE_ANON_KEY", anonKey);
+
+try {
+  const serviceRole = getServiceRoleKey(ref);
+  if (serviceRole) {
+    envText = upsertEnvLine(envText, "SUPABASE_SERVICE_ROLE_KEY", serviceRole);
+  }
+} catch {
+  console.warn("Could not sync SUPABASE_SERVICE_ROLE_KEY from CLI (permissions). Paste from dashboard if login emails fail.");
+}
 
 const poolerBase = getPoolerBaseUrl();
 const existingDbUrl = envMap.get("DATABASE_URL")?.replace(/^["']|["']$/g, "");

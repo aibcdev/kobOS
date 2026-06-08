@@ -1,4 +1,5 @@
 import type { AuditCompetitor } from "@/lib/audit/types";
+import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
 import { placesSearchNearbyRestaurants } from "@/lib/places/google-places-server";
 
 function clamp(n: number, min: number, max: number) {
@@ -18,7 +19,7 @@ function hashSeed(s: string) {
   return Math.abs(h);
 }
 
-/** Deterministic fallback when Places is unavailable. */
+/** Deterministic fallback when Places is unavailable (tests / legacy only — not shown in production UI). */
 export function buildEstimatedCompetitors(city: string, seed: string): AuditCompetitor[] {
   const h = hashSeed(seed + city);
   const names = [
@@ -45,13 +46,16 @@ export async function fetchNearbyCompetitors(input: {
   city: string;
   seed: string;
 }): Promise<AuditCompetitor[]> {
+  void input.seed;
   try {
-    const nearby = await placesSearchNearbyRestaurants(input.lat, input.lng, input.excludeName, 4);
-    if (nearby.length === 0) {
-      return buildEstimatedCompetitors(input.city, input.seed);
+    const nearby = await placesSearchNearbyRestaurants(input.lat, input.lng, input.excludeName, 6);
+    const independent = nearby.filter((p) => !isLikelyChainRestaurant(p.name, null));
+
+    if (independent.length === 0) {
+      return [];
     }
 
-    return nearby.map((p) => ({
+    return independent.slice(0, 4).map((p) => ({
       name: p.name,
       note:
         p.rating != null && p.rating >= 4.3
@@ -64,6 +68,6 @@ export async function fetchNearbyCompetitors(input: {
     }));
   } catch (e) {
     console.warn("[audit] fetchNearbyCompetitors", e);
-    return buildEstimatedCompetitors(input.city, input.seed);
+    return [];
   }
 }

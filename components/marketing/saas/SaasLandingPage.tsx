@@ -3,6 +3,7 @@ import { SaasBrandGrid } from "./SaasBrandGrid";
 import { SaasEcosystemTabs } from "./SaasEcosystemTabs";
 import { SaasFinalCta } from "./SaasFinalCta";
 import { SaasHeroSection } from "./SaasHeroSection";
+import { SaasIndustryStatsBand } from "./SaasIndustryStatsBand";
 import { SaasRatingsMarquee } from "./SaasRatingsMarquee";
 import { SaasBenefitTabs } from "./SaasBenefitTabs";
 import { SaasTrustBand } from "./SaasTrustBand";
@@ -12,6 +13,7 @@ export function SaasLandingPage() {
   return (
     <>
       <SaasHeroSection />
+      <SaasIndustryStatsBand />
       <SaasTrustBand />
       <SaasBenefitTabs
         eyebrow="How KOB helps"

@@ -1,7 +1,9 @@
 # KOB — Product & Technical Design
 
-**Handoff doc for [cofounder.co](https://cofounder.co) and external builders.**  
+**Product and technical reference for builders and operators.**  
 This is the single reference for what KOB is, how it is built, and what is done vs. in progress.
+
+**Daily sales email:** [SALES_PIPELINE.md](./SALES_PIPELINE.md)
 
 Related docs:
 
@@ -34,7 +36,7 @@ Homepage audit form
   → /audit/{id}/scanning (live progress)
   → /audit/{id} (report; email + phone unlock)
   → /audit/{id}/upgrade (trial / Stripe)
-  → /dashboard (Growth Agent + tools)
+  → /dashboard (Chief of Staff home — morning brief + approve tasks)
 ```
 
 ### Positioning (tone)
@@ -79,6 +81,24 @@ flowchart TB
 
 **Chrome routing logic:** `components/marketing/MarketingPageChrome.tsx` skips the marketing shell when the path matches `/audit/[id](/scanning|upgrade(/checkout)?)?`.
 
+### Chief of Staff home (launch)
+
+**Tagline:** The AI Chief of Staff for Restaurants.
+
+The default dashboard (`/dashboard`) is a **Town-inspired 3-column layout** — calm gray canvas, white cards, approve-first actions (not a metric tile grid).
+
+| Column | Component | Content |
+|--------|-----------|---------|
+| Left | `TaskFeedColumn` | Scrollable tasks with impact, time, confidence; sources: audit, AI, or “Connect to enable” |
+| Center | `ActionCardsColumn` | Morning hero, revenue opportunity, UK holiday card |
+| Right | `InsightsSidebar` | Need to know + suggestion chips |
+
+**Data:** `ChiefOfStaffTask`, `DailyBriefSnapshot`, `Restaurant.aiPersonality` (Prisma). Generated daily via `lib/chief-of-staff/ensure-today-brief.ts` from audit data + AI (`generate-morning-brief.ts`).
+
+**API:** `GET /api/chief-of-staff/today`, task approve routes, `PATCH /api/restaurant/personality`.
+
+**Roadmap:** See [CHIEF-OF-STAFF.md](./CHIEF-OF-STAFF.md).
+
 ---
 
 ## 3. Route map
@@ -117,7 +137,7 @@ All under `app/dashboard/` — shell in `components/dashboard/DashboardShell.tsx
 
 | Path | Focus |
 |------|--------|
-| `/dashboard` | Today / overview metrics |
+| `/dashboard` | **Chief of Staff home** — morning brief, task feed, approve actions (`ChiefOfStaffHome`) |
 | `/dashboard/growth-agent` | Daily briefing, priorities |
 | `/dashboard/seo` | Keywords, SEO tools |
 | `/dashboard/website` | Website redesign panel |

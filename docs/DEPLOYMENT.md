@@ -1,5 +1,14 @@
 # KOB production deployment
 
+**Launch checklist (trykob.com):** [docs/LAUNCH.md](LAUNCH.md)
+
+Run before go-live:
+
+```bash
+npm run launch:check -- --production
+npm run smoke:check -- --url https://trykob.com
+```
+
 Repo root (deploy from here): `/Users/akeemojuko/KOB`
 
 ## 1. Supabase Auth URLs
@@ -12,12 +21,21 @@ Run locally to print the exact strings to paste:
 npm run setup:auth-urls
 ```
 
-Set `NETLIFY_PRODUCTION_URL=https://your-site.netlify.app` in `.env.local` first if you want the script to include your live URL.
+Set `NETLIFY_PRODUCTION_URL=https://trykob.com` in `.env.local` first if you want the script to include your live URL.
 
-Minimum redirect URLs:
+Minimum redirect URLs (wildcards required for magic links and OTP):
 
+- `http://localhost:3000/**`
+- `https://<your-netlify-site>.netlify.app/**`
+
+Also keep exact paths (optional):
+
+- `http://localhost:3000/auth/confirm`
 - `http://localhost:3000/auth/callback`
+- `https://<your-netlify-site>.netlify.app/auth/confirm`
 - `https://<your-netlify-site>.netlify.app/auth/callback`
+
+Run `npm run setup:auth-urls` to print the full list for your Netlify URL.
 
 ## 2. Netlify (Git — not drag-and-drop)
 
@@ -36,10 +54,13 @@ Copy from `.env.local` (production values):
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes |
 | `NEXT_PUBLIC_APP_URL` | Yes (`https://your-site.netlify.app`) |
-| `GEMINI_API_KEY` | Yes for audit benchmarks |
+| `GOOGLE_PLACES_API_KEY` | Yes — UK competitors + audit autocomplete |
+| `PLACES_AUTOCOMPLETE_REGIONS` | `GB` for UK launch |
+| `GEMINI_API_KEY` | Yes — audit benchmarks (start returns 503 without it) |
 | `OPENAI_API_KEY` | Optional (narrative) |
 | `INNGEST_SIGNING_KEY` | Yes for background jobs (from Inngest) |
 | `INNGEST_EVENT_KEY` | Yes for sending events (from Inngest) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes if using Resend magic-link backup |
 
 After first deploy:
 
@@ -108,10 +129,31 @@ Defer until core flow works. See `.env.example` for `STRIPE_*` and webhook `http
 
 ## Audit pipeline (local)
 
-- Run `npm run dev:public:reset` and `npm run inngest:dev` together so scans finish (about a minute).
+- Run **`npm run dev:audit`** (Next.js + Inngest together). Without Inngest, benchmark scores stay **pending**.
+- `GOOGLE_PLACES_API_KEY` and `GEMINI_API_KEY` are **required** at `/api/audit/start` (503 if missing).
+- Pick the restaurant from the **Google dropdown** on `/audit` so competitors come from Places (not empty).
 - On the results page, **mobile number is required** to unlock scores and the full report (Owner-style hardwall).
+- Automated check: `npm run audit:golden-path` (after `dev:audit` is running).
 - Browserbase keys enable JS rendering; optional `PAGESPEED_API_KEY` for factual mobile scores.
-- Manual API discovery: `vendor/browserbase-skills/README.md` (browser-trace + browser-to-api).
+
+### Manual UK QA (once before launch)
+
+1. `npm run dev:audit`
+2. `/audit` → pick a **real London restaurant** from Google (not URL-only).
+3. Wait on scanning → unlock report with test email/phone.
+4. Confirm: scores above 0; benchmark sections load; **3 real competitor names** with notes; map in UK.
+5. Repeat **website-only** (no place) → warning, **no fake peer bars**.
+
+## Production launch checklist
+
+1. Point domain DNS to Netlify; set `NEXT_PUBLIC_APP_URL` and `NETLIFY_PRODUCTION_URL`.
+2. Paste production env from `.env.example` (DB, Supabase, Places, Gemini, Inngest, Resend).
+3. `npm run db:migrate` against production database.
+4. Inngest → sync app URL to `https://<domain>/api/inngest`; redeploy.
+5. Supabase → Site URL + `https://<domain>/**` redirect URLs (see §1).
+6. `npm run smoke:check -- --url https://<domain>`
+7. `AUDIT_GOLDEN_BASE_URL=https://<domain> npm run audit:golden-path`
+8. One full UK audit on production in the browser.
 
 ## Share locally with ngrok
 

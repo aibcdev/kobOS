@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { looksLikeWebsiteInput, normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
+import { marketingCopy } from "@/lib/marketing/copy";
 
 type Suggestion = { placeId: string; mainText: string; secondaryText: string };
 
@@ -191,10 +192,11 @@ export function DemoOnboardingForm() {
     <div className="w-full max-w-md rounded-3xl border border-[var(--color-hairline)] bg-white p-8 shadow-[0_24px_48px_-12px_rgba(9,68,19,0.12)] md:p-10">
       <p className="text-center text-sm text-[var(--color-muted-medium)]">Step {step} of 2</p>
       <h2 className="mt-3 text-center font-head text-xl font-semibold leading-snug text-[var(--color-ink)] md:text-2xl">
-        {step === 1
-          ? "Tell us about your restaurant to unlock growth today"
-          : "Almost there — where should we send your scan?"}
+        {step === 1 ? marketingCopy.demo.step1Headline : "Almost there — where should we send your scan?"}
       </h2>
+      {step === 2 ? (
+        <p className="mt-2 text-center text-sm text-[var(--color-muted-medium)]">{marketingCopy.demo.step2Subline}</p>
+      ) : null}
 
       {step === 1 ? (
         <div className="mt-8 space-y-5">
@@ -218,9 +220,7 @@ export function DemoOnboardingForm() {
               className={inputClass}
               autoComplete="off"
             />
-            <p className="mt-2 text-xs text-[var(--color-muted-medium)]">
-              Start typing, then select your restaurant from the list
-            </p>
+            <p className="mt-2 text-xs text-[var(--color-muted-medium)]">{marketingCopy.demo.step1Hint}</p>
             {open && suggestions.length > 0 ? (
               <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-auto rounded-xl border border-[var(--color-hairline)] bg-white py-1 shadow-lg">
                 {suggestions.map((s, i) => (

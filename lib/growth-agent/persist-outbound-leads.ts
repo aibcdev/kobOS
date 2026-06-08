@@ -15,7 +15,7 @@ export async function persistOutboundDraftLeads(
           workspaceRestaurantId,
           city: trimmedCity,
           restaurantName: lead.restaurant_name_guess,
-          websiteUrl: null,
+          websiteUrl: lead.website_url?.trim() || null,
           insightSummary: `${lead.visible_problem}\n\nChannel: ${lead.channel}`,
           messageSubject: lead.email_subject,
           messageBody: lead.message_body,

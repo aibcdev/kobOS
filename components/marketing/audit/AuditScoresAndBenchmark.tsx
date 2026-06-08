@@ -81,7 +81,7 @@ export function AuditScoresAndBenchmark({
   initial: AuditBenchmarkPollSnapshot;
   unlocked?: boolean;
 }) {
-  const { data } = useAuditBenchmarkPoll(auditId, initial, { enabled: unlocked });
+  const { data } = useAuditBenchmarkPoll(auditId, initial, { unlocked });
   const scoresReady = isAuditScoresReady({
     scoresPending: data.scoresPending,
     scanStatus: data.scanStatus,

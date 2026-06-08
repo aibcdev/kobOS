@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BillingActions } from "@/components/dashboard/billing/BillingActions";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   description: "Subscriptions and invoices.",
 };
 
-export default async function BillingPage({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
+export default async function BillingPage({ searchParams }: { searchParams: Promise<{ r?: string; checkout?: string }> }) {
   if (isUiPreviewEnabled()) {
     return <PreviewPlaceholder title="Billing" description="Stripe checkout and invoices need a live backend and keys." />;
   }
@@ -33,6 +34,18 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     <div className="mx-auto max-w-3xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Billing</h1>
       <p className="type-body-md mt-2 text-[var(--color-muted)]">{restaurant.name}</p>
+
+      {sp.checkout === "success" ? (
+        <div className={`mt-6 ${appCardSurface} border-emerald-200 bg-emerald-50`}>
+          <p className="type-body-sm text-emerald-900">Trial started. Your Chief of Staff is ready.</p>
+          <Link
+            href={`/dashboard?r=${encodeURIComponent(restaurantId)}&welcome=1`}
+            className="mt-3 inline-block font-semibold text-[var(--color-primary)] underline underline-offset-2"
+          >
+            Go to Today →
+          </Link>
+        </div>
+      ) : null}
 
       <div className={`mt-8 ${appCardSurface}`}>
         <p className="type-body-sm text-[var(--color-muted)]">

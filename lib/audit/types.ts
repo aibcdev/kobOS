@@ -1,3 +1,5 @@
+import type { AuditFoodImageAnalysis } from "@/lib/audit/analyze-food-images";
+import type { AuditEngagementSignals } from "@/lib/audit/engagement-signals";
 import type { AuditEvidencePackV1 } from "@/lib/audit/evidence-pack";
 import type { RubricV2Result } from "@/lib/audit/rubric-v2";
 import type { AuditVisualIntelligenceResult } from "@/lib/audit/visual-intelligence";
@@ -70,6 +72,58 @@ export type BenchmarkV1MediaResult = {
   videoSummary?: string;
 };
 
+/** Hospitality perception intelligence (async Gemini). */
+export type PerceptionVisualScorecardRow = {
+  category: string;
+  scoreOutOf10: number;
+  note: string;
+};
+
+export type PerceptionOwnerHero = {
+  revenueHeadline: string;
+  bookingLeakPercentLow: number;
+  bookingLeakPercentHigh: number;
+  monthlyRevenueBandLowGbp?: number;
+  monthlyRevenueBandHighGbp?: number;
+  revenueDetail: string;
+  customerLossBullets: string[];
+  timelineHeadline: string;
+  timelinePhases: { window: string; outcome: string }[];
+  comparedToLabel: string;
+};
+
+export type PerceptionAuditV1 = {
+  version: 1;
+  model: string;
+  scoredAt: string;
+  digitalPositioningScore: number;
+  confidence: "low" | "medium" | "high";
+  coverHeadline?: string;
+  coverSubheadline?: string;
+  executiveSummary?: {
+    strengths: string[];
+    gapStatement: string;
+    impacts: string[];
+  };
+  visualScorecard?: PerceptionVisualScorecardRow[];
+  estimatedDwellSeconds?: { low: number; high: number; rationale: string };
+  positioningTable: { area: string; current: string; ideal: string }[];
+  perceptionGap: { metric: string; current: string; potential: string; note?: string }[];
+  customerExperience: string;
+  modernStandard: string;
+  reviewIntelligence: {
+    praiseThemes: string[];
+    complaintThemes: string[];
+    disconnect: string;
+  };
+  socialAnalysis: string;
+  commercialSeo: string;
+  revenueLeaks: { title: string; impact: "high" | "medium" | "low"; narrative: string }[];
+  benchmarkAnchors: string[];
+  overallSummary: string;
+  ownerHero?: PerceptionOwnerHero;
+};
+
 /** Browserbase / Stagehand capture metadata (no raw session secrets exposed to the client). */
 export type AuditBrowserbaseScan = {
   capturedAt: string;
@@ -82,6 +136,8 @@ export type AuditBrowserbaseScan = {
   approximateMarkdownSnippet?: string;
   /** Public URL after optional Supabase Storage upload. */
   screenshotPublicUrl?: string;
+  /** Support log: geo + competitor resolution stage after pipeline run. */
+  pipelineStage?: string;
 };
 
 export type AuditScanStatus = "pending" | "ready" | "failed";
@@ -133,6 +189,10 @@ export type AuditResultPayload = {
   benchmarkV1MediaStatus?: "pending" | "ready" | "failed" | "skipped";
   benchmarkV1Media?: BenchmarkV1MediaResult | null;
   benchmarkV1MediaError?: string;
+  /** Hospitality perception audit (async Gemini). */
+  perceptionAuditV1Status?: "pending" | "ready" | "failed";
+  perceptionAuditV1?: PerceptionAuditV1 | null;
+  perceptionAuditV1Error?: string;
 };
 
 export function parseAuditPayload(json: unknown): AuditResultPayload | null {

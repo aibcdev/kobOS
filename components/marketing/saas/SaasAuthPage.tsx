@@ -15,13 +15,14 @@ export function SaasAuthPage({ defaultMode = "signin" }: { defaultMode?: "signin
           </Link>
           <p className="font-mono-brand mt-8 text-xs font-semibold uppercase tracking-wider text-[#088924]">KOB</p>
           <h1 className="font-heading mt-4 text-3xl font-semibold tracking-tight text-[#2c2c2c] md:text-4xl">
-            Your growth workspace starts here
+            {marketingCopy.auth.headline}
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-[#2c2c2c]/75 md:text-base">{marketingCopy.trustLine}</p>
+          <p className="mt-4 text-sm leading-relaxed text-[#2c2c2c]/75 md:text-base">{marketingCopy.auth.statLine}</p>
+          <p className="mt-3 text-sm leading-relaxed text-[#2c2c2c]/60 md:text-base">{marketingCopy.trustLine}</p>
           <ul className="mt-8 space-y-3 text-sm text-[#2c2c2c]/80">
-            <li>✓ Free AI visibility scan</li>
-            <li>✓ Growth Agent priorities each week</li>
-            <li>✓ Website, ordering, and marketing in one place</li>
+            {marketingCopy.auth.bullets.map((bullet) => (
+              <li key={bullet}>✓ {bullet}</li>
+            ))}
           </ul>
         </div>
         <Suspense fallback={<div className="h-80 animate-pulse rounded-3xl bg-[#2c2c2c]/5" />}>

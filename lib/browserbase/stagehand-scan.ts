@@ -19,16 +19,17 @@ export type StagehandRenderedPage = BrowserbaseRenderedPage & {
 };
 
 export function isStagehandAuditEnabled(): boolean {
-  return (
-    process.env.AUDIT_STAGEHAND === "1" &&
-    Boolean(process.env.BROWSERBASE_API_KEY?.trim()) &&
-    Boolean(
-      process.env.OPENAI_API_KEY?.trim() ||
-        process.env.ANTHROPIC_API_KEY?.trim() ||
-        process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ||
-        process.env.GEMINI_API_KEY?.trim(),
-    )
+  if (process.env.AUDIT_STAGEHAND === "0") return false;
+  const hasBrowserbase = Boolean(process.env.BROWSERBASE_API_KEY?.trim());
+  const hasLlm = Boolean(
+    process.env.OPENAI_API_KEY?.trim() ||
+      process.env.ANTHROPIC_API_KEY?.trim() ||
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ||
+      process.env.GEMINI_API_KEY?.trim(),
   );
+  if (!hasBrowserbase || !hasLlm) return false;
+  if (process.env.AUDIT_STAGEHAND === "1") return true;
+  return hasBrowserbase;
 }
 
 /**

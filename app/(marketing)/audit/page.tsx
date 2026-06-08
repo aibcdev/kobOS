@@ -5,16 +5,12 @@ import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const metadata: Metadata = {
-  title: "Free AI report · KOB",
+  title: "Free hospitality perception report · KOB",
   description:
-    "You're losing sales online. Use AI to see what to fix—website, SEO, photos, and reviews scored in about a minute.",
+    "See the gap between how good your restaurant is and how you look online. Perception report for UK restaurants and cafés.",
 };
 
-const INSIGHTS = [
-  { quote: "Food photos quietly costing 40% of online orders.", tag: "Website experience" },
-  { quote: "Missing local keywords worth 800+ monthly searches.", tag: "SEO" },
-  { quote: "Slow mobile site bleeding sales before guests ever book.", tag: "Performance" },
-] as const;
+const INSIGHTS = marketingCopy.auditInsights;
 
 export default function AuditPage() {
   return (
@@ -50,7 +46,8 @@ export default function AuditPage() {
         </ul>
         <p className="mx-auto mt-12 max-w-lg text-center text-base leading-relaxed text-[#2c2c2c]/75 md:text-lg">
           Your room sells the experience.{" "}
-          <span className="font-medium text-[#2c2c2c]">Your website should sell it just as hard online.</span>
+          <span className="font-medium text-[#2c2c2c]">Your website should sell it just as hard online.</span>{" "}
+          {marketingCopy.auditInsightsClosing}
         </p>
       </SaasSection>
     </>

@@ -1,80 +1,56 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChiefOfStaffHome } from "@/components/dashboard/chief-of-staff/ChiefOfStaffHome";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
-import { DashboardTodayView } from "@/components/dashboard/DashboardTodayView";
 import { RestaurantOnboardingForm } from "@/components/dashboard/RestaurantOnboardingForm";
 import { appCodeInline, appLinkMuted } from "@/lib/app-ui-classes";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
-import { getOverviewMetrics } from "@/lib/dashboard/overview-metrics";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
-import { buildDigestSnapshot } from "@/lib/digest/build-snapshot";
-import { prisma } from "@/lib/db/prisma";
-import { getPreviewDigestSnapshot, getPreviewOverviewMetrics } from "@/lib/preview/static-dashboard-data";
-import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
+import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
+import { marketingCopy } from "@/lib/marketing/copy";
+import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
+import { getPreviewRestaurant, isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
+import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
 
 export const metadata: Metadata = {
   title: "Today · KOB",
-  description:
-    "Executive snapshot: brand health, site signals, visibility, AI briefing, alerts, and one-click growth actions.",
+  description: "Your AI Chief of Staff — what needs attention today, why it matters, and one-click approval.",
   openGraph: {
-    title: "Today · KOB",
-    description: "Action-oriented dashboard for restaurant growth.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Today · KOB",
-    description: "Action-oriented dashboard for restaurant growth.",
+    title: "Today · KOB Chief of Staff",
+    description: "Morning brief, tasks, and revenue opportunities for your restaurant.",
   },
 };
 
-type SearchParams = { r?: string };
-
-function dashboardGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
+type SearchParams = { r?: string; welcome?: string };
 
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const user = await getDashboardPageUser();
-  const sp = await searchParams;
-  const { memberships, restaurantId, restaurant } = await getActiveRestaurantContext(user.id, sp.r);
-
-  const briefingAutoRun = process.env.NEXT_PUBLIC_DASHBOARD_AUTO_BRIEFING === "1";
-
   if (isUiPreviewEnabled()) {
-    if (!restaurantId || !restaurant) {
-      return <DashboardEmptyRestaurant />;
-    }
+    const preview = getPreviewRestaurant();
     return (
-      <DashboardTodayView
-        greetingLabel={dashboardGreeting()}
-        briefingAutoRun={briefingAutoRun}
-        restaurantName={restaurant.name}
-        city={restaurant.city}
-        state={restaurant.state}
-        restaurantId={restaurantId}
-        recommendations={[]}
-        insights={[]}
-        digest={getPreviewDigestSnapshot()}
-        overviewMetrics={getPreviewOverviewMetrics()}
+      <ChiefOfStaffHome
+        restaurantId={PREVIEW_RESTAURANT_ID}
+        restaurantName={preview.name}
+        initial={getPreviewChiefOfStaffBrief()}
         previewMode
       />
     );
   }
+
+  const user = await getDashboardPageUser();
+  await ensureSalesWorkspaceMembership(user.id);
+  const sp = await searchParams;
+  const { memberships, restaurantId, restaurant } = await getActiveRestaurantContext(user.id, sp.r);
 
   if (!memberships.length) {
     return (
       <div className="mx-auto max-w-2xl px-[var(--spacing-md)] py-24">
         <h1 className="type-title-md">Your workspace</h1>
         <p className="type-body-md mt-3 text-pretty leading-snug text-[var(--color-muted)]">
-          Add your first restaurant to unlock insights and recommendations. You can also use{" "}
-          <code className={appCodeInline}>POST /api/restaurants</code> from tooling.
+          {marketingCopy.dashboardOnboarding.body}
         </p>
         <RestaurantOnboardingForm />
         <Link href="/" className={`${appLinkMuted} mt-8 inline-block`}>
@@ -88,34 +64,20 @@ export default async function DashboardPage({
     return <DashboardEmptyRestaurant />;
   }
 
-  const [recommendations, insights, digest, overviewMetrics] = await Promise.all([
-    prisma.recommendation.findMany({
-      where: { restaurantId },
-      orderBy: [{ impactScore: "desc" }, { createdAt: "desc" }],
-      take: 12,
-      include: { insight: true },
-    }),
-    prisma.growthInsight.findMany({
-      where: { restaurantId, status: "OPEN" },
-      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 8,
-    }),
-    buildDigestSnapshot(restaurantId),
-    getOverviewMetrics(restaurantId),
-  ]);
+  let brief;
+  try {
+    brief = await ensureTodayBrief(restaurantId);
+  } catch (e) {
+    console.error("[dashboard] chief-of-staff brief", e);
+    brief = await ensureTodayBrief(restaurantId, true);
+  }
 
   return (
-    <DashboardTodayView
-      greetingLabel={dashboardGreeting()}
-      briefingAutoRun={briefingAutoRun}
-      restaurantName={restaurant.name}
-      city={restaurant.city}
-      state={restaurant.state}
+    <ChiefOfStaffHome
       restaurantId={restaurantId}
-      recommendations={recommendations}
-      insights={insights}
-      digest={digest}
-      overviewMetrics={overviewMetrics}
+      restaurantName={restaurant.name}
+      initial={brief}
+      welcome={sp.welcome === "1"}
     />
   );
 }

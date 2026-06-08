@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
+import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
 import { prisma } from "@/lib/db/prisma";
 import { isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -30,6 +31,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   await ensureAppUser(user);
+  await ensureSalesWorkspaceMembership(user.id);
 
   const memberships = await prisma.teamMember.findMany({
     where: { userId: user.id },

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import { buildAuditResult } from "@/lib/audit/build-result";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
@@ -11,6 +12,7 @@ export type AuditPipelineInput = {
   userSocial?: AuditUserSocialInput | null;
   userImageUrls?: string[] | null;
   place?: {
+    name?: string;
     placeId?: string;
     formattedAddress?: string;
     lat?: number | null;
@@ -97,6 +99,23 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       place: input.place,
     });
 
+    const placesCompetitors = payload.competitors.filter((c) => c.source === "places").length;
+    const pipelineStage = [
+      `geo:${payload.geoLocation?.source ?? "none"}`,
+      `competitors:places=${placesCompetitors}/${payload.competitors.length}`,
+      `scan:${payload.scanStatus ?? "unknown"}`,
+    ].join(";");
+
+    const payloadWithStage: AuditResultPayload = {
+      ...payload,
+      browserbaseScan: {
+        capturedAt: payload.browserbaseScan?.capturedAt ?? new Date().toISOString(),
+        mode: payload.browserbaseScan?.mode ?? "sync",
+        ...payload.browserbaseScan,
+        pipelineStage,
+      },
+    };
+
     await prisma.visibilityAudit.update({
       where: { id: auditId },
       data: {
@@ -108,11 +127,11 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
         designScore: row.designScore,
         mobileScore: row.mobileScore,
         conversionScore: row.conversionScore,
-        resultPayload: row.resultPayload,
+        resultPayload: payloadWithStage as Prisma.InputJsonValue,
       },
     });
 
-    await upsertSiteScanForAudit(auditId, payload);
+    await upsertSiteScanForAudit(auditId, payloadWithStage);
     await enqueuePostScanJobs(auditId, queueAsyncBrowserbase);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

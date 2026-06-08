@@ -1,4 +1,5 @@
 import { analyzeWebsiteFromHtml, analyzeWebsiteFull, type WebsiteAnalysis } from "@/lib/audit/analyze-url";
+import { computeEngagementSignals } from "@/lib/audit/engagement-signals";
 import type { AuditBrowserbaseScan } from "@/lib/audit/types";
 import type { AuditVisualIntelligenceResult } from "@/lib/audit/visual-intelligence";
 import type { AuditStagehandExtraction } from "@/lib/browserbase/stagehand-schema";
@@ -96,6 +97,11 @@ export async function runAuditWebsitePipeline(
       const rendered = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
         httpStatus: page.statusCode ?? undefined,
       });
+      rendered.engagementSignals = computeEngagementSignals(
+        page.html,
+        rendered.signals,
+        page.stagehandExtraction,
+      );
       return {
         analysis: rendered,
         queueAsyncBrowserbase: false,
