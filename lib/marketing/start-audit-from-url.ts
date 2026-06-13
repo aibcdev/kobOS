@@ -59,7 +59,11 @@ export async function startAuditFromUrl(websiteUrl: string): Promise<StartAuditR
   } catch {
     return {
       ok: false,
-      message: auditInlineValidationMessage("We got an unexpected response. Please try again."),
+      message: auditInlineValidationMessage(
+        res.status >= 500
+          ? "Our scan server hit a snag. Wait a minute and try again."
+          : "We got an unexpected response. Please try again.",
+      ),
     };
   }
 

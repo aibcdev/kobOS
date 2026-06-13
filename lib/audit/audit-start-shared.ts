@@ -6,7 +6,6 @@ import { cityFromFormattedAddress, createPendingAuditSeed } from "@/lib/audit/cr
 import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import { normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
 import { checkAuditRunRateLimit, clientIpFromHeaders } from "@/lib/audit/rate-limit";
-import { executeAuditPipeline } from "@/lib/audit/execute-audit-pipeline";
 import { validateAuditRuntimeEnv } from "@/lib/audit/validate-audit-runtime";
 import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
@@ -137,6 +136,7 @@ export async function handleAuditStart(req: Request) {
     if (!queued) {
       const inlineMs = process.env.NODE_ENV === "development" ? 120_000 : 55_000;
       try {
+        const { executeAuditPipeline } = await import("@/lib/audit/execute-audit-pipeline");
         await Promise.race([
           executeAuditPipeline(created.id, {
             websiteUrl,
