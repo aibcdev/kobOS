@@ -10,7 +10,7 @@ export const marketingCopy = {
 
   heroHeadline: "See the gap between how good you are—and how you look online.",
   heroSubline:
-    "KOB watches your website, reviews, and listings—then every morning tells you what needs doing. One tap to approve. Start with a free scan.",
+    "Scan your site in seconds and see how you compare to strong venues nearby. Then get a daily list of what needs doing—one tap to approve.",
   losingSalesOnline: "See the gap between how good you are—and how you look online.",
   useAiToFix: " Free hospitality perception report.",
 
@@ -46,7 +46,7 @@ export const marketingCopy = {
   },
 
   scanning: {
-    headline: "Building your perception report…",
+    headline: "Scanning…",
     subline: "Checking what guests see when they find you online—vs strong UK hospitality venues.",
     contextLine: "Most guests decide on your website before they visit—we're checking what they see.",
     mapStatus: (name: string) => `Scanning ${name} & competitors`,
@@ -55,6 +55,12 @@ export const marketingCopy = {
     mobileStatus: "Scanning mobile experience",
     reviewsStatus: "Scanning Google Reviews",
   },
+
+  graderPrompts: [
+    { label: "How's my Google SEO?", icon: "search" as const },
+    { label: "What's broken on my site?", icon: "site" as const },
+    { label: "Who's beating me and how?", icon: "crown" as const },
+  ] as const,
 
   graderReport: {
     onlineHealth: "Digital positioning",
@@ -161,7 +167,7 @@ export const marketingCopy = {
   ] as const,
 
   input: {
-    restaurantPlaceholder: "Find your restaurant name",
+    restaurantPlaceholder: "Find your restaurant",
   },
 
   industryStatsFootnote,

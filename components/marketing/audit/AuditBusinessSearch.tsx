@@ -43,6 +43,7 @@ function SearchField({
   highlight,
   onSelect,
   onHighlight,
+  ownerHighlight = false,
 }: {
   children: React.ReactNode;
   showDropdown: boolean;
@@ -51,6 +52,7 @@ function SearchField({
   highlight: number;
   onSelect: (s: Suggestion) => void;
   onHighlight: (i: number) => void;
+  ownerHighlight?: boolean;
 }) {
   return (
     <div className="relative min-w-0 flex-1">
@@ -62,25 +64,40 @@ function SearchField({
           {suggestLoading && suggestions.length === 0 ? (
             <li className="px-5 py-3 text-sm text-[var(--color-muted-medium)]">Searching restaurants…</li>
           ) : null}
-          {suggestions.map((s, i) => (
-            <li key={s.placeId}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={i === highlight}
-                className={`flex w-full flex-col items-start gap-0.5 px-5 py-3.5 text-left transition-colors ${
-                  i === highlight ? "bg-[var(--color-surface-cream)]" : "hover:bg-[var(--color-surface-warm)]"
-                }`}
-                onMouseEnter={() => onHighlight(i)}
-                onClick={() => void onSelect(s)}
-              >
-                <span className="font-head text-base font-semibold text-[var(--color-ink)]">{s.mainText}</span>
-                {s.secondaryText ? (
-                  <span className="text-sm text-[var(--color-muted-medium)]">{s.secondaryText}</span>
-                ) : null}
-              </button>
-            </li>
-          ))}
+          {suggestions.map((s, i) => {
+            const selected = i === highlight;
+            return (
+              <li key={s.placeId}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`flex w-full flex-col items-start gap-0.5 px-5 py-3.5 text-left transition-colors ${
+                    selected && ownerHighlight
+                      ? "bg-[var(--color-primary)] text-white"
+                      : selected
+                        ? "bg-[var(--color-surface-cream)]"
+                        : "hover:bg-[var(--color-surface-warm)]"
+                  }`}
+                  onMouseEnter={() => onHighlight(i)}
+                  onClick={() => void onSelect(s)}
+                >
+                  <span
+                    className={`font-head text-base font-semibold ${selected && ownerHighlight ? "text-white" : "text-[var(--color-ink)]"}`}
+                  >
+                    {s.mainText}
+                  </span>
+                  {s.secondaryText ? (
+                    <span
+                      className={`text-sm ${selected && ownerHighlight ? "text-white/80" : "text-[var(--color-muted-medium)]"}`}
+                    >
+                      {s.secondaryText}
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
       {children}
@@ -91,6 +108,7 @@ function SearchField({
 export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "hero" }) {
   const isHero = variant === "hero";
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setHydrated(true);
@@ -408,8 +426,10 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
           highlight={highlight}
           onSelect={selectSuggestion}
           onHighlight={setHighlight}
+          ownerHighlight={isHero}
         >
           <input
+            ref={inputRef}
             type="text"
             autoComplete="off"
             value={inputValue}
@@ -504,6 +524,24 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
             className={`${fieldClass} mt-2`}
             placeholder="yourrestaurant.com"
           />
+        </div>
+      ) : null}
+
+      {isHero ? (
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          {marketingCopy.graderPrompts.map((chip) => (
+            <button
+              key={chip.label}
+              type="button"
+              onClick={() => {
+                inputRef.current?.focus();
+                setOpen(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--color-hairline)] bg-white px-4 py-2 text-sm text-[var(--color-ink)] shadow-sm transition-colors hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-surface-cream)]"
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
       ) : null}
 

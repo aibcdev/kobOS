@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
+import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
 import { marketingCopy } from "@/lib/marketing/copy";
 
-import { SaasHeroAuditForm } from "./SaasHeroAuditForm";
 import { SaasIcon } from "./SaasIcon";
 
 const MOCK_IMAGE =
@@ -36,7 +36,7 @@ export function SaasHeroSection() {
         <p className="mb-10 max-w-2xl text-sm text-[#2c2c2c]/75 md:text-base">{marketingCopy.heroSubline}</p>
 
         <div className="mb-16 w-full max-w-xl px-2">
-          <SaasHeroAuditForm />
+          <AuditBusinessSearch variant="hero" />
         </div>
 
         <div className="relative flex w-full items-center justify-center overflow-hidden rounded-[3rem] bg-gradient-to-tr from-[#094413] to-[#088924] p-8 shadow-2xl md:p-16">

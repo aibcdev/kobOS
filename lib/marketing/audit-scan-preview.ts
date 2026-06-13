@@ -12,6 +12,7 @@ export type ScanPreviewReview = {
 export type ScanPreviewGooglePlace = {
   rating: number | null;
   reviewCount: number | null;
+  photoCount: number | null;
   reviews: ScanPreviewReview[];
 };
 
@@ -20,12 +21,14 @@ export type ScanPreviewSignals = {
   hasScreenshot: boolean;
   hasHeroImage: boolean;
   hasReviews: boolean;
+  hasPhotos: boolean;
 };
 
 export type AuditScanPreview = {
   screenshotUrl: string | null;
   heroImageUrl: string | null;
   previewImageUrl: string | null;
+  imageUrls: string[];
   googlePlace: ScanPreviewGooglePlace | null;
   scanSignals: ScanPreviewSignals;
 };
@@ -52,6 +55,7 @@ function normalizeGooglePlace(gp: AuditGooglePlaceEvidence): ScanPreviewGooglePl
   return {
     rating: gp.rating,
     reviewCount: gp.reviewCount,
+    photoCount: gp.photoCount ?? null,
     reviews: gp.reviews.slice(0, 6).map((r, i) => ({
       text: r.text.slice(0, 280),
       rating: r.rating,
@@ -86,18 +90,23 @@ export function buildScanPreviewFromPayload(payload: AuditResultPayload): AuditS
   const previewImageUrl = pickScanPreviewImageUrl(screenshotUrl, heroImageUrl);
   const gp = payload.evidencePack?.googlePlace;
   const googlePlace = gp ? normalizeGooglePlace(gp) : null;
+  const imageUrls =
+    payload.evidencePack?.imageCandidates?.map((c) => c.url).filter(Boolean).slice(0, 6) ?? [];
+  const photoCount = googlePlace?.photoCount ?? 0;
 
   const scanSignals: ScanPreviewSignals = {
     hasGeo: Boolean(payload.geoLocation?.lat != null && payload.geoLocation?.lng != null),
     hasScreenshot: Boolean(screenshotUrl),
     hasHeroImage: Boolean(heroImageUrl),
     hasReviews: Boolean(googlePlace && googlePlace.reviews.length > 0),
+    hasPhotos: Boolean(photoCount > 0 || imageUrls.length > 0 || heroImageUrl),
   };
 
   return {
     screenshotUrl,
     heroImageUrl,
     previewImageUrl,
+    imageUrls,
     googlePlace,
     scanSignals,
   };
