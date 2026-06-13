@@ -35,16 +35,19 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (
-    path.startsWith("/dashboard") ||
-    path.startsWith("/app")
-  ) {
+  if (path.startsWith("/dashboard") || path.startsWith("/app")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", path);
       return NextResponse.redirect(url);
     }
+  }
+
+  if (user && (path === "/login" || path === "/signup")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;

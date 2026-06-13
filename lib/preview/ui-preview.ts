@@ -49,6 +49,7 @@ export function getPreviewRestaurant(): Restaurant {
     vibe: null,
     googleBusinessUrl: null,
     aiPersonality: "BALANCED",
+    useSampleData: true,
     createdAt: new Date(0),
     updatedAt: new Date(0),
   };

@@ -4,6 +4,7 @@ import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { AiEraContentBriefPanel } from "@/components/dashboard/seo/AiEraContentBriefPanel";
 import { SeoKeywordTools } from "@/components/dashboard/seo/SeoKeywordTools";
 import { prisma } from "@/lib/db/prisma";
 import { SubscriptionPlan } from "@prisma/client";
@@ -57,6 +58,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
       )}
 
       <SeoKeywordTools restaurantId={restaurantId} canRefresh={canRefresh} />
+      <AiEraContentBriefPanel restaurantId={restaurantId} />
     </div>
   );
 }

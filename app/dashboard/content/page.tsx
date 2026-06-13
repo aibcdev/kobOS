@@ -9,8 +9,8 @@ import { prisma } from "@/lib/db/prisma";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
-  title: "Content · KOB",
-  description: "AI-generated blogs, pages, and social copy.",
+  title: "Posts & Email · KOB",
+  description: "Social posts, email campaigns, and newsletters ready for your approval.",
 };
 
 export default async function ContentPage({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
@@ -30,9 +30,9 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="mx-auto max-w-4xl px-[var(--spacing-md)] py-10">
-      <h1 className="type-title-md">Content engine</h1>
+      <h1 className="type-title-md">Posts &amp; Email</h1>
       <p className="type-body-md mt-2 text-[var(--color-muted)]">
-        Generated assets for {restaurant.name}. Approve tasks on Today to auto-create drafts here.
+        Social posts, emails, and newsletters for {restaurant.name}. Nothing sends until you approve.
       </p>
 
       <ContentGeneratePanel restaurantId={restaurantId} />

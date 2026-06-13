@@ -1,5 +1,7 @@
 import { ContentType } from "@prisma/client";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { geminiConfigError, getGeminiModelName, isGeminiConfigured } from "@/lib/ai/gemini-config";
+import { generateImage } from "@/lib/ai/generate-image";
 import { prisma } from "@/lib/db/prisma";
 
 const typeLabels: Record<ContentType, string> = {
@@ -16,22 +18,46 @@ const typeLabels: Record<ContentType, string> = {
   GROWTH_REVIEW_REPLY: "Growth · review relationship draft",
 };
 
+/** Content types that benefit from an accompanying generated image */
+const IMAGE_TYPES: ContentType[] = [
+  ContentType.INSTAGRAM_CAPTION,
+  ContentType.GOOGLE_BUSINESS_POST,
+  ContentType.EVENT_PAGE,
+];
+
+async function generateTextWithGemini(prompt: string): Promise<string | null> {
+  if (!isGeminiConfigured()) return null;
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!.trim());
+    const model = genAI.getGenerativeModel({
+      model: getGeminiModelName(),
+      generationConfig: { temperature: 0.7 },
+    });
+    const res = await model.generateContent(prompt);
+    const text = res.response.text()?.trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateAndStoreContent(args: {
   restaurantId: string;
   type: ContentType;
   extraPrompt?: string;
-}): Promise<{ id: string; output: string } | { error: string }> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return { error: "OPENAI_API_KEY is not configured." };
+  withImage?: boolean;
+}): Promise<{ id: string; output: string; imageUrl?: string } | { error: string }> {
+  if (!isGeminiConfigured()) {
+    return { error: `${geminiConfigError()} Add it in Netlify environment variables.` };
   }
 
   const restaurant = await prisma.restaurant.findUnique({ where: { id: args.restaurantId } });
-  if (!restaurant) {
-    return { error: "Restaurant not found." };
-  }
+  if (!restaurant) return { error: "Restaurant not found." };
+
+  const systemLine = "You write high-converting restaurant marketing copy. Be specific, warm, and concise.";
 
   const prompt = [
+    systemLine,
     `Restaurant: ${restaurant.name}`,
     restaurant.city ? `City: ${restaurant.city}` : null,
     restaurant.cuisineType ? `Cuisine: ${restaurant.cuisineType}` : null,
@@ -42,16 +68,8 @@ export async function generateAndStoreContent(args: {
     .filter(Boolean)
     .join("\n");
 
-  const openai = new OpenAI({ apiKey });
-  const completion = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You write high-converting restaurant marketing copy." },
-      { role: "user", content: prompt },
-    ],
-  });
+  const output = await generateTextWithGemini(prompt);
 
-  const output = completion.choices[0]?.message?.content?.trim() ?? "";
   if (!output) {
     const row = await prisma.generatedContent.create({
       data: {
@@ -65,15 +83,24 @@ export async function generateAndStoreContent(args: {
     return { id: row.id, output: "" };
   }
 
+  let imageUrl: string | undefined;
+  const shouldGenerateImage = args.withImage !== false && IMAGE_TYPES.includes(args.type);
+  if (shouldGenerateImage) {
+    const imagePrompt = `${restaurant.name} restaurant — ${args.extraPrompt?.trim() || typeLabels[args.type]}`;
+    const imgResult = await generateImage(imagePrompt);
+    if (imgResult.ok) imageUrl = imgResult.url;
+  }
+
   const row = await prisma.generatedContent.create({
     data: {
       restaurantId: args.restaurantId,
       type: args.type,
       prompt,
       output,
+      imageUrl: imageUrl ?? null,
       status: "READY",
     },
   });
 
-  return { id: row.id, output };
+  return { id: row.id, output, imageUrl };
 }

@@ -1,5 +1,6 @@
 import { cron } from "inngest";
 import { persistAiRecommendations } from "@/lib/ai/recommendations";
+import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
 import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
 import { buildAuditPayloadAndRow } from "@/lib/audit/build-result";
@@ -17,17 +18,17 @@ import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
 import { auditPageTextPreview } from "@/lib/audit/website-analysis-pipeline";
 import { fetchRenderedPageWithRetry, isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
-import {
-  type StagehandRenderedPage,
-  fetchRenderedPageViaStagehandWithRetry,
-  isStagehandAuditEnabled,
-} from "@/lib/browserbase/stagehand-scan";
+import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
+import type { StagehandRenderedPage } from "@/lib/browserbase/stagehand-scan";
 import { saveDigestRun } from "@/lib/digest/build-snapshot";
 import { prisma } from "@/lib/db/prisma";
 import { generateOutboundDraft } from "@/lib/growth-agent/generate-outbound-draft";
 import { persistOutboundDraftLeads } from "@/lib/growth-agent/persist-outbound-leads";
 import { importAuditLeadsToOutbound } from "@/lib/outbound/import-audit-leads";
 import { isUkColdOutboundMode } from "@/lib/outbound/icp-config";
+import { runLeadFinder } from "@/lib/lead-engine/run-lead-finder";
+import { runOpportunityAnalyzer } from "@/lib/lead-engine/run-opportunity-analyzer";
+import { runOutreachWriter } from "@/lib/lead-engine/run-outreach-writer";
 import { runUkColdPipeline } from "@/lib/outbound/run-uk-cold-pipeline";
 import { detectInsightsFromRules } from "@/lib/growth/detect";
 import { summarizeMetadata } from "@/lib/growth/normalize";
@@ -144,8 +145,8 @@ export const aiRecommendations = inngest.createFunction(
       throw new Error("growth/recommendations.ai.requested missing restaurantId");
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return { restaurantId, skipped: true, reason: "no_openai_key" };
+    if (!isGeminiConfigured()) {
+      return { restaurantId, skipped: true, reason: "no_gemini_key" };
     }
 
     if (process.env.GROWTH_AUTO_AI_RECOMMENDATIONS !== "1") {
@@ -238,15 +239,20 @@ export const auditBrowserbaseScan = inngest.createFunction(
         return { ok: false as const, reason: "bad_payload" };
       }
 
+      const websiteUrl = audit.websiteUrl.trim();
+
       try {
         const useStagehand = isStagehandAuditEnabled();
         const page = useStagehand
-          ? await fetchRenderedPageViaStagehandWithRetry(
-              audit.websiteUrl.trim(),
-              { restaurantName: audit.restaurantName, city: audit.city },
-              2,
-            )
-          : await fetchRenderedPageWithRetry(audit.websiteUrl.trim(), 2);
+          ? await (async () => {
+              const { fetchRenderedPageViaStagehandWithRetry } = await import("@/lib/browserbase/stagehand-scan");
+              return fetchRenderedPageViaStagehandWithRetry(
+                websiteUrl,
+                { restaurantName: audit.restaurantName, city: audit.city },
+                2,
+              );
+            })()
+          : await fetchRenderedPageWithRetry(websiteUrl, 2);
         const analysis = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
           httpStatus: page.statusCode ?? undefined,
         });
@@ -330,7 +336,7 @@ export const auditBrowserbaseScan = inngest.createFunction(
     if (result.ok === true) {
       await step.run("enqueue-post-scan-ai", async () => {
         const sends: { name: string; data: Record<string, string> }[] = [];
-        if (process.env.OPENAI_API_KEY) {
+        if (isGeminiConfigured()) {
           sends.push({ name: "audit/enrichment.requested", data: { auditId } });
         }
         if (process.env.GEMINI_API_KEY?.trim()) {
@@ -361,7 +367,7 @@ export const auditEnrichment = inngest.createFunction(
       throw new Error("audit/enrichment.requested missing auditId");
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!isGeminiConfigured()) {
       return { auditId, skipped: true };
     }
 
@@ -733,6 +739,173 @@ export const outboundAuditImportDaily = inngest.createFunction(
   },
 );
 
+/** Agent A — discover UK/IE independents with email into LeadProspect pool. */
+export const leadFinderDaily = inngest.createFunction(
+  {
+    id: "lead-finder-daily",
+    name: "Lead engine · finder daily",
+    triggers: [cron("0 6 * * *"), { event: "lead-engine/finder.requested" }],
+  },
+  async ({ step }) => {
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID not set" };
+    }
+
+    const result = await step.run("lead-finder", () => runLeadFinder(workspaceId));
+
+    await step.run("resend-lead-finder-summary", async () => {
+      const key = process.env.RESEND_API_KEY?.trim();
+      const to = process.env.OUTBOUND_RESEND_NOTIFY_EMAIL?.trim();
+      if (!key || !to) return { skipped: true as const, reason: "resend_or_notify_email_missing" };
+      const { Resend } = await import("resend");
+      const resend = new Resend(key);
+      const from =
+        process.env.RESEND_FROM_EMAIL?.trim() || "KOB Growth <onboarding@resend.dev>";
+      const skipLines = Object.entries(result.skipped)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+      const { error } = await resend.emails.send({
+        from,
+        to: [to],
+        subject: `KOB Lead Finder: ${result.inserted} new · ${result.city}`,
+        html: `<p><strong>${result.inserted}</strong> prospect(s) added for <strong>${result.city}</strong> (${result.country}).</p>
+<p>Contactable total: <strong>${result.contactableTotal}</strong>. Analyzed queue runs next.</p>
+${skipLines ? `<p>Skipped: ${skipLines}</p>` : ""}`,
+      });
+      if (error) throw new Error(error.message);
+      return { sent: true as const };
+    });
+
+    return result;
+  },
+);
+
+/** Agent B — score DISCOVERED prospects with KOB Opportunity Score. */
+export const leadAnalyzerDaily = inngest.createFunction(
+  {
+    id: "lead-analyzer-daily",
+    name: "Lead engine · analyzer daily",
+    triggers: [cron("15 6 * * *"), { event: "lead-engine/analyzer.requested" }],
+  },
+  async ({ step }) => {
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID not set" };
+    }
+
+    return step.run("lead-analyzer", () => runOpportunityAnalyzer(workspaceId));
+  },
+);
+
+/** Agent C — draft personalized outreach for high-score ANALYZED prospects. */
+export const leadOutreachWriterDaily = inngest.createFunction(
+  {
+    id: "lead-outreach-writer-daily",
+    name: "Lead engine · outreach writer daily",
+    triggers: [cron("30 6 * * *"), { event: "lead-engine/outreach-writer.requested" }],
+  },
+  async ({ step }) => {
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID not set" };
+    }
+
+    const result = await step.run("lead-outreach-writer", () => runOutreachWriter(workspaceId));
+
+    await step.run("resend-lead-outreach-summary", async () => {
+      const key = process.env.RESEND_API_KEY?.trim();
+      const to = process.env.OUTBOUND_RESEND_NOTIFY_EMAIL?.trim();
+      if (!key || !to || result.queued === 0) {
+        return { skipped: true as const };
+      }
+      const { Resend } = await import("resend");
+      const resend = new Resend(key);
+      const from =
+        process.env.RESEND_FROM_EMAIL?.trim() || "KOB Growth <onboarding@resend.dev>";
+      const { error } = await resend.emails.send({
+        from,
+        to: [to],
+        subject: `KOB Outreach Writer: ${result.queued} email(s) ready`,
+        html: `<p><strong>${result.queued}</strong> personalized email(s) are in the approval queue.</p>
+<p>Open <strong>/dashboard/outbound</strong> → Lead Engine or UK cold tab to approve.</p>`,
+      });
+      if (error) throw new Error(error.message);
+      return { sent: true as const };
+    });
+
+    return result;
+  },
+);
+
+/** Daily sync for connected POS and analytics integrations. */
+export const integrationSyncDaily = inngest.createFunction(
+  {
+    id: "integration-sync-daily",
+    name: "Integrations · daily sync",
+    triggers: [cron("30 6 * * *")],
+  },
+  async ({ step }) => {
+    const integrations = await step.run("list-integrations", () =>
+      prisma.integration.findMany({
+        where: {
+          provider: { in: ["SQUARE", "TOAST", "GOOGLE_ANALYTICS", "GOOGLE_SEARCH_CONSOLE", "GOOGLE_CALENDAR", "GMAIL"] },
+        },
+      }),
+    );
+
+    let synced = 0;
+    for (const row of integrations) {
+      await step.run(`sync-${row.id}`, async () => {
+        const integration = await prisma.integration.findUnique({ where: { id: row.id } });
+        if (!integration) return 0;
+        if (integration.provider === "SQUARE") {
+          const { syncSquareSales } = await import("@/lib/integrations/providers/square");
+          return syncSquareSales(integration.restaurantId, integration);
+        }
+        if (integration.provider === "TOAST") {
+          const { syncToastSales } = await import("@/lib/integrations/providers/toast");
+          return syncToastSales(integration.restaurantId, integration);
+        }
+        if (integration.provider === "GOOGLE_ANALYTICS") {
+          const { syncGa4Traffic } = await import("@/lib/integrations/providers/ga4");
+          return syncGa4Traffic(integration.restaurantId, integration);
+        }
+        if (integration.provider === "GOOGLE_SEARCH_CONSOLE") {
+          const { syncGscKeywords } = await import("@/lib/integrations/providers/gsc");
+          return syncGscKeywords(integration.restaurantId, integration);
+        }
+        if (integration.provider === "GOOGLE_CALENDAR") {
+          const { syncGoogleCalendarEvents } = await import("@/lib/integrations/providers/google-calendar");
+          return syncGoogleCalendarEvents(integration.restaurantId, integration);
+        }
+        if (integration.provider === "GMAIL") {
+          const { syncGmailSnapshot } = await import("@/lib/integrations/providers/gmail");
+          return syncGmailSnapshot(integration.restaurantId, integration);
+        }
+        return 0;
+      });
+      synced++;
+    }
+    return { synced };
+  },
+);
+
+export const cosGenerateDraftsOnApprove = inngest.createFunction(
+  {
+    id: "cos-generate-drafts-on-approve",
+    name: "Chief of Staff · generate drafts after approve",
+    triggers: [{ event: "chief-of-staff/task.approved" }],
+  },
+  async ({ event, step }) => {
+    const taskId = event.data.taskId as string;
+    return step.run("generate-drafts", async () => {
+      const { generateDraftsForTask } = await import("@/lib/chief-of-staff/generate-drafts-for-task");
+      return generateDraftsForTask(taskId);
+    });
+  },
+);
+
 export const functions = [
   ingestionHourly,
   normalizationRequested,
@@ -747,4 +920,9 @@ export const functions = [
   outboundSendApprovedDaily,
   outboundUkColdDaily,
   outboundAuditImportDaily,
+  leadFinderDaily,
+  leadAnalyzerDaily,
+  leadOutreachWriterDaily,
+  integrationSyncDaily,
+  cosGenerateDraftsOnApprove,
 ];

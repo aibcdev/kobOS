@@ -1,28 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRef, useState } from "react";
+import { DashboardAccountMenu } from "@/components/dashboard/DashboardAccountMenu";
 import { appPillActive, appPillInactive } from "@/lib/app-ui-classes";
 
 export type DashboardRestaurantLite = { id: string; name: string; city: string | null };
 
+/** What restaurant owners use day to day */
 const NAV_PRIMARY: { href: string; label: string }[] = [
   { href: "/dashboard", label: "Today" },
-  { href: "/dashboard/website", label: "Website" },
+  { href: "/dashboard/chat", label: "Chat" },
   { href: "/dashboard/reviews", label: "Reviews" },
-  { href: "/dashboard/content", label: "Content" },
+  { href: "/dashboard/content", label: "Posts & Email" },
+  { href: "/dashboard/customers", label: "Customers" },
+  { href: "/dashboard/analytics", label: "Traffic & Sales" },
+  { href: "/dashboard/website", label: "Website" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
+/** Secondary tools — still useful, not daily */
 const NAV_MORE: { href: string; label: string }[] = [
-  { href: "/dashboard/brand", label: "Brand & Visuals" },
-  { href: "/dashboard/outbound", label: "Outbound" },
-  { href: "/dashboard/growth-agent", label: "Growth Agent" },
+  { href: "/dashboard/brand", label: "Brand & Photos" },
+  { href: "/dashboard/seo", label: "Search (SEO)" },
+  { href: "/dashboard/workspace", label: "Workspace" },
   { href: "/dashboard/billing", label: "Billing" },
 ];
 
-const NAV = [...NAV_PRIMARY, ...NAV_MORE];
+/** Internal KOB sales ops only — not for restaurant owners */
+const NAV_INTERNAL: { href: string; label: string }[] = [
+  { href: "/dashboard/outbound", label: "Sales pipeline" },
+];
 
 function withRestaurant(path: string, restaurantId: string | null) {
   if (!restaurantId) return path;
@@ -30,11 +39,20 @@ function withRestaurant(path: string, restaurantId: string | null) {
   return `${clean}?r=${encodeURIComponent(restaurantId)}`;
 }
 
+function isActive(pathname: string, href: string) {
+  if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/dashboard/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function DashboardShell({
   restaurants,
+  userEmail,
+  salesMode,
   children,
 }: {
   restaurants: DashboardRestaurantLite[];
+  userEmail?: string | null;
+  salesMode?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -44,24 +62,51 @@ export function DashboardShell({
     activeR && restaurants.some((x) => x.id === activeR) ? activeR : restaurants[0]?.id ?? null;
 
   const [mobileNav, setMobileNav] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const navMore = salesMode ? [...NAV_MORE, ...NAV_INTERNAL] : NAV_MORE;
+  const navAll = [...NAV_PRIMARY, ...navMore];
+
+  function submitSearch() {
+    const q = searchQuery.trim();
+    if (!q || !restaurantId) return;
+    router.push(`/dashboard/workspace?r=${encodeURIComponent(restaurantId)}&q=${encodeURIComponent(q)}`);
+    setSearchQuery("");
+    searchRef.current?.blur();
+  }
 
   return (
     <div className="flex min-h-screen bg-[var(--color-surface-soft)] text-[var(--color-body)]">
-      {/* Desktop sidebar */}
       <aside className="hidden w-56 shrink-0 flex-col border-r border-[var(--color-hairline)] bg-[var(--color-surface-soft)] lg:flex">
         <div className="p-4">
-          <Link href="/" className="type-label-md font-semibold text-[var(--color-ink)] no-underline">
+          <Link
+            href={withRestaurant("/dashboard", restaurantId)}
+            className="type-label-md font-semibold text-[var(--color-ink)] no-underline"
+          >
             KOB
           </Link>
-          <p className="type-caption mt-1 text-[var(--color-muted-medium)]">Workspace</p>
+          <p className="type-caption mt-1 text-[var(--color-muted-medium)]">Your restaurant</p>
+          <div className="mt-3">
+            <input
+              ref={searchRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitSearch();
+              }}
+              placeholder="Search…"
+              className="w-full rounded-[var(--radius-default)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--color-body)] outline-none placeholder:text-[var(--color-muted)] focus:border-[var(--color-ink)]"
+              aria-label="Search dashboard"
+            />
+          </div>
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 px-2 pb-6">
           {NAV_PRIMARY.map((item) => {
             const target = withRestaurant(item.href, restaurantId);
-            const active =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard" || pathname === "/dashboard/"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = isActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -77,12 +122,9 @@ export function DashboardShell({
             );
           })}
           <p className="type-caption mb-1 mt-4 px-3 text-[var(--color-muted-medium)]">More</p>
-          {NAV_MORE.map((item) => {
+          {navMore.map((item) => {
             const target = withRestaurant(item.href, restaurantId);
-            const active =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard" || pathname === "/dashboard/"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = isActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -113,15 +155,12 @@ export function DashboardShell({
               >
                 {mobileNav ? "×" : "Menu"}
               </button>
-              <span className="type-label-md text-[var(--color-ink)]">KOB</span>
+              <Link href={withRestaurant("/dashboard", restaurantId)} className="type-label-md text-[var(--color-ink)] no-underline">
+                KOB
+              </Link>
             </div>
             <div className="hidden min-w-0 flex-1 lg:block" />
-            <Link
-              href="/login"
-              className="type-caption shrink-0 text-[var(--color-muted)] underline-offset-2 hover:text-[var(--color-ink)]"
-            >
-              Account
-            </Link>
+            <DashboardAccountMenu email={userEmail} />
           </div>
           {restaurants.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -136,19 +175,16 @@ export function DashboardShell({
               ))}
             </div>
           ) : (
-            <p className="type-caption text-[var(--color-muted-medium)]">Add a restaurant to unlock modules.</p>
+            <p className="type-caption text-[var(--color-muted-medium)]">Add a restaurant to get started.</p>
           )}
         </header>
 
         {mobileNav ? (
           <div className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-soft)] px-2 py-3 lg:hidden">
             <nav className="flex flex-col gap-0.5">
-              {NAV.map((item) => {
+              {navAll.map((item) => {
                 const target = withRestaurant(item.href, restaurantId);
-                const active =
-                  item.href === "/dashboard"
-                    ? pathname === "/dashboard" || pathname === "/dashboard/"
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const active = isActive(pathname, item.href);
                 return (
                   <Link
                     key={item.href}
@@ -170,33 +206,13 @@ export function DashboardShell({
       </div>
 
       {restaurantId ? (
-        <div className="pointer-events-none fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2 sm:bottom-8 sm:right-8">
-          <div className="pointer-events-auto flex flex-col gap-1 rounded-2xl border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-2 shadow-lg">
-            <Link
-              href="/audit"
-              className="rounded-[var(--radius-default)] px-3 py-2 text-xs font-medium text-[var(--color-ink)] no-underline hover:bg-[var(--color-surface-warm)]"
-            >
-              Run audit
-            </Link>
-            <Link
-              href={withRestaurant("/dashboard/brand", restaurantId)}
-              className="rounded-[var(--radius-default)] px-3 py-2 text-xs font-medium text-[var(--color-ink)] no-underline hover:bg-[var(--color-surface-warm)]"
-            >
-              Brand &amp; Visuals
-            </Link>
-            <Link
-              href={withRestaurant("/dashboard/growth-agent", restaurantId)}
-              className="rounded-[var(--radius-default)] px-3 py-2 text-xs font-medium text-[var(--color-ink)] no-underline hover:bg-[var(--color-surface-warm)]"
-            >
-              Growth Agent
-            </Link>
-            <Link
-              href={withRestaurant("/dashboard/billing", restaurantId)}
-              className="rounded-[var(--radius-default)] px-3 py-2 text-xs font-medium text-[var(--color-ink)] no-underline hover:bg-[var(--color-surface-warm)]"
-            >
-              Billing
-            </Link>
-          </div>
+        <div className="pointer-events-none fixed bottom-6 right-6 z-40 sm:bottom-8 sm:right-8">
+          <Link
+            href={withRestaurant("/dashboard/chat", restaurantId)}
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[var(--color-ink)] px-4 py-3 text-sm font-medium text-[var(--color-text-warm)] shadow-lg no-underline transition-transform active:scale-95"
+          >
+            Ask Chief of Staff
+          </Link>
         </div>
       ) : null}
     </div>

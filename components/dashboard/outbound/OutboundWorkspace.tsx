@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { appBtnPrimary, appBtnSecondary, appCardSurface } from "@/lib/app-ui-classes";
+import { LeadEnginePanel, type LeadProspectRow } from "@/components/dashboard/outbound/LeadEnginePanel";
 
 type LeadRow = {
   id: string;
@@ -27,6 +28,7 @@ type PipelineProps = {
   auditQueue: LeadRow[];
   approved: LeadRow[];
   sent: LeadRow[];
+  leadProspects: LeadProspectRow[];
   restaurantId: string;
   salesMode: boolean;
   ukColdMode: boolean;
@@ -154,6 +156,7 @@ export function OutboundWorkspace({
   auditQueue,
   approved,
   sent,
+  leadProspects,
   restaurantId,
   salesMode,
   ukColdMode,
@@ -170,7 +173,9 @@ export function OutboundWorkspace({
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [recipientById, setRecipientById] = useState<Record<string, string>>({});
-  const [tab, setTab] = useState<"uk_cold" | "audit" | "approved" | "sent">(ukColdMode ? "uk_cold" : "audit");
+  const [tab, setTab] = useState<"lead_engine" | "uk_cold" | "audit" | "approved" | "sent">(
+    ukColdMode ? "lead_engine" : "audit",
+  );
 
   const activeQueue = tab === "uk_cold" ? ukColdQueue : tab === "audit" ? auditQueue : [];
 
@@ -280,6 +285,9 @@ export function OutboundWorkspace({
           {salesMode ? " Sales mode on." : ""}
         </p>
         <div className="mt-4 flex flex-wrap gap-2 type-caption">
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-900">
+            Lead engine: {leadProspects.length}
+          </span>
           <span className="rounded-full bg-[var(--color-primary)]/10 px-3 py-1">UK cold: {ukColdQueue.length}</span>
           <span className="rounded-full bg-[var(--color-muted-faint)] px-3 py-1">Audit: {auditQueue.length}</span>
           <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-900">Approved: {approved.length}</span>
@@ -345,6 +353,7 @@ export function OutboundWorkspace({
         <div className="flex flex-wrap gap-2 border-b border-[var(--color-hairline)] pb-3">
           {(
             [
+              ...(ukColdMode ? [["lead_engine", `Lead engine (${leadProspects.length})`] as const] : []),
               ...(ukColdMode ? [["uk_cold", `UK cold (${ukColdQueue.length})`] as const] : []),
               ["audit", `Audit follow-up (${auditQueue.length})`] as const,
               ["approved", `Approved (${approved.length})`] as const,
@@ -364,7 +373,11 @@ export function OutboundWorkspace({
           ))}
         </div>
 
-        {tabLeads.length === 0 ? (
+        {tab === "lead_engine" ? (
+          <div className="mt-4">
+            <LeadEnginePanel prospects={leadProspects} restaurantId={restaurantId} />
+          </div>
+        ) : tabLeads.length === 0 ? (
           <p className={`${appCardSurface} type-body-sm mt-4 text-[var(--color-muted)]`}>Nothing here yet.</p>
         ) : (
           <ul className="mt-4 space-y-4">

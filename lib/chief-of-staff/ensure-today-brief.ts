@@ -9,6 +9,19 @@ function todayUtcDate(): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
+function toDraft(payload: ChiefOfStaffTask["draftPayload"]): ChiefOfStaffTaskDto["draft"] {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const p = payload as Record<string, unknown>;
+  if (typeof p.body !== "string" || !p.body.trim()) return null;
+  const kinds = ["email", "social_post", "review_reply", "content", "note"] as const;
+  const kind = kinds.includes(p.kind as (typeof kinds)[number]) ? (p.kind as (typeof kinds)[number]) : "note";
+  return {
+    kind,
+    subject: typeof p.subject === "string" ? p.subject : null,
+    body: p.body,
+  };
+}
+
 function toDto(row: ChiefOfStaffTask): ChiefOfStaffTaskDto {
   return {
     id: row.id,
@@ -24,6 +37,8 @@ function toDto(row: ChiefOfStaffTask): ChiefOfStaffTaskDto {
     revenueHighGbp: row.revenueHighGbp,
     requiresIntegration: row.requiresIntegration,
     auditId: row.auditId,
+    conversationId: row.conversationId,
+    draft: toDraft(row.draftPayload),
   };
 }
 

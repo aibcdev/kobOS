@@ -4,6 +4,7 @@ import { buildAuditResult } from "@/lib/audit/build-result";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
 import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
 import { prisma } from "@/lib/db/prisma";
+import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { inngest } from "@/inngest/client";
 
 export type AuditPipelineInput = {
@@ -37,7 +38,7 @@ async function enqueuePostScanJobs(
   }
 
   const sends: { name: string; data: { auditId: string } }[] = [];
-  if (process.env.OPENAI_API_KEY) {
+  if (isGeminiConfigured()) {
     sends.push({ name: "audit/enrichment.requested", data: { auditId } });
   }
   if (process.env.GEMINI_API_KEY?.trim()) {

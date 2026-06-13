@@ -1,0 +1,115 @@
+import { analyzeProspectWebsite } from "@/lib/lead-engine/analyze-prospect";
+import { getLeadEngineConfig } from "@/lib/lead-engine/config";
+import { computeKobOpportunityScore } from "@/lib/lead-engine/kob-opportunity-score";
+import { LeadProspectStatus, type LeadProspect } from "@prisma/client";
+import { prisma } from "@/lib/db/prisma";
+
+export type OpportunityAnalyzerResult = {
+  processed: number;
+  analyzed: number;
+  skipped: Record<string, number>;
+};
+
+export async function runOpportunityAnalyzer(
+  workspaceRestaurantId: string,
+  options?: { max?: number },
+): Promise<OpportunityAnalyzerResult> {
+  const config = getLeadEngineConfig();
+  const max = options?.max ?? config.analyzerDailyCap;
+  const skipped: Record<string, number> = {};
+  const bump = (key: string) => {
+    skipped[key] = (skipped[key] ?? 0) + 1;
+  };
+
+  const prospects = await prisma.leadProspect.findMany({
+    where: {
+      workspaceRestaurantId,
+      status: LeadProspectStatus.DISCOVERED,
+      contactEmail: { not: null },
+    },
+    orderBy: { createdAt: "asc" },
+    take: max,
+  });
+
+  let analyzed = 0;
+
+  for (const prospect of prospects) {
+    const result = await analyzeAndPersistProspect(prospect);
+    if (result === "analyzed") analyzed++;
+    else bump(result);
+  }
+
+  return { processed: prospects.length, analyzed, skipped };
+}
+
+async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analyzed" | string> {
+  if (!prospect.websiteUrl) return "no_website";
+
+  const analysis = await analyzeProspectWebsite(prospect);
+  if (!analysis) return "icp_failed";
+
+  const score = computeKobOpportunityScore({
+    reviewCount: prospect.reviewCount,
+    rating: prospect.rating,
+    ratingBand: analysis.ratingBand,
+    instagramFollowers: analysis.instagramFollowers,
+    instagramPostGapDays: analysis.instagramPostGapDays,
+    hasTikTok: analysis.hasTikTok,
+    weakWebsite: analysis.weakWebsite,
+    websiteStale: analysis.websiteStale,
+    weakPhotography: analysis.weakPhotography,
+    hasEmailCapture: analysis.hasEmailCapture,
+    hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
+    instagramFollowersKnown: analysis.instagramFollowers != null,
+    locationCount: analysis.locationCount,
+    platformRankPercentile: prospect.platformRankPercentile,
+  });
+
+  if (score.disqualifiers.length > 0) {
+    await prisma.leadProspect.update({
+      where: { id: prospect.id },
+      data: {
+        status: LeadProspectStatus.ARCHIVED,
+        disqualifiers: score.disqualifiers,
+        kobOpportunityScore: score.total,
+        scoreBreakdown: score.breakdown,
+        opportunities: score.opportunities,
+        locationCount: analysis.locationCount,
+        websiteStale: analysis.websiteStale,
+        websiteCopyrightYear: analysis.websiteCopyrightYear,
+        analyzedAt: new Date(),
+      },
+    });
+    return "disqualified";
+  }
+
+  await prisma.leadProspect.update({
+    where: { id: prospect.id },
+    data: {
+      status: LeadProspectStatus.ANALYZED,
+      instagramUrl: analysis.instagramUrl,
+      instagramFollowers: analysis.instagramFollowers,
+      instagramPostGapDays: analysis.instagramPostGapDays,
+      hasTikTok: analysis.hasTikTok,
+      facebookUrl: analysis.facebookUrl,
+      hasContactForm: analysis.hasContactForm,
+      weakWebsite: analysis.weakWebsite,
+      weakPhotography: analysis.weakPhotography,
+      hasEmailCapture: analysis.hasEmailCapture,
+      pdfMenu: analysis.pdfMenu,
+      hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
+      hasTripadvisor: analysis.hasTripadvisor,
+      hasOnlineOrdering: analysis.hasOnlineOrdering,
+      locationCount: analysis.locationCount,
+      websiteStale: analysis.websiteStale,
+      websiteCopyrightYear: analysis.websiteCopyrightYear,
+      kobOpportunityScore: score.total,
+      scoreBreakdown: score.breakdown,
+      opportunities: score.opportunities,
+      disqualifiers: score.disqualifiers,
+      analyzedAt: new Date(),
+    },
+  });
+
+  return "analyzed";
+}

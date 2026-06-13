@@ -11,6 +11,9 @@ export async function GET(req: Request) {
   }
 
   const events: { name: string; data: { source: string } }[] = [
+    { name: "lead-engine/finder.requested", data: { source: "http-cron" } },
+    { name: "lead-engine/analyzer.requested", data: { source: "http-cron" } },
+    { name: "lead-engine/outreach-writer.requested", data: { source: "http-cron" } },
     { name: "outbound/send.requested", data: { source: "http-cron" } },
     { name: "outbound/audit-import.requested", data: { source: "http-cron" } },
   ];

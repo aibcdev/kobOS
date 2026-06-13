@@ -1,9 +1,10 @@
-import { ContentType, type ChiefOfStaffTask, type TaskCategory, type Prisma } from "@prisma/client";
-import { generateAndStoreContent } from "@/lib/ai/content";
+import type { ChiefOfStaffTask, TaskCategory } from "@prisma/client";
+import { inngest } from "@/inngest/client";
+import { generateDraftsForTask } from "@/lib/chief-of-staff/generate-drafts-for-task";
 import { prisma } from "@/lib/db/prisma";
 
 export type ApproveTaskResult =
-  | { ok: true; task: ChiefOfStaffTask; message: string; nextHref?: string; contentId?: string }
+  | { ok: true; task: ChiefOfStaffTask; message: string; nextHref?: string; contentId?: string; generating?: boolean }
   | { ok: false; status: number; code: string; message: string; nextHref?: string };
 
 function categoryHref(category: TaskCategory, restaurantId: string): string {
@@ -22,11 +23,15 @@ function categoryHref(category: TaskCategory, restaurantId: string): string {
   return map[category] ?? `/dashboard?r=${r}`;
 }
 
-function contentTypeForCategory(category: TaskCategory): ContentType {
-  if (category === "HOLIDAY") return ContentType.EMAIL_CAMPAIGN;
-  if (category === "SOCIAL") return ContentType.INSTAGRAM_CAPTION;
-  if (category === "EMAIL") return ContentType.EMAIL_CAMPAIGN;
-  return ContentType.GOOGLE_BUSINESS_POST;
+function needsDraftGeneration(task: ChiefOfStaffTask): boolean {
+  if (task.draftPayload && typeof task.draftPayload === "object") {
+    const p = task.draftPayload as Record<string, unknown>;
+    if (p.body || p.contentId || p.reviewReplyContentId) return false;
+  }
+  return (
+    task.category === "REVIEWS" ||
+    ["HOLIDAY", "CONTENT", "SOCIAL", "EMAIL"].includes(task.category)
+  );
 }
 
 export async function executeTaskApprove(task: ChiefOfStaffTask): Promise<ApproveTaskResult> {
@@ -49,63 +54,44 @@ export async function executeTaskApprove(task: ChiefOfStaffTask): Promise<Approv
     };
   }
 
-  let draftPayload = task.draftPayload as Record<string, unknown> | null;
-  let contentId: string | undefined;
+  const nextHref = categoryHref(task.category, task.restaurantId);
+  const isSocialMulti = task.category === "SOCIAL" && /3|three/i.test(task.title);
+  const willGenerate = needsDraftGeneration(task);
 
-  if (task.category === "REVIEWS") {
-    const review = await prisma.customerReview.findFirst({
-      where: { restaurantId: task.restaurantId, replied: false },
-      orderBy: { reviewedAt: "desc" },
-    });
-    if (review) {
-      const gen = await generateAndStoreContent({
-        restaurantId: task.restaurantId,
-        type: ContentType.GROWTH_REVIEW_REPLY,
-        extraPrompt: `Review: "${review.body.slice(0, 400)}" (${review.rating} stars). Task: ${task.title}`,
-      });
-      if (!("error" in gen)) {
-        contentId = gen.id;
-        draftPayload = { ...draftPayload, reviewReplyContentId: gen.id, preview: gen.output.slice(0, 500) };
-      }
-    }
-  } else if (["HOLIDAY", "CONTENT", "SOCIAL", "EMAIL"].includes(task.category)) {
-    const gen = await generateAndStoreContent({
-      restaurantId: task.restaurantId,
-      type: contentTypeForCategory(task.category),
-      extraPrompt: `${task.title}. ${task.detail}`,
-    });
-    if ("error" in gen) {
-      if (gen.error.includes("OPENAI")) {
-        return {
-          ok: false,
-          status: 503,
-          code: "ai_unavailable",
-          message: "AI drafting is temporarily unavailable. Try again shortly.",
-        };
-      }
-    } else {
-      contentId = gen.id;
-      draftPayload = { ...draftPayload, contentId: gen.id, preview: gen.output.slice(0, 500) };
-    }
-  }
-
+  // Mark approved immediately so the UI feels instant.
   const updated = await prisma.chiefOfStaffTask.update({
     where: { id: task.id },
-    data: {
-      status: "APPROVED",
-      draftPayload: draftPayload ? (draftPayload as Prisma.InputJsonValue) : undefined,
-    },
+    data: { status: "APPROVED" },
   });
 
-  const nextHref = contentId
-    ? `/dashboard/content?r=${encodeURIComponent(task.restaurantId)}`
-    : categoryHref(task.category, task.restaurantId);
+  if (!willGenerate) {
+    return {
+      ok: true,
+      task: updated,
+      message: "Approved.",
+      nextHref,
+    };
+  }
+
+  // Generate drafts in background — don't block the button click.
+  try {
+    await inngest.send({
+      name: "chief-of-staff/task.approved",
+      data: { taskId: task.id, restaurantId: task.restaurantId },
+    });
+  } catch {
+    // Inngest unavailable (local dev) — generate inline without blocking HTTP... 
+    // Fire-and-forget; user already sees approved state.
+    void generateDraftsForTask(task.id).catch(() => {});
+  }
 
   return {
     ok: true,
     task: updated,
-    message: contentId ? "Draft created — view it in Content." : "Approved — open the next tab to continue.",
-    nextHref,
-    contentId,
+    generating: true,
+    message: isSocialMulti
+      ? "Approved — 3 drafts are being prepared. Check Content in a moment."
+      : "Approved — your draft is being prepared. Check Content in a moment.",
+    nextHref: `/dashboard/content?r=${encodeURIComponent(task.restaurantId)}`,
   };
 }

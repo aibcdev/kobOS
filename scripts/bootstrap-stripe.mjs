@@ -35,6 +35,7 @@ function loadEnvFile(name) {
 }
 
 const useCli = process.argv.includes("--cli");
+const useLive = process.argv.includes("--live");
 const env = {
   ...loadEnvFile(".env"),
   ...loadEnvFile(".env.local"),
@@ -75,11 +76,19 @@ async function stripeApiRequest(secretKey, method, path, body) {
 }
 
 function stripeCli(args) {
-  const r = spawnSync("stripe", args, { encoding: "utf8" });
+  const fullArgs = useLive ? [...args, "--live"] : args;
+  const r = spawnSync("stripe", fullArgs, { encoding: "utf8" });
   if (r.status !== 0) {
     throw new Error(r.stderr?.trim() || r.stdout?.trim() || "stripe CLI failed");
   }
-  return JSON.parse(r.stdout);
+  const json = JSON.parse(r.stdout);
+  if (json.error) {
+    throw new Error(json.error.message ?? "Stripe CLI error");
+  }
+  if (!json.id) {
+    throw new Error(`Stripe CLI returned no id: ${r.stdout.slice(0, 200)}`);
+  }
+  return json;
 }
 
 async function findExistingPrice(secretKey, tier) {
@@ -163,7 +172,7 @@ async function main() {
 
   let priceIds;
   if (useCli) {
-    console.log("Using Stripe CLI…\n");
+    console.log(`Using Stripe CLI (${useLive ? "LIVE" : "TEST"})…\n`);
     priceIds = createViaCli();
   } else {
     const key = env.STRIPE_SECRET_KEY?.trim();
@@ -173,6 +182,10 @@ async function main() {
       console.error("  1. Add sk_test_... or sk_live_... to .env.local, then re-run");
       console.error("  2. Run: stripe login");
       console.error("  3. Run: npm run stripe:bootstrap -- --cli\n");
+      process.exit(1);
+    }
+    if (useLive && !key.startsWith("sk_live")) {
+      console.error("For --live use sk_live_... in STRIPE_SECRET_KEY, or run: npm run stripe:bootstrap -- --cli --live\n");
       process.exit(1);
     }
     const mode = key.startsWith("sk_live") ? "LIVE" : "TEST";

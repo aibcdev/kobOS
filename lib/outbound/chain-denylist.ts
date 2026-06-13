@@ -46,6 +46,20 @@ const CHAIN_HOSTS = new Set([
   "beefeater.co.uk",
   "wetherspoon.co.uk",
   "jdwherspoon.co.uk",
+  "tortilla.co.uk",
+  "www.tortilla.co.uk",
+  "leon.co",
+  "www.leon.co",
+  "itsu.com",
+  "www.itsu.com",
+  "gailsbread.co.uk",
+  "cote.co.uk",
+  "dishoom.com",
+  "franco-manca.com",
+  "honestburgers.co.uk",
+  "billssrestaurants.com",
+  "tgifridays.com",
+  "tgi-fridays.co.uk",
 ]);
 
 const CHAIN_NAME_PATTERNS = [
@@ -69,6 +83,20 @@ const CHAIN_NAME_PATTERNS = [
   /\btoby carvery\b/i,
   /\bbeefeater\b/i,
   /\bshake shack\b/i,
+  /\btortilla\b/i,
+  /\bleon\b/i,
+  /\bitsu\b/i,
+  /\bgail'?s\b/i,
+  /\bcote\b/i,
+  /\bdishoom\b/i,
+  /\bfranco manca\b/i,
+  /\bhonest burger\b/i,
+  /\bbill'?s\b/i,
+  /\btgi friday'?s?\b/i,
+  /\bwaitrose\b/i,
+  /\bwhole foods\b/i,
+  /\bpizza guys\b/i,
+  /\burban greens\b/i,
 ];
 
 export function hostFromWebsiteUrl(raw: string | null | undefined): string {

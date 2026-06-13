@@ -10,7 +10,7 @@ import { prisma } from "@/lib/db/prisma";
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
   /** Approve all pending in this source track */
-  source: z.enum(["UK_COLD", "AUDIT", "ALL"]).optional(),
+  source: z.enum(["UK_COLD", "AUDIT", "LEAD_ENGINE", "ALL"]).optional(),
   leadIds: z.array(z.string().min(12)).max(50).optional(),
 });
 
@@ -46,12 +46,11 @@ export async function POST(req: Request) {
   const sourceWhere =
     sourceFilter === "ALL"
       ? {}
-      : {
-          source:
-            sourceFilter === "UK_COLD"
-              ? OutboundLeadSource.UK_COLD
-              : OutboundLeadSource.AUDIT,
-        };
+      : sourceFilter === "UK_COLD"
+        ? { source: { in: [OutboundLeadSource.UK_COLD, OutboundLeadSource.LEAD_ENGINE] } }
+        : sourceFilter === "LEAD_ENGINE"
+          ? { source: OutboundLeadSource.LEAD_ENGINE }
+          : { source: OutboundLeadSource.AUDIT };
 
   const rows = parsed.data.leadIds?.length
     ? await prisma.outboundLead.findMany({

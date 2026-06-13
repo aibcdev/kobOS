@@ -32,7 +32,7 @@ export const benchmarkV1MediaResultSchema = z.object({
 export type BenchmarkV1MediaParsed = z.infer<typeof benchmarkV1MediaResultSchema>;
 
 function modelSlug() {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 }
 
 function stripJsonFences(raw: string): string {

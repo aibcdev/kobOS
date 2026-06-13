@@ -9,6 +9,7 @@ export function TaskFeedColumn({
   tasks,
   restaurantName,
   onApprove,
+  onReview,
   busyId,
   highlightId,
   taskRefs,
@@ -16,6 +17,7 @@ export function TaskFeedColumn({
   tasks: ChiefOfStaffTaskDto[];
   restaurantName: string;
   onApprove: (id: string) => void;
+  onReview?: (id: string) => void;
   busyId?: string | null;
   highlightId?: string | null;
   taskRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
@@ -34,7 +36,7 @@ export function TaskFeedColumn({
               }}
               className={highlightId === t.id ? "rounded-lg bg-[#f0fdf4] ring-1 ring-[var(--color-primary)]" : undefined}
             >
-              <TaskRow task={t} onApprove={onApprove} busy={busyId === t.id} />
+              <TaskRow task={t} onApprove={onApprove} onReview={onReview} busy={busyId === t.id} />
             </div>
           ))
         ) : (

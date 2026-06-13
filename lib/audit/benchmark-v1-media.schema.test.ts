@@ -87,7 +87,7 @@ describe("mergeBenchmarkV1MediaIntoPayload", () => {
     };
 
     const merged = mergeBenchmarkV1MediaIntoPayload(payload, media);
-    expect(merged.scores.design).toBe(Math.round(60 * 0.65 + 100 * 0.35));
+    expect(merged.scores.design).toBe(Math.round(60 * 0.55 + 100 * 0.45));
     const expectedOverall = Math.round((80 + 60 + 50 + 70 + 60 + 100) / 6);
     expect(merged.scores.overall).toBe(expectedOverall);
     expect(merged.benchmarkV1MediaStatus).toBe("ready");

@@ -191,7 +191,7 @@ export const perceptionAuditV1Schema = z.object({
 });
 
 function modelSlug() {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 }
 
 function stripJsonFences(raw: string): string {

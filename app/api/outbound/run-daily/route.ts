@@ -42,6 +42,9 @@ export async function POST(req: Request) {
   const events: { name: string; data: Record<string, string> }[] = [];
 
   if (step === "draft" || step === "both") {
+    events.push({ name: "lead-engine/finder.requested", data: { source: "dashboard" } });
+    events.push({ name: "lead-engine/analyzer.requested", data: { source: "dashboard" } });
+    events.push({ name: "lead-engine/outreach-writer.requested", data: { source: "dashboard" } });
     if (isUkColdOutboundMode()) {
       events.push({ name: "outbound/uk-cold.requested", data: { source: "dashboard" } });
       events.push({ name: "outbound/audit-import.requested", data: { source: "dashboard" } });

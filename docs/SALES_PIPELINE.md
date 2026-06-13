@@ -67,14 +67,27 @@ Or two terminals: `npm run dev:public` and `npm run inngest:dev` (stop extra Inn
 OUTBOUND_MODE=uk_cold
 OUTBOUND_SALES_MODE=1
 OUTBOUND_WORKSPACE_RESTAURANT_ID=<auto-filled by sales:bootstrap>
-OUTBOUND_UK_CITIES=London,Manchester,Birmingham,Leeds,Bristol,Glasgow,Edinburgh
-OUTBOUND_REVIEW_MIN=20
-OUTBOUND_REVIEW_MAX=500
+OUTBOUND_UK_CITIES=London,Manchester,Birmingham,Leeds,Bristol,Glasgow,Edinburgh,Dublin,Cork,Galway
+OUTBOUND_REVIEW_MIN=50
+OUTBOUND_REVIEW_MAX=2500
+OUTBOUND_RATING_MIN=4.0
+OUTBOUND_RATING_MAX=4.6
 OUTBOUND_MAX_QUALIFY_SCORE=65
 OUTBOUND_UK_DAILY_CAP=20
 
+# Lead engine (3 daily agents — platform-first ICP)
+LEAD_ENGINE_DAILY_CAP=50
+LEAD_ENGINE_MIN_SCORE=60
+LEAD_ENGINE_SEED_TARGET=3000
+LEAD_ENGINE_INSTAGRAM_MAX=10000
+LEAD_ENGINE_LOCATION_MAX=3
+LEAD_ENGINE_PLATFORM_TOP_PCT=30
+LEAD_ENGINE_REQUIRE_STALE_WEBSITE=1
+LEAD_ENGINE_UK_IE_CITIES=London,Manchester,...,Dublin,Cork,Galway
+LEAD_ENGINE_IRELAND_CITIES=Dublin,Cork,Galway,Limerick,Waterford
+
 GOOGLE_PLACES_API_KEY=
-PLACES_AUTOCOMPLETE_REGIONS=GB
+PLACES_AUTOCOMPLETE_REGIONS=GB,IE
 GEMINI_API_KEY=              # drafts UK cold copy (OPENAI_API_KEY optional fallback)
 HUNTER_API_KEY=              # required for cold email addresses
 RESEND_API_KEY=
@@ -87,11 +100,28 @@ INNGEST_EVENT_KEY=
 CRON_SECRET=
 ```
 
+## Lead engine (3 agents)
+
+```text
+06:00 Agent A — Lead Finder (Deliveroo + Uber Eats + Just Eat → Google enrich)
+06:15 Agent B — Opportunity Analyzer (KOB score 0–100)
+06:30 Agent C — Outreach Writer (personalized email drafts)
+  → Lead Engine tab — approve scored leads
+  → UK cold tab — approve email batch
+  → Send job (14:55 UTC or manual)
+```
+
+Bulk seed (one-time, until 3,000 contactable):
+
+```bash
+npm run lead-engine:seed
+```
+
 ### Your daily routine (~10 min)
 
-1. Check email summary: “N UK cold leads ready”.
-2. Open **UK cold** tab — skim scores and copy.
-3. Click **Approve UK batch**.
+1. Check email summary: “N scored leads ready”.
+2. Open **Lead engine** tab — sort by KOB score, approve top leads.
+3. Open **UK cold** tab — approve email batch.
 4. Sends run automatically (or click **Send approved only**).
 
 ### ICP rules (code)
@@ -122,9 +152,12 @@ Set `OUTBOUND_MODE` empty or `legacy` to use old city-only AI scan instead of UK
 curl -H "Authorization: Bearer $CRON_SECRET" https://YOUR-SITE/api/cron/outbound
 ```
 
-Enqueues (when `OUTBOUND_MODE=uk_cold`):
+Enqueues:
 
-- `outbound/uk-cold.requested`
+- `lead-engine/finder.requested`
+- `lead-engine/analyzer.requested`
+- `lead-engine/outreach-writer.requested`
+- `outbound/uk-cold.requested` (when `OUTBOUND_MODE=uk_cold`)
 - `outbound/audit-import.requested`
 - `outbound/send.requested`
 

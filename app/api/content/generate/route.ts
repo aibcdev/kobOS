@@ -9,6 +9,7 @@ const bodySchema = z.object({
   restaurantId: z.string().min(12),
   type: z.nativeEnum(ContentType),
   prompt: z.string().max(4000).optional(),
+  withImage: z.boolean().optional().default(false),
 });
 
 export async function POST(req: Request) {
@@ -38,11 +39,21 @@ export async function POST(req: Request) {
     restaurantId: parsed.data.restaurantId,
     type: parsed.data.type,
     extraPrompt: parsed.data.prompt,
+    withImage: parsed.data.withImage,
   });
 
   if ("error" in result) {
-    return NextResponse.json({ error: result.error }, { status: result.error.includes("OPENAI") ? 503 : 400 });
+    const is503 = result.error.includes("key") || result.error.includes("configured");
+    return NextResponse.json({ error: result.error }, { status: is503 ? 503 : 400 });
   }
 
-  return NextResponse.json({ ok: true, id: result.id, outputPreview: result.output.slice(0, 500) }, { status: 201 });
+  return NextResponse.json(
+    {
+      ok: true,
+      id: result.id,
+      outputPreview: result.output.slice(0, 500),
+      imageUrl: result.imageUrl ?? null,
+    },
+    { status: 201 },
+  );
 }

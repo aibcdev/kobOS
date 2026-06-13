@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
 import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
+import { isOutboundSalesMode } from "@/lib/outbound/sales-access";
 import { prisma } from "@/lib/db/prisma";
 import { isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,7 +20,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
         city: "Austin",
       },
     ];
-    return <DashboardShell restaurants={restaurants}>{children}</DashboardShell>;
+    return (
+      <Suspense>
+        <DashboardShell restaurants={restaurants} salesMode={isOutboundSalesMode()}>
+          {children}
+        </DashboardShell>
+      </Suspense>
+    );
   }
 
   const supabase = await createSupabaseServerClient();
@@ -45,5 +53,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     city: m.restaurant.city,
   }));
 
-  return <DashboardShell restaurants={restaurants}>{children}</DashboardShell>;
+  return (
+    <Suspense>
+      <DashboardShell restaurants={restaurants} userEmail={user.email} salesMode={isOutboundSalesMode()}>
+        {children}
+      </DashboardShell>
+    </Suspense>
+  );
 }

@@ -5,6 +5,10 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  if (path.startsWith("/api/inngest")) {
+    return NextResponse.next();
+  }
+
   const previewDashboard =
     isUiPreviewEnabled() && (path.startsWith("/dashboard") || path.startsWith("/app"));
   if (previewDashboard) {

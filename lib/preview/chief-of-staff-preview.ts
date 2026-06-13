@@ -44,6 +44,12 @@ export function getPreviewChiefOfStaffBrief(): TodayBriefPayload {
         revenueHighGbp: null,
         requiresIntegration: null,
         auditId: null,
+        conversationId: null,
+        draft: {
+          kind: "review_reply",
+          subject: null,
+          body: "Thank you so much for the kind words! We're thrilled you enjoyed the food and hope to welcome you back very soon.",
+        },
       },
       {
         id: "preview-2",
@@ -59,6 +65,8 @@ export function getPreviewChiefOfStaffBrief(): TodayBriefPayload {
         revenueHighGbp: 900,
         requiresIntegration: null,
         auditId: null,
+        conversationId: null,
+        draft: null,
       },
       {
         id: "preview-3",
@@ -74,6 +82,8 @@ export function getPreviewChiefOfStaffBrief(): TodayBriefPayload {
         revenueHighGbp: null,
         requiresIntegration: null,
         auditId: null,
+        conversationId: null,
+        draft: null,
       },
       {
         id: "preview-4",
@@ -89,6 +99,8 @@ export function getPreviewChiefOfStaffBrief(): TodayBriefPayload {
         revenueHighGbp: null,
         requiresIntegration: "Instagram",
         auditId: null,
+        conversationId: null,
+        draft: null,
       },
     ],
   };

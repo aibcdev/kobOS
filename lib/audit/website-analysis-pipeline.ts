@@ -6,10 +6,7 @@ import type { AuditStagehandExtraction } from "@/lib/browserbase/stagehand-schem
 import { getAuditBrowserbaseMode, shouldSyncBrowserbaseRender } from "@/lib/audit/browserbase-policy";
 import { isAuditBrowserbaseEnabled } from "@/lib/audit/is-audit-browserbase-enabled";
 import { fetchRenderedPageWithRetry } from "@/lib/browserbase/fetch-page";
-import {
-  fetchRenderedPageViaStagehandWithRetry,
-  isStagehandAuditEnabled,
-} from "@/lib/browserbase/stagehand-scan";
+import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 
 function utcNow() {
   return new Date().toISOString();
@@ -93,6 +90,7 @@ export async function runAuditWebsitePipeline(
 
   if (isStagehandAuditEnabled() && meta) {
     try {
+      const { fetchRenderedPageViaStagehandWithRetry } = await import("@/lib/browserbase/stagehand-scan");
       const page = await fetchRenderedPageViaStagehandWithRetry(websiteUrl.trim(), meta, 2);
       const rendered = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
         httpStatus: page.statusCode ?? undefined,

@@ -65,7 +65,7 @@ export function GrowthAgentBriefingPanel({
         <div>
           <h2 className="type-title-sm">Today&apos;s Growth Briefing</h2>
           <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-            Structured AI brief — needs <code className={appCodeInline}>OPENAI_API_KEY</code>.
+            Structured AI brief — needs <code className={appCodeInline}>GEMINI_API_KEY</code>.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

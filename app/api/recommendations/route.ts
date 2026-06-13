@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { persistAiRecommendations } from "@/lib/ai/recommendations";
+import { geminiConfigError, isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { prisma } from "@/lib/db/prisma";
@@ -69,8 +70,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: "OPENAI_API_KEY not configured" }, { status: 503 });
+  if (!isGeminiConfigured()) {
+    return NextResponse.json({ error: geminiConfigError() }, { status: 503 });
   }
 
   const created = await persistAiRecommendations(parsed.data.restaurantId);

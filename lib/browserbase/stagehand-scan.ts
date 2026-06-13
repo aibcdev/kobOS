@@ -1,4 +1,3 @@
-import { Stagehand } from "@browserbasehq/stagehand";
 import { analyzeScreenshotBuffer } from "@/lib/audit/visual-intelligence";
 import { maybeUploadAuditScreenshotPng } from "@/lib/supabase/audit-screenshot";
 import type { BrowserbaseRenderedPage } from "@/lib/browserbase/types";
@@ -7,6 +6,8 @@ import {
   type AuditStagehandExtraction,
   auditStagehandExtractionSchema,
 } from "@/lib/browserbase/stagehand-schema";
+
+export { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 
 function normalizeUrl(raw: string): string {
   const t = raw.trim();
@@ -18,20 +19,6 @@ export type StagehandRenderedPage = BrowserbaseRenderedPage & {
   stagehandExtraction: AuditStagehandExtraction;
 };
 
-export function isStagehandAuditEnabled(): boolean {
-  if (process.env.AUDIT_STAGEHAND === "0") return false;
-  const hasBrowserbase = Boolean(process.env.BROWSERBASE_API_KEY?.trim());
-  const hasLlm = Boolean(
-    process.env.OPENAI_API_KEY?.trim() ||
-      process.env.ANTHROPIC_API_KEY?.trim() ||
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ||
-      process.env.GEMINI_API_KEY?.trim(),
-  );
-  if (!hasBrowserbase || !hasLlm) return false;
-  if (process.env.AUDIT_STAGEHAND === "1") return true;
-  return hasBrowserbase;
-}
-
 /**
  * Single Browserbase session: Stagehand navigation + LLM extract + viewport screenshot metrics.
  */
@@ -42,6 +29,7 @@ export async function fetchRenderedPageViaStagehand(
   const apiKey = process.env.BROWSERBASE_API_KEY?.trim();
   if (!apiKey) throw new Error("browserbase_not_configured");
 
+  const { Stagehand } = await import("@browserbasehq/stagehand");
   const model = process.env.AUDIT_STAGEHAND_MODEL?.trim() || "openai/gpt-4o-mini";
   const projectId = process.env.BROWSERBASE_PROJECT_ID?.trim();
 

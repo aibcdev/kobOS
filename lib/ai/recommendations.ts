@@ -1,6 +1,6 @@
 import { RecommendationType } from "@prisma/client";
-import OpenAI from "openai";
 import { z } from "zod";
+import { geminiJsonCompletion, isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { prisma } from "@/lib/db/prisma";
 
 const outputSchema = z.object({
@@ -23,8 +23,7 @@ function mapRecommendationType(raw: string): RecommendationType | null {
 }
 
 export async function persistAiRecommendations(restaurantId: string): Promise<{ created: number }> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  if (!isGeminiConfigured()) {
     return { created: 0 };
   }
 
@@ -41,8 +40,6 @@ export async function persistAiRecommendations(restaurantId: string): Promise<{ 
     return { created: 0 };
   }
 
-  const openai = new OpenAI({ apiKey });
-
   const insightBlob = insights.map((i) => ({
     id: i.id,
     type: i.type,
@@ -51,39 +48,28 @@ export async function persistAiRecommendations(restaurantId: string): Promise<{ 
     priority: i.priority,
   }));
 
-  const completion = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content: `You are KOB Growth Agent. Output JSON with key "recommendations" (array).
+  const completion = await geminiJsonCompletion({
+    system: `You are KOB Growth Agent. Output JSON with key "recommendations" (array).
 Each item: type (one of: ${Object.keys(RecommendationType).join(", ")}), title, action (short imperative), aiSummary (1-2 sentences), impactScore (0-100), insightId (optional, id from input or null).
 Focus on the next best actions for a restaurant, not generic advice.`,
+    user: JSON.stringify({
+      restaurant: {
+        name: restaurant.name,
+        city: restaurant.city,
+        state: restaurant.state,
+        cuisineType: restaurant.cuisineType,
       },
-      {
-        role: "user",
-        content: JSON.stringify({
-          restaurant: {
-            name: restaurant.name,
-            city: restaurant.city,
-            state: restaurant.state,
-            cuisineType: restaurant.cuisineType,
-          },
-          openInsights: insightBlob,
-        }),
-      },
-    ],
+      openInsights: insightBlob,
+    }),
   });
 
-  const raw = completion.choices[0]?.message?.content;
-  if (!raw) {
+  if (!completion.ok) {
     return { created: 0 };
   }
 
   let parsed: z.infer<typeof outputSchema>;
   try {
-    parsed = outputSchema.parse(JSON.parse(raw));
+    parsed = outputSchema.parse(JSON.parse(completion.raw));
   } catch {
     return { created: 0 };
   }

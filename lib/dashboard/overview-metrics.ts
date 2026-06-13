@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { getSalesMetrics } from "@/lib/dashboard/sales-metrics";
 
 export type OverviewMetrics = {
   onlineSalesDisplay: string;
@@ -101,9 +102,14 @@ export async function getOverviewMetrics(restaurantId: string): Promise<Overview
         ? `Avg ${reviewsAvgThisWeek}★ in window`
         : "Recent review activity";
 
+  const sales = await getSalesMetrics(restaurantId);
+
   return {
-    onlineSalesDisplay: "—",
-    onlineSalesHint: "Direct reservation & visit signals when site + GBP are connected",
+    onlineSalesDisplay: sales.revenueDisplay,
+    onlineSalesHint:
+      sales.revenueCents7d > 0
+        ? `${sales.orderCount7d} orders · ${sales.source === "SAMPLE" ? "sample data" : sales.source}`
+        : "Connect Square in Workspace for live sales",
     trafficChangePct,
     trafficEventsThisWeek: thisWeek,
     trafficEventsPrevWeek: prevWeek,

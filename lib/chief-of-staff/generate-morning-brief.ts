@@ -1,5 +1,5 @@
 import type { AiPersonality } from "@prisma/client";
-import OpenAI from "openai";
+import { geminiJsonCompletion, isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { buildAuditTasksForRestaurant, fetchLatestLinkedAudit } from "@/lib/chief-of-staff/build-audit-tasks";
 import { morningBriefAiSchema } from "@/lib/chief-of-staff/morning-brief-schema";
 import type { TaskDraftInput, TodayBriefSummary } from "@/lib/chief-of-staff/types";
@@ -7,12 +7,28 @@ import { nextUkHoliday } from "@/lib/chief-of-staff/uk-holidays";
 import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { buildGrowthAgentBriefingContext } from "@/lib/growth-agent/restaurant-context";
+import { getCalendarSnapshot, type CalendarEventSnapshot } from "@/lib/integrations/providers/google-calendar";
+import { getGmailSnapshot } from "@/lib/integrations/providers/gmail";
 import { prisma } from "@/lib/db/prisma";
 
 function greetingForHour(name: string): string {
   const h = new Date().getHours();
   const part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
   return `${part}, ${name}.`;
+}
+
+function todaysEvents(events: CalendarEventSnapshot[]): CalendarEventSnapshot[] {
+  const now = new Date();
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+  return events.filter((e) => {
+    const start = new Date(e.start);
+    return start >= now && start <= endOfDay;
+  });
+}
+
+function formatEventTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" });
 }
 
 function personalityTone(p: AiPersonality): string {
@@ -35,10 +51,10 @@ function ruleBasedAiTasks(
   const place = ctx.city ? ` in ${ctx.city}` : "";
   const tasks: TaskDraftInput[] = [
     {
-      title: `Post 3 times this week for ${ctx.name}`,
+      title: `Create 3 social post drafts for ${ctx.name}`,
       detail: competitors.length
-        ? `${competitors.slice(0, 2).join(" and ")} are posting often — stay visible${place}.`
-        : `Consistent posting keeps ${ctx.name} visible when guests decide where to eat.`,
+        ? `${competitors.slice(0, 2).join(" and ")} post frequently. Approve this to get 3 ready-to-use captions — nothing goes live until you publish.`
+        : `Consistent posting keeps ${ctx.name} visible. Approve to get 3 caption drafts ready for review.`,
       category: "SOCIAL",
       source: "AI",
       impactLabel: "+reach",
@@ -94,24 +110,10 @@ async function callMorningBriefAi(
   personality: AiPersonality,
   holidayLine: string,
 ): Promise<TaskDraftInput[]> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) return [];
+  if (!isGeminiConfigured()) return [];
 
-  const client = new OpenAI({ apiKey });
-  const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
-
-  const res = await client.chat.completions.create({
-    model,
-    temperature: 0.55,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content: `You are KOB, the daily helper for UK independent restaurants—plain English, efficiency-first, never miss reviews/holidays/hours/posts. Tone: ${personalityTone(personality)}. Return JSON only.`,
-      },
-      {
-        role: "user",
-        content: `Restaurant: ${ctx.name}, ${ctx.city ?? "UK"}.
+  const system = `You are KOB, the daily helper for UK independent restaurants—plain English, efficiency-first, never miss reviews/holidays/hours/posts. Tone: ${personalityTone(personality)}. Return JSON only.`;
+  const user = `Restaurant: ${ctx.name}, ${ctx.city ?? "UK"}.
 Visibility: ${ctx.visibilityScore ?? "unknown"}/100.
 Audit snapshot: ${ctx.latestLinkedAuditSnapshot.slice(0, 1200)}
 Open insights: ${ctx.openInsightTitles.join("; ") || "none"}
@@ -126,13 +128,12 @@ Return JSON:
   "suggestions": ["max 5 short chips"],
   "aiTasks": [{"title","detail","category","impactLabel","estimatedMinutes","confidenceScore","requiresIntegration?"}]
 }
-Include 2-4 aiTasks. Mark requiresIntegration when Instagram/email not connected.`,
-      },
-    ],
-  });
+Include 2-4 aiTasks. Mark requiresIntegration when Instagram/email not connected.`;
 
-  const raw = res.choices[0]?.message?.content?.trim();
-  if (!raw) return [];
+  const res = await geminiJsonCompletion({ system, user, temperature: 0.55 });
+  if (!res.ok) return [];
+
+  const raw = res.raw;
 
   try {
     const parsed = morningBriefAiSchema.parse(JSON.parse(raw));
@@ -198,27 +199,18 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
 
   let aiTasks = ruleBasedAiTasks(ctx, holiday?.event.name ?? null, holiday?.daysAway ?? null, competitors);
 
-  if (process.env.OPENAI_API_KEY?.trim()) {
+  if (isGeminiConfigured()) {
     try {
       const apiKeyTasks = await callMorningBriefAi(ctx, restaurant.aiPersonality, holidayLine);
       if (apiKeyTasks.length) aiTasks = apiKeyTasks;
 
-      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-      const metaRes = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+      const metaRes = await geminiJsonCompletion({
+        system: "Return JSON only.",
+        user: `For ${ctx.name}: ${holidayLine} Audit: ${ctx.latestLinkedAuditSnapshot.slice(0, 800)}. Return {"revenueHealthLine","needToKnow":[],"suggestions":[]}`,
         temperature: 0.5,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: "Return JSON only." },
-          {
-            role: "user",
-            content: `For ${ctx.name}: ${holidayLine} Audit: ${ctx.latestLinkedAuditSnapshot.slice(0, 800)}. Return {"revenueHealthLine","needToKnow":[],"suggestions":[]}`,
-          },
-        ],
       });
-      const metaRaw = metaRes.choices[0]?.message?.content;
-      if (metaRaw) {
-        const m = morningBriefAiSchema.pick({ revenueHealthLine: true, needToKnow: true, suggestions: true }).safeParse(JSON.parse(metaRaw));
+      if (metaRes.ok) {
+        const m = morningBriefAiSchema.pick({ revenueHealthLine: true, needToKnow: true, suggestions: true }).safeParse(JSON.parse(metaRes.raw));
         if (m.success) aiMeta = m.data;
       }
     } catch {
@@ -228,6 +220,33 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
 
   if (holiday && holiday.daysAway <= 21) {
     aiMeta.needToKnow.unshift(`${holiday.event.name} is ${holiday.daysAway} days away.`);
+  }
+
+  // Live signals from connected calendar + inbox (cached snapshots, no network).
+  let greeting = greetingForHour(restaurant.name);
+  try {
+    const [calendarEvents, gmail] = await Promise.all([
+      getCalendarSnapshot(restaurantId),
+      getGmailSnapshot(restaurantId),
+    ]);
+
+    const today = todaysEvents(calendarEvents);
+    if (today.length) {
+      const first = today[0];
+      const eventLine = first.allDay
+        ? `Today: ${first.title}.`
+        : `You have ${first.title} at ${formatEventTime(first.start)}${today.length > 1 ? ` and ${today.length - 1} more event${today.length > 2 ? "s" : ""} today` : ""}.`;
+      greeting = `${greeting} ${eventLine}`;
+      aiMeta.needToKnow.unshift(eventLine);
+    }
+
+    if (gmail && gmail.unreadCount > 0) {
+      aiMeta.needToKnow.push(
+        `${gmail.unreadCount} unread email${gmail.unreadCount === 1 ? "" : "s"} in the last 24h — want replies drafted? Type it in the task bar.`,
+      );
+    }
+  } catch {
+    /* signals are best-effort */
   }
 
   if (ctx.visibilityScore != null && ctx.visibilityScore < 50) {
@@ -267,7 +286,7 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
   };
 
   return {
-    greeting: greetingForHour(restaurant.name),
+    greeting,
     summary,
     taskDrafts: merged,
   };

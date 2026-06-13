@@ -7,25 +7,43 @@ function sourceLabel(source: ChiefOfStaffTaskDto["source"], requiresIntegration:
   if (requiresIntegration) return "Connect in Settings";
   if (source === "AUDIT") return "From your audit";
   if (source === "AI") return "AI suggestion";
+  if (source === "MANUAL") return "Your request";
   return "Suggested";
+}
+
+function reviewLabel(task: ChiefOfStaffTaskDto): string {
+  if (task.draft) {
+    if (task.draft.kind === "email") return "Review email";
+    if (task.draft.kind === "social_post") return "Review post";
+    if (task.draft.kind === "review_reply") return "Review reply";
+    if (task.draft.kind === "content") return "Review draft";
+    return "Review notes";
+  }
+  if (task.category === "EMAIL") return "Review email";
+  if (task.category === "SOCIAL") return "Review post";
+  if (task.category === "REVIEWS") return "Review reply";
+  return "Review";
 }
 
 export function TaskRow({
   task,
   onApprove,
+  onReview,
   busy,
 }: {
   task: ChiefOfStaffTaskDto;
   onApprove: (id: string) => void;
+  onReview?: (id: string) => void;
   busy?: boolean;
 }) {
   const done = task.status === "APPROVED" || task.status === "DONE";
+  const showReview = !done && !task.requiresIntegration && Boolean(onReview);
 
   return (
     <article className="flex gap-3 border-b border-[#eee] py-4 last:border-0">
       <button
         type="button"
-        disabled={done || busy}
+        disabled={done}
         onClick={() => onApprove(task.id)}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
           done ? "border-[var(--color-primary)] bg-[var(--color-primary)]" : "border-[#ccc] bg-white hover:border-[var(--color-primary)]"
@@ -39,7 +57,18 @@ export function TaskRow({
         ) : null}
       </button>
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium ${done ? "text-[#999] line-through" : "text-[#1a1a1a]"}`}>{task.title}</p>
+        <div className="flex items-start justify-between gap-2">
+          <p className={`text-sm font-medium ${done ? "text-[#999] line-through" : "text-[#1a1a1a]"}`}>{task.title}</p>
+          {showReview ? (
+            <button
+              type="button"
+              onClick={() => onReview?.(task.id)}
+              className="shrink-0 rounded-full border border-[#ddd] bg-white px-3 py-1 text-xs font-medium text-[#444] hover:bg-[#fafafa]"
+            >
+              {reviewLabel(task)}
+            </button>
+          ) : null}
+        </div>
         {task.detail ? <p className="mt-1 text-xs leading-relaxed text-[#777]">{task.detail}</p> : null}
         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[#888]">
           {task.impactLabel ? <span>{task.impactLabel}</span> : null}
@@ -50,10 +79,12 @@ export function TaskRow({
           <span className="rounded-full bg-[#f0f0f0] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#666]">
             {sourceLabel(task.source, task.requiresIntegration)}
           </span>
+          {task.draft ? (
+            <span className="rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#047857]">
+              Draft ready
+            </span>
+          ) : null}
         </div>
-        {!done && !task.requiresIntegration ? (
-          <p className="mt-2 text-[10px] text-[#aaa]">Approve prepares a draft for you to review—nothing posts automatically.</p>
-        ) : null}
         {task.requiresIntegration ? (
           <Link href="/dashboard/settings" className="mt-2 inline-block text-[11px] font-medium text-[var(--color-primary)] underline">
             Connect in Settings →

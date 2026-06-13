@@ -21,6 +21,7 @@
     "db:doctor": "node scripts/db-doctor.mjs",
     "sales:bootstrap": "dotenv -e .env -e .env.local -- node scripts/bootstrap-sales-workspace.mjs",
     "stripe:bootstrap": "dotenv -e .env -e .env.local -- node scripts/bootstrap-stripe.mjs",
+    "stripe:go-live": "dotenv -e .env -e .env.local -- node scripts/stripe-go-live.mjs",
     "sales:link-user": "dotenv -e .env -e .env.local -- node scripts/link-sales-user.mjs",
     "setup:auth-urls": "node scripts/print-supabase-auth-config.mjs",
     "auth:test-email": "node scripts/test-supabase-auth-email.mjs",
@@ -44,9 +45,14 @@
     "marketing:check-owner": "node scripts/marketing-check-owner-copy.mjs",
     "smoke:check": "node scripts/smoke-check.mjs",
     "launch:check": "node scripts/launch-check.mjs",
-    "audit:golden-path": "dotenv -e .env -e .env.local -- node scripts/audit-golden-path.mjs"
+    "audit:golden-path": "dotenv -e .env -e .env.local -- node scripts/audit-golden-path.mjs",
+    "lead-engine:prune": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-prune.ts",
+    "lead-engine:seed": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/azure": "^3.0.74",
+    "@ai-sdk/google": "^3.0.82",
+    "@ai-sdk/openai": "^3.0.68",
     "@browserbasehq/sdk": "^2.11.0",
     "@browserbasehq/stagehand": "^3.4.0",
     "@google/generative-ai": "^0.24.1",
@@ -57,6 +63,7 @@
     "@sanity/vision": "^5.24.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
+    "ai": "^6.0.198",
     "framer-motion": "^12.38.0",
     "iconify-icon": "^3.0.2",
     "inngest": "^4.3.0",

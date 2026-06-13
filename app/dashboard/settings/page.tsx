@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
+import { ConnectIntegrationCard } from "@/components/dashboard/integrations/ConnectIntegrationCard";
 import { SettingsPersonality } from "@/components/dashboard/settings/SettingsPersonality";
 import { SettingsRestaurantUrls } from "@/components/dashboard/settings/SettingsRestaurantUrls";
 import { appCardSurface } from "@/lib/app-ui-classes";
@@ -40,21 +41,31 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <p className="type-body-md mt-2 text-[var(--color-muted)]">{restaurant.name}</p>
 
       <h2 className="type-title-sm mt-10">Connected services</h2>
-      {integrations.length === 0 ? (
-        <p className={`type-body-sm mt-4 text-[var(--color-muted)] ${appCardSurface}`}>
-          No integrations yet. Use <span className="font-mono text-[13px]">POST /api/integrations</span> or the Growth
-          onboarding flow when available.
-        </p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {integrations.map((i) => (
-            <li key={i.id} className={appCardSurface}>
-              <p className="font-medium text-[var(--color-ink)]">{i.provider.replace(/_/g, " ")}</p>
-              <p className="type-caption text-[var(--color-muted-medium)]">Connected {i.connectedAt.toLocaleDateString()}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <p className="type-body-sm mt-2 text-[var(--color-muted)]">
+        Connect analytics, search, and POS to power Traffic &amp; Sales and Customer Insights.
+      </p>
+      <div className="mt-4 space-y-2">
+        {(
+          [
+            "GOOGLE_ANALYTICS",
+            "GOOGLE_SEARCH_CONSOLE",
+            "GOOGLE_CALENDAR",
+            "GMAIL",
+            "SQUARE",
+            "TOAST",
+            "INSTAGRAM",
+            "OPENTABLE",
+            "RESY",
+          ] as const
+        ).map((provider) => (
+          <ConnectIntegrationCard
+            key={provider}
+            restaurantId={restaurantId}
+            provider={provider}
+            connected={integrations.some((i) => i.provider === provider)}
+          />
+        ))}
+      </div>
 
       <SettingsRestaurantUrls
         restaurantId={restaurantId}

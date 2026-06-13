@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { MarketingAuthNav } from "./MarketingAuthNav";
 import { SaasIcon } from "./SaasIcon";
 
 export function SaasMarketingHeader() {
@@ -82,18 +83,7 @@ export function SaasMarketingHeader() {
         </nav>
 
         <div className="flex items-center gap-4 md:gap-6">
-          <Link
-            href="/login"
-            className="hidden text-sm font-medium text-[#2c2c2c]/80 transition-colors hover:text-[#094413] sm:inline-block"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/signup"
-            className="hidden text-sm font-medium text-[#094413] underline-offset-4 transition-colors hover:underline sm:inline-block"
-          >
-            Sign up
-          </Link>
+          <MarketingAuthNav />
           <Link
             href="/#audit-form"
             className="inline-flex transform items-center justify-center rounded-full bg-[#094413] px-5 py-2.5 text-sm font-medium text-[#fbf8f5] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#088924]"
@@ -146,21 +136,8 @@ export function SaasMarketingHeader() {
             Resources
           </Link>
           <hr className="border-[#2c2c2c]/5" />
-          <div className="flex flex-col gap-3 pt-2">
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="rounded-full border border-[#2c2c2c]/10 py-2 text-center text-sm text-[#2c2c2c] hover:text-[#094413]"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              onClick={() => setMobileMenuOpen(false)}
-              className="rounded-full bg-[#094413] py-2 text-center text-sm text-[#fbf8f5] hover:bg-[#088924]"
-            >
-              Sign up
-            </Link>
+          <div className="flex flex-col gap-3 pt-2 sm:hidden">
+            <MarketingAuthNav mobile onNavigate={() => setMobileMenuOpen(false)} />
           </div>
         </div>
       ) : null}

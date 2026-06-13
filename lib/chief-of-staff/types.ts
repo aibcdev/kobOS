@@ -20,6 +20,12 @@ export type TodayBriefSummary = {
   holidayBlock: HolidayBlock | null;
 };
 
+export type TaskDraft = {
+  kind: "email" | "social_post" | "review_reply" | "content" | "note";
+  subject: string | null;
+  body: string;
+};
+
 export type ChiefOfStaffTaskDto = {
   id: string;
   title: string;
@@ -34,6 +40,8 @@ export type ChiefOfStaffTaskDto = {
   revenueHighGbp: number | null;
   requiresIntegration: string | null;
   auditId: string | null;
+  conversationId: string | null;
+  draft: TaskDraft | null;
 };
 
 export type TodayBriefPayload = {

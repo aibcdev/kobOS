@@ -9,7 +9,7 @@ export function auditPlacesRegionCodes(): string[] {
       .filter((s) => /^[A-Z]{2}$/.test(s));
     if (parts.length) return parts;
   }
-  return ["GB"];
+  return ["GB", "IE"];
 }
 
 export const UK_MAP_CENTER = { lat: 51.5074, lng: -0.1278 } as const;

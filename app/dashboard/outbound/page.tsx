@@ -4,7 +4,7 @@ import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { UpgradeRequired } from "@/components/dashboard/UpgradeRequired";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { prisma } from "@/lib/db/prisma";
-import { OutboundLeadSource, OutboundLeadStatus, SubscriptionPlan } from "@prisma/client";
+import { LeadProspectStatus, OutboundLeadSource, OutboundLeadStatus, SubscriptionPlan } from "@prisma/client";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
@@ -82,9 +82,12 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
     status: { in: [...queueStatuses] },
   };
 
-  const [ukColdRows, auditRows, approvedRows, sentRows] = await Promise.all([
+  const [ukColdRows, auditRows, approvedRows, sentRows, leadProspects] = await Promise.all([
     prisma.outboundLead.findMany({
-      where: { ...baseWhere, source: OutboundLeadSource.UK_COLD },
+      where: {
+        ...baseWhere,
+        source: { in: [OutboundLeadSource.UK_COLD, OutboundLeadSource.LEAD_ENGINE] },
+      },
       orderBy: { createdAt: "desc" },
       take: 80,
     }),
@@ -106,6 +109,14 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
+    prisma.leadProspect.findMany({
+      where: {
+        workspaceRestaurantId: restaurantId,
+        status: { in: [LeadProspectStatus.DISCOVERED, LeadProspectStatus.ANALYZED] },
+      },
+      orderBy: [{ kobOpportunityScore: "desc" }, { createdAt: "desc" }],
+      take: 80,
+    }),
   ]);
 
   return (
@@ -114,6 +125,26 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
       auditQueue={auditRows.map(mapLead)}
       approved={approvedRows.map(mapLead)}
       sent={sentRows.map(mapLead)}
+      leadProspects={leadProspects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        city: p.city,
+        country: p.country,
+        websiteUrl: p.websiteUrl,
+        contactEmail: p.contactEmail,
+        reviewCount: p.reviewCount,
+        rating: p.rating,
+        kobOpportunityScore: p.kobOpportunityScore,
+        opportunities: p.opportunities,
+        hasTikTok: p.hasTikTok,
+        deliveryPlatforms: p.deliveryPlatforms,
+        platformRank: p.platformRank,
+        platformRankPercentile: p.platformRankPercentile,
+        locationCount: p.locationCount,
+        websiteStale: p.websiteStale,
+        status: p.status,
+        createdAt: p.createdAt.toISOString(),
+      }))}
       restaurantId={restaurantId}
       salesMode={isOutboundSalesMode()}
       ukColdMode={isUkColdOutboundMode()}
