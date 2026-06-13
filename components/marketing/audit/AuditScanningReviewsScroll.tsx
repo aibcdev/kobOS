@@ -2,26 +2,31 @@
 
 import type { ScanPreviewReview } from "@/lib/marketing/audit-scan-preview";
 
-const FALLBACK_REVIEWS: (ScanPreviewReview & { displayName: string })[] = [
-  { displayName: "Sarah M.", text: "Great atmosphere and friendly staff. Food was excellent.", rating: 5, authorInitial: "S" },
-  { displayName: "James T.", text: "Waited a bit long but worth it. Would come back.", rating: 4, authorInitial: "J" },
-  { displayName: "Priya K.", text: "Lovely spot for a date night. Menu had great options.", rating: 5, authorInitial: "P" },
-  { displayName: "Alex R.", text: "Solid lunch spot near the office.", rating: 4, authorInitial: "A" },
-];
-
 type ReviewRow = ScanPreviewReview & { displayName: string };
 
 function toRows(reviews: ScanPreviewReview[] | undefined): ReviewRow[] {
-  if (!reviews?.length) return FALLBACK_REVIEWS;
+  if (!reviews?.length) return [];
   return reviews.map((r, i) => ({
     ...r,
     displayName: `Guest ${r.authorInitial}${i + 1}`,
   }));
 }
 
-/** Owner grader — scrolling review cards with green scan line. */
+/** Owner grader — scrolling review cards with green scan line (real Google reviews only). */
 export function AuditScanningReviewsScroll({ reviews }: { reviews?: ScanPreviewReview[] }) {
   const rows = toRows(reviews);
+
+  if (rows.length === 0) {
+    return (
+      <div className="mx-auto flex h-[min(420px,55vh)] w-full max-w-md flex-col items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)] p-8 text-center shadow-[var(--shadow-card-elevated)]">
+        <p className="type-body-md font-medium text-[var(--color-ink)]">Checking Google reviews</p>
+        <p className="type-body-sm mt-2 text-[var(--color-muted)]">
+          We will show guest feedback here when we find a matching Google Business listing.
+        </p>
+      </div>
+    );
+  }
+
   const duplicated = [...rows, ...rows];
 
   return (

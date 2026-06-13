@@ -14,6 +14,7 @@ import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
 import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
+import { finalizePendingAuditScan, failPendingAuditScan } from "@/lib/audit/finalize-pending-scan";
 import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 import type { StagehandRenderedPage } from "@/lib/browserbase/stagehand-scan";
@@ -197,13 +198,19 @@ export const auditRunPipeline = inngest.createFunction(
 
     await step.run("execute-audit-pipeline", async () => {
       const { executeAuditPipeline } = await import("@/lib/audit/execute-audit-pipeline");
-      return executeAuditPipeline(auditId, {
-        websiteUrl,
-        siteScope,
-        userSocial,
-        userImageUrls,
-        place,
-      });
+      try {
+        return await executeAuditPipeline(auditId, {
+          websiteUrl,
+          siteScope,
+          userSocial,
+          userImageUrls,
+          place,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        await failPendingAuditScan(auditId, msg);
+        throw e;
+      }
     });
 
     return { auditId };
@@ -223,6 +230,7 @@ export const auditBrowserbaseScan = inngest.createFunction(
     }
 
     if (!isBrowserbaseConfigured()) {
+      await step.run("finalize-pending-without-browserbase", async () => finalizePendingAuditScan(auditId));
       return { auditId, skipped: true, reason: "no_browserbase" };
     }
 
@@ -349,6 +357,8 @@ export const auditBrowserbaseScan = inngest.createFunction(
         }
         return sends.length;
       });
+    } else {
+      await step.run("finalize-stuck-pending", async () => finalizePendingAuditScan(auditId));
     }
 
     return { auditId, result };

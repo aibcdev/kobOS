@@ -1,7 +1,6 @@
 "use client";
 
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 export type ScanMapCompetitor = {
   name: string;
@@ -15,87 +14,14 @@ type Props = {
   competitors?: ScanMapCompetitor[];
 };
 
-/** Light-styled map with primary pin + nearby competitor markers. Falls back to Static Maps API. */
+/** Server-rendered static map for audit scanning (uses GOOGLE_PLACES_API_KEY server-side). */
 export function AuditScanningMap({ lat, lng, competitors = [] }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-  const jsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
   const [staticFailed, setStaticFailed] = useState(false);
-
-  const init = useCallback(async () => {
-    const key = jsKey;
-    const el = ref.current;
-    if (!key || !el) return;
-
-    setOptions({ key, v: "weekly" });
-    const mapsLib = await importLibrary("maps");
-    const center = { lat, lng };
-    const map = new mapsLib.Map(el, {
-      center,
-      zoom: 14,
-      disableDefaultUI: true,
-      zoomControl: true,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-    });
-
-    new google.maps.Marker({
-      position: center,
-      map,
-      title: "Your restaurant",
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: "#094413",
-        fillOpacity: 1,
-        strokeColor: "#ffffff",
-        strokeWeight: 2,
-      },
-    });
-
-    for (const c of competitors.slice(0, 4)) {
-      if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) continue;
-      new google.maps.Marker({
-        position: { lat: c.lat, lng: c.lng },
-        map,
-        title: c.name,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: "#c9a227",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        },
-      });
-    }
-  }, [competitors, jsKey, lat, lng]);
-
-  useEffect(() => {
-    if (!jsKey) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        if (cancelled) return;
-        await init();
-      } catch (e) {
-        console.warn("[AuditScanningMap]", e);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [init, jsKey]);
-
-  if (jsKey) {
-    return <div ref={ref} className="h-full min-h-[280px] w-full overflow-hidden" />;
-  }
 
   if (staticFailed) {
     return (
       <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-2xl border border-[#2c2c2c]/10 bg-[#f6f4f0] p-8 text-center text-sm text-[#666666]">
-        Map preview unavailable. Set <code className="rounded bg-white px-1">GOOGLE_PLACES_API_KEY</code> or{" "}
-        <code className="rounded bg-white px-1">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>.
+        Map preview unavailable
       </div>
     );
   }

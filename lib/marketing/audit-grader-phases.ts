@@ -29,6 +29,11 @@ export type GraderScanSignals = {
 
 export const GRADER_COUNTDOWN_START_SEC = 36;
 
+function effectivePhaseOrder(signals?: GraderScanSignals): GraderScanPhase[] {
+  if (signals?.hasReviews) return PHASE_ORDER;
+  return PHASE_ORDER.filter((p) => p !== "reviews");
+}
+
 function signalReadyForAdvance(phase: GraderScanPhase, signals?: GraderScanSignals): boolean {
   if (!signals) return false;
   switch (phase) {
@@ -50,14 +55,15 @@ export function resolveGraderPhase(
   scanReady: boolean,
   signals?: GraderScanSignals,
 ): GraderScanPhase {
-  if (scanReady) return "reviews";
+  const order = effectivePhaseOrder(signals);
+  if (scanReady) return order[order.length - 1] ?? "reviews";
 
   let cursor = 0;
-  for (let i = 0; i < PHASE_ORDER.length; i++) {
-    const phase = PHASE_ORDER[i]!;
+  for (let i = 0; i < order.length; i++) {
+    const phase = order[i]!;
     const maxEnd = cursor + PHASE_MS[phase];
 
-    if (elapsedMs < cursor) return PHASE_ORDER[Math.max(0, i - 1)]!;
+    if (elapsedMs < cursor) return order[Math.max(0, i - 1)]!;
 
     const dwell = elapsedMs - cursor;
     const minMet = dwell >= MIN_DWELL_MS[phase];
@@ -70,13 +76,14 @@ export function resolveGraderPhase(
 
     cursor = timedOut ? maxEnd : elapsedMs;
   }
-  return "reviews";
+  return order[order.length - 1] ?? "reviews";
 }
 
 function phaseWindow(elapsedMs: number, scanReady: boolean, signals?: GraderScanSignals) {
+  const order = effectivePhaseOrder(signals);
   const phase = resolveGraderPhase(elapsedMs, scanReady, signals);
   let cursor = 0;
-  for (const p of PHASE_ORDER) {
+  for (const p of order) {
     const maxEnd = cursor + PHASE_MS[p];
     const dwell = elapsedMs - cursor;
     const minMet = dwell >= MIN_DWELL_MS[p];
@@ -87,7 +94,8 @@ function phaseWindow(elapsedMs: number, scanReady: boolean, signals?: GraderScan
     }
     cursor = timedOut ? maxEnd : minMet && signalOk ? elapsedMs : maxEnd;
   }
-  return { phase: "reviews" as const, start: cursor, end: cursor + PHASE_MS.reviews, dwell: 0 };
+  const last = order[order.length - 1] ?? "reviews";
+  return { phase: last, start: cursor, end: cursor + PHASE_MS[last], dwell: 0 };
 }
 
 export function graderCountdownSeconds(elapsedMs: number, scanReady: boolean): number {
@@ -102,13 +110,14 @@ export function graderPhaseProgress(
   signals?: GraderScanSignals,
 ): number {
   if (scanReady) return 100;
+  const order = effectivePhaseOrder(signals);
   const phase = resolveGraderPhase(elapsedMs, scanReady, signals);
-  const phaseIdx = PHASE_ORDER.indexOf(phase);
+  const phaseIdx = order.indexOf(phase);
   const { start, end } = phaseWindow(elapsedMs, scanReady, signals);
   const dur = Math.max(1, end - start);
   const within = Math.min(1, (elapsedMs - start) / dur);
-  const base = (phaseIdx / PHASE_ORDER.length) * 100;
-  return Math.min(92, base + within * (100 / PHASE_ORDER.length));
+  const base = (phaseIdx / order.length) * 100;
+  return Math.min(92, base + within * (100 / order.length));
 }
 
 import { UK_MAP_CENTER } from "@/lib/places/audit-places-config";

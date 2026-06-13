@@ -156,8 +156,16 @@ export function AuditScanningExperience({
     const readyToLeave = scanReady && (elapsedMs >= MIN_POLISH_MS || scanFailed);
     if (!timedOut && !readyToLeave) return;
     redirectScheduledRef.current = true;
+    const stillPending = !scanReady && !scanFailed;
+    if (stillPending) {
+      try {
+        sessionStorage.setItem(SKIP_KEY(auditId), "1");
+      } catch {
+        /* ignore */
+      }
+    }
     window.setTimeout(() => {
-      router.replace(`/audit/${auditId}`);
+      router.replace(stillPending ? `/audit/${auditId}?preview=1` : `/audit/${auditId}`);
     }, 300);
   }, [elapsedMs, scanReady, scanFailed, auditId, router]);
 
@@ -195,7 +203,7 @@ export function AuditScanningExperience({
           {showWebsiteMobile ? (
             <AuditScanningWebsiteMobileDual websiteUrl={website} imageUrl={previewImageUrl} />
           ) : null}
-          {phase === "reviews" ? (
+          {phase === "reviews" && scanSignals.hasReviews ? (
             <AuditScanningReviewsScroll reviews={googlePlace?.reviews} />
           ) : null}
         </div>
