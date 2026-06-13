@@ -6,14 +6,17 @@ import type { AuditUserMessage } from "@/lib/audit/audit-start-errors";
 export function AuditFormAlert({
   alert,
   onRetry,
+  id,
 }: {
   alert: AuditUserMessage;
   onRetry?: () => void;
+  id?: string;
 }) {
   const showDev = Boolean(alert.devHint && process.env.NODE_ENV === "development");
 
   return (
     <div
+      id={id}
       role="alert"
       className="mt-6 overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white text-left shadow-[0_12px_40px_-16px_rgba(9,68,19,0.12)]"
     >

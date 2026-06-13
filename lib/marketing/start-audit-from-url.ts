@@ -1,9 +1,12 @@
 import {
   auditInlineValidationMessage,
+  AUDIT_URL_EMPTY_HINT,
+  AUDIT_URL_HTTPS_HINT,
+  AUDIT_URL_INVALID_HINT,
   parseAuditStartApiError,
   type AuditUserMessage,
 } from "@/lib/audit/audit-start-errors";
-import { normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
+import { looksLikeWebsiteInput, normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
 
 export type StartAuditResult =
   | { ok: true; auditId: string }
@@ -12,11 +15,19 @@ export type StartAuditResult =
 export function validateAuditWebsiteInput(raw: string): { url: string } | { error: string } {
   const trimmed = raw.trim();
   if (!trimmed) {
-    return { error: "Enter a valid website address (e.g. turtlebay.co.uk)." };
+    return { error: AUDIT_URL_EMPTY_HINT };
   }
+
+  if (!/^https?:\/\//i.test(trimmed)) {
+    if (looksLikeWebsiteInput(trimmed)) {
+      return { error: AUDIT_URL_HTTPS_HINT };
+    }
+    return { error: AUDIT_URL_INVALID_HINT };
+  }
+
   const url = normalizeAuditWebsiteUrl(trimmed);
   if (!url) {
-    return { error: "Enter a valid website address (e.g. turtlebay.co.uk)." };
+    return { error: AUDIT_URL_INVALID_HINT };
   }
   return { url };
 }

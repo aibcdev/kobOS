@@ -1,5 +1,14 @@
 /** User-facing copy for audit start failures (Owner-style: calm, non-technical). */
 
+export const AUDIT_URL_HTTPS_HINT =
+  "Please include https:// at the start — e.g. https://cowpigchicken.co.uk";
+
+export const AUDIT_URL_EMPTY_HINT =
+  "Enter your restaurant website starting with https:// — e.g. https://turtlebay.co.uk";
+
+export const AUDIT_URL_INVALID_HINT =
+  "Enter a valid website starting with https:// — e.g. https://turtlebay.co.uk";
+
 export type AuditStartErrorCode =
   | "database_unreachable"
   | "database_schema"

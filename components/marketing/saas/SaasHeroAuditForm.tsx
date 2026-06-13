@@ -40,15 +40,20 @@ export function SaasHeroAuditForm({ className = "" }: { className?: string }) {
     <div className={className}>
       <form
         onSubmit={(e) => void onSubmit(e)}
+        noValidate
         className="flex items-center gap-2 rounded-full border border-[#2c2c2c]/5 bg-white p-2 shadow-[0_12px_32px_rgba(61,60,60,0.12)] transition-all duration-300 focus-within:ring-2 focus-within:ring-[#088924]"
       >
         <div className="flex flex-1 items-center gap-2.5 pl-4">
           <SaasIcon icon="solar:global-linear" stroke-width="1.5" className="text-xl text-[#2c2c2c]/40" />
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
-            placeholder="Enter your restaurant's website URL..."
+            placeholder="https://yourrestaurant.co.uk"
+            aria-invalid={alert?.code === "validation" ? true : undefined}
+            aria-describedby={alert ? "audit-url-error" : undefined}
             className="w-full border-none bg-transparent py-2.5 text-sm text-[#2c2c2c] outline-none placeholder:text-[#2c2c2c]/40"
             required
             disabled={loading}
@@ -63,7 +68,7 @@ export function SaasHeroAuditForm({ className = "" }: { className?: string }) {
           {!loading ? <SaasIcon icon="solar:arrow-right-linear" className="text-sm" /> : null}
         </button>
       </form>
-      {alert ? <AuditFormAlert alert={alert} /> : null}
+      {alert ? <AuditFormAlert id="audit-url-error" alert={alert} /> : null}
     </div>
   );
 }
