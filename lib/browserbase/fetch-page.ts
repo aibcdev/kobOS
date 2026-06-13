@@ -15,9 +15,9 @@ function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
 }
 
-export function isBrowserbaseConfigured(): boolean {
-  return Boolean(process.env.BROWSERBASE_API_KEY?.trim() && process.env.BROWSERBASE_PROJECT_ID?.trim());
-}
+import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
+
+export { isBrowserbaseConfigured };
 
 function normalizeUrl(raw: string): string {
   const t = raw.trim();

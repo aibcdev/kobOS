@@ -3,21 +3,18 @@ import { persistAiRecommendations } from "@/lib/ai/recommendations";
 import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
 import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
-import { buildAuditPayloadAndRow } from "@/lib/audit/build-result";
+import { auditPageTextPreview } from "@/lib/audit/audit-page-text-preview";
 import { enrichAuditNarrative } from "@/lib/audit/enrich-openai";
 import { fetchMediaAssetsForVision } from "@/lib/audit/collect-media-assets";
-import { analyzeFoodImagesFromBuffers } from "@/lib/audit/analyze-food-images";
 import { runGeminiDesignQualityV1 } from "@/lib/audit/gemini-design-quality";
 import { mergeBenchmarkV1MediaIntoPayload, runGeminiBenchmarkV1Media } from "@/lib/audit/gemini-benchmark-media";
 import { mergeBenchmarkV1IntoPayload, runGeminiBenchmarkV1 } from "@/lib/audit/gemini-benchmark-score";
 import { mergePerceptionAuditIntoPayload, runGeminiPerceptionAuditV1 } from "@/lib/audit/gemini-perception-audit";
 import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
-import { executeAuditPipeline } from "@/lib/audit/execute-audit-pipeline";
 import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
-import { auditPageTextPreview } from "@/lib/audit/website-analysis-pipeline";
-import { fetchRenderedPageWithRetry, isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
+import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 import type { StagehandRenderedPage } from "@/lib/browserbase/stagehand-scan";
 import { saveDigestRun } from "@/lib/digest/build-snapshot";
@@ -198,15 +195,16 @@ export const auditRunPipeline = inngest.createFunction(
           }
         : null;
 
-    await step.run("execute-audit-pipeline", () =>
-      executeAuditPipeline(auditId, {
+    await step.run("execute-audit-pipeline", async () => {
+      const { executeAuditPipeline } = await import("@/lib/audit/execute-audit-pipeline");
+      return executeAuditPipeline(auditId, {
         websiteUrl,
         siteScope,
         userSocial,
         userImageUrls,
         place,
-      }),
-    );
+      });
+    });
 
     return { auditId };
   },
@@ -243,6 +241,8 @@ export const auditBrowserbaseScan = inngest.createFunction(
 
       try {
         const useStagehand = isStagehandAuditEnabled();
+        const { fetchRenderedPageWithRetry } = await import("@/lib/browserbase/fetch-page");
+        const { buildAuditPayloadAndRow } = await import("@/lib/audit/build-result");
         const page = useStagehand
           ? await (async () => {
               const { fetchRenderedPageViaStagehandWithRetry } = await import("@/lib/browserbase/stagehand-scan");
@@ -444,7 +444,12 @@ export const auditGeminiBenchmark = inngest.createFunction(
         };
       } else {
         const { assets, errors } = await fetchMediaAssetsForVision(candidates, 6);
-        const foodImageAnalysis = assets.length ? await analyzeFoodImagesFromBuffers(assets) : undefined;
+        const foodImageAnalysis = assets.length
+          ? await (async () => {
+              const { analyzeFoodImagesFromBuffers } = await import("@/lib/audit/analyze-food-images");
+              return analyzeFoodImagesFromBuffers(assets);
+            })()
+          : undefined;
         merged = {
           ...merged,
           evidencePack: merged.evidencePack

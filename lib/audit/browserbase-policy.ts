@@ -1,4 +1,4 @@
-import { isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
+import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import type { UrlSignals } from "@/lib/audit/analyze-url";
 import { isLikelySpaShell } from "@/lib/audit/detect-spa-shell";
 

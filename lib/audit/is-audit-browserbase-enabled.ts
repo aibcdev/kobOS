@@ -1,4 +1,4 @@
-import { isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
+import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 
 /** Audits use Browserbase when explicitly enabled or when keys exist (default-on when configured). */
 export function isAuditBrowserbaseEnabled(): boolean {
