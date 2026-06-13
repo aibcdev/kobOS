@@ -52,13 +52,25 @@ const PLANS = [
 ];
 
 async function stripeApi(secretKey, method, path, body) {
+  let fetchBody;
+  if (body) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+      if (Array.isArray(value)) {
+        for (const item of value) params.append(key, item);
+      } else {
+        params.append(key, value);
+      }
+    }
+    fetchBody = params.toString();
+  }
   const res = await fetch(`https://api.stripe.com/v1${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${secretKey}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: body ? new URLSearchParams(body).toString() : undefined,
+    body: fetchBody,
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error?.message ?? `Stripe ${res.status}`);
@@ -104,22 +116,59 @@ async function ensureProducts(secretKey) {
   return out;
 }
 
-function setNetlifyEnv(siteId, key, value) {
-  const r = spawnSync(
-    "npx",
-    ["netlify", "env:set", key, value, "--context", "production", "--force"],
-    {
-      encoding: "utf8",
-      env: { ...process.env, NETLIFY_SITE_ID: siteId },
-      cwd: process.cwd(),
-    },
-  );
+function setNetlifyEnv(_siteId, key, value) {
+  const r = spawnSync("npx", ["netlify", "env:set", key, value, "--context", "production", "--force"], {
+    encoding: "utf8",
+    cwd: process.cwd(),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
   if (r.status !== 0) {
     console.error(`  ✗ Netlify env:set ${key} failed: ${r.stderr || r.stdout}`);
     return false;
   }
   console.log(`  ✓ Netlify ${key}`);
   return true;
+}
+
+const WEBHOOK_URL = "https://trykob.com/api/stripe/webhook";
+const WEBHOOK_EVENTS = [
+  "checkout.session.completed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "customer.subscription.trial_will_end",
+];
+
+async function findExistingWebhook(secretKey) {
+  const list = await stripeApi(secretKey, "GET", "/webhook_endpoints?limit=100", null);
+  for (const endpoint of list.data ?? []) {
+    if (endpoint.url === WEBHOOK_URL && endpoint.status === "enabled") {
+      return endpoint;
+    }
+  }
+  return null;
+}
+
+async function ensureWebhook(secretKey) {
+  const existing = await findExistingWebhook(secretKey);
+  if (existing) {
+    console.log(`  ✓ Webhook already exists → ${existing.id}`);
+    console.log("    Reveal signing secret in Stripe Dashboard → Webhooks → this endpoint");
+    return { id: existing.id, secret: null, existing: true };
+  }
+
+  const created = await stripeApi(secretKey, "POST", "/webhook_endpoints", {
+    url: WEBHOOK_URL,
+    description: "KOB trykob.com production",
+    "enabled_events[]": WEBHOOK_EVENTS,
+  });
+  console.log(`  ✓ Created webhook → ${created.id}`);
+  if (created.secret) {
+    console.log(`  ✓ Signing secret → ${created.secret.slice(0, 12)}...`);
+    return { id: created.id, secret: created.secret, existing: false };
+  }
+  console.log("  ○ Stripe did not return secret — copy whsec_... from Dashboard → Webhooks");
+  return { id: created.id, secret: null, existing: false };
 }
 
 async function main() {
@@ -149,11 +198,15 @@ Then run: npm run stripe:go-live
 
   console.log("\nKOB Stripe — LIVE production setup\n");
   const priceIds = await ensureProducts(secretKey);
+  console.log("\nWebhook…\n");
+  const webhook = await ensureWebhook(secretKey);
+  const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim() || webhook.secret;
 
   console.log(`
 ── Add to Netlify (kobkob / trykob.com) ──
 
 STRIPE_SECRET_KEY=${secretKey.slice(0, 12)}...  (already in .env.local)
+STRIPE_WEBHOOK_SECRET=${webhookSecret ? `${webhookSecret.slice(0, 12)}...` : "(copy whsec_ from Stripe Dashboard)"}
 STRIPE_PRICE_STARTER=${priceIds.STRIPE_PRICE_STARTER}
 STRIPE_PRICE_PRO=${priceIds.STRIPE_PRICE_PRO}
 STRIPE_GROWTH_PRICE_ID=${priceIds.STRIPE_PRICE_STARTER}
@@ -163,6 +216,11 @@ STRIPE_TRIAL_DAYS=7
   if (pushNetlify) {
     console.log("Pushing to Netlify production…\n");
     setNetlifyEnv(siteId, "STRIPE_SECRET_KEY", secretKey);
+    if (webhookSecret?.startsWith("whsec_")) {
+      setNetlifyEnv(siteId, "STRIPE_WEBHOOK_SECRET", webhookSecret);
+    } else {
+      console.log("  ○ STRIPE_WEBHOOK_SECRET not pushed — set whsec_ manually in Netlify");
+    }
     if (pk) setNetlifyEnv(siteId, "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", pk);
     setNetlifyEnv(siteId, "STRIPE_PRICE_STARTER", priceIds.STRIPE_PRICE_STARTER);
     setNetlifyEnv(siteId, "STRIPE_PRICE_PRO", priceIds.STRIPE_PRICE_PRO);
@@ -173,7 +231,7 @@ STRIPE_TRIAL_DAYS=7
     console.log("To push to Netlify automatically: npm run stripe:go-live -- --netlify\n");
   }
 
-  console.log("Webhook (once): https://trykob.com/api/stripe/webhook → STRIPE_WEBHOOK_SECRET in Netlify\n");
+  console.log(`Webhook URL: ${WEBHOOK_URL}\n`);
 }
 
 main().catch((e) => {
