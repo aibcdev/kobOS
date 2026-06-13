@@ -36,10 +36,8 @@ function readStripePublishableKey() {
 
 function pickGeminiKey(env) {
   const local = env.GEMINI_API_KEY?.trim() ?? "";
-  const paste = loadEnvFile("netlify-env-paste.txt").GEMINI_API_KEY?.trim() ?? "";
-  if (local.startsWith("AIza")) return local;
-  if (paste.startsWith("AIza")) return paste;
-  return local || paste || null;
+  if (local) return local;
+  return loadEnvFile("netlify-env-paste.txt").GEMINI_API_KEY?.trim() ?? null;
 }
 
 const PUSH_KEYS = [
@@ -92,9 +90,8 @@ function main() {
     if (!setNetlifyEnv(siteId, key, value)) ok = false;
   }
 
-  if (gemini && !gemini.startsWith("AIza")) {
-    console.log("\n  ⚠ GEMINI_API_KEY does not look like a Google AI Studio key (should start with AIza)");
-    console.log("    Get one: https://aistudio.google.com/apikey\n");
+  if (gemini && gemini.length < 20) {
+    console.log("\n  ⚠ GEMINI_API_KEY looks too short — check .env.local\n");
   }
 
   console.log(`

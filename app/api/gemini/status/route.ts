@@ -6,14 +6,14 @@ export async function GET() {
   const key = process.env.GEMINI_API_KEY?.trim() ?? "";
   const model = getGeminiModelName();
   const configured = isGeminiConfigured();
-  const keyLooksLikeAiStudio = key.startsWith("AIza");
+  const keyLooksLikeAuthKey = key.startsWith("AQ.") || key.startsWith("AIza");
 
   if (!configured) {
     return NextResponse.json({
       ok: false,
       configured: false,
       model,
-      keyLooksLikeAiStudio,
+      keyLooksLikeAuthKey,
       error: "GEMINI_API_KEY missing on this server (set in Netlify for trykob.com).",
     });
   }
@@ -29,7 +29,7 @@ export async function GET() {
     ok: probe.ok,
     configured: true,
     model,
-    keyLooksLikeAiStudio,
+    keyLooksLikeAuthKey,
     keyPrefix: key.slice(0, 6),
     probe: probe.ok ? "ok" : probe.error,
   });
