@@ -9,12 +9,16 @@ export function ActionCardsColumn({
   onApproveHoliday,
   onApproveTopFix,
   holidayBusy,
+  creativeHref,
+  requestsHref,
 }: {
   greeting: string;
   summary: TodayBriefSummary;
   onApproveHoliday: () => void;
   onApproveTopFix?: () => void;
   holidayBusy?: boolean;
+  creativeHref?: string;
+  requestsHref?: string;
 }) {
   const opp =
     summary.revenueOpportunityLow != null && summary.revenueOpportunityHigh != null
@@ -84,6 +88,23 @@ export function ActionCardsColumn({
           </button>
         </div>
       ) : null}
+
+      <div className={`${cosCard} p-6`}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#888]">Quick actions</p>
+        <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">Request website, logo, or SEO</p>
+        <p className="mt-2 text-sm text-[#666]">
+          Spend plan credits — our team delivers the work after you&apos;re on a paid plan. Nothing is
+          auto-built.
+        </p>
+        {requestsHref ? (
+          <a
+            href={requestsHref}
+            className="mt-5 inline-flex rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+          >
+            Open requests
+          </a>
+        ) : null}
+      </div>
     </div>
   );
 }

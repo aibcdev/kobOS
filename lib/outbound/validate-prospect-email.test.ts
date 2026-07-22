@@ -21,4 +21,10 @@ describe("isValidProspectEmail", () => {
   it("rejects domain mismatch", () => {
     expect(isValidProspectEmail("info@random.com", "https://thebap.co.uk").ok).toBe(false);
   });
+
+  it("accepts personal inboxes listed on the restaurant site", () => {
+    expect(
+      isValidProspectEmail("akmodali@icloud.com", "https://www.currymasterindian.co.uk").ok,
+    ).toBe(true);
+  });
 });

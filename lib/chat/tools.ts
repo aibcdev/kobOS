@@ -46,9 +46,19 @@ export function buildChatTools(restaurantId: string) {
       inputSchema: z.object({ path: z.string() }),
       execute: async ({ path }) => executeChatTool(restaurantId, "open_app", { path }),
     }),
+    lead_engine_stats: tool({
+      description: "Get lead engine counts: found prospects, contactable, top cities.",
+      inputSchema: z.object({}),
+      execute: async () => executeChatTool(restaurantId, "lead_engine_stats", {}),
+    }),
+    approve_lead_batch: tool({
+      description: "Queue the top lead prospects for email approval.",
+      inputSchema: z.object({ max: z.number().min(1).max(50).optional() }),
+      execute: async ({ max }) => executeChatTool(restaurantId, "approve_lead_batch", { max: max ?? 25 }),
+    }),
     generate_content_draft: tool({
       description:
-        "Generate a real content draft (social post, email, Google post, TikTok concept, review reply) using AI. Use this when the owner asks you to write, draft, or create any marketing content.",
+        "Generate a real content draft (social post, email, Google post, TikTok concept, review reply) using AI.",
       inputSchema: z.object({
         type: z.enum([
           "INSTAGRAM_CAPTION",
@@ -58,18 +68,13 @@ export function buildChatTools(restaurantId: string) {
           "GROWTH_REVIEW_REPLY",
           "SEO_BLOG",
         ]),
-        brief: z.string().describe("Specific brief for this piece of content, e.g. 'Father's Day, warm tone, mention Sunday roast'"),
+        brief: z.string(),
       }),
       execute: async ({ type, brief }) => executeChatTool(restaurantId, "generate_content_draft", { type, brief }),
     }),
     generate_image: tool({
-      description:
-        "Generate a professional restaurant image with AI (Gemini). Use when the owner wants a photo, visual, or image for a post.",
-      inputSchema: z.object({
-        prompt: z
-          .string()
-          .describe("Description of the image, e.g. 'summer rooftop terrace, golden hour lighting, British cuisine on the table'"),
-      }),
+      description: "Generate a professional restaurant image with AI (Gemini).",
+      inputSchema: z.object({ prompt: z.string() }),
       execute: async ({ prompt }) => executeChatTool(restaurantId, "generate_image", { prompt }),
     }),
   };

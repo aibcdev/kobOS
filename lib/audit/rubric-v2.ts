@@ -6,6 +6,7 @@ import type { AuditResultPayload, BenchmarkV1Section } from "@/lib/audit/types";
 import type { AuditStagehandExtraction } from "@/lib/browserbase/stagehand-schema";
 import type { AuditVisualIntelligenceResult } from "@/lib/audit/visual-intelligence";
 import type { UrlSignals } from "@/lib/audit/analyze-url";
+import { normalizeUrlSignals } from "@/lib/audit/analyze-url";
 
 export type RubricV2Input = {
   evidencePack: AuditEvidencePackV1;
@@ -64,7 +65,7 @@ function hostFromUrl(url: string | null): string {
 type Check = { id: string; pass: boolean; weight: number; detail: string; evidenceRef: string };
 
 function runChecks(input: RubricV2Input): Check[] {
-  const s = input.evidencePack.urlSignals;
+  const s = normalizeUrlSignals(input.evidencePack.urlSignals);
   const social = input.evidencePack.userSocial;
   const page = input.evidencePack.pageEvidence;
   const checks: Check[] = [];
@@ -85,17 +86,37 @@ function runChecks(input: RubricV2Input): Check[] {
   });
   checks.push({
     id: "seo_meta_description",
-    pass: s.hasMetaDescription,
+    pass:
+      s.hasMetaDescription &&
+      (s.metaDescriptionLen === 0 || (s.metaDescriptionLen >= 70 && s.metaDescriptionLen <= 170)),
     weight: 10,
-    detail: s.hasMetaDescription ? "Meta description present." : "Missing meta description.",
+    detail: s.hasMetaDescription
+      ? `Meta description present (${s.metaDescriptionLen || "?"} chars).`
+      : "Missing meta description.",
     evidenceRef: "urlSignals.hasMetaDescription",
+  });
+  checks.push({
+    id: "seo_h1",
+    pass: s.h1Count === 1,
+    weight: 8,
+    detail: `H1 count: ${s.h1Count}.`,
+    evidenceRef: "urlSignals.h1Count",
   });
   checks.push({
     id: "seo_json_ld",
     pass: s.hasJsonLd,
-    weight: 12,
+    weight: 10,
     detail: s.hasJsonLd ? "Structured data (JSON-LD) detected." : "No JSON-LD found in rendered HTML.",
     evidenceRef: "urlSignals.hasJsonLd",
+  });
+  checks.push({
+    id: "seo_restaurant_schema",
+    pass: s.hasRestaurantSchema,
+    weight: 8,
+    detail: s.hasRestaurantSchema
+      ? "Restaurant / LocalBusiness schema present."
+      : "No Restaurant or LocalBusiness schema type found.",
+    evidenceRef: "urlSignals.hasRestaurantSchema",
   });
   checks.push({
     id: "seo_canonical",
@@ -104,7 +125,48 @@ function runChecks(input: RubricV2Input): Check[] {
     detail: s.hasCanonical ? "Canonical URL set." : "No canonical link.",
     evidenceRef: "urlSignals.hasCanonical",
   });
-
+  checks.push({
+    id: "seo_open_graph",
+    pass: s.hasOgTitle && s.hasOgImage,
+    weight: 6,
+    detail:
+      s.hasOgTitle && s.hasOgImage
+        ? "Open Graph title + image present."
+        : "Incomplete Open Graph tags for social / search previews.",
+    evidenceRef: "urlSignals.hasOgImage",
+  });
+  checks.push({
+    id: "seo_robots_txt",
+    pass: s.robotsTxtFound && !s.hasNoindex,
+    weight: 6,
+    detail: s.hasNoindex
+      ? "Indexing blocked (noindex or robots Disallow: /)."
+      : s.robotsTxtFound
+        ? "robots.txt found."
+        : "No robots.txt detected at site origin.",
+    evidenceRef: "urlSignals.robotsTxtFound",
+  });
+  checks.push({
+    id: "seo_sitemap",
+    pass: s.sitemapFound,
+    weight: 6,
+    detail: s.sitemapFound ? "XML sitemap found." : "No XML sitemap detected.",
+    evidenceRef: "urlSignals.sitemapFound",
+  });
+  checks.push({
+    id: "seo_image_alts",
+    pass: s.imgCount === 0 || s.imgWithAltCount / Math.max(1, s.imgCount) >= 0.5,
+    weight: 5,
+    detail: `${s.imgWithAltCount}/${s.imgCount} images have alt text.`,
+    evidenceRef: "urlSignals.imgWithAltCount",
+  });
+  checks.push({
+    id: "seo_lang",
+    pass: s.hasLangAttr,
+    weight: 3,
+    detail: s.hasLangAttr ? "HTML lang attribute set." : "Missing html lang attribute.",
+    evidenceRef: "urlSignals.hasLangAttr",
+  });
   checks.push({
     id: "web_viewport",
     pass: s.hasViewport,
@@ -143,6 +205,15 @@ function runChecks(input: RubricV2Input): Check[] {
         weight: 8,
         detail: `Largest Contentful Paint ~${psi.lcpMs}ms.`,
         evidenceRef: "pageSpeed.lcpMs",
+      });
+    }
+    if (psi.cls != null) {
+      checks.push({
+        id: "web_psi_cls",
+        pass: psi.cls <= 0.25,
+        weight: 6,
+        detail: `Cumulative Layout Shift ${psi.cls}.`,
+        evidenceRef: "pageSpeed.cls",
       });
     }
   }
@@ -265,7 +336,7 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
   const webR = scoreFromChecks(webChecks.length ? webChecks : checks);
   const brandR = scoreFromChecks(brandChecks.length ? brandChecks : checks);
 
-  const s = input.evidencePack.urlSignals;
+  const s = normalizeUrlSignals(input.evidencePack.urlSignals);
   let mobile = s.hasViewport ? 72 : 48;
   if (input.pageSpeed?.performanceScore != null) {
     mobile = clamp(mobile * 0.35 + input.pageSpeed.performanceScore * 0.65, 35, 98);
@@ -335,10 +406,13 @@ export function rubricFixtureWeakSignals(): UrlSignals {
     status: 200,
     titleLen: 8,
     hasMetaDescription: false,
+    metaDescriptionLen: 0,
     h1Count: 0,
+    h2Count: 0,
     hasOgTitle: false,
     hasCanonical: false,
     hasJsonLd: false,
+    hasRestaurantSchema: false,
     hasViewport: false,
     isHttps: false,
     hasTelLink: false,
@@ -346,9 +420,14 @@ export function rubricFixtureWeakSignals(): UrlSignals {
     hasBookOrReserveKeyword: false,
     hasOpenTableOrResy: false,
     imgCount: 0,
+    imgWithAltCount: 0,
     htmlSizeKb: 12,
     hasOgImage: false,
     hasTwitterCard: false,
+    hasLangAttr: false,
+    hasNoindex: false,
+    robotsTxtFound: false,
+    sitemapFound: false,
     mentionsRobotsOrSitemap: false,
   };
 }
@@ -360,10 +439,13 @@ export function rubricFixtureEliteSignals(): UrlSignals {
     status: 200,
     titleLen: 42,
     hasMetaDescription: true,
+    metaDescriptionLen: 150,
     h1Count: 1,
+    h2Count: 4,
     hasOgTitle: true,
     hasCanonical: true,
     hasJsonLd: true,
+    hasRestaurantSchema: true,
     hasViewport: true,
     isHttps: true,
     hasTelLink: true,
@@ -371,9 +453,14 @@ export function rubricFixtureEliteSignals(): UrlSignals {
     hasBookOrReserveKeyword: true,
     hasOpenTableOrResy: false,
     imgCount: 12,
+    imgWithAltCount: 10,
     htmlSizeKb: 420,
     hasOgImage: true,
     hasTwitterCard: true,
+    hasLangAttr: true,
+    hasNoindex: false,
+    robotsTxtFound: true,
+    sitemapFound: true,
     mentionsRobotsOrSitemap: true,
   };
 }

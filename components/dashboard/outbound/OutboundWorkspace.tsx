@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { appBtnPrimary, appBtnSecondary, appCardSurface } from "@/lib/app-ui-classes";
 import { LeadEnginePanel, type LeadProspectRow } from "@/components/dashboard/outbound/LeadEnginePanel";
+import { OutboundAskBar } from "@/components/dashboard/outbound/OutboundAskBar";
 
 type LeadRow = {
   id: string;
@@ -29,6 +30,8 @@ type PipelineProps = {
   approved: LeadRow[];
   sent: LeadRow[];
   leadProspects: LeadProspectRow[];
+  leadProspectTotal: number;
+  leadProspectContactable: number;
   restaurantId: string;
   salesMode: boolean;
   ukColdMode: boolean;
@@ -157,6 +160,8 @@ export function OutboundWorkspace({
   approved,
   sent,
   leadProspects,
+  leadProspectTotal,
+  leadProspectContactable,
   restaurantId,
   salesMode,
   ukColdMode,
@@ -286,7 +291,10 @@ export function OutboundWorkspace({
         </p>
         <div className="mt-4 flex flex-wrap gap-2 type-caption">
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-900">
-            Lead engine: {leadProspects.length}
+            Lead engine: {leadProspectTotal.toLocaleString()} found
+          </span>
+          <span className="rounded-full bg-sky-50 px-3 py-1 text-sky-900">
+            With email: {leadProspectContactable.toLocaleString()}
           </span>
           <span className="rounded-full bg-[var(--color-primary)]/10 px-3 py-1">UK cold: {ukColdQueue.length}</span>
           <span className="rounded-full bg-[var(--color-muted-faint)] px-3 py-1">Audit: {auditQueue.length}</span>
@@ -294,6 +302,10 @@ export function OutboundWorkspace({
           <span className="rounded-full bg-[var(--color-accent)]/10 px-3 py-1">Sent: {sent.length}</span>
         </div>
       </div>
+
+      {ukColdMode ? (
+        <OutboundAskBar restaurantId={restaurantId} prospectCount={leadProspectTotal} />
+      ) : null}
 
       <section className={appCardSurface}>
         <h2 className="type-title-sm">Daily actions</h2>
@@ -353,7 +365,7 @@ export function OutboundWorkspace({
         <div className="flex flex-wrap gap-2 border-b border-[var(--color-hairline)] pb-3">
           {(
             [
-              ...(ukColdMode ? [["lead_engine", `Lead engine (${leadProspects.length})`] as const] : []),
+              ...(ukColdMode ? [["lead_engine", `Lead engine (${leadProspectTotal.toLocaleString()})`] as const] : []),
               ...(ukColdMode ? [["uk_cold", `UK cold (${ukColdQueue.length})`] as const] : []),
               ["audit", `Audit follow-up (${auditQueue.length})`] as const,
               ["approved", `Approved (${approved.length})`] as const,
@@ -375,7 +387,12 @@ export function OutboundWorkspace({
 
         {tab === "lead_engine" ? (
           <div className="mt-4">
-            <LeadEnginePanel prospects={leadProspects} restaurantId={restaurantId} />
+            <LeadEnginePanel
+              prospects={leadProspects}
+              restaurantId={restaurantId}
+              totalFound={leadProspectTotal}
+              contactableCount={leadProspectContactable}
+            />
           </div>
         ) : tabLeads.length === 0 ? (
           <p className={`${appCardSurface} type-body-sm mt-4 text-[var(--color-muted)]`}>Nothing here yet.</p>

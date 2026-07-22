@@ -10,6 +10,7 @@ import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 import { canUseOutboundWorkspace, isOutboundSalesMode } from "@/lib/outbound/sales-access";
 import { isUkColdOutboundMode } from "@/lib/outbound/icp-config";
+import { platformFoundWhere, platformQualifiedWhere } from "@/lib/lead-engine/contactable-query";
 
 export const metadata: Metadata = {
   title: "Sales pipeline · KOB",
@@ -82,7 +83,8 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
     status: { in: [...queueStatuses] },
   };
 
-  const [ukColdRows, auditRows, approvedRows, sentRows, leadProspects] = await Promise.all([
+  const [ukColdRows, auditRows, approvedRows, sentRows, leadProspects, leadProspectTotal, leadProspectContactable] =
+    await Promise.all([
     prisma.outboundLead.findMany({
       where: {
         ...baseWhere,
@@ -111,12 +113,15 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
     }),
     prisma.leadProspect.findMany({
       where: {
-        workspaceRestaurantId: restaurantId,
+        ...platformFoundWhere(restaurantId),
+        contactEmail: { not: null },
         status: { in: [LeadProspectStatus.DISCOVERED, LeadProspectStatus.ANALYZED] },
       },
-      orderBy: [{ kobOpportunityScore: "desc" }, { createdAt: "desc" }],
-      take: 80,
+      orderBy: [{ kobOpportunityScore: "desc" }, { platformRank: "asc" }, { reviewCount: "desc" }],
+      take: 3000,
     }),
+    prisma.leadProspect.count({ where: platformFoundWhere(restaurantId) }),
+    prisma.leadProspect.count({ where: platformQualifiedWhere(restaurantId) }),
   ]);
 
   return (
@@ -132,6 +137,9 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
         country: p.country,
         websiteUrl: p.websiteUrl,
         contactEmail: p.contactEmail,
+        contactPhone: p.contactPhone,
+        hasContactForm: p.hasContactForm,
+        weakWebsite: p.weakWebsite,
         reviewCount: p.reviewCount,
         rating: p.rating,
         kobOpportunityScore: p.kobOpportunityScore,
@@ -145,6 +153,8 @@ export default async function OutboundPage({ searchParams }: { searchParams: Pro
         status: p.status,
         createdAt: p.createdAt.toISOString(),
       }))}
+      leadProspectTotal={leadProspectTotal}
+      leadProspectContactable={leadProspectContactable}
       restaurantId={restaurantId}
       salesMode={isOutboundSalesMode()}
       ukColdMode={isUkColdOutboundMode()}

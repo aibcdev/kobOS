@@ -1,4 +1,4 @@
-import { analyzeWebsiteFromHtml, analyzeWebsiteFull, type WebsiteAnalysis } from "@/lib/audit/analyze-url";
+import { analyzeWebsiteFromHtml, analyzeWebsiteFull, enrichWebsiteAnalysisWithSeoDiscovery, type WebsiteAnalysis } from "@/lib/audit/analyze-url";
 import { computeEngagementSignals } from "@/lib/audit/engagement-signals";
 import type { AuditBrowserbaseScan } from "@/lib/audit/types";
 import type { AuditVisualIntelligenceResult } from "@/lib/audit/visual-intelligence";
@@ -93,8 +93,9 @@ export async function runAuditWebsitePipeline(
         rendered.signals,
         page.stagehandExtraction,
       );
+      const analysis = await enrichWebsiteAnalysisWithSeoDiscovery(rendered, page.finalUrl);
       return {
-        analysis: rendered,
+        analysis,
         queueAsyncBrowserbase: false,
         browserbaseScan: {
           sessionId: page.sessionId,
@@ -118,8 +119,9 @@ export async function runAuditWebsitePipeline(
     const rendered = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
       httpStatus: page.statusCode ?? undefined,
     });
+    const analysis = await enrichWebsiteAnalysisWithSeoDiscovery(rendered, page.finalUrl);
     return {
-      analysis: rendered,
+      analysis,
       queueAsyncBrowserbase: false,
       browserbaseScan: {
         sessionId: page.sessionId,

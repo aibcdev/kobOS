@@ -27,6 +27,7 @@ import { isUkColdOutboundMode } from "@/lib/outbound/icp-config";
 import { runLeadFinder } from "@/lib/lead-engine/run-lead-finder";
 import { runOpportunityAnalyzer } from "@/lib/lead-engine/run-opportunity-analyzer";
 import { runOutreachWriter } from "@/lib/lead-engine/run-outreach-writer";
+import { sendOutboundEmailViaResend } from "@/lib/outbound/send-resend-outbound-email";
 import { runUkColdPipeline } from "@/lib/outbound/run-uk-cold-pipeline";
 import { detectInsightsFromRules } from "@/lib/growth/detect";
 import { summarizeMetadata } from "@/lib/growth/normalize";
@@ -633,7 +634,8 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       return { skipped: true as const, reason: "RESEND_API_KEY missing" };
     }
 
-    const batch = Math.min(25, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH?.trim() || "25")));
+    const batch = Math.min(100, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH?.trim() || "30") || 30));
+    const delaySec = Math.max(2, Number(process.env.OUTBOUND_SEND_DELAY_SEC?.trim() || "3") || 3);
 
     const leads = await step.run("list-approved-with-email", async () => {
       const rows = await prisma.outboundLead.findMany({
@@ -653,25 +655,19 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       return { sent: 0 as const, message: "no_eligible_leads" as const };
     }
 
-    const from =
-      process.env.RESEND_FROM_EMAIL?.trim() ||
-      "KOB Growth <onboarding@resend.dev>";
-
     let sent = 0;
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i]!;
       await step.run(`resend-${lead.id}`, async () => {
-        const { Resend } = await import("resend");
-        const resend = new Resend(key);
         const to = lead.contactEmail!.trim();
         const subject = lead.messageSubject?.trim() || "A note from KOB";
-        const html = `<div style="font-family:system-ui,sans-serif;max-width:600px;line-height:1.5">${(lead.messageBody || "")
-          .split("\n")
-          .map((line) => `<p>${line || " "}</p>`)
-          .join("")}</div>`;
-        const { error } = await resend.emails.send({ from, to: [to], subject, html });
-        if (error) {
-          throw new Error(error.message);
+        const result = await sendOutboundEmailViaResend(key, {
+          to,
+          subject,
+          body: lead.messageBody || "",
+        });
+        if (!result.ok) {
+          throw new Error(result.error);
         }
         await prisma.outboundLead.update({
           where: { id: lead.id },
@@ -681,7 +677,7 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       });
       sent++;
       if (i < leads.length - 1) {
-        await step.sleep(`outbound-delay-${i}`, "2.5s");
+        await step.sleep(`outbound-delay-${i}`, `${delaySec}s`);
       }
     }
 
@@ -921,6 +917,27 @@ export const cosGenerateDraftsOnApprove = inngest.createFunction(
   },
 );
 
+export const creativeAgentPackRequested = inngest.createFunction(
+  {
+    id: "creative-agent-pack",
+    name: "Creative Agent · generate pack",
+    triggers: [{ event: "creative-agent/pack.requested" }],
+  },
+  async ({ event, step }) => {
+    const packId = event.data.packId as string;
+    const restaurantId = event.data.restaurantId as string;
+    const preview = Boolean(event.data.preview);
+    const dishHints = Array.isArray(event.data.dishHints)
+      ? (event.data.dishHints as string[])
+      : [];
+
+    return step.run("run-creative-pack", async () => {
+      const { runCreativePack } = await import("@/lib/creative-agent/run-creative-pack");
+      return runCreativePack(restaurantId, { packId, preview, dishHints });
+    });
+  },
+);
+
 export const functions = [
   ingestionHourly,
   normalizationRequested,
@@ -940,4 +957,5 @@ export const functions = [
   leadOutreachWriterDaily,
   integrationSyncDaily,
   cosGenerateDraftsOnApprove,
+  creativeAgentPackRequested,
 ];

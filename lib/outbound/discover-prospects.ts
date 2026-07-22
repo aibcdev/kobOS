@@ -1,6 +1,6 @@
+import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
 import type { OutboundProspect } from "@/lib/outbound/prospect-types";
 import { getOutboundIcpConfig } from "@/lib/outbound/icp-config";
-import { passesLeadIcpFilters } from "@/lib/lead-engine/icp-filters";
 import { placesPlaceDetailsNew } from "@/lib/places/google-places-server";
 import { auditPlacesRegionCodes } from "@/lib/places/audit-places-config";
 
@@ -13,14 +13,9 @@ function passesIcpFilters(
   },
   icp: ReturnType<typeof getOutboundIcpConfig>,
 ): boolean {
-  const result = passesLeadIcpFilters({
-    name: p.name,
-    websiteUrl: p.websiteUrl,
-    userRatingCount: p.userRatingCount,
-    rating: p.rating,
-    lastReviewAt: null,
-  });
-  if (!result.ok) return false;
+  if (isLikelyChainRestaurant(p.name, p.websiteUrl)) return false;
+  const rating = p.rating;
+  if (rating == null || rating > icp.ratingMax) return false;
   if (icp.requireWebsite && !p.websiteUrl?.trim()) return false;
   const reviews = p.userRatingCount ?? 0;
   if (reviews < icp.reviewMin || reviews > icp.reviewMax) return false;

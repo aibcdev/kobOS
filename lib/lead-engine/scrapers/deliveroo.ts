@@ -1,6 +1,13 @@
 import type { PlatformListing } from "@/lib/lead-engine/scrapers/types";
 import { cityLatLngGrid, citySlug } from "@/lib/lead-engine/scrapers/uk-postcodes";
 import { extractNextDataJson, fetchHtml } from "@/lib/lead-engine/scrapers/fetch-html";
+import { fetchRenderedHtml } from "@/lib/lead-engine/scrapers/playwright-fetch";
+import { randomUUID } from "node:crypto";
+
+function deliverooCookieHeader(): string {
+  const guid = randomUUID();
+  return `roo_guid=${guid}`;
+}
 
 function encodeGeohash(lat: number, lng: number): string {
   const chars = "0123456789bcdefghjkmnpqrstuvwxyz";
@@ -38,15 +45,119 @@ function encodeGeohash(lat: number, lng: number): string {
 }
 
 type RooBlock = {
-  target?: {
-    restaurant?: {
-      id?: string;
-      name?: string;
-      rating?: { formatted_rating?: string; count?: string };
-      links?: { self?: { href?: string } };
-    };
-  };
+  typeName?: string;
+  data?: Record<string, string>;
 };
+
+function parsePartnerA11y(label: string): {
+  name: string;
+  rating: number | null;
+  reviewCount: number | null;
+} {
+  const name = label.split(/\.\s+\d/)[0]?.trim() || label.split(".")[0]?.trim() || "";
+  const ratingMatch = label.match(/Rated\s+([\d.]+)/i);
+  const countMatch = label.match(/from\s+([\d,]+)\+?\s+reviews/i);
+  let reviewCount: number | null = null;
+  if (countMatch) {
+    const raw = Number(countMatch[1]!.replace(/\D/g, ""));
+    reviewCount = /\+/.test(countMatch[0]!) ? Math.max(raw, 500) : raw;
+  }
+  return {
+    name,
+    rating: ratingMatch ? Number(ratingMatch[1]) : null,
+    reviewCount,
+  };
+}
+
+function parsePartnerAction(action: string): {
+  drnId: string | null;
+  href: string | null;
+  branchType: string | null;
+} {
+  const params = new URLSearchParams(action.split("?").pop() ?? "");
+  return {
+    drnId: params.get("partner_drn_id"),
+    href: params.get("restaurant_href"),
+    branchType: params.get("navigate_to_restaurant_branch_type"),
+  };
+}
+
+function collectRooBlocks(data: unknown): RooBlock[] {
+  const out: RooBlock[] = [];
+  const walk = (node: unknown) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    const obj = node as RooBlock;
+    if (obj.typeName === "UIRooBlock" && obj.data) out.push(obj);
+    for (const value of Object.values(node as Record<string, unknown>)) walk(value);
+  };
+  walk(data);
+  return out;
+}
+
+async function fetchDeliverooHtml(url: string): Promise<string | null> {
+  const cookie = deliverooCookieHeader();
+  const html = await fetchHtml(url, 18_000, { Cookie: cookie });
+  if (html && html.includes("UIRooBlock")) return html;
+
+  const rendered = await fetchRenderedHtml(url, 3500);
+  return rendered ?? html;
+}
+
+export function parseDeliverooHtml(
+  html: string,
+  city: string,
+  geohash: string,
+): PlatformListing[] {
+  const nextData = extractNextDataJson(html);
+  if (!nextData) return [];
+
+  const blocks = collectRooBlocks(nextData);
+  const restaurants = blocks
+    .map((block) => {
+      const action = block.data?.["partner-card.action"];
+      const a11y = block.data?.["partner-card.accessibility.screen-reader"];
+      if (!action || !a11y) return null;
+      const { drnId, href, branchType } = parsePartnerAction(action);
+      if (!drnId || branchType !== "restaurant") return null;
+      const parsed = parsePartnerA11y(a11y);
+      if (!parsed.name || parsed.name.length < 2) return null;
+      return {
+        id: drnId,
+        name: parsed.name,
+        rating: parsed.rating,
+        reviewCount: parsed.reviewCount,
+        url: href ? `https://deliveroo.co.uk${decodeURIComponent(href)}` : null,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+
+  const total = restaurants.length;
+  if (!total) return [];
+
+  return restaurants.map((r, idx) => {
+    const rank = idx + 1;
+    return {
+      platform: "deliveroo" as const,
+      platformId: r.id,
+      name: r.name,
+      city,
+      country: "GB" as const,
+      rank,
+      totalInRegion: total,
+      rankPercentile: rank / total,
+      platformRegion: geohash,
+      rating: r.rating,
+      reviewCount: r.reviewCount,
+      url: r.url,
+      address: null,
+      isBrand: false,
+    };
+  });
+}
 
 export async function scrapeDeliverooForCity(
   city: string,
@@ -54,61 +165,33 @@ export async function scrapeDeliverooForCity(
 ): Promise<PlatformListing[]> {
   if (country === "IE") return [];
   const slug = citySlug(city);
-  const grid = cityLatLngGrid(city).slice(0, 2);
+  const grid = cityLatLngGrid(city);
+  const limit = Math.max(
+    1,
+    Number(process.env.LEAD_ENGINE_DR_GEOHASH_LIMIT?.trim() || "3") || 3,
+  );
   const out: PlatformListing[] = [];
+  const seen = new Set<string>();
 
-  for (const { lat, lng } of grid) {
+  for (let i = 0; i < Math.min(grid.length, limit); i++) {
+    const { lat, lng } = grid[i]!;
+    if (i > 0) await sleep(1200);
     const geohash = encodeGeohash(lat, lng);
     const url = `https://deliveroo.co.uk/restaurants/${slug}/${slug}?geohash=${geohash}&collection=all-restaurants`;
-    const html = await fetchHtml(url);
+    const html = await fetchDeliverooHtml(url);
     if (!html) continue;
 
-    const data = extractNextDataJson(html) as {
-      props?: {
-        initialState?: {
-          home?: {
-            feed?: {
-              results?: { data?: Array<{ blocks?: RooBlock[] }> };
-            };
-          };
-        };
-      };
-    } | null;
-
-    const blocks =
-      data?.props?.initialState?.home?.feed?.results?.data?.flatMap((d) => d.blocks ?? []) ?? [];
-
-    const restaurants = blocks
-      .map((b) => b.target?.restaurant)
-      .filter((r): r is NonNullable<typeof r> => Boolean(r?.name && r?.id));
-
-    const total = restaurants.length;
-    if (!total) continue;
-
-    restaurants.forEach((r, idx) => {
-      const rank = idx + 1;
-      const ratingStr = r.rating?.formatted_rating;
-      const countStr = r.rating?.count?.replace(/\D/g, "");
-      out.push({
-        platform: "deliveroo",
-        platformId: r.id!,
-        name: r.name!.trim(),
-        city,
-        country: "GB",
-        rank,
-        totalInRegion: total,
-        rankPercentile: rank / total,
-        platformRegion: geohash,
-        rating: ratingStr ? Number(ratingStr) : null,
-        reviewCount: countStr ? Number(countStr) : null,
-        url: r.links?.self?.href
-          ? `https://deliveroo.co.uk${r.links.self.href}`
-          : null,
-        address: null,
-        isBrand: false,
-      });
-    });
+    for (const listing of parseDeliverooHtml(html, city, geohash)) {
+      const key = listing.platformId;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(listing);
+    }
   }
 
   return out;
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
 }

@@ -112,7 +112,25 @@ export const OWNER_COMPARISON = {
     {
       label: "Long-term contract",
       kob: "No — cancel anytime",
-      owner: "Varies",
+      owner: "No — month-to-month",
+      kobWins: true,
+    },
+    {
+      label: "Typical go-live",
+      kob: "Free scan in ~1 min; trial in minutes",
+      owner: "Demo call + ~1 week with specialist",
+      kobWins: true,
+    },
+    {
+      label: "Core offer",
+      kob: "Daily visibility tasks you approve",
+      owner: "Full stack: website, ordering, app, marketing",
+      kobWins: false,
+    },
+    {
+      label: "Free online health scan",
+      kob: "Yes — trykob.com/audit",
+      owner: "Yes — grader.owner.com (feeds demo)",
       kobWins: true,
     },
   ] satisfies ComparisonRow[],
@@ -145,7 +163,7 @@ export const PRICING_FAQ = [
   },
   {
     q: "How is KOB different from Owner.com?",
-    a: "Owner.com sells a full revenue stack at premium prices. KOB focuses on never missing a beat online—reviews, holidays, hours, posts—with a daily list you approve. Lower price, simpler story.",
+    a: "Owner.com sells a full revenue stack—website, ordering, app, and marketing automations—starting at $249/mo plus fees, with a demo-led setup. KOB focuses on never missing a beat online—reviews, holidays, hours, posts—with a daily list you approve. Lower price, simpler story, self-serve from a free scan.",
   },
   {
     q: "Do you require contracts?",

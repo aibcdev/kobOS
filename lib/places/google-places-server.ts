@@ -13,6 +13,7 @@ export type PlaceDetailsResult = {
   name: string;
   formattedAddress: string;
   websiteUri: string | null;
+  phoneNumber: string | null;
   lat: number | null;
   lng: number | null;
 };
@@ -94,7 +95,7 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     method: "GET",
     headers: {
       "X-Goog-Api-Key": key,
-      "X-Goog-FieldMask": "id,displayName,formattedAddress,websiteUri,location",
+      "X-Goog-FieldMask": "id,displayName,formattedAddress,websiteUri,location,nationalPhoneNumber",
     },
   });
 
@@ -110,6 +111,7 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     formattedAddress?: string;
     websiteUri?: string;
     location?: { latitude?: number; longitude?: number };
+    nationalPhoneNumber?: string;
   };
 
   const lat = json.location?.latitude ?? null;
@@ -120,6 +122,7 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     name: json.displayName?.text ?? "Restaurant",
     formattedAddress: json.formattedAddress ?? "",
     websiteUri: json.websiteUri?.trim() ? json.websiteUri.trim() : null,
+    phoneNumber: json.nationalPhoneNumber?.trim() ? json.nationalPhoneNumber.trim() : null,
     lat,
     lng,
   };

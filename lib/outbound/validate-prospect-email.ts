@@ -18,7 +18,24 @@ const BLOCKED_EMAIL_DOMAINS = new Set([
   "wordpress.com",
 ]);
 
-const BLOCKED_LOCAL = new Set(["noreply", "no-reply", "donotreply", "support", "help", "privacy", "abuse"]);
+/** Owners often list personal inboxes on their site — allow when scraped from their pages. */
+const PERSONAL_EMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "icloud.com",
+  "me.com",
+  "hotmail.com",
+  "hotmail.co.uk",
+  "outlook.com",
+  "live.com",
+  "yahoo.com",
+  "yahoo.co.uk",
+  "aol.com",
+  "protonmail.com",
+  "proton.me",
+]);
+
+const BLOCKED_LOCAL = new Set(["noreply", "no-reply", "donotreply", "donotreply", "privacy", "abuse"]);
 
 function normalizeHost(host: string): string {
   return host.toLowerCase().replace(/^www\./, "");
@@ -56,7 +73,8 @@ export function isValidProspectEmail(
   }
 
   const websiteHost = hostFromWebsiteUrl(websiteUrl);
-  if (websiteHost && !hostsAlign(domain, websiteHost)) {
+  const isPersonalInbox = PERSONAL_EMAIL_DOMAINS.has(domain) || PERSONAL_EMAIL_DOMAINS.has(domainRoot);
+  if (websiteHost && !isPersonalInbox && !hostsAlign(domain, websiteHost)) {
     return { ok: false, reason: "domain_mismatch" };
   }
 

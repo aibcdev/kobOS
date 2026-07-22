@@ -3,6 +3,7 @@ import {
   analyzeWebsiteFromHtml,
   analyzeWebsiteFull,
   fetchHtmlForAudit,
+  normalizeUrlSignals,
   type WebsiteAnalysis,
   type UrlSignals,
 } from "@/lib/audit/analyze-url";
@@ -26,10 +27,11 @@ function clamp(n: number, min: number, max: number) {
 }
 
 function scoreFromSignals(
-  s: UrlSignals,
+  sIn: UrlSignals,
   hadUrlInput: boolean,
   engagement?: AuditEngagementSignals | null,
 ): Pick<AuditResultPayload["scores"], "seo" | "design" | "mobile" | "conversion"> {
+  const s = normalizeUrlSignals(sIn);
   if (!hadUrlInput) {
     return { seo: 32, design: 35, mobile: 34, conversion: 28 };
   }
@@ -38,14 +40,25 @@ function scoreFromSignals(
   }
 
   let seo = 35;
-  if (s.titleLen > 10 && s.titleLen < 70) seo += 18;
-  else if (s.titleLen > 0) seo += 8;
-  if (s.hasMetaDescription) seo += 18;
-  if (s.h1Count === 1) seo += 12;
-  else if (s.h1Count > 1) seo -= 8;
-  if (s.hasOgTitle) seo += 8;
-  if (s.hasCanonical) seo += 6;
-  if (s.hasJsonLd) seo += 12;
+  if (s.titleLen > 10 && s.titleLen < 70) seo += 14;
+  else if (s.titleLen > 0) seo += 6;
+  if (s.hasMetaDescription) {
+    seo += 12;
+    if (s.metaDescriptionLen >= 70 && s.metaDescriptionLen <= 170) seo += 4;
+  }
+  if (s.h1Count === 1) seo += 8;
+  else if (s.h1Count > 1) seo -= 6;
+  if (s.h2Count >= 2) seo += 3;
+  if (s.hasOgTitle) seo += 4;
+  if (s.hasOgImage) seo += 4;
+  if (s.hasCanonical) seo += 5;
+  if (s.hasJsonLd) seo += 8;
+  if (s.hasRestaurantSchema) seo += 6;
+  if (s.robotsTxtFound) seo += 4;
+  if (s.sitemapFound) seo += 4;
+  if (s.hasLangAttr) seo += 2;
+  if (s.hasNoindex) seo -= 18;
+  if (s.imgCount > 0 && s.imgWithAltCount / s.imgCount >= 0.5) seo += 3;
 
   let mobile = 40;
   if (s.hasViewport) mobile += 35;
@@ -79,10 +92,11 @@ function scoreFromSignals(
 }
 
 function buildIssues(
-  s: UrlSignals,
+  sIn: UrlSignals,
   restaurantName: string,
   hadUrlInput: boolean,
 ): AuditResultPayload["issues"] {
+  const s = normalizeUrlSignals(sIn);
   const issues: AuditResultPayload["issues"] = [];
 
   if (!hadUrlInput) {
@@ -122,6 +136,12 @@ function buildIssues(
       impact: "high",
       fixHint: "Write a 140–160 character promise: cuisine, neighborhood, and why to book now.",
     });
+  } else if (s.metaDescriptionLen > 0 && (s.metaDescriptionLen < 70 || s.metaDescriptionLen > 170)) {
+    issues.push({
+      title: "Meta description length is off",
+      impact: "medium",
+      fixHint: "Aim for roughly 140–160 characters so Google doesn’t truncate your pitch.",
+    });
   }
 
   if (s.h1Count === 0) {
@@ -151,6 +171,52 @@ function buildIssues(
       title: "No structured data (JSON-LD) detected",
       impact: "medium",
       fixHint: "Add Restaurant / LocalBusiness schema so Google can show rich results.",
+    });
+  } else if (!s.hasRestaurantSchema) {
+    issues.push({
+      title: "JSON-LD found but not Restaurant schema",
+      impact: "medium",
+      fixHint: "Use schema.org Restaurant (or LocalBusiness) with name, address, and opening hours.",
+    });
+  }
+
+  if (!s.sitemapFound) {
+    issues.push({
+      title: "No XML sitemap detected",
+      impact: "medium",
+      fixHint: "Publish /sitemap.xml and reference it in robots.txt so Google can crawl menu and location pages.",
+    });
+  }
+
+  if (!s.robotsTxtFound) {
+    issues.push({
+      title: "No robots.txt found",
+      impact: "low",
+      fixHint: "Add a robots.txt that allows indexing and points to your sitemap.",
+    });
+  }
+
+  if (s.hasNoindex) {
+    issues.push({
+      title: "Site may be blocked from indexing",
+      impact: "high",
+      fixHint: "Remove noindex meta / Disallow: / so search engines can list your restaurant.",
+    });
+  }
+
+  if (s.imgCount >= 3 && s.imgWithAltCount / s.imgCount < 0.4) {
+    issues.push({
+      title: "Most images lack alt text",
+      impact: "medium",
+      fixHint: "Describe dishes and rooms in alt text — helps SEO and accessibility.",
+    });
+  }
+
+  if (!s.hasOgImage || !s.hasOgTitle) {
+    issues.push({
+      title: "Social / Open Graph preview is incomplete",
+      impact: "medium",
+      fixHint: "Set og:title and og:image so shares look intentional on Instagram, Facebook, and Google.",
     });
   }
 

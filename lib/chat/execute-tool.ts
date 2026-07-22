@@ -1,9 +1,13 @@
-import { ContentType, TaskCategory, TaskSource } from "@prisma/client";
+import { ContentType, LeadProspectStatus, TaskCategory, TaskSource } from "@prisma/client";
 import { inngest } from "@/inngest/client";
 import { generateDailyBriefing } from "@/lib/growth-agent/generate-daily-briefing";
 import { generateReviewRelationship } from "@/lib/growth-agent/generate-review-relationship";
 import { generateAndStoreContent } from "@/lib/ai/content";
 import { generateImage } from "@/lib/ai/generate-image";
+import {
+  platformFoundWhere,
+  platformQualifiedWhere,
+} from "@/lib/lead-engine/contactable-query";
 import { prisma } from "@/lib/db/prisma";
 
 export type ToolResult = { ok: true; summary: string; link?: string; taskId?: string } | { ok: false; error: string };
@@ -94,6 +98,52 @@ export async function executeChatTool(
     case "open_app": {
       const path = String(args.path ?? "/dashboard/apps");
       return { ok: true, summary: `Open ${path}`, link: `${path}?r=${restaurantId}` };
+    }
+    case "lead_engine_stats": {
+      const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || restaurantId;
+      const [found, contactable, topCities] = await Promise.all([
+        prisma.leadProspect.count({ where: platformFoundWhere(workspaceId) }),
+        prisma.leadProspect.count({ where: platformQualifiedWhere(workspaceId) }),
+        prisma.leadProspect.groupBy({
+          by: ["city"],
+          where: platformFoundWhere(workspaceId),
+          _count: { _all: true },
+          orderBy: { _count: { city: "desc" } },
+          take: 8,
+        }),
+      ]);
+      const cityLine = topCities.map((c) => `${c.city}: ${c._count._all}`).join(", ");
+      return {
+        ok: true,
+        summary: `${found.toLocaleString()} restaurants found · ${contactable.toLocaleString()} ready to contact. Top cities: ${cityLine || "none yet"}.`,
+        link: `/dashboard/outbound?r=${restaurantId}`,
+      };
+    }
+    case "approve_lead_batch": {
+      const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || restaurantId;
+      const max = Math.min(50, Math.max(1, Number(args.max ?? 25) || 25));
+      const rows = await prisma.leadProspect.findMany({
+        where: {
+          ...platformQualifiedWhere(workspaceId),
+          status: { in: [LeadProspectStatus.DISCOVERED, LeadProspectStatus.ANALYZED] },
+          contactEmail: { not: null },
+        },
+        orderBy: [{ kobOpportunityScore: "desc" }, { platformRank: "asc" }],
+        take: max,
+        select: { id: true },
+      });
+      if (!rows.length) {
+        return { ok: false, error: "No contactable leads with email to queue." };
+      }
+      await prisma.leadProspect.updateMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+        data: { status: LeadProspectStatus.QUEUED },
+      });
+      return {
+        ok: true,
+        summary: `Queued ${rows.length} leads for email approval.`,
+        link: `/dashboard/outbound?r=${restaurantId}`,
+      };
     }
     case "generate_content_draft": {
       const typeRaw = String(args.type ?? "INSTAGRAM_CAPTION");

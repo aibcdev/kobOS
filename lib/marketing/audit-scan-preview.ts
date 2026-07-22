@@ -24,6 +24,18 @@ export type ScanPreviewSignals = {
   hasPhotos: boolean;
 };
 
+/** Real SEO check outcomes for the website scan phase (TypeUI-depth, Owner chrome). */
+export type ScanPreviewSeoChecks = {
+  title: boolean;
+  meta: boolean;
+  h1: boolean;
+  schema: boolean;
+  og: boolean;
+  robots: boolean;
+  sitemap: boolean;
+  alts: boolean;
+};
+
 export type AuditScanPreview = {
   screenshotUrl: string | null;
   heroImageUrl: string | null;
@@ -31,6 +43,7 @@ export type AuditScanPreview = {
   imageUrls: string[];
   googlePlace: ScanPreviewGooglePlace | null;
   scanSignals: ScanPreviewSignals;
+  seoChecks?: ScanPreviewSeoChecks | null;
 };
 
 export type AuditPerceptionTeaser = {
@@ -102,6 +115,22 @@ export function buildScanPreviewFromPayload(payload: AuditResultPayload): AuditS
     hasPhotos: Boolean(photoCount > 0 || imageUrls.length > 0 || heroImageUrl),
   };
 
+  const s = payload.evidencePack?.urlSignals;
+  const seoChecks: ScanPreviewSeoChecks | null = s?.fetched
+    ? {
+        title: (s.titleLen ?? 0) >= 12 && (s.titleLen ?? 0) <= 70,
+        meta: Boolean(s.hasMetaDescription),
+        h1: (s.h1Count ?? 0) === 1,
+        schema: Boolean(s.hasJsonLd || s.hasRestaurantSchema),
+        og: Boolean(s.hasOgTitle && s.hasOgImage),
+        robots: Boolean(s.robotsTxtFound) && !s.hasNoindex,
+        sitemap: Boolean(s.sitemapFound),
+        alts:
+          (s.imgCount ?? 0) === 0 ||
+          (s.imgWithAltCount ?? 0) / Math.max(1, s.imgCount ?? 0) >= 0.5,
+      }
+    : null;
+
   return {
     screenshotUrl,
     heroImageUrl,
@@ -109,6 +138,7 @@ export function buildScanPreviewFromPayload(payload: AuditResultPayload): AuditS
     imageUrls,
     googlePlace,
     scanSignals,
+    seoChecks,
   };
 }
 

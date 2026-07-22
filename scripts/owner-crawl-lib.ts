@@ -11,6 +11,10 @@ export const SEED_URLS = [
   "https://www.owner.com/restaurant-website-ai",
   "https://www.owner.com/online-ordering",
   "https://www.owner.com/delivery",
+  "https://www.owner.com/mobile",
+  "https://www.owner.com/reporting-analytics",
+  "https://www.owner.com/kitchen-tablet",
+  "https://www.owner.com/pos-integrations",
 ];
 
 export type PageMeta = {

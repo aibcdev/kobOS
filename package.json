@@ -48,7 +48,13 @@
     "launch:check": "node scripts/launch-check.mjs",
     "audit:golden-path": "dotenv -e .env -e .env.local -- node scripts/audit-golden-path.mjs",
     "lead-engine:prune": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-prune.ts",
-    "lead-engine:seed": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-seed.ts"
+    "lead-engine:seed": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-seed.ts",
+    "lead-engine:backfill-contacts": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-backfill-contacts.ts",
+    "lead-engine:sync-platforms": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-sync-platforms.ts",
+    "lead-engine:audit-platforms": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-audit-platforms.ts",
+    "lead-engine:bulk-import": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-bulk-import.ts",
+    "resend:doctor": "dotenv -e .env -e .env.local -- bash -c 'export PATH=\"$HOME/.resend/bin:$PATH\" && resend doctor'",
+    "resend:test-outbound": "dotenv -e .env -e .env.local -- npx tsx scripts/resend-test-outbound.ts"
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.74",

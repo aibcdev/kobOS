@@ -62,14 +62,14 @@ export function MarketingAuthNav({ onNavigate, mobile }: { onNavigate?: () => vo
         onClick={onNavigate}
         className={`text-sm font-medium text-[#2c2c2c]/80 transition-colors hover:text-[#094413] ${mobile ? "rounded-full border border-[#2c2c2c]/10 py-2 text-center" : ""}`}
       >
-        Sign in
+        Login
       </Link>
       <Link
         href="/signup"
         onClick={onNavigate}
-        className={`text-sm font-medium text-[#094413] underline-offset-4 transition-colors hover:underline ${mobile ? "rounded-full bg-[#094413] py-2 text-center text-[#fbf8f5] hover:bg-[#088924]" : ""}`}
+        className={`inline-flex items-center justify-center rounded-full bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#094413] ${mobile ? "w-full" : ""}`}
       >
-        Sign up
+        Get started
       </Link>
     </div>
   );

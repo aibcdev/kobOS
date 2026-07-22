@@ -90,15 +90,13 @@ export async function discoverLeadsInCity(
     const enrichment = await placesPlaceAuditEnrichment(placeId);
     const lastReviewAt = parseLastReviewAt(enrichment?.reviews ?? []);
 
-    const candidate = {
+    const icp = passesLeadIcpFilters({
       name,
       websiteUrl,
-      userRatingCount: p.userRatingCount ?? enrichment?.reviewCount ?? null,
       rating: p.rating ?? enrichment?.rating ?? null,
-      lastReviewAt,
-    };
-
-    const icp = passesLeadIcpFilters(candidate);
+      reviewCount: p.userRatingCount ?? enrichment?.reviewCount ?? null,
+      platformRankPercentile: undefined,
+    });
     if (!icp.ok) continue;
 
     out.push({
@@ -107,8 +105,8 @@ export async function discoverLeadsInCity(
       city: city.trim(),
       formattedAddress: p.formattedAddress ?? "",
       websiteUrl,
-      rating: candidate.rating,
-      userRatingCount: candidate.userRatingCount,
+      rating: p.rating ?? enrichment?.rating ?? null,
+      userRatingCount: p.userRatingCount ?? enrichment?.reviewCount ?? null,
       country,
       businessType: queryType,
       lastReviewAt,

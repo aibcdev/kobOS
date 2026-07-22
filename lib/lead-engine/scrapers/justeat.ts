@@ -1,9 +1,11 @@
 import type { PlatformListing } from "@/lib/lead-engine/scrapers/types";
+import { buildJustEatMenuPath } from "@/lib/lead-engine/justeat-menu-url";
 import { postcodesForCity } from "@/lib/lead-engine/scrapers/uk-postcodes";
 
 type JeRestaurant = {
   Id?: number;
   Name?: string;
+  UniqueName?: string;
   IsBrand?: boolean;
   IsTestRestaurant?: boolean;
   URL?: string;
@@ -22,15 +24,15 @@ type JeResponse = {
 
 function postcodesPerCity(): number {
   return Math.min(
-    12,
-    Math.max(3, Number(process.env.LEAD_ENGINE_JE_POSTCODES_PER_CITY?.trim() || "8") || 8),
+    16,
+    Math.max(6, Number(process.env.LEAD_ENGINE_JE_POSTCODES_PER_CITY?.trim() || "12") || 12),
   );
 }
 
 export async function scrapeJustEatForCity(
   city: string,
   country: "GB" | "IE" = "GB",
-  maxPerPostcode = 60,
+  maxPerPostcode = 100,
 ): Promise<PlatformListing[]> {
   const postcodes = postcodesForCity(city).slice(0, postcodesPerCity());
   const out: PlatformListing[] = [];
@@ -69,7 +71,9 @@ export async function scrapeJustEatForCity(
           platformRegion: postcode,
           rating: r.Rating?.Average ?? null,
           reviewCount: r.Rating?.Count ?? null,
-          url: r.URL ?? null,
+          url:
+            r.URL?.replace(/^https:\/\/www\.just-eat\.(co\.uk|ie)/i, "") ||
+            (r.UniqueName ? `/restaurants-${r.UniqueName}` : buildJustEatMenuPath(r.Name!.trim(), city)),
           address: [r.Address?.FirstLine, r.Address?.City, r.Address?.Postcode]
             .filter(Boolean)
             .join(", "),

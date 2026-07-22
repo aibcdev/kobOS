@@ -149,32 +149,35 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
   const isSignUp = mode === "signup";
 
   return (
-    <div className="rounded-3xl border border-[#2c2c2c]/10 bg-white p-8 shadow-xl">
-      <div className="mb-6 flex rounded-full bg-[#f9f3ed] p-1">
+    <div className="rounded-[1.35rem] border border-[#2c2c2c]/08 bg-white p-8 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.35)]">
+      <div className="mb-6 flex rounded-full bg-[#f7f5f2] p-1">
         <button
           type="button"
           onClick={() => setMode("signin")}
-          className={`flex-1 rounded-full py-2 text-sm font-medium transition-colors ${
-            !isSignUp ? "bg-[#094413] text-white shadow-sm" : "text-[#2c2c2c]/60"
+          className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
+            !isSignUp ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#2c2c2c]/55"
           }`}
         >
-          Sign in
+          Login
         </button>
         <button
           type="button"
           onClick={() => setMode("signup")}
-          className={`flex-1 rounded-full py-2 text-sm font-medium transition-colors ${
-            isSignUp ? "bg-[#094413] text-white shadow-sm" : "text-[#2c2c2c]/60"
+          className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
+            isSignUp ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#2c2c2c]/55"
           }`}
         >
-          Create account
+          Sign up
         </button>
       </div>
 
-      <h1 className="font-heading text-2xl font-semibold text-[#2c2c2c]">
+      <p className="text-xs font-medium tracking-wide text-[#2c2c2c]/45 uppercase">
+        Supabase secure login
+      </p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#1a1a1a]">
         {isSignUp ? marketingCopy.auth.signUpTitle : marketingCopy.auth.signInTitle}
       </h1>
-      <p className="mt-2 text-sm text-[#2c2c2c]/70">
+      <p className="mt-2 text-sm leading-relaxed text-[#2c2c2c]/65">
         {isSignUp ? marketingCopy.auth.signUpBlurb : marketingCopy.auth.signInBlurb}
       </p>
 
@@ -250,7 +253,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
             <button
               type="submit"
               disabled={status === "verifying"}
-              className="h-12 rounded-full bg-[#094413] text-sm font-semibold text-[#fbf8f5] transition-colors hover:bg-[#088924] disabled:opacity-60"
+              className="h-12 rounded-full bg-[#1a1a1a] text-sm font-semibold text-white transition-colors hover:bg-[#094413] disabled:opacity-60"
             >
               {status === "verifying" ? "Signing in…" : "Sign in with code"}
             </button>
@@ -284,7 +287,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
           ) : null}
           <button
             type="submit"
-            className="h-12 rounded-full bg-[#094413] text-sm font-semibold text-[#fbf8f5] transition-colors hover:bg-[#088924]"
+            className="h-12 rounded-full bg-[#1a1a1a] text-sm font-semibold text-white transition-colors hover:bg-[#094413]"
           >
             {isSignUp ? marketingCopy.auth.submitSignUp : marketingCopy.auth.submitSignIn}
           </button>

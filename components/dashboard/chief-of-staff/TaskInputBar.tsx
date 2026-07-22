@@ -103,7 +103,7 @@ export function TaskInputBar({
     <div className={`${cosCard} flex items-center gap-2 p-3`}>
       <input
         className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm text-[#1a1a1a] outline-none placeholder:text-[#999]"
-        placeholder="Give KOB a task…"
+        placeholder="What would you like to get done?"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {

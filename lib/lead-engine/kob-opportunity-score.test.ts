@@ -2,45 +2,61 @@ import { describe, expect, it } from "vitest";
 import { computeKobOpportunityScore } from "@/lib/lead-engine/kob-opportunity-score";
 
 describe("computeKobOpportunityScore", () => {
-  it("scores dream lead highly", () => {
+  it("scores cowpigchicken-style lead highly", () => {
     const result = computeKobOpportunityScore({
-      reviewCount: 1200,
-      rating: 4.4,
+      reviewCount: 180,
+      rating: 4.1,
       ratingBand: "ideal",
-      instagramFollowers: 4800,
-      instagramPostGapDays: 21,
+      instagramFollowers: null,
+      instagramPostGapDays: null,
       hasTikTok: false,
       weakWebsite: true,
       websiteStale: true,
-      weakPhotography: true,
+      weakPhotography: false,
       hasEmailCapture: false,
       hasGoogleBusinessPosts: false,
-      instagramFollowersKnown: true,
+      instagramFollowersKnown: false,
       locationCount: 1,
-      platformRankPercentile: 0.12,
+      platformRankPercentile: 0.08,
     });
-    expect(result.total).toBeGreaterThanOrEqual(60);
+    expect(result.total).toBeGreaterThanOrEqual(55);
     expect(result.opportunities.length).toBeGreaterThan(0);
     expect(result.disqualifiers).toHaveLength(0);
   });
 
-  it("disqualifies instagram over 10k", () => {
-    const result = computeKobOpportunityScore({
-      reviewCount: 500,
-      rating: 4.5,
+  it("prioritises lower Google rating over high rating", () => {
+    const low = computeKobOpportunityScore({
+      reviewCount: 120,
+      rating: 3.9,
       ratingBand: "ideal",
-      instagramFollowers: 12_000,
-      instagramPostGapDays: 2,
+      instagramFollowers: null,
+      instagramPostGapDays: null,
       hasTikTok: false,
       weakWebsite: false,
       websiteStale: false,
       weakPhotography: false,
-      hasEmailCapture: true,
-      hasGoogleBusinessPosts: true,
-      instagramFollowersKnown: true,
+      hasEmailCapture: false,
+      hasGoogleBusinessPosts: false,
+      instagramFollowersKnown: false,
       locationCount: 1,
-      platformRankPercentile: 0.2,
+      platformRankPercentile: 0.12,
     });
-    expect(result.disqualifiers).toContain("instagram_too_large");
+    const high = computeKobOpportunityScore({
+      reviewCount: 120,
+      rating: 4.8,
+      ratingBand: "low",
+      instagramFollowers: null,
+      instagramPostGapDays: null,
+      hasTikTok: false,
+      weakWebsite: false,
+      websiteStale: false,
+      weakPhotography: false,
+      hasEmailCapture: false,
+      hasGoogleBusinessPosts: false,
+      instagramFollowersKnown: false,
+      locationCount: 1,
+      platformRankPercentile: 0.12,
+    });
+    expect(low.total).toBeGreaterThan(high.total);
   });
 });

@@ -6,30 +6,38 @@ function avgBool(values: boolean[]): boolean {
   return t / values.length >= 0.5;
 }
 
+const EMPTY_SIGNALS: UrlSignals = {
+  fetched: false,
+  titleLen: 0,
+  hasMetaDescription: false,
+  metaDescriptionLen: 0,
+  h1Count: 0,
+  h2Count: 0,
+  hasOgTitle: false,
+  hasCanonical: false,
+  hasJsonLd: false,
+  hasRestaurantSchema: false,
+  hasViewport: false,
+  isHttps: false,
+  hasTelLink: false,
+  hasMailto: false,
+  hasBookOrReserveKeyword: false,
+  hasOpenTableOrResy: false,
+  imgCount: 0,
+  imgWithAltCount: 0,
+  htmlSizeKb: 0,
+  hasOgImage: false,
+  hasTwitterCard: false,
+  hasLangAttr: false,
+  hasNoindex: false,
+  robotsTxtFound: false,
+  sitemapFound: false,
+  mentionsRobotsOrSitemap: false,
+};
+
 /** Average technical signals across N public sites (multi-location roll-up). */
 export function averageUrlSignals(items: UrlSignals[]): UrlSignals {
-  if (items.length === 0) {
-    return {
-      fetched: false,
-      titleLen: 0,
-      hasMetaDescription: false,
-      h1Count: 0,
-      hasOgTitle: false,
-      hasCanonical: false,
-      hasJsonLd: false,
-      hasViewport: false,
-      isHttps: false,
-      hasTelLink: false,
-      hasMailto: false,
-      hasBookOrReserveKeyword: false,
-      hasOpenTableOrResy: false,
-      imgCount: 0,
-      htmlSizeKb: 0,
-      hasOgImage: false,
-      hasTwitterCard: false,
-      mentionsRobotsOrSitemap: false,
-    };
-  }
+  if (items.length === 0) return { ...EMPTY_SIGNALS };
   if (items.length === 1) return { ...items[0] };
 
   const n = items.length;
@@ -42,10 +50,13 @@ export function averageUrlSignals(items: UrlSignals[]): UrlSignals {
     status: codes.length ? Math.max(...codes) : undefined,
     titleLen: roundAvg((i) => i.titleLen),
     hasMetaDescription: avgBool(items.map((i) => i.hasMetaDescription)),
+    metaDescriptionLen: roundAvg((i) => i.metaDescriptionLen),
     h1Count: roundAvg((i) => i.h1Count),
+    h2Count: roundAvg((i) => i.h2Count),
     hasOgTitle: avgBool(items.map((i) => i.hasOgTitle)),
     hasCanonical: avgBool(items.map((i) => i.hasCanonical)),
     hasJsonLd: avgBool(items.map((i) => i.hasJsonLd)),
+    hasRestaurantSchema: avgBool(items.map((i) => i.hasRestaurantSchema)),
     hasViewport: avgBool(items.map((i) => i.hasViewport)),
     isHttps: avgBool(items.map((i) => i.isHttps)),
     hasTelLink: avgBool(items.map((i) => i.hasTelLink)),
@@ -53,9 +64,14 @@ export function averageUrlSignals(items: UrlSignals[]): UrlSignals {
     hasBookOrReserveKeyword: avgBool(items.map((i) => i.hasBookOrReserveKeyword)),
     hasOpenTableOrResy: avgBool(items.map((i) => i.hasOpenTableOrResy)),
     imgCount: roundAvg((i) => i.imgCount),
+    imgWithAltCount: roundAvg((i) => i.imgWithAltCount),
     htmlSizeKb: roundAvg((i) => i.htmlSizeKb),
     hasOgImage: avgBool(items.map((i) => i.hasOgImage)),
     hasTwitterCard: avgBool(items.map((i) => i.hasTwitterCard)),
+    hasLangAttr: avgBool(items.map((i) => i.hasLangAttr)),
+    hasNoindex: avgBool(items.map((i) => i.hasNoindex)),
+    robotsTxtFound: avgBool(items.map((i) => i.robotsTxtFound)),
+    sitemapFound: avgBool(items.map((i) => i.sitemapFound)),
     mentionsRobotsOrSitemap: avgBool(items.map((i) => i.mentionsRobotsOrSitemap)),
   };
 }

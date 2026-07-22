@@ -1,3 +1,4 @@
+import { buildJustEatMenuPath } from "@/lib/lead-engine/justeat-menu-url";
 import { buildCanonicalKey } from "@/lib/lead-engine/normalize-name";
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
 import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
@@ -15,6 +16,9 @@ export type MergedPlatformLead = {
   platformRating: number | null;
   platformReviewCount: number | null;
   platformUrl: string | null;
+  justEatMenuUrl: string | null;
+  deliverooMenuUrl: string | null;
+  uberEatsMenuUrl: string | null;
   address: string | null;
 };
 
@@ -31,6 +35,11 @@ export function mergePlatformListings(listings: PlatformListing[]): MergedPlatfo
     const canonicalKey = buildCanonicalKey(l.name, l.city);
     const existing = byKey.get(canonicalKey);
 
+    const jeUrl =
+      l.platform === "justeat" ? l.url?.trim() || buildJustEatMenuPath(l.name, l.city) : null;
+    const drUrl = l.platform === "deliveroo" ? l.url?.trim() || null : null;
+    const ueUrl = l.platform === "ubereats" ? l.url?.trim() || null : null;
+
     if (!existing) {
       byKey.set(canonicalKey, {
         canonicalKey,
@@ -43,7 +52,10 @@ export function mergePlatformListings(listings: PlatformListing[]): MergedPlatfo
         platformRegion: l.platformRegion,
         platformRating: l.rating,
         platformReviewCount: l.reviewCount,
-        platformUrl: l.url,
+        platformUrl: l.url ?? jeUrl ?? drUrl ?? ueUrl,
+        justEatMenuUrl: jeUrl,
+        deliverooMenuUrl: drUrl,
+        uberEatsMenuUrl: ueUrl,
         address: l.address,
       });
       continue;
@@ -51,6 +63,18 @@ export function mergePlatformListings(listings: PlatformListing[]): MergedPlatfo
 
     if (!existing.deliveryPlatforms.includes(l.platform)) {
       existing.deliveryPlatforms.push(l.platform);
+    }
+    if ((l.reviewCount ?? 0) > (existing.platformReviewCount ?? 0)) {
+      existing.platformReviewCount = l.reviewCount;
+    }
+    if (l.platform === "justeat") {
+      existing.justEatMenuUrl = jeUrl ?? existing.justEatMenuUrl;
+    }
+    if (l.platform === "deliveroo" && drUrl) {
+      existing.deliverooMenuUrl = drUrl;
+    }
+    if (l.platform === "ubereats" && ueUrl) {
+      existing.uberEatsMenuUrl = ueUrl;
     }
     if (l.rankPercentile < existing.platformRankPercentile) {
       existing.platformRank = l.rank;

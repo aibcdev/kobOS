@@ -100,8 +100,8 @@ export function SaasOwnerComparison() {
         </div>
 
         <p className="mx-auto mt-6 max-w-2xl text-center text-[11px] leading-relaxed text-[#2c2c2c]/45">
-          Owner.com pricing based on public list rates ($249/mo + 5% flex, $499/mo flat). KOB founding rates for first{" "}
-          {LAUNCH_PRICING.foundingSlots} restaurants. Competitor names used for comparison only.
+          Owner.com pricing verified 2026-06-19 ($249/mo + 5% flex, $499/mo flat, month-to-month). KOB founding
+          rates for first {LAUNCH_PRICING.foundingSlots} restaurants. Competitor names used for comparison only.
         </p>
       </div>
     </section>

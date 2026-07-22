@@ -9,6 +9,7 @@ import { AuditScanningPhotoPanel } from "@/components/marketing/audit/AuditScann
 import { AuditScanningReviewsScroll } from "@/components/marketing/audit/AuditScanningReviewsScroll";
 import { AuditScanningSidebar } from "@/components/marketing/audit/AuditScanningSidebar";
 import { AuditScanningWebsitePreview } from "@/components/marketing/audit/AuditScanningWebsitePreview";
+import { AuditScanningSeoChecks } from "@/components/marketing/audit/AuditScanningSeoChecks";
 import type { AuditScanPreview } from "@/lib/marketing/audit-scan-preview";
 import {
   graderContextStatus,
@@ -194,7 +195,10 @@ export function AuditScanningExperience({
               />
             ) : null}
             {phase === "website" ? (
-              <AuditScanningWebsitePreview websiteUrl={website} imageUrl={previewImageUrl} />
+              <div className="space-y-4">
+                <AuditScanningWebsitePreview websiteUrl={website} imageUrl={previewImageUrl} />
+                <AuditScanningSeoChecks checks={preview?.seoChecks} />
+              </div>
             ) : null}
             {phase === "mobile" ? (
               <div className="flex justify-center">

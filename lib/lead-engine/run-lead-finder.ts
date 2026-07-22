@@ -1,14 +1,17 @@
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
 import { pickLeadCityForDate } from "@/lib/lead-engine/city-rotation";
-import { enrichLeadFromGoogle } from "@/lib/lead-engine/google-enrich";
+import {
+  enrichPlatformLead,
+  enrichmentQualifies,
+} from "@/lib/lead-engine/enrich-platform-lead";
 import { passesLeadIcpFilters } from "@/lib/lead-engine/icp-filters";
 import {
-  countContactableProspects,
+  countQualifiedProspects,
   isLeadProspectDuplicateByKey,
   persistPlatformLead,
 } from "@/lib/lead-engine/persist-prospect";
 import { discoverPlatformLeadsForCity } from "@/lib/lead-engine/run-platform-discovery";
-import { enrichProspectEmail } from "@/lib/outbound/enrich-email";
+import { computeKobOpportunityScore } from "@/lib/lead-engine/kob-opportunity-score";
 
 export type LeadFinderResult = {
   city: string;
@@ -44,12 +47,9 @@ export async function runLeadFinder(
   const platformLeads = await discoverPlatformLeadsForCity(slot.city, slot.country);
   let enriched = 0;
   let inserted = 0;
-  let processed = 0;
+  let attempts = 0;
 
   for (const lead of platformLeads) {
-    if (processed >= max) break;
-    processed++;
-
     if (
       await isLeadProspectDuplicateByKey(
         workspaceRestaurantId,
@@ -62,45 +62,71 @@ export async function runLeadFinder(
       continue;
     }
 
-    const google = await enrichLeadFromGoogle(lead.name, lead.city, lead.country);
-    if (!google) {
-      bump("google_match_failed");
+    if (attempts >= max) break;
+    attempts++;
+
+    const result = await enrichPlatformLead(lead, { fast: true });
+
+    if (!enrichmentQualifies(result)) {
+      bump(result.icpReason ?? "icp_fail");
       continue;
     }
 
-    const icp = passesLeadIcpFilters({
-      name: google.name,
-      websiteUrl: google.websiteUrl,
-      userRatingCount: google.reviewCount,
-      rating: google.rating,
-      lastReviewAt: google.lastReviewAt,
+    enriched++;
+
+    const icpCheck = passesLeadIcpFilters({
+      name: result.google.name,
+      websiteUrl: result.google.websiteUrl,
+      contactPhone: result.google.phoneNumber,
+      contactEmail: result.contactEmail,
+      rating: result.google.rating,
+      reviewCount: result.google.reviewCount,
+      platformReviewCount: lead.platformReviewCount,
+      platformRankPercentile: lead.platformRankPercentile,
+      locationCount: result.locationCount,
+    });
+    const ratingBand = icpCheck.ok ? icpCheck.ratingBand : "low";
+
+    const score = computeKobOpportunityScore({
+      reviewCount: result.google.reviewCount,
+      rating: result.google.rating,
+      ratingBand,
+      instagramFollowers: result.instagramFollowers,
+      instagramPostGapDays: null,
+      hasTikTok: false,
+      weakWebsite: result.weakWebsite,
+      websiteStale: result.websiteStale,
+      weakPhotography: false,
+      hasEmailCapture: false,
+      hasGoogleBusinessPosts: false,
+      instagramFollowersKnown: result.instagramFollowers != null,
+      locationCount: result.locationCount,
       platformRankPercentile: lead.platformRankPercentile,
     });
-    if (!icp.ok) {
-      bump(icp.reason);
-      continue;
-    }
 
-    let emailResult: { email: string; source: string } | null = null;
-    if (google.websiteUrl) {
-      const e = await enrichProspectEmail(google.websiteUrl, { scrapeOnly: true });
-      if (e.ok) {
-        emailResult = { email: e.email, source: e.source };
-        enriched++;
-      } else {
-        bump(e.reason);
-      }
-    } else {
-      bump("no_website");
-    }
+    const email =
+      result.contactEmail && result.emailSource
+        ? { email: result.contactEmail, source: result.emailSource }
+        : null;
 
-    if (!emailResult) continue;
-
-    await persistPlatformLead(workspaceRestaurantId, lead, google, emailResult);
+    await persistPlatformLead(workspaceRestaurantId, lead, result.google, email, {
+      contactPhone: result.google.phoneNumber,
+      locationCount: result.locationCount,
+      weakWebsite: result.weakWebsite,
+      websiteStale: result.websiteStale,
+      websiteCopyrightYear: result.websiteCopyrightYear,
+      hasContactForm: result.hasContactForm,
+      instagramUrl: result.instagramUrl,
+      instagramFollowers: result.instagramFollowers,
+      kobOpportunityScore: score.total,
+      scoreBreakdown: score.breakdown,
+      opportunities: score.opportunities,
+      disqualifiers: score.disqualifiers,
+    });
     inserted++;
   }
 
-  const contactableTotal = await countContactableProspects(workspaceRestaurantId);
+  const contactableTotal = await countQualifiedProspects(workspaceRestaurantId);
 
   return {
     city: slot.city,

@@ -74,6 +74,42 @@ enum ContentType {
   GROWTH_FOOD_ANALYSIS
   GROWTH_WEBSITE_PLAN
   GROWTH_REVIEW_REPLY
+  CREATIVE_BRAND_BRIEF
+  CREATIVE_UGC
+  CREATIVE_DISH
+  @@schema("public")
+}
+
+enum CreativePackStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  @@schema("public")
+}
+
+enum ServiceRequestType {
+  WEBSITE
+  LOGO
+  SEO_RESURFACE
+  CREATIVE_PACK
+  OTHER
+  @@schema("public")
+}
+
+enum ServiceRequestStatus {
+  REQUESTED
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+  @@schema("public")
+}
+
+enum CreditLedgerReason {
+  MONTHLY_GRANT
+  SERVICE_REQUEST
+  MANUAL_ADJUST
+  REFUND
   @@schema("public")
 }
 
@@ -320,6 +356,9 @@ model Restaurant {
   subscriptionPlan   SubscriptionPlan  @default(FREE)
   stripeCustomerId   String?
   stripeSubscriptionId String?
+  /** Credits available for human-fulfilled service requests (website, logo, SEO, etc.). */
+  creditBalance      Int               @default(0)
+  creditsRefreshedAt DateTime?
   vibe               String?
   googleBusinessUrl  String?
   aiPersonality      AiPersonality     @default(BALANCED)
@@ -350,6 +389,9 @@ model Restaurant {
   salesSnapshots     SalesSnapshot[]
   socialSnapshots    SocialSnapshot[]
   workspaceAppPins   WorkspaceAppPin[]
+  creativePacks      CreativePack[]
+  serviceRequests    ServiceRequest[]
+  creditLedger       CreditLedgerEntry[]
 
   @@index([organizationId])
   @@schema("public")
@@ -408,19 +450,40 @@ model Recommendation {
 }
 
 model GeneratedContent {
-  id           String        @id @default(cuid())
-  restaurantId String
-  type         ContentType
-  prompt       String
-  output       String        @default("")
-  imageUrl     String?
-  status       ContentStatus @default(DRAFT)
-  published    Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  restaurantId   String
+  creativePackId String?
+  type           ContentType
+  prompt         String
+  output         String        @default("")
+  imageUrl       String?
+  status         ContentStatus @default(DRAFT)
+  published      Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  restaurant     Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  creativePack   CreativePack? @relation(fields: [creativePackId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId])
+  @@index([creativePackId])
+  @@schema("public")
+}
+
+/** One-click Creative Agent pack — brand brief + month of UGC / dish creatives. */
+model CreativePack {
+  id           String             @id @default(cuid())
+  restaurantId String
+  status       CreativePackStatus @default(PENDING)
+  brief        Json               @default("{}")
+  errorMessage String?
+  targetCount  Int                @default(12)
+  doneCount    Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  contents     GeneratedContent[]
+
+  @@index([restaurantId, createdAt])
   @@schema("public")
 }
 
@@ -711,8 +774,10 @@ model LeadProspect {
   platformRank           Int?
   platformRankPercentile Float?
   platformRegion         String?
+  platformMenuUrl        String?
   websiteUrl             String?
   contactEmail           String?
+  contactPhone           String?
   hasContactForm         Boolean            @default(false)
   reviewCount            Int?
   rating                 Float?
@@ -840,5 +905,39 @@ model SiteScan {
   status               String          @default("completed")
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
+  @@schema("public")
+}
+
+/** Owner-requested deliverable fulfilled manually by KOB (costs credits). */
+model ServiceRequest {
+  id            String               @id @default(cuid())
+  restaurantId  String
+  type          ServiceRequestType
+  status        ServiceRequestStatus @default(REQUESTED)
+  title         String
+  notes         String               @default("")
+  creditCost    Int
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  deliveredAt   DateTime?
+  restaurant    Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
+  @@index([status, createdAt])
+  @@schema("public")
+}
+
+model CreditLedgerEntry {
+  id           String             @id @default(cuid())
+  restaurantId String
+  delta        Int
+  balanceAfter Int
+  reason       CreditLedgerReason
+  note         String             @default("")
+  requestId    String?
+  createdAt    DateTime           @default(now())
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
   @@schema("public")
 }

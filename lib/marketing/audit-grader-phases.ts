@@ -168,7 +168,7 @@ export function graderContextStatus(
     case "photoQuality":
       return signals?.hasPhotos ? "Reviewing listing and website photos" : "Checking photo quality";
     case "website":
-      return "Scanning your website pages";
+      return "Checking SEO & crawl signals";
     case "mobile":
       return "Testing mobile experience";
   }

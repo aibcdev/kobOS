@@ -16,6 +16,9 @@ const typeLabels: Record<ContentType, string> = {
   GROWTH_FOOD_ANALYSIS: "Growth · food photography analysis",
   GROWTH_WEBSITE_PLAN: "Growth · website redesign plan",
   GROWTH_REVIEW_REPLY: "Growth · review relationship draft",
+  CREATIVE_BRAND_BRIEF: "Creative Agent · brand identity brief",
+  CREATIVE_UGC: "Creative Agent · UGC creative",
+  CREATIVE_DISH: "Creative Agent · dish photography",
 };
 
 /** Content types that benefit from an accompanying generated image */

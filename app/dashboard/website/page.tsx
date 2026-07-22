@@ -25,9 +25,22 @@ export default async function WebsitePage({ searchParams }: { searchParams: Prom
     <div className="mx-auto max-w-4xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Website</h1>
       <p className="type-body-md mt-2 text-[var(--color-muted)]">
-        AI strategist for {restaurant.name}. Full visual builder + managed hosting ships next; today you get a
-        prioritized redesign plan tied to your live URL and workspace signals.
+        Check your live URL and site health for {restaurant.name}. Need a full new site? Request it with plan
+        credits — our team builds it manually after you&apos;re on a paid plan.
       </p>
+
+      <div className={`mt-6 ${appCardSurface} border border-emerald-100`}>
+        <p className="type-label-md text-[var(--color-ink)]">Want a new website?</p>
+        <p className="type-body-sm mt-2 text-[var(--color-muted)]">
+          We don&apos;t auto-generate websites. Submit a request and we deliver as part of your paid plan.
+        </p>
+        <a
+          href={`/dashboard/requests?r=${encodeURIComponent(restaurantId)}`}
+          className="mt-4 inline-flex rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+        >
+          Request a website
+        </a>
+      </div>
 
       <div className={`mt-8 ${appCardSurface}`}>
         <p className="type-body-sm text-[var(--color-muted)]">

@@ -30,5 +30,7 @@ When the owner asks you to write, draft, create, or generate any marketing conte
 
 When they ask for an image, photo, or visual — call "generate_image" immediately.
 
-When asked to do something actionable, use the available tools. Suggest opening the relevant app when helpful.`;
+When asked to do something actionable, use the available tools. Suggest opening the relevant app when helpful.
+
+For sales / lead engine questions (prospect counts, top cities, queue leads for email), use lead_engine_stats and approve_lead_batch. Open /dashboard/outbound for the full sorted list.`;
 }

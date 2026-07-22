@@ -1,16 +1,22 @@
 import { createHash } from "node:crypto";
 import type { AuditEngagementSignals } from "@/lib/audit/engagement-signals";
 import { computeEngagementSignals } from "@/lib/audit/engagement-signals";
+import { discoverSeoCrawlAssets } from "@/lib/audit/seo-discovery";
 
 export type UrlSignals = {
   fetched: boolean;
   status?: number;
   titleLen: number;
   hasMetaDescription: boolean;
+  /** Character length of meta description (0 if missing). */
+  metaDescriptionLen: number;
   h1Count: number;
+  h2Count: number;
   hasOgTitle: boolean;
   hasCanonical: boolean;
   hasJsonLd: boolean;
+  /** Restaurant / FoodEstablishment / LocalBusiness in JSON-LD @type. */
+  hasRestaurantSchema: boolean;
   hasViewport: boolean;
   isHttps: boolean;
   hasTelLink: boolean;
@@ -18,10 +24,17 @@ export type UrlSignals = {
   hasBookOrReserveKeyword: boolean;
   hasOpenTableOrResy: boolean;
   imgCount: number;
+  /** Images with a non-empty alt attribute. */
+  imgWithAltCount: number;
   htmlSizeKb: number;
   /** Extended signals for evidence / benchmark */
   hasOgImage: boolean;
   hasTwitterCard: boolean;
+  hasLangAttr: boolean;
+  hasNoindex: boolean;
+  robotsTxtFound: boolean;
+  sitemapFound: boolean;
+  /** True if robots.txt, sitemap, or HTML mentions of either were found. */
   mentionsRobotsOrSitemap: boolean;
 };
 
@@ -203,10 +216,13 @@ const emptySignals = (): UrlSignals => ({
   fetched: false,
   titleLen: 0,
   hasMetaDescription: false,
+  metaDescriptionLen: 0,
   h1Count: 0,
+  h2Count: 0,
   hasOgTitle: false,
   hasCanonical: false,
   hasJsonLd: false,
+  hasRestaurantSchema: false,
   hasViewport: false,
   isHttps: false,
   hasTelLink: false,
@@ -214,11 +230,67 @@ const emptySignals = (): UrlSignals => ({
   hasBookOrReserveKeyword: false,
   hasOpenTableOrResy: false,
   imgCount: 0,
+  imgWithAltCount: 0,
   htmlSizeKb: 0,
   hasOgImage: false,
   hasTwitterCard: false,
+  hasLangAttr: false,
+  hasNoindex: false,
+  robotsTxtFound: false,
+  sitemapFound: false,
   mentionsRobotsOrSitemap: false,
 });
+
+/**
+ * Coerce partially-stored / legacy evidence urlSignals into a full UrlSignals shape.
+ * Older audits may lack newer SEO fields.
+ */
+export function normalizeUrlSignals(raw: Partial<UrlSignals> | null | undefined): UrlSignals {
+  const base = emptySignals();
+  if (!raw) return base;
+  return {
+    ...base,
+    ...raw,
+    metaDescriptionLen: raw.metaDescriptionLen ?? 0,
+    h2Count: raw.h2Count ?? 0,
+    imgWithAltCount: raw.imgWithAltCount ?? 0,
+    hasRestaurantSchema: raw.hasRestaurantSchema ?? false,
+    hasLangAttr: raw.hasLangAttr ?? false,
+    hasNoindex: raw.hasNoindex ?? false,
+    robotsTxtFound: raw.robotsTxtFound ?? false,
+    sitemapFound: raw.sitemapFound ?? false,
+    mentionsRobotsOrSitemap: raw.mentionsRobotsOrSitemap ?? false,
+  };
+}
+
+function countImgWithAlt(html: string): number {
+  let n = 0;
+  const re = /<img\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const tag = m[0];
+    const alt = tag.match(/\balt=["']([^"']*)["']/i);
+    if (alt && alt[1].trim().length > 0) n += 1;
+  }
+  return n;
+}
+
+function detectRestaurantSchema(html: string): boolean {
+  const blocks = html.match(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  );
+  if (!blocks?.length) return false;
+  for (const block of blocks) {
+    const inner = block.replace(/^[\s\S]*?>/, "").replace(/<\/script>$/i, "");
+    if (/@"?type"?\s*:\s*"?(Restaurant|FoodEstablishment|LocalBusiness|CafeOrCoffeeShop)/i.test(inner)) {
+      return true;
+    }
+    if (/"@type"\s*:\s*\[\s*[^\]]*(Restaurant|FoodEstablishment|LocalBusiness)/i.test(inner)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export type AnalyzeHtmlMeta = {
   /** HTTP status from the transport (fetch, Browserbase navigation, etc.). */
@@ -260,16 +332,23 @@ export function analyzeWebsiteFromHtml(
     /<meta[^>]+property=["']og:description["'][^>]*>/i.test(html);
   const metaDescriptionSnippet =
     metaContent(html, "description", "name") ?? metaContent(html, "og:description", "property");
+  signals.metaDescriptionLen = metaDescriptionSnippet?.length ?? 0;
 
   const h1Matches = html.match(/<h1[\s>]/gi);
   signals.h1Count = h1Matches?.length ?? 0;
+  signals.h2Count = (html.match(/<h2[\s>]/gi) ?? []).length;
 
   signals.hasOgTitle = /<meta[^>]+property=["']og:title["'][^>]*>/i.test(html);
   signals.hasOgImage = /<meta[^>]+property=["']og:image["'][^>]*>/i.test(html);
   signals.hasTwitterCard = /<meta[^>]+name=["']twitter:card["'][^>]*>/i.test(html);
   signals.hasCanonical = /<link[^>]+rel=["']canonical["'][^>]*>/i.test(html);
   signals.hasJsonLd = /<script[^>]+type=["']application\/ld\+json["'][^>]*>/i.test(html);
+  signals.hasRestaurantSchema = detectRestaurantSchema(html);
   signals.hasViewport = /<meta[^>]+name=["']viewport["'][^>]*>/i.test(html);
+  signals.hasLangAttr = /<html[^>]+lang=["'][^"']+["']/i.test(html);
+  signals.hasNoindex =
+    /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(html) ||
+    /<meta[^>]+content=["'][^"']*noindex[^"']*["'][^>]+name=["']robots["']/i.test(html);
 
   signals.hasTelLink = /href=["']tel:/i.test(html);
   signals.hasMailto = /href=["']mailto:/i.test(html);
@@ -277,11 +356,13 @@ export function analyzeWebsiteFromHtml(
   signals.hasOpenTableOrResy = /opentable|resy|tock|sevenrooms/i.test(html);
 
   signals.imgCount = (html.match(/<img[\s>]/gi) ?? []).length;
+  signals.imgWithAltCount = countImgWithAlt(html);
 
-  signals.mentionsRobotsOrSitemap =
+  const htmlMentionsCrawl =
     /href=["'][^"']*robots\.txt/i.test(html) ||
     /href=["'][^"']*sitemap[^"']*\.xml/i.test(html) ||
     /sitemap\.xml/i.test(html);
+  signals.mentionsRobotsOrSitemap = htmlMentionsCrawl;
 
   const socialLinksFound = extractSocialLinks(html);
   const imageCandidates = extractImageCandidates(html, resolvedPageUrl);
@@ -297,6 +378,29 @@ export function analyzeWebsiteFromHtml(
     },
     engagementSignals: computeEngagementSignals(html, signals),
   };
+}
+
+/** Attach live robots.txt / sitemap probes to an existing HTML analysis. */
+export async function enrichWebsiteAnalysisWithSeoDiscovery(
+  analysis: WebsiteAnalysis,
+  pageUrl: string,
+): Promise<WebsiteAnalysis> {
+  if (!analysis.signals.fetched || !pageUrl.trim()) return analysis;
+  try {
+    const crawl = await discoverSeoCrawlAssets(pageUrl);
+    const signals: UrlSignals = {
+      ...analysis.signals,
+      robotsTxtFound: crawl.robotsTxtFound,
+      sitemapFound: crawl.sitemapFound,
+      mentionsRobotsOrSitemap:
+        analysis.signals.mentionsRobotsOrSitemap || crawl.robotsTxtFound || crawl.sitemapFound,
+      // noindex via robots Disallow: / is a crawlability hit
+      hasNoindex: analysis.signals.hasNoindex || crawl.robotsDisallowsAll,
+    };
+    return { ...analysis, signals };
+  } catch {
+    return analysis;
+  }
 }
 
 const AUDIT_FETCH_TIMEOUT_MS = Number(process.env.AUDIT_FETCH_TIMEOUT_MS) || 18_000;
@@ -387,7 +491,10 @@ export async function analyzeWebsiteFull(rawUrl: string | undefined): Promise<We
       return { signals, pageEvidence: emptyPage };
     }
     const html = await res.text();
-    return analyzeWebsiteFromHtml(html, res.url || url.toString(), { httpStatus: res.status });
+    const analysis = analyzeWebsiteFromHtml(html, res.url || url.toString(), {
+      httpStatus: res.status,
+    });
+    return enrichWebsiteAnalysisWithSeoDiscovery(analysis, res.url || url.toString());
   } catch {
     clearTimeout(t);
     return { signals: { ...emptySignals(), ...signals, fetched: true }, pageEvidence: emptyPage };

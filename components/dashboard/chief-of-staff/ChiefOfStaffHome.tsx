@@ -328,6 +328,7 @@ export function ChiefOfStaffHome({
               onApproveHoliday={approveHoliday}
               onApproveTopFix={focusFirstAuditTask}
               holidayBusy={holidayBusy}
+              requestsHref={`/dashboard/requests?r=${encodeURIComponent(restaurantId)}`}
             />
 
             <div className="mt-6">
