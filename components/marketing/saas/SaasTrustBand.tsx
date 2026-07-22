@@ -1,26 +1,18 @@
 import { marketingCopy } from "@/lib/marketing/copy";
 
-import { SaasIcon } from "./SaasIcon";
-
 export function SaasTrustBand() {
   return (
-    <section id="trust" className="border-y border-[#2c2c2c]/5 bg-[#fbf8f5] px-6 py-16 md:py-20">
+    <section className="border-y border-[#2c2c2c]/5 bg-[#f9f6f1] px-6 py-12 md:py-14">
       <div className="mx-auto max-w-[83rem] text-center">
-        <p className="font-mono-brand mb-3 text-xs font-semibold uppercase tracking-wider text-[#088924]">
-          Social proof
+        <p className="font-mono-brand text-[11px] font-semibold tracking-[0.18em] text-[#2c2c2c]/45 uppercase">
+          Who it&apos;s for
         </p>
-        <h2 className="font-heading mx-auto max-w-3xl text-2xl font-semibold tracking-tight text-[#2c2c2c] md:text-4xl">
+        <p className="font-heading mx-auto mt-4 max-w-2xl text-xl font-semibold tracking-tight text-[#1a1a1a] md:text-2xl">
           {marketingCopy.trustLine}
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-sm text-[#2c2c2c]/65 md:text-base">{marketingCopy.trustBandBody}</p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-[#2c2c2c]/40">
-          {["Hospitality", "Retail", "Markets", "Cafés", "Quick service"].map((label) => (
-            <span key={label} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-              <SaasIcon icon="solar:verified-check-bold" className="text-[#088924]" />
-              {label}
-            </span>
-          ))}
-        </div>
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[#2c2c2c]/65">
+          {marketingCopy.trustBandBody}
+        </p>
       </div>
     </section>
   );

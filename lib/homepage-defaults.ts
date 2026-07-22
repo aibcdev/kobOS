@@ -6,8 +6,8 @@
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const defaultSiteMeta = {
-  title: `KOB | ${marketingCopy.losingSalesOnline.replace(/\.$/, "")}`,
-  description: `${marketingCopy.useAiToFix} Free report on your website, SEO, photos, and reviews—then websites, ordering, and growth tools built for restaurants.`,
+  title: `KOB | ${marketingCopy.tagline.replace(/\.$/, "")}`,
+  description: `${marketingCopy.heroSubline} Free scan of your website, SEO, photos, and reviews—then a daily list you approve in one tap.`,
 } as const;
 
 export const DEFAULT_HERO_IMAGE =
@@ -87,13 +87,13 @@ export const homepageDefaults = {
     imageAlt: "Restaurant hero visual",
   },
   socialProof: {
-    label: "Trusted by teams who cannot afford to guess",
-    logos: ["NOBU", "TATEL", "STK", "BOA", "CARBONE", "OLIVE & IVY", "HONEY SALT", "URBAN BELLY"],
+    label: "Built for independent restaurants and cafés",
+    logos: [],
   },
   stats: [
-    { value: "500+", label: "restaurants on the platform" },
-    { value: "4.9/5", label: "average satisfaction" },
-    { value: "+243%", label: "avg. reservation lift (sample)" },
+    { value: "Free", label: "online scan before you pay" },
+    { value: "~1 min", label: "to see guest-facing gaps" },
+    { value: "$49", label: "founding Flex rate / mo" },
   ],
   leadBand: {
     headline: "See where covers leak before you spend another month guessing.",
@@ -138,7 +138,7 @@ export const homepageDefaults = {
       imageUrl:
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop",
       imageAlt: "Restaurant operator",
-      statChip: "500+ teams",
+      statChip: "Daily approve list",
     },
     {
       segment: "For staff",

@@ -1,28 +1,34 @@
 /**
- * KOB public marketing copy — free scan → daily task list → approve in one tap.
+ * KOB public marketing copy — free scan → daily task list → approve / request with credits.
  */
 import { industryStats, industryStatsFootnote } from "@/lib/marketing/industry-stats";
 
 export const marketingCopy = {
   tagline: "Your restaurant's ultimate employee.",
-  trustLine: "Trusted by over 500 retailers, restaurants and markets worldwide",
-  trustLineShort: "Trusted by 500+ restaurants & cafés",
+  trustLine: "Built for independent restaurants and cafés",
+  trustLineShort: "For busy owners who want a clear next step",
 
-  heroHeadline: "See the gap between how good you are—and how you look online.",
+  heroHeadline: "Your restaurant’s ultimate employee.",
+  heroHeadlineLead: "Your restaurant’s",
+  heroHeadlineAccent: "ultimate",
+  heroHeadlineTail: "employee.",
   heroSubline:
-    "Scan your site in seconds and see how you compare to strong venues nearby. Then get a daily list of what needs doing—one tap to approve.",
-  losingSalesOnline: "See the gap between how good you are—and how you look online.",
+    "Free scan of what guests see online. Then a daily list of what to fix—and credits to request website, SEO, or brand work when you need help.",
+  heroProofPoints: ["Free scan", "About 1 minute", "No card required"] as const,
+  losingSalesOnline: "Your website is your front door online",
   useAiToFix: " Free hospitality perception report.",
 
   auditSubline:
     "We check how guests see your restaurant online—photos, hours, reviews, and trust. About a minute. No card.",
   productSubline:
-    "We watch your online presence so you don't have to—reviews, holidays, hours, posts, and the small things guests notice.",
+    "See the gaps, approve drafts, and request website or SEO work with credits—without juggling five apps.",
 
   trustBandBody:
-    "Most guests decide online before they ever visit. KOB helps independent restaurants and cafés stay on top of what guests see—without juggling five apps or hiring an agency.",
+    "Most guests decide online before they visit. KOB shows what they see, gives you a daily list to approve, and lets you request deliverables with credits.",
 
-  finalCtaSubline: "Find what's slipping through the cracks—starting with a free scan.",
+  finalCtaHeadline: "See what guests see—then fix it.",
+  finalCtaSubline: "Start with a free scan. Unlock your report, then get a daily list you approve in one tap.",
+  finalCtaFinePrint: "No card for the scan · Founding rates for early restaurants",
 
   cta: {
     aiReport: "Run free scan",
@@ -42,7 +48,7 @@ export const marketingCopy = {
   pricing: {
     lead: "Founding member pricing for early restaurants.",
     subline: "Lock in a low monthly rate as one of our first 10 venues. No long-term contracts.",
-    feeLine: "Start with a free scan—then a daily helper for reviews, holidays, and listings.",
+    feeLine: "Start with a free scan—then a daily helper plus credits for website, SEO, and brand requests.",
   },
 
   scanning: {
@@ -114,7 +120,7 @@ export const marketingCopy = {
       "Daily tasks from your scan—reviews, holidays, hours, posts",
       "Plain English: what needs doing and why",
       "Approve in one tap—we prepare drafts for you to review",
-      "Never miss a beat online while you run the floor",
+      "Request website, SEO, or brand work with credits",
       "7-day free trial · cancel anytime",
     ] as const,
   },
@@ -140,7 +146,7 @@ export const marketingCopy = {
     bullets: [
       "Free online scan in about a minute",
       "See what guests notice before they book",
-      "Daily tasks—reviews, holidays, hours, posts",
+      "Daily tasks plus credits for website, SEO, and brand requests",
     ] as const,
     signInTitle: "Welcome back",
     signUpTitle: "Create your account",
@@ -163,7 +169,7 @@ export const marketingCopy = {
     "I approve a review reply in the morning and move on with service.",
     "Holiday posts used to slip—we get a reminder and a draft ready.",
     "One place for hours, menu, and reviews beat juggling five apps.",
-    "It feels like having someone watching our online presence full-time.",
+    "Request the website work with credits—someone actually delivers it.",
   ] as const,
 
   input: {

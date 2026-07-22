@@ -40,10 +40,18 @@ html {
   --font-body: "SuisseIntl", Helvetica, Arial, "Hiragino Sans GB", STXihei, "Microsoft YaHei", "WenQuanYi Micro Hei",
     Hind, "MS Gothic", "Apple SD Gothic Neo", NanumBarunGothic, sans-serif;
   --font-mono-brand: "Fragment Mono", ui-monospace, monospace;
+  /* Bright green — key accent (hero “ultimate”, badges) */
+  --color-bright-green: #a8ff2e;
+  --color-forest: #094413;
+  --color-forest-mid: #088924;
 }
 
 .font-heading {
   font-family: var(--font-head);
+}
+
+.font-accent-script {
+  font-family: var(--font-accent-script), "Caveat", cursive;
 }
 
 .font-body {

@@ -27,13 +27,14 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "flex",
     name: "Flex",
-    badge: "Founding rate",
+    badge: "Most popular",
     priceMonthly: 49,
     regularPriceMonthly: 125,
     priceNote: "+ 2.5% platform fee per order",
     description:
-      "Low monthly cost while you grow. Your daily helper watches reviews, holidays, and listings—you approve fixes in one tap.",
+      "Daily helper for reviews, hours, and posts—plus credits to request website, SEO, or brand work. Low monthly while you grow.",
     stripeTier: "starter",
+    highlight: true,
   },
   {
     id: "flat",
@@ -43,9 +44,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     regularPriceMonthly: 250,
     priceNote: "No additional order fees",
     description:
-      "One predictable monthly price. Best when you want zero per-order fees and a daily list of what needs doing online.",
+      "One predictable monthly price. Same daily list and credit-backed requests—without per-order fees.",
     stripeTier: "pro",
-    highlight: true,
   },
 ];
 
@@ -61,9 +61,9 @@ export type ComparisonRow = {
 /** Structured KOB vs Owner.com — homepage + pricing reference */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
-  headline: "Same kind of help. Lower price. Built for busy owners.",
+  headline: "Same kind of help. Lower price.",
   subline:
-    "Owner.com charges premium rates for a full growth stack. KOB starts with a free scan and a daily helper—so you never miss reviews, holidays, or listing updates.",
+    "Owner.com sells a full stack at premium rates. KOB starts with a free scan, a daily list you approve, and credits for website, SEO, and brand requests.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   rows: [
@@ -123,7 +123,7 @@ export const OWNER_COMPARISON = {
     },
     {
       label: "Core offer",
-      kob: "Daily visibility tasks you approve",
+      kob: "Scan + daily approve list + credit requests",
       owner: "Full stack: website, ordering, app, marketing",
       kobWins: false,
     },
@@ -140,12 +140,12 @@ export const PRICING_INCLUDED_FEATURES = [
   { title: "Free online scan", detail: "See what guests notice before you spend a penny." },
   { title: "Daily task helper", detail: "Reviews, holidays, hours, and posts—in a list you approve each morning." },
   { title: "Draft replies & posts", detail: "We prepare copy. Nothing goes live until you say so." },
+  { title: "Service requests with credits", detail: "Request website, SEO, logo, or creative work—KOB fulfills it." },
   { title: "UK holiday calendar", detail: "Bank holidays and busy weekends flagged early." },
   { title: "Listing & photo checks", detail: "Flags when Google or your site looks off vs competitors." },
   { title: "Plain-English briefings", detail: "What needs doing, why, and how long—no SEO deck required." },
   { title: "7-day free trial", detail: "Start after your scan. Cancel anytime." },
   { title: "Founding member rate", detail: "Lock in $49 or $99/mo as one of our first 10 restaurants." },
-  { title: "Email support", detail: "Real humans when you need help." },
 ] as const;
 
 export const PRICING_FAQ = [
@@ -155,7 +155,7 @@ export const PRICING_FAQ = [
   },
   {
     q: "What is included with KOB?",
-    a: "Free scan, daily task list, draft replies and posts, holiday reminders, and listing checks. Flex adds 2.5% on direct orders; Flat has no order fees.",
+    a: "Free scan, daily task list, draft replies and posts, holiday reminders, listing checks, and credits to request website, SEO, or brand work. Flex adds 2.5% on direct orders; Flat has no order fees.",
   },
   {
     q: "What fees do restaurants pay on orders?",
@@ -163,7 +163,7 @@ export const PRICING_FAQ = [
   },
   {
     q: "How is KOB different from Owner.com?",
-    a: "Owner.com sells a full revenue stack—website, ordering, app, and marketing automations—starting at $249/mo plus fees, with a demo-led setup. KOB focuses on never missing a beat online—reviews, holidays, hours, posts—with a daily list you approve. Lower price, simpler story, self-serve from a free scan.",
+    a: "Owner.com sells a full revenue stack—website, ordering, app, and marketing—starting at $249/mo plus fees. KOB focuses on a free scan, a daily list you approve, and credit-backed requests for website and SEO work. Lower price, clearer next step.",
   },
   {
     q: "Do you require contracts?",

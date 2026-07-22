@@ -13,10 +13,10 @@ export function SaasFinalCta() {
 
           <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center">
             <span className="font-mono-brand mb-4 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#088924]">
-              READY TO SCALE?
+              Free first
             </span>
             <h2 className="font-heading mb-4 text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
-              Take control of your digital sales channel today.
+              {marketingCopy.finalCtaHeadline}
             </h2>
             <p className="mb-8 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
               {marketingCopy.finalCtaSubline}
@@ -38,7 +38,7 @@ export function SaasFinalCta() {
               </Link>
             </div>
 
-            <p className="font-mono-brand mt-6 text-xs text-white/60">* Complete website analysis and commission savings estimation included.</p>
+            <p className="font-mono-brand mt-6 text-xs text-white/60">{marketingCopy.finalCtaFinePrint}</p>
           </div>
         </div>
       </div>
