@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { VisibilityAudit } from "@prisma/client";
 import { useCallback, useState } from "react";
+import { AuditOpportunityReport } from "@/components/marketing/audit/AuditOpportunityReport";
 import { AuditFunnelHeader } from "@/components/marketing/audit/AuditFunnelHeader";
 import { AuditPerceptionGapTable } from "@/components/marketing/audit/AuditPerceptionGapTable";
 import { AuditPerceptionHero } from "@/components/marketing/audit/AuditPerceptionHero";
@@ -24,12 +25,11 @@ import { AuditRevenueLeaks } from "@/components/marketing/audit/AuditRevenueLeak
 import { useAuditBenchmarkPoll } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { isAuditScoresReady } from "@/lib/audit/audit-score-display";
-import { auditBlurGate } from "@/lib/marketing/audit-theme";
+import { gradeMeaning } from "@/lib/audit/restaurant-scoring";
 import { buildTeaserPerception } from "@/lib/marketing/audit-scan-preview";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { onlineHealthLabel } from "@/lib/marketing/audit-grader-phases";
 import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
-import { gradeMeaning } from "@/lib/audit/restaurant-scoring";
 import type { AuditResultPayload, BenchmarkV1Section, RestaurantScoresV1 } from "@/lib/audit/types";
 
 type NavId = "overview" | "reviews" | "discovery" | "competitors" | "technical";
@@ -266,6 +266,7 @@ export function AuditReportDashboard({
   benchmarkInitial,
   unlocked,
   scanStillRunning,
+  onRequestUnlock,
 }: {
   audit: Pick<
     VisibilityAudit,
@@ -285,6 +286,7 @@ export function AuditReportDashboard({
   benchmarkInitial: AuditBenchmarkPollSnapshot;
   unlocked: boolean;
   scanStillRunning?: boolean;
+  onRequestUnlock?: () => void;
 }) {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
   const [shareLabel, setShareLabel] = useState<string | null>(null);
@@ -346,7 +348,7 @@ export function AuditReportDashboard({
   const mediaThumbs = meta && meta.length > 0 ? meta : cands;
   const showMedia = unlocked && data.benchmarkV1MediaStatus === "ready" && data.benchmarkV1Media;
   const showVideo = showMedia && Boolean(data.benchmarkV1Media?.videoPresentationQuality);
-  const showHeaderScoreRing = Boolean(restaurantScores) || !perception || perceptionPending;
+  const showHeaderScoreRing = unlocked && (Boolean(restaurantScores) || !perception || perceptionPending);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface-warm)] text-[var(--color-ink)]">
@@ -517,44 +519,55 @@ export function AuditReportDashboard({
               </div>
 
               {activeNav === "overview" && (
-                <div className="mb-8 space-y-8">
-                  {restaurantScores ? <RestaurantAxisStrip scores={restaurantScores} /> : null}
-                  <AuditPerceptionHero
-                    perception={perception}
-                    pending={perceptionPending}
-                    timedOut={timedOut && perceptionPending}
-                    retrying={retrying}
-                    onRetry={() => {
-                      void retryAnalysis();
-                    }}
+                <div className="mb-8 space-y-10">
+                  <AuditOpportunityReport
+                    auditId={audit.id}
                     restaurantName={restaurantDisplay}
+                    city={audit.city}
+                    websiteUrl={audit.websiteUrl}
                     payload={payload}
+                    unlocked={unlocked}
+                    report={payload.opportunityReport ?? null}
+                    onUnlockClick={() => {
+                      onRequestUnlock?.();
+                    }}
                   />
-                  {perception ? (
-                    <div className={!unlocked ? auditBlurGate : ""}>
-                      {perception.overallSummary ? (
-                        <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
-                          {perception.overallSummary}
-                        </p>
+
+                  {unlocked && restaurantScores ? <RestaurantAxisStrip scores={restaurantScores} /> : null}
+
+                  {unlocked ? (
+                    <>
+                      <AuditPerceptionHero
+                        perception={perception}
+                        pending={perceptionPending}
+                        timedOut={timedOut && perceptionPending}
+                        retrying={retrying}
+                        onRetry={() => {
+                          void retryAnalysis();
+                        }}
+                        restaurantName={restaurantDisplay}
+                        payload={payload}
+                      />
+                      {perception ? (
+                        <div>
+                          {perception.overallSummary ? (
+                            <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
+                              {perception.overallSummary}
+                            </p>
+                          ) : null}
+                          <AuditExecutiveSummary perception={perception} />
+                          <AuditVisualScorecard rows={perception.visualScorecard} />
+                          <AuditPositioningTable rows={perception.positioningTable} />
+                          <AuditPerceptionGapTable rows={perception.perceptionGap} locked={false} />
+                          <AuditRevenueLeaks leaks={perception.revenueLeaks} />
+                          <AuditEvidenceSourcesDetail payload={payload} />
+                          <AuditNarrativeSection
+                            customerExperience={perception.customerExperience}
+                            modernStandard={perception.modernStandard}
+                          />
+                        </div>
                       ) : null}
-                      <AuditExecutiveSummary perception={perception} />
-                      <AuditVisualScorecard rows={perception.visualScorecard} />
-                      <AuditPositioningTable rows={perception.positioningTable} />
-                      <AuditPerceptionGapTable rows={perception.perceptionGap} locked={!unlocked} />
-                      {!unlocked && perception.revenueLeaks.length ? (
-                        <p className="text-center text-sm font-medium text-[var(--color-primary)]">
-                          {perception.revenueLeaks.length} revenue leaks identified — unlock to see the full gap
-                        </p>
-                      ) : null}
-                      {unlocked ? <AuditRevenueLeaks leaks={perception.revenueLeaks} /> : null}
-                      {unlocked ? <AuditEvidenceSourcesDetail payload={payload} /> : null}
-                      {unlocked ? (
-                        <AuditNarrativeSection
-                          customerExperience={perception.customerExperience}
-                          modernStandard={perception.modernStandard}
-                        />
-                      ) : null}
-                    </div>
+                    </>
                   ) : null}
                 </div>
               )}

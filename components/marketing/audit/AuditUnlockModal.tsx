@@ -15,6 +15,7 @@ export type AuditUnlockTeaser = {
   leakPercentHigh?: number;
   revenueLeakCount?: number;
   screenshotUrl?: string | null;
+  lostRevenueGbp?: number | null;
 };
 
 function competitorSubtitle(names: string[]) {
@@ -37,12 +38,14 @@ export function AuditUnlockModal({
   competitorNames = [],
   teaser,
   open,
+  onClose,
 }: {
   auditId: string;
   restaurantName: string;
   competitorNames?: string[];
   teaser?: AuditUnlockTeaser;
   open: boolean;
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -63,7 +66,10 @@ export function AuditUnlockModal({
     first?.focus();
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") e.preventDefault();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose?.();
+      }
     }
     document.addEventListener("keydown", onKeyDown);
 
@@ -71,7 +77,7 @@ export function AuditUnlockModal({
       document.body.style.overflow = prev;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -81,6 +87,10 @@ export function AuditUnlockModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="audit-unlock-title"
+      id="audit-unlock"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
     >
       <div ref={dialogRef} className={`relative w-full max-w-md ${auditModalPanel}`}>
         {teaser?.screenshotUrl ? (
@@ -110,23 +120,29 @@ export function AuditUnlockModal({
           {marketingCopy.auditUnlock.modalTitle}
         </h2>
         <p className="mt-2 text-center text-sm leading-relaxed text-[var(--color-muted)]">
-          {competitorSubtitle(competitorNames)}
+          {teaser?.lostRevenueGbp
+            ? `We estimate ~£${teaser.lostRevenueGbp.toLocaleString("en-GB")}/mo in lost revenue from online gaps.`
+            : competitorSubtitle(competitorNames)}
         </p>
 
         {score != null && Number.isFinite(score) ? (
           <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-cream)]/50 px-4 py-3 text-center">
             <p className="font-head text-3xl font-semibold tabular-nums text-[var(--color-ink)]">{score}</p>
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-              Digital positioning · {scoreTeaserLabel(score)}
+              Marketing maturity · {scoreTeaserLabel(score)}
             </p>
-            {hasLeak ? (
+            {teaser?.lostRevenueGbp ? (
+              <p className="mt-2 text-sm font-medium text-[#dc2626]">
+                Est. £{teaser.lostRevenueGbp.toLocaleString("en-GB")}/mo lost
+              </p>
+            ) : hasLeak ? (
               <p className="mt-2 text-sm font-medium text-[#ea580c]">
                 {teaser!.leakPercentLow}–{teaser!.leakPercentHigh}% booking leak estimated
               </p>
             ) : null}
             {teaser?.revenueLeakCount ? (
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                {teaser.revenueLeakCount} things guests notice in your audit
+                ~{teaser.revenueLeakCount} customers/mo may be choosing competitors
               </p>
             ) : null}
           </div>

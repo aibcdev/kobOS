@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import type { VisibilityAudit } from "@prisma/client";
 import { AuditReportDashboard } from "@/components/marketing/audit/AuditReportDashboard";
 import { AuditUnlockModal } from "@/components/marketing/audit/AuditUnlockModal";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { auditCard, auditCardMuted } from "@/lib/marketing/audit-theme";
 import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
+import { computeAuditOpportunityReport } from "@/lib/audit/audit-opportunity-from-payload";
 import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
@@ -34,7 +38,16 @@ export function AuditResultsContent({
   payload: AuditResultPayload;
 }) {
   const unlocked = Boolean(audit.leadCapturedAt);
+  const [unlockOpen, setUnlockOpen] = useState(false);
   const perceptionTeaser = buildPerceptionTeaserFromPayload(payload, audit.overallScore);
+
+  const opportunity =
+    payload.opportunityReport ??
+    computeAuditOpportunityReport(payload, {
+      name: audit.restaurantName,
+      city: audit.city,
+      websiteUrl: audit.websiteUrl,
+    });
 
   const benchmarkInitial: AuditBenchmarkPollSnapshot = {
     scoresPending: payload.scoresPending,
@@ -72,11 +85,23 @@ export function AuditResultsContent({
     (perception ? buildOwnerHeroFallback(payload, perception) : perceptionTeaser.ownerHero);
 
   const unlockTeaser = {
-    score: perception?.digitalPositioningScore ?? perceptionTeaser.digitalPositioningScore,
+    score:
+      opportunity.opportunity_score?.marketing_maturity ??
+      perception?.digitalPositioningScore ??
+      perceptionTeaser.digitalPositioningScore,
     leakPercentLow: ownerHero?.bookingLeakPercentLow,
     leakPercentHigh: ownerHero?.bookingLeakPercentHigh,
-    revenueLeakCount: perception?.revenueLeaks?.length ?? perceptionTeaser.revenueLeakCount,
+    revenueLeakCount:
+      opportunity.opportunity_score?.est_monthly_lost_customers ??
+      perception?.revenueLeaks?.length ??
+      perceptionTeaser.revenueLeakCount,
     screenshotUrl: perceptionTeaser.screenshotUrl,
+    lostRevenueGbp: opportunity.opportunity_score?.est_lost_revenue,
+  };
+
+  const payloadWithOpp: AuditResultPayload = {
+    ...payload,
+    opportunityReport: opportunity,
   };
 
   return (
@@ -86,15 +111,17 @@ export function AuditResultsContent({
         restaurantName={audit.restaurantName}
         competitorNames={competitorNames}
         teaser={unlockTeaser}
-        open={!unlocked}
+        open={!unlocked && unlockOpen}
+        onClose={() => setUnlockOpen(false)}
       />
 
       <AuditReportDashboard
         audit={audit}
-        payload={payload}
+        payload={payloadWithOpp}
         benchmarkInitial={benchmarkInitial}
         unlocked={unlocked}
         scanStillRunning={scanStillRunning}
+        onRequestUnlock={() => setUnlockOpen(true)}
       />
 
       {unlocked ? (

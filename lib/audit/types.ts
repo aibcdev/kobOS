@@ -197,6 +197,36 @@ export type AuditResultPayload = {
   restaurantScores?: RestaurantScoresV1;
   /** Live analysis step progress for scanning UI. */
   analysisProgress?: AnalysisProgressV1;
+  /** Post-scan Opportunity Report (revenue / maturity / lost customers). */
+  opportunityReport?: AuditOpportunityReportV1;
+};
+
+export type AuditOpportunityFix = {
+  title: string;
+  detail: string;
+};
+
+/** Persisted on audit payload after scan — drives Opportunity Report UI. */
+export type AuditOpportunityReportV1 = {
+  version: string;
+  place_id: string | null;
+  name: string;
+  status: "qualified" | "park" | "discard";
+  disqualifiers: string[];
+  opportunity_score: {
+    revenue_potential: number;
+    marketing_maturity: number;
+    likelihood_to_buy: number;
+    est_monthly_lost_customers: number;
+    est_lost_revenue: number;
+    currency: string;
+  } | null;
+  fit_proxy: number | null;
+  reasons: string[];
+  personalization_hooks: string[];
+  recommended_email_angle: string | null;
+  locationLabel: string;
+  topFixes: AuditOpportunityFix[];
 };
 
 export type RestaurantGrade = "A" | "B" | "C" | "D" | "F";

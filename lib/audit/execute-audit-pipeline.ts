@@ -170,8 +170,16 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       const { syncAnalysisProgressFromPayload, persistAnalysisPayload } = await import(
         "@/lib/audit/analysis-progress"
       );
+      const { applyOpportunityReportToPayload } = await import(
+        "@/lib/audit/audit-opportunity-from-payload"
+      );
       const synced = syncAnalysisProgressFromPayload(payloadWithStage);
-      await persistAnalysisPayload(auditId, synced);
+      const withOpp = applyOpportunityReportToPayload(synced, {
+        name: row.restaurantName,
+        city: row.city,
+        websiteUrl: row.websiteUrl,
+      });
+      await persistAnalysisPayload(auditId, withOpp);
     } catch (progressErr) {
       console.warn("[audit/pipeline] analysis progress sync failed", progressErr);
     }

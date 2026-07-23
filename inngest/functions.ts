@@ -320,8 +320,16 @@ export const auditBrowserbaseScan = inngest.createFunction(
           const { syncAnalysisProgressFromPayload, persistAnalysisPayload } = await import(
             "@/lib/audit/analysis-progress"
           );
+          const { applyOpportunityReportToPayload } = await import(
+            "@/lib/audit/audit-opportunity-from-payload"
+          );
           const synced = syncAnalysisProgressFromPayload(payload);
-          await persistAnalysisPayload(auditId, synced);
+          const withOpp = applyOpportunityReportToPayload(synced, {
+            name: audit.restaurantName,
+            city: audit.city,
+            websiteUrl: audit.websiteUrl,
+          });
+          await persistAnalysisPayload(auditId, withOpp);
         } catch (e) {
           console.warn("[audit/browserbase] analysis progress sync failed", e);
         }
