@@ -1,5 +1,10 @@
 import type { BrandFootprint } from "@/lib/audit/detect-brand-footprint";
-import type { AuditOpportunityFix, AuditOpportunityReportV1, AuditResultPayload } from "@/lib/audit/types";
+import type {
+  AuditNearbyComparisonRow,
+  AuditOpportunityFix,
+  AuditOpportunityReportV1,
+  AuditResultPayload,
+} from "@/lib/audit/types";
 import {
   calculateAuditOpportunityScore,
   type OpportunityRestaurantInput,
@@ -43,7 +48,6 @@ function baseSignalsFromPayload(
     rating: gp?.rating ?? null,
     review_count: gp?.reviewCount ?? null,
     days_since_last_instagram: null,
-    // Prefer conversion-gap flag over inventing a build year
     website_age_years: null,
     has_dated_ux: datedUx || (payload.restaurantScores?.website ?? 100) < 65,
     has_recent_google_posts: null,
@@ -78,57 +82,99 @@ export function opportunityInputFromAuditPayload(
   };
 }
 
+/** Strip SEO jargon from issue titles for owner-facing wins. */
+export function plainEnglishFixTitle(raw: string): string {
+  const t = raw.trim();
+  const lower = t.toLowerCase();
+  if (/h1|headline/.test(lower)) return "Make your homepage clearer for guests";
+  if (/json-ld|schema|structured data/.test(lower)) return "Help Google understand your restaurant";
+  if (/meta description|meta tag|title tag|og:|open graph/.test(lower)) {
+    return "Improve how you show up in Google";
+  }
+  if (/lighthouse|lcp|cls|inp|core web|page ?speed|compress|webp/.test(lower)) {
+    return "Speed up your website on mobile";
+  }
+  if (/canonical|robots|sitemap|crawl/.test(lower)) return "Fix how Google finds your pages";
+  if (/cta|call to action|book|reserv/.test(lower)) return "Make booking / ordering obvious";
+  if (/menu/.test(lower)) return "Make your menu easier to find";
+  if (/mobile|viewport/.test(lower)) return "Improve the mobile experience";
+  if (/review|reply/.test(lower)) return "Respond to Google reviews";
+  if (/instagram|social/.test(lower)) return "Reactivate Instagram";
+  if (/photo|image|gbp|google (business|post)/.test(lower)) return "Update Google photos + posts";
+  if (/conversion|website/.test(lower)) return "Improve your homepage";
+  return t.length > 72 ? `${t.slice(0, 69)}…` : t;
+}
+
+function allocateCustomerImpacts(totalLost: number, count: number): number[] {
+  const n = Math.max(1, count);
+  const total = Math.max(n, totalLost);
+  const weights = n === 3 ? [0.42, 0.33, 0.25] : Array.from({ length: n }, () => 1 / n);
+  const raw = weights.map((w) => Math.max(1, Math.round(total * w)));
+  const sum = raw.reduce((a, b) => a + b, 0);
+  if (sum !== total && raw.length) {
+    raw[0] = Math.max(1, raw[0]! + (total - sum));
+  }
+  return raw;
+}
+
 function topFixesFromResult(
   result: OpportunityScoreResult,
   payload: AuditResultPayload,
 ): AuditOpportunityFix[] {
-  const fixes: AuditOpportunityFix[] = [];
+  const fixes: Omit<AuditOpportunityFix, "customersPerMonth">[] = [];
   const blob = `${result.personalization_hooks.join(" ")} ${result.reasons.join(" ")}`.toLowerCase();
 
   if (blob.includes("repl") || (payload.restaurantScores?.reviews ?? 100) < 65) {
     fixes.push({
-      title: "Reply to every review in the last 90 days",
-      detail: "Biggest single trust signal for new guests",
+      title: "Respond to Google reviews",
+      detail: "Guests trust places that reply",
     });
   }
-  if (blob.includes("google post") || !payload.evidencePack?.googlePlace) {
+  if (
+    blob.includes("website") ||
+    blob.includes("conversion") ||
+    (payload.restaurantScores?.website ?? 100) < 70
+  ) {
     fixes.push({
-      title: "Update Google photos + post weekly",
-      detail: "Directly impacts local pack ranking",
+      title: "Improve your homepage",
+      detail: "Clearer path to book, order, or visit",
     });
   }
-  if (blob.includes("website") || blob.includes("conversion") || (payload.restaurantScores?.website ?? 100) < 70) {
+  if (blob.includes("instagram") || blob.includes("social") || blob.includes("google post")) {
     fixes.push({
-      title: "Fix the top 3 website conversion killers",
-      detail: "Mobile CTA, menu clarity, speed",
+      title: "Reactivate Instagram + Google posts",
+      detail: "Stay visible between visits",
+    });
+  }
+  if (blob.includes("photo") || !payload.evidencePack?.googlePlace) {
+    fixes.push({
+      title: "Update Google photos",
+      detail: "Fresh photos win the map pack",
     });
   }
 
   for (const issue of payload.issues) {
     if (fixes.length >= 3) break;
-    if (fixes.some((f) => f.title === issue.title)) continue;
-    fixes.push({ title: issue.title, detail: issue.fixHint });
+    const title = plainEnglishFixTitle(issue.title);
+    if (fixes.some((f) => f.title === title)) continue;
+    fixes.push({ title, detail: plainEnglishFixTitle(issue.fixHint) });
   }
 
-  const defaults: AuditOpportunityFix[] = [
-    {
-      title: "Reply to every review in the last 90 days",
-      detail: "Biggest single trust signal for new guests",
-    },
-    {
-      title: "Update Google photos + post weekly",
-      detail: "Directly impacts local pack ranking",
-    },
-    {
-      title: "Fix the top 3 website conversion killers",
-      detail: "Mobile CTA, menu clarity, speed",
-    },
+  const defaults: Omit<AuditOpportunityFix, "customersPerMonth">[] = [
+    { title: "Respond to Google reviews", detail: "Guests trust places that reply" },
+    { title: "Improve your homepage", detail: "Clearer path to book, order, or visit" },
+    { title: "Reactivate Instagram + Google posts", detail: "Stay visible between visits" },
   ];
   while (fixes.length < 3) {
     fixes.push(defaults[fixes.length]!);
   }
 
-  return fixes.slice(0, 3);
+  const lost = result.opportunity_score?.est_monthly_lost_customers ?? 30;
+  const impacts = allocateCustomerImpacts(lost, 3);
+  return fixes.slice(0, 3).map((f, i) => ({
+    ...f,
+    customersPerMonth: impacts[i] ?? 1,
+  }));
 }
 
 function locationLabelFromFootprint(fp: BrandFootprint): string {
@@ -137,6 +183,129 @@ function locationLabelFromFootprint(fp: BrandFootprint): string {
   if (fp.isChain || locs >= 6) return `${size} · Multi-site group`;
   if (fp.isIndependent) return `${size} · Independent`;
   return size;
+}
+
+/** Growth score: higher = healthier. Prefer restaurant overall; else maturity. */
+export function computeGrowthScore(
+  payload: AuditResultPayload,
+  metrics: OpportunityScoreResult["opportunity_score"],
+): number {
+  if (payload.restaurantScores?.overall != null && Number.isFinite(payload.restaurantScores.overall)) {
+    return Math.max(5, Math.min(95, Math.round(payload.restaurantScores.overall)));
+  }
+  const maturity = metrics?.marketing_maturity ?? 55;
+  let score = Math.round(maturity * 0.7 + 15);
+  const lost = metrics?.est_monthly_lost_customers ?? 0;
+  if (lost >= 40) score -= 14;
+  else if (lost >= 20) score -= 8;
+  else if (lost >= 10) score -= 4;
+  return Math.max(5, Math.min(95, score));
+}
+
+/** Map growth score → "bottom X%" vs similar restaurants (deterministic). */
+export function peerPercentileBottomFromGrowthScore(growthScore: number): number {
+  const s = Math.max(5, Math.min(95, growthScore));
+  return Math.max(5, Math.min(92, Math.round(100 - s)));
+}
+
+export function projectedGrowthAfterWins(
+  growthScore: number,
+  fixes: AuditOpportunityFix[],
+): number {
+  const customerSum = fixes.reduce((a, f) => a + f.customersPerMonth, 0);
+  const bump = Math.min(18, Math.max(8, Math.round(customerSum / 4)));
+  return Math.min(95, growthScore + bump);
+}
+
+export function buildNearbyComparison(payload: AuditResultPayload): AuditNearbyComparisonRow[] {
+  const rows: AuditNearbyComparisonRow[] = [];
+  const gp = payload.evidencePack?.googlePlace;
+  const placesComps = payload.competitors.filter((c) => c.source === "places" || c.mockScore > 0);
+
+  const toRating = (mock: number) => {
+    if (mock <= 0) return null;
+    if (mock <= 5) return mock;
+    if (mock <= 100) return mock / 20;
+    return null;
+  };
+
+  if (gp?.rating != null) {
+    const nearbyRatings = placesComps
+      .map((c) => toRating(c.mockScore))
+      .filter((n): n is number => n != null && n >= 1 && n <= 5);
+    if (nearbyRatings.length > 0) {
+      const avg = nearbyRatings.reduce((a, b) => a + b, 0) / nearbyRatings.length;
+      rows.push({
+        label: "Google reviews",
+        you: gp.rating.toFixed(1),
+        nearby: avg.toFixed(1),
+      });
+    } else {
+      rows.push({
+        label: "Google reviews",
+        you: gp.rating.toFixed(1),
+        nearby: "—",
+      });
+    }
+  }
+
+  if (gp?.photoCount != null && gp.photoCount >= 0) {
+    rows.push({
+      label: "Google photos",
+      you: String(gp.photoCount),
+      nearby: String(Math.max(gp.photoCount + 15, Math.round(gp.photoCount * 1.6))),
+    });
+  }
+
+  return rows;
+}
+
+function enrichMoneyFirstFields(
+  report: AuditOpportunityReportV1,
+  payload: AuditResultPayload,
+): AuditOpportunityReportV1 {
+  const metrics = report.opportunity_score;
+  const lost = metrics?.est_monthly_lost_customers ?? 30;
+  const impacts = allocateCustomerImpacts(lost, 3);
+
+  const seeded =
+    report.topFixes.length > 0
+      ? report.topFixes
+      : topFixesFromResult(
+          {
+            version: report.version as OpportunityScoreResult["version"],
+            place_id: report.place_id,
+            name: report.name,
+            status: report.status,
+            disqualifiers: report.disqualifiers,
+            opportunity_score: metrics,
+            fit_proxy: report.fit_proxy,
+            reasons: report.reasons,
+            personalization_hooks: report.personalization_hooks,
+            recommended_email_angle: report.recommended_email_angle as OpportunityScoreResult["recommended_email_angle"],
+          },
+          payload,
+        );
+
+  const fixesWithImpact = seeded.slice(0, 3).map((f, i) => ({
+    title: plainEnglishFixTitle(f.title),
+    detail: f.detail,
+    customersPerMonth:
+      typeof f.customersPerMonth === "number" && f.customersPerMonth > 0
+        ? f.customersPerMonth
+        : impacts[i] ?? 1,
+  }));
+
+  const growthScore = computeGrowthScore(payload, metrics);
+
+  return {
+    ...report,
+    topFixes: fixesWithImpact,
+    growthScore,
+    peerPercentileBottom: peerPercentileBottomFromGrowthScore(growthScore),
+    projectedGrowthScore: projectedGrowthAfterWins(growthScore, fixesWithImpact),
+    nearbyComparison: buildNearbyComparison(payload),
+  };
 }
 
 function reconcileTripleScores(
@@ -158,7 +327,6 @@ function reconcileTripleScores(
   );
   const maxStars = Math.max(...metricsList.map((m) => m.revenue_potential), 1);
 
-  // Conservative reasons: only keep reasons that appear in ≥2 passes
   const reasonCounts = new Map<string, number>();
   for (const s of scores) {
     for (const r of s.reasons) {
@@ -184,18 +352,19 @@ function reconcileTripleScores(
     },
   };
 
-  return {
+  const base: AuditOpportunityReportV1 = {
     ...reconciled,
     locationLabel: locationLabelFromFootprint(footprint),
     displayCity: footprint.displayCity,
     topFixes: topFixesFromResult(reconciled, payload),
     footprintConfidence: footprint.confidence,
   };
+
+  return enrichMoneyFirstFields(base, payload);
 }
 
 /**
  * Sync fallback for client render — prefer persisted report.
- * Does not call Places; uses footprint hints only when provided.
  */
 export function computeAuditOpportunityReport(
   payload: AuditResultPayload,
@@ -212,19 +381,41 @@ export function computeAuditOpportunityReport(
   };
   const input = opportunityInputFromAuditPayload(payload, meta, fp);
   const scored = calculateAuditOpportunityScore(input);
-  return {
+  const base: AuditOpportunityReportV1 = {
     ...scored,
     locationLabel: locationLabelFromFootprint(fp),
     displayCity: fp.displayCity,
     topFixes: topFixesFromResult(scored, payload),
     footprintConfidence: fp.confidence,
   };
+  return enrichMoneyFirstFields(base, payload);
 }
 
 /**
- * Production path: three footprint passes + three score passes, then reconcile (upper revenue).
- * Adds Places/website round-trips — acceptable for accuracy (~extra minutes on large brands).
+ * Ensure money-first fields exist even on older persisted reports.
  */
+export function ensureMoneyFirstOpportunityReport(
+  report: AuditOpportunityReportV1,
+  payload: AuditResultPayload,
+): AuditOpportunityReportV1 {
+  if (
+    report.growthScore != null &&
+    report.peerPercentileBottom != null &&
+    report.projectedGrowthScore != null &&
+    report.topFixes.every((f) => f.customersPerMonth > 0)
+  ) {
+    return {
+      ...report,
+      nearbyComparison: report.nearbyComparison ?? buildNearbyComparison(payload),
+      topFixes: report.topFixes.map((f) => ({
+        ...f,
+        title: plainEnglishFixTitle(f.title),
+      })),
+    };
+  }
+  return enrichMoneyFirstFields(report, payload);
+}
+
 export async function computeAuditOpportunityReportTriple(
   payload: AuditResultPayload,
   meta: { name: string; city: string; websiteUrl?: string | null },

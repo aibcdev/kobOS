@@ -8,7 +8,10 @@ import { AuditUnlockModal } from "@/components/marketing/audit/AuditUnlockModal"
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { auditCard, auditCardMuted } from "@/lib/marketing/audit-theme";
 import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
-import { computeAuditOpportunityReport } from "@/lib/audit/audit-opportunity-from-payload";
+import {
+  computeAuditOpportunityReport,
+  ensureMoneyFirstOpportunityReport,
+} from "@/lib/audit/audit-opportunity-from-payload";
 import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
@@ -41,13 +44,15 @@ export function AuditResultsContent({
   const [unlockOpen, setUnlockOpen] = useState(false);
   const perceptionTeaser = buildPerceptionTeaserFromPayload(payload, audit.overallScore);
 
-  const opportunity =
+  const opportunity = ensureMoneyFirstOpportunityReport(
     payload.opportunityReport ??
-    computeAuditOpportunityReport(payload, {
-      name: audit.restaurantName,
-      city: audit.city,
-      websiteUrl: audit.websiteUrl,
-    });
+      computeAuditOpportunityReport(payload, {
+        name: audit.restaurantName,
+        city: audit.city,
+        websiteUrl: audit.websiteUrl,
+      }),
+    payload,
+  );
 
   const benchmarkInitial: AuditBenchmarkPollSnapshot = {
     scoresPending: payload.scoresPending,

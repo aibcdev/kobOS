@@ -204,6 +204,14 @@ export type AuditResultPayload = {
 export type AuditOpportunityFix = {
   title: string;
   detail: string;
+  /** Estimated customers recovered per month if this win is fixed. */
+  customersPerMonth: number;
+};
+
+export type AuditNearbyComparisonRow = {
+  label: string;
+  you: string;
+  nearby: string;
 };
 
 /** Persisted on audit payload after scan — drives Opportunity Report UI. */
@@ -230,6 +238,13 @@ export type AuditOpportunityReportV1 = {
   displayCity?: string | null;
   footprintConfidence?: "high" | "medium" | "low";
   topFixes: AuditOpportunityFix[];
+  /** Owner-facing growth score (higher = healthier). */
+  growthScore?: number;
+  /** e.g. 37 meaning "Bottom 37%". */
+  peerPercentileBottom?: number;
+  /** Score if the three biggest wins are fixed (illustrative). */
+  projectedGrowthScore?: number;
+  nearbyComparison?: AuditNearbyComparisonRow[];
 };
 
 export type RestaurantGrade = "A" | "B" | "C" | "D" | "F";

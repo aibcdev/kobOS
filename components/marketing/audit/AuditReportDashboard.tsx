@@ -466,41 +466,31 @@ export function AuditReportDashboard({
             ) : null}
 
             <div>
-              <div className="mb-8 flex flex-col items-center gap-6 text-center md:flex-row md:items-end md:justify-between md:text-left">
-                <div className="md:text-left">
-                  <h1
-                    className={
-                      unlocked
-                        ? "font-head text-3xl font-semibold tracking-tight md:text-4xl"
-                        : "type-display-lg text-balance"
-                    }
-                  >
-                    {unlocked ? "Your hospitality perception report" : "Your hospitality perception preview"}
-                  </h1>
-                  <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-                    {unlocked
-                      ? `Generated ${new Date(audit.updatedAt).toLocaleDateString("en-GB", { dateStyle: "medium" })} · ${formatEvidenceSourcesSummary(collectAuditEvidenceSources(payload))}`
-                      : `${restaurantDisplay} · ${audit.city}`}
-                  </p>
-                  {unlocked ? (
+              {unlocked ? (
+                <div className="mb-8 flex flex-col items-center gap-6 text-center md:flex-row md:items-end md:justify-between md:text-left">
+                  <div className="md:text-left">
+                    <h1 className="font-head text-3xl font-semibold tracking-tight md:text-4xl">
+                      Your hospitality perception report
+                    </h1>
+                    <p className="type-body-sm mt-2 text-[var(--color-muted)]">
+                      {`Generated ${new Date(audit.updatedAt).toLocaleDateString("en-GB", { dateStyle: "medium" })} · ${formatEvidenceSourcesSummary(collectAuditEvidenceSources(payload))}`}
+                    </p>
                     <div className="mt-3">
                       <AuditEvidenceSources payload={payload} />
                     </div>
-                  ) : null}
-                </div>
-                {showHeaderScoreRing ? (
-                  <div className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-white p-6 shadow-sm sm:flex-row sm:gap-6">
-                    <ScoreRing
-                      score={displayScore}
-                      size={unlocked ? 120 : 140}
-                      grade={restaurantScores?.grade}
-                    />
-                    <div className="text-center sm:text-left">
-                      <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-                        {restaurantScores ? "Restaurant visibility" : "Digital positioning"}
-                      </p>
-                      <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>{healthLabel}</p>
-                      {unlocked ? (
+                  </div>
+                  {showHeaderScoreRing ? (
+                    <div className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-white p-6 shadow-sm sm:flex-row sm:gap-6">
+                      <ScoreRing
+                        score={displayScore}
+                        size={120}
+                        grade={restaurantScores?.grade}
+                      />
+                      <div className="text-center sm:text-left">
+                        <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+                          {restaurantScores ? "Restaurant visibility" : "Digital positioning"}
+                        </p>
+                        <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>{healthLabel}</p>
                         <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
                           {restaurantScores
                             ? `Your score vs. similar restaurants in ${audit.city}.`
@@ -508,15 +498,11 @@ export function AuditReportDashboard({
                               ? "Scoring digital positioning…"
                               : `Your score vs. similar restaurants in ${audit.city}.`}
                         </p>
-                      ) : (
-                        <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
-                          Unlock to see fixes, competitors, and your 30/60/90 plan.
-                        </p>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {activeNav === "overview" && (
                 <div className="mb-8 space-y-10">
