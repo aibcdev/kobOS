@@ -61,6 +61,10 @@ export function AuditOpportunityReport({
 
   return (
     <div className="mx-auto max-w-3xl">
+      <p className="mb-4 text-[11px] leading-snug text-[#2c2c2c]/45">
+        Estimates from a public web scan — location count, city, and revenue figures can differ from
+        your internal data.
+      </p>
       <div className="mb-8">
         <p className="font-mono-brand text-xs font-semibold tracking-wider text-[var(--color-forest-mid)] uppercase">
           Opportunity Report
@@ -70,7 +74,7 @@ export function AuditOpportunityReport({
         </h1>
         <p className="mt-1 text-sm text-[#2c2c2c]/55">
           {report.locationLabel}
-          {city ? ` · ${city}` : ""}
+          {report.displayCity ? ` · ${report.displayCity}` : ""}
         </p>
       </div>
 

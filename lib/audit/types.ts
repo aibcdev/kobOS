@@ -226,6 +226,9 @@ export type AuditOpportunityReportV1 = {
   personalization_hooks: string[];
   recommended_email_angle: string | null;
   locationLabel: string;
+  /** City only when single-site confidence is high; null for multi-site. */
+  displayCity?: string | null;
+  footprintConfidence?: "high" | "medium" | "low";
   topFixes: AuditOpportunityFix[];
 };
 

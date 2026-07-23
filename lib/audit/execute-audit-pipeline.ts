@@ -174,7 +174,7 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
         "@/lib/audit/audit-opportunity-from-payload"
       );
       const synced = syncAnalysisProgressFromPayload(payloadWithStage);
-      const withOpp = applyOpportunityReportToPayload(synced, {
+      const withOpp = await applyOpportunityReportToPayload(synced, {
         name: row.restaurantName,
         city: row.city,
         websiteUrl: row.websiteUrl,

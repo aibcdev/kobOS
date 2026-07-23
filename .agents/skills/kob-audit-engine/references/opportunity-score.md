@@ -30,4 +30,17 @@ npx tsx scripts/score-opportunity.ts restaurants.json --pretty
 npx tsx scripts/score-opportunity.ts restaurants.json --qualified-only
 ```
 
-Keep in sync with the Python Opportunity Score Engine source of truth when rules change — bump `OPPORTUNITY_SCORE_VERSION`.
+Keep in sync with the Opportunity Score Engine — bump `OPPORTUNITY_SCORE_VERSION` (`opportunity-v2`).
+
+## Lost revenue (upper bound)
+
+Audit + outbound use an **upper-bound** leak model scaled by location count, with floors:
+
+| Locations | Min est. lost revenue / mo (when gaps visible) |
+|-----------|-----------------------------------------------|
+| 1–2 | £2,500 |
+| 3–5 | £8,000 |
+| 6–15 | £24,000 |
+| 16+ | £48,000 |
+
+Free audit reports run footprint detection **3 times** and reconcile (see `computeAuditOpportunityReportTriple`).

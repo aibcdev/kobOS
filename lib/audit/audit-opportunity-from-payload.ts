@@ -1,6 +1,7 @@
+import type { BrandFootprint } from "@/lib/audit/detect-brand-footprint";
 import type { AuditOpportunityFix, AuditOpportunityReportV1, AuditResultPayload } from "@/lib/audit/types";
 import {
-  calculateOpportunityScore,
+  calculateAuditOpportunityScore,
   type OpportunityRestaurantInput,
   type OpportunityScoreResult,
 } from "@/lib/outbound/score-opportunity";
@@ -16,11 +17,10 @@ export function formatRevenueStars(n: number): string {
   return "★".repeat(filled) + "☆".repeat(5 - filled);
 }
 
-/** Map free-audit payload → Opportunity Score input. */
-export function opportunityInputFromAuditPayload(
+function baseSignalsFromPayload(
   payload: AuditResultPayload,
   meta: { name: string; city: string; websiteUrl?: string | null },
-): OpportunityRestaurantInput {
+): Omit<OpportunityRestaurantInput, "locations" | "is_independent" | "is_chain"> {
   const gp = payload.evidencePack?.googlePlace;
   const signals = payload.evidencePack?.urlSignals;
   const datedUx =
@@ -39,15 +39,13 @@ export function opportunityInputFromAuditPayload(
   return {
     place_id: gp?.placeId ?? null,
     name: meta.name,
-    locations: 1,
-    is_independent: true,
-    is_chain: false,
     is_hotel: false,
     rating: gp?.rating ?? null,
     review_count: gp?.reviewCount ?? null,
     days_since_last_instagram: null,
-    website_age_years: datedUx ? 7 : null,
-    has_dated_ux: datedUx,
+    // Prefer conversion-gap flag over inventing a build year
+    website_age_years: null,
+    has_dated_ux: datedUx || (payload.restaurantScores?.website ?? 100) < 65,
     has_recent_google_posts: null,
     review_response_rate: replyRate,
     is_ghost_kitchen: false,
@@ -56,8 +54,27 @@ export function opportunityInputFromAuditPayload(
     active_on_deliveroo_or_uber: deliveryNote,
     is_competitive_city: competitive,
     on_major_platform: false,
-    avg_ticket: 32,
+    avg_ticket: 36,
     currency: "GBP",
+  };
+}
+
+export function opportunityInputFromAuditPayload(
+  payload: AuditResultPayload,
+  meta: { name: string; city: string; websiteUrl?: string | null },
+  footprint?: Pick<BrandFootprint, "locations" | "isChain" | "isIndependent">,
+): OpportunityRestaurantInput {
+  const base = baseSignalsFromPayload(payload, meta);
+  const locations = footprint?.locations ?? 1;
+  const isChain = footprint?.isChain ?? false;
+  const isIndependent = footprint?.isIndependent ?? (!isChain && locations <= 5);
+
+  return {
+    ...base,
+    locations,
+    is_chain: isChain,
+    is_independent: isIndependent,
+    avg_ticket: locations >= 6 ? 38 : 36,
   };
 }
 
@@ -80,7 +97,7 @@ function topFixesFromResult(
       detail: "Directly impacts local pack ranking",
     });
   }
-  if (blob.includes("website") || (payload.restaurantScores?.website ?? 100) < 70) {
+  if (blob.includes("website") || blob.includes("conversion") || (payload.restaurantScores?.website ?? 100) < 70) {
     fixes.push({
       title: "Fix the top 3 website conversion killers",
       detail: "Mobile CTA, menu clarity, speed",
@@ -114,27 +131,134 @@ function topFixesFromResult(
   return fixes.slice(0, 3);
 }
 
-export function computeAuditOpportunityReport(
+function locationLabelFromFootprint(fp: BrandFootprint): string {
+  const locs = fp.locations;
+  const size = `${locs} location${locs === 1 ? "" : "s"}`;
+  if (fp.isChain || locs >= 6) return `${size} · Multi-site group`;
+  if (fp.isIndependent) return `${size} · Independent`;
+  return size;
+}
+
+function reconcileTripleScores(
+  scores: OpportunityScoreResult[],
+  footprint: BrandFootprint,
   payload: AuditResultPayload,
-  meta: { name: string; city: string; websiteUrl?: string | null },
 ): AuditOpportunityReportV1 {
-  const input = opportunityInputFromAuditPayload(payload, meta);
-  const scored = calculateOpportunityScore(input);
-  const locs = input.locations ?? 1;
+  const withMetrics = scores.filter((s) => s.opportunity_score);
+  const pick = withMetrics[0] ?? scores[0]!;
+  const metricsList = withMetrics.map((s) => s.opportunity_score!);
+
+  const maxRevenue = Math.max(...metricsList.map((m) => m.est_lost_revenue), 0);
+  const maxCustomers = Math.max(...metricsList.map((m) => m.est_monthly_lost_customers), 0);
+  const avgMaturity = Math.round(
+    metricsList.reduce((a, m) => a + m.marketing_maturity, 0) / Math.max(1, metricsList.length),
+  );
+  const avgLikelihood = Math.round(
+    metricsList.reduce((a, m) => a + m.likelihood_to_buy, 0) / Math.max(1, metricsList.length),
+  );
+  const maxStars = Math.max(...metricsList.map((m) => m.revenue_potential), 1);
+
+  // Conservative reasons: only keep reasons that appear in ≥2 passes
+  const reasonCounts = new Map<string, number>();
+  for (const s of scores) {
+    for (const r of s.reasons) {
+      reasonCounts.set(r, (reasonCounts.get(r) ?? 0) + 1);
+    }
+  }
+  const reasons = [...reasonCounts.entries()]
+    .filter(([, n]) => n >= 2 || scores.length < 2)
+    .map(([r]) => r)
+    .slice(0, 6);
+
+  const reconciled: OpportunityScoreResult = {
+    ...pick,
+    reasons: reasons.length ? reasons : pick.reasons.slice(0, 4),
+    personalization_hooks: pick.personalization_hooks.slice(0, 3),
+    opportunity_score: {
+      revenue_potential: maxStars,
+      marketing_maturity: avgMaturity,
+      likelihood_to_buy: avgLikelihood,
+      est_monthly_lost_customers: maxCustomers,
+      est_lost_revenue: maxRevenue,
+      currency: pick.opportunity_score?.currency ?? "GBP",
+    },
+  };
 
   return {
-    ...scored,
-    locationLabel: `${locs} location${locs === 1 ? "" : "s"} · Independent`,
-    topFixes: topFixesFromResult(scored, payload),
+    ...reconciled,
+    locationLabel: locationLabelFromFootprint(footprint),
+    displayCity: footprint.displayCity,
+    topFixes: topFixesFromResult(reconciled, payload),
+    footprintConfidence: footprint.confidence,
   };
 }
 
-export function applyOpportunityReportToPayload(
+/**
+ * Sync fallback for client render — prefer persisted report.
+ * Does not call Places; uses footprint hints only when provided.
+ */
+export function computeAuditOpportunityReport(
   payload: AuditResultPayload,
   meta: { name: string; city: string; websiteUrl?: string | null },
-): AuditResultPayload {
+  footprint?: BrandFootprint,
+): AuditOpportunityReportV1 {
+  const fp: BrandFootprint = footprint ?? {
+    locations: 1,
+    isChain: false,
+    isIndependent: true,
+    displayCity: meta.city.trim() || null,
+    confidence: "low",
+    sources: ["sync-fallback"],
+  };
+  const input = opportunityInputFromAuditPayload(payload, meta, fp);
+  const scored = calculateAuditOpportunityScore(input);
+  return {
+    ...scored,
+    locationLabel: locationLabelFromFootprint(fp),
+    displayCity: fp.displayCity,
+    topFixes: topFixesFromResult(scored, payload),
+    footprintConfidence: fp.confidence,
+  };
+}
+
+/**
+ * Production path: three footprint passes + three score passes, then reconcile (upper revenue).
+ * Adds Places/website round-trips — acceptable for accuracy (~extra minutes on large brands).
+ */
+export async function computeAuditOpportunityReportTriple(
+  payload: AuditResultPayload,
+  meta: { name: string; city: string; websiteUrl?: string | null },
+): Promise<AuditOpportunityReportV1> {
+  const { detectBrandFootprintPass, reconcileBrandFootprintPasses } = await import(
+    "@/lib/audit/detect-brand-footprint"
+  );
+
+  const passes = await Promise.all([
+    detectBrandFootprintPass(meta, 1),
+    detectBrandFootprintPass(meta, 2),
+    detectBrandFootprintPass(meta, 3),
+  ]);
+  const footprint = reconcileBrandFootprintPasses(passes, meta.city);
+
+  const scores = passes.map((fp) => {
+    const input = opportunityInputFromAuditPayload(payload, meta, {
+      locations: Math.max(fp.locations, footprint.isChain ? footprint.locations : fp.locations),
+      isChain: fp.isChain || footprint.isChain,
+      isIndependent: footprint.isIndependent && fp.isIndependent,
+    });
+    return calculateAuditOpportunityScore(input);
+  });
+
+  return reconcileTripleScores(scores, footprint, payload);
+}
+
+export async function applyOpportunityReportToPayload(
+  payload: AuditResultPayload,
+  meta: { name: string; city: string; websiteUrl?: string | null },
+): Promise<AuditResultPayload> {
+  const opportunityReport = await computeAuditOpportunityReportTriple(payload, meta);
   return {
     ...payload,
-    opportunityReport: computeAuditOpportunityReport(payload, meta),
+    opportunityReport,
   };
 }

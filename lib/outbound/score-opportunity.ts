@@ -6,7 +6,7 @@
  * estimated lost customers/revenue, reasons, personalization hooks.
  */
 
-export const OPPORTUNITY_SCORE_VERSION = "opportunity-v1" as const;
+export const OPPORTUNITY_SCORE_VERSION = "opportunity-v2" as const;
 
 export type OpportunityStatus = "qualified" | "park" | "discard";
 
@@ -93,10 +93,25 @@ function hardDisqualifiers(r: OpportunityRestaurantInput): string[] {
   return disqualifiers;
 }
 
-/** Deterministic opportunity score — matches the Python Opportunity Score Engine. */
+/** Deterministic opportunity score — matches the Opportunity Score Engine. */
 export function calculateOpportunityScore(r: OpportunityRestaurantInput): OpportunityScoreResult {
+  return scoreOpportunityInternal(r, { allowLargeChains: false });
+}
+
+/**
+ * Audit report scoring — always returns metrics (even for large chains) so the
+ * free Opportunity Report stays useful; outbound gates still use calculateOpportunityScore.
+ */
+export function calculateAuditOpportunityScore(r: OpportunityRestaurantInput): OpportunityScoreResult {
+  return scoreOpportunityInternal(r, { allowLargeChains: true });
+}
+
+function scoreOpportunityInternal(
+  r: OpportunityRestaurantInput,
+  opts: { allowLargeChains: boolean },
+): OpportunityScoreResult {
   const disqualifiers = hardDisqualifiers(r);
-  if (disqualifiers.length > 0) {
+  if (disqualifiers.length > 0 && !opts.allowLargeChains) {
     return {
       version: OPPORTUNITY_SCORE_VERSION,
       place_id: r.place_id ?? null,
@@ -111,7 +126,7 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
     };
   }
 
-  const locations = r.locations ?? 0;
+  const locations = Math.max(1, r.locations ?? 1);
   const rating = r.rating;
   const reviewCount = r.review_count ?? 0;
 
@@ -119,6 +134,7 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
   let revenuePoints = 0;
   if (locations >= 1 && locations <= 2) revenuePoints += 2;
   else if (locations >= 3 && locations <= 5) revenuePoints += 1.5;
+  else if (locations >= 6) revenuePoints += 2.5;
 
   if (reviewCount >= 800) revenuePoints += 1.5;
   else if (reviewCount >= 300) revenuePoints += 1;
@@ -137,6 +153,11 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
   if (locations) {
     reasons.push(`${locations} location${locations > 1 ? "s" : ""}`);
   }
+  if (r.is_chain === true) {
+    reasons.push("Multi-site / group");
+  } else if (r.is_independent === true) {
+    reasons.push("Independent");
+  }
 
   if (rating != null && rating < 4.5) {
     maturity -= 18;
@@ -152,11 +173,16 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
   }
 
   const siteAge = r.website_age_years ?? 0;
-  if (siteAge >= 5 || r.has_dated_ux === true) {
+  // Only cite a website year when age is an explicit signal — avoid invented years from weak UX flags alone
+  if (siteAge >= 5) {
     maturity -= 14;
-    const year = 2026 - Math.floor(siteAge || 6);
-    reasons.push(`Website built in ${year}`);
-    hooks.push(`Website still looks like ${year}`);
+    const year = 2026 - Math.floor(siteAge);
+    reasons.push(`Website ~${year} era`);
+    hooks.push(`Website still looks dated (~${year})`);
+  } else if (r.has_dated_ux === true) {
+    maturity -= 10;
+    reasons.push("Website conversion gaps");
+    hooks.push("Website has visible conversion gaps");
   }
 
   if (r.has_recent_google_posts === false) {
@@ -187,22 +213,52 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
   if (marketingMaturity < 60) likelihood += 12;
   if (r.active_on_deliveroo_or_uber === true) likelihood += 5;
   if (r.is_competitive_city === true) likelihood += 5;
+  if (opts.allowLargeChains && locations >= 6) likelihood = Math.min(likelihood, 55);
   const likelihoodToBuy = Math.max(5, Math.min(95, likelihood));
 
-  // Estimated lost customers & revenue
-  const avgTicket = r.avg_ticket ?? 32;
+  // Estimated lost customers & revenue — upper-bound model
+  const avgTicket = r.avg_ticket ?? (locations >= 6 ? 38 : 32);
   const currency = r.currency ?? "GBP";
 
-  const lostFromRating = Math.max(0, (4.6 - (rating ?? 4.0)) * 18);
-  const lostFromSocial = igDays > 14 ? 12 : 0;
-  const lostFromWebsite = siteAge >= 5 || r.has_dated_ux === true ? 15 : 0;
-  const lostFromReplies = replyRate < 0.3 ? 10 : 0;
-  const lostFromPosts = r.has_recent_google_posts === false ? 8 : 0;
+  const lostFromRating = Math.max(0, (4.7 - (rating ?? 4.3)) * 45);
+  const lostFromSocial = igDays > 14 ? 28 : igDays > 7 ? 12 : 0;
+  const lostFromWebsite = siteAge >= 5 || r.has_dated_ux === true ? 35 : 12;
+  const lostFromReplies = replyRate < 0.3 ? 22 : replyRate < 0.5 ? 10 : 0;
+  const lostFromPosts = r.has_recent_google_posts === false ? 18 : 0;
 
-  const estMonthlyLostCustomers = Math.floor(
-    lostFromRating + lostFromSocial + lostFromWebsite + lostFromReplies + lostFromPosts,
-  );
-  const estLostRevenue = Math.floor(estMonthlyLostCustomers * avgTicket);
+  const perSiteBase =
+    lostFromRating + lostFromSocial + lostFromWebsite + lostFromReplies + lostFromPosts;
+  const siteScale =
+    locations <= 1
+      ? 1
+      : locations <= 2
+        ? 1.6
+        : locations <= 5
+          ? locations * 0.9
+          : locations <= 15
+            ? locations * 0.75
+            : locations * 0.6;
+
+  let estMonthlyLostCustomers = Math.floor(perSiteBase * siteScale);
+  let estLostRevenue = Math.floor(estMonthlyLostCustomers * avgTicket);
+
+  const hasVisibleGaps =
+    marketingMaturity < 88 ||
+    r.has_dated_ux === true ||
+    siteAge >= 5 ||
+    replyRate < 0.5 ||
+    (rating != null && rating < 4.6);
+
+  if (hasVisibleGaps) {
+    if (locations >= 16) estLostRevenue = Math.max(estLostRevenue, 48_000);
+    else if (locations >= 6) estLostRevenue = Math.max(estLostRevenue, 24_000);
+    else if (locations >= 3) estLostRevenue = Math.max(estLostRevenue, 8_000);
+    else estLostRevenue = Math.max(estLostRevenue, 2_500);
+    estMonthlyLostCustomers = Math.max(
+      estMonthlyLostCustomers,
+      Math.floor(estLostRevenue / Math.max(1, avgTicket)),
+    );
+  }
 
   // Fit-style gate for outbound
   let fitProxy = 0;
@@ -213,7 +269,8 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
   if (siteAge >= 5 || r.has_dated_ux === true) fitProxy += 15;
 
   let status: OpportunityStatus;
-  if (fitProxy >= 70 && likelihoodToBuy >= 60) status = "qualified";
+  if (disqualifiers.length > 0) status = "discard";
+  else if (fitProxy >= 70 && likelihoodToBuy >= 60) status = "qualified";
   else if (fitProxy >= 50) status = "park";
   else status = "discard";
 
@@ -228,7 +285,7 @@ export function calculateOpportunityScore(r: OpportunityRestaurantInput): Opport
     place_id: r.place_id ?? null,
     name: r.name,
     status,
-    disqualifiers: [],
+    disqualifiers,
     opportunity_score: {
       revenue_potential: revenuePotential,
       marketing_maturity: marketingMaturity,

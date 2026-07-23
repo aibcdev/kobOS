@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  calculateAuditOpportunityScore,
   calculateOpportunityScore,
   type OpportunityRestaurantInput,
 } from "@/lib/outbound/score-opportunity";
@@ -29,7 +30,7 @@ const harborHouse: OpportunityRestaurantInput = {
   currency: "GBP",
 };
 
-describe("calculateOpportunityScore (opportunity-v1)", () => {
+describe("calculateOpportunityScore (opportunity-v2)", () => {
   it("scores Harbor House as qualified with lost-revenue angle", () => {
     const r = calculateOpportunityScore(harborHouse);
     expect(r.status).toBe("qualified");
@@ -37,7 +38,7 @@ describe("calculateOpportunityScore (opportunity-v1)", () => {
     expect(r.fit_proxy).toBeGreaterThanOrEqual(70);
     expect(r.opportunity_score!.likelihood_to_buy).toBeGreaterThanOrEqual(60);
     expect(r.opportunity_score!.est_monthly_lost_customers).toBeGreaterThan(0);
-    expect(r.opportunity_score!.est_lost_revenue).toBeGreaterThan(0);
+    expect(r.opportunity_score!.est_lost_revenue).toBeGreaterThanOrEqual(2500);
     expect(r.opportunity_score!.revenue_potential).toBeGreaterThanOrEqual(1);
     expect(r.opportunity_score!.revenue_potential).toBeLessThanOrEqual(5);
     expect(r.personalization_hooks.length).toBeGreaterThan(0);
@@ -51,7 +52,7 @@ describe("calculateOpportunityScore (opportunity-v1)", () => {
     expect(r.opportunity_score).toBeNull();
   });
 
-  it("discards too many locations", () => {
+  it("discards too many locations for outbound", () => {
     const r = calculateOpportunityScore({
       ...harborHouse,
       locations: 12,
@@ -77,8 +78,29 @@ describe("calculateOpportunityScore (opportunity-v1)", () => {
       has_google_profile: true,
       is_competitive_city: true,
     });
-    // fit_proxy = 30 + 20 = 50 → park
     expect(r.fit_proxy).toBe(50);
     expect(r.status).toBe("park");
+  });
+});
+
+describe("calculateAuditOpportunityScore", () => {
+  it("still scores large multi-site brands with upper-bound lost revenue", () => {
+    const r = calculateAuditOpportunityScore({
+      name: "Turtle Bay",
+      locations: 20,
+      is_independent: false,
+      is_chain: true,
+      rating: 4.8,
+      review_count: 18000,
+      has_dated_ux: true,
+      has_website: true,
+      has_google_profile: true,
+      review_response_rate: 0.4,
+      avg_ticket: 38,
+      currency: "GBP",
+    });
+    expect(r.opportunity_score).not.toBeNull();
+    expect(r.opportunity_score!.est_lost_revenue).toBeGreaterThanOrEqual(48_000);
+    expect(r.reasons.some((x) => /20 location/i.test(x) || /Multi-site/i.test(x))).toBe(true);
   });
 });

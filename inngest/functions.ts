@@ -324,7 +324,7 @@ export const auditBrowserbaseScan = inngest.createFunction(
             "@/lib/audit/audit-opportunity-from-payload"
           );
           const synced = syncAnalysisProgressFromPayload(payload);
-          const withOpp = applyOpportunityReportToPayload(synced, {
+          const withOpp = await applyOpportunityReportToPayload(synced, {
             name: audit.restaurantName,
             city: audit.city,
             websiteUrl: audit.websiteUrl,
