@@ -27,9 +27,10 @@ function loadHandlers(): Promise<InngestHandlers> {
       return serve({
         client: inngest,
         functions,
-        signingKey,
-        signingKeyFallback,
-      });
+        // Explicit pass — Netlify sometimes fails silent env pickup for serve introspect
+        ...(signingKey ? { signingKey } : {}),
+        ...(signingKeyFallback ? { signingKeyFallback } : {}),
+      } as Parameters<typeof serve>[0]);
     })().catch((err) => {
       handlersPromise = null;
       throw err;
