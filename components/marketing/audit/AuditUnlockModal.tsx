@@ -142,8 +142,12 @@ export function AuditUnlockModal({
         </div>
         <p className="mt-4 text-center text-xs leading-relaxed text-[var(--color-muted-medium)]">
           {marketingCopy.auditUnlock.legal}{" "}
+          <Link href="/terms" className="underline underline-offset-2">
+            Terms
+          </Link>
+          {" · "}
           <Link href="/privacy" className="underline underline-offset-2">
-            Privacy policy
+            Privacy
           </Link>
         </p>
       </div>

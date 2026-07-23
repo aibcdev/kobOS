@@ -13,22 +13,36 @@ export const marketingCopy = {
   heroHeadlineAccent: "ultimate",
   heroHeadlineTail: "employee.",
   heroSubline:
-    "Free scan of what guests see online. Then a daily list of what to fix—and credits to request website, SEO, or brand work when you need help.",
-  heroProofPoints: ["Free scan", "About 1 minute", "No card required"] as const,
+    "Guests judge you online before they book. Run a free scan, get a clear list of what to fix, and request website or SEO help when you need it—nothing goes live without you.",
+  heroProofPoints: ["Free · ~1 minute", "No card required", "You approve every change"] as const,
   losingSalesOnline: "Your website is your front door online",
   useAiToFix: " Free hospitality perception report.",
 
   auditSubline:
-    "We check how guests see your restaurant online—photos, hours, reviews, and trust. About a minute. No card.",
+    "In about a minute we’ll show what guests notice on your site and Google listing—photos, hours, reviews, and trust. No card.",
   productSubline:
     "See the gaps, approve drafts, and request website or SEO work with credits—without juggling five apps.",
 
   trustBandBody:
     "Most guests decide online before they visit. KOB shows what they see, gives you a daily list to approve, and lets you request deliverables with credits.",
 
-  finalCtaHeadline: "See what guests see—then fix it.",
-  finalCtaSubline: "Start with a free scan. Unlock your report, then get a daily list you approve in one tap.",
-  finalCtaFinePrint: "No card for the scan · Founding rates for early restaurants",
+  howItWorksEyebrow: "How KOB works",
+  howItWorksHeadline: "Scan. Approve. Request help.",
+  howItWorksSubline:
+    "One clear path from “what’s wrong online?” to “done”—without another dashboard full of modules.",
+  howItWorksProof: "Free scan first · You stay in control · Cancel anytime",
+
+  midCtaHeadline: "Your website is your front door online",
+  midCtaCardTitle: "See what guests see—before another cover walks past.",
+  midCtaCardBody: "Enter your restaurant name or website. Results in about a minute. No card.",
+
+  finalCtaEyebrow: "Start free",
+  finalCtaHeadline: "Don’t leave tonight’s bookings to a weak first impression.",
+  finalCtaSubline:
+    "Run a free scan now. Unlock your report, then wake up to a short list you approve in one tap—so guests find the restaurant you actually run.",
+  finalCtaFinePrint: "Free scan · No card · Nothing goes live without you",
+
+  closingSuggestive: "Still guessing what guests see? Start with the free scan—it takes about a minute.",
 
   cta: {
     aiReport: "Run free scan",
@@ -36,7 +50,7 @@ export const marketingCopy = {
     freeScan: "Run free scan",
     seeProduct: "See how it works",
     viewPricing: "View pricing",
-    getDemo: "Book a demo",
+    getDemo: "Talk to us",
     getStarted: "Get started",
     startTrial: "Start free trial",
   },
@@ -46,14 +60,19 @@ export const marketingCopy = {
   },
 
   pricing: {
-    lead: "Founding member pricing for early restaurants.",
-    subline: "Lock in a low monthly rate as one of our first 10 venues. No long-term contracts.",
+    lead: "Clear pricing for busy restaurants.",
+    subline: "Two simple plans. No long-term contracts.",
     feeLine: "Start with a free scan—then a daily helper plus credits for website, SEO, and brand requests.",
+    closingEyebrow: "Ready when you are",
+    closingHeadline: "See the gaps first. Pick a plan when it makes sense.",
   },
+
+  footerTagline:
+    "Your restaurant’s daily helper online—scan what guests see, approve the fixes, request the rest with credits.",
 
   scanning: {
     headline: "Scanning…",
-    subline: "Checking what guests see when they find you online—vs strong UK hospitality venues.",
+    subline: "Checking what guests see when they find you online—vs strong restaurants nearby.",
     contextLine: "Most guests decide on your website before they visit—we're checking what they see.",
     mapStatus: (name: string) => `Scanning ${name} & competitors`,
     gbpStatus: "Scanning Google Business Profile",
@@ -85,7 +104,7 @@ export const marketingCopy = {
   auditUnlock: {
     modalTitle: "Unlock your free report",
     modalBody:
-      "See scores, photo gaps, and what guests notice—the same issues that put 7 in 10 people off weak sites. Then start your free trial for a daily fix list.",
+      "See scores, photo gaps, and what guests notice—the same issues that put 7 in 10 people off weak sites. Then get a daily list of what to fix.",
     modalSubtitleCompetitors:
       "See why {competitorA} and {competitorB} are beating you on Google.",
     emailLabel: "Work email",
@@ -93,7 +112,7 @@ export const marketingCopy = {
     submit: "Unlock full report",
     submitting: "Unlocking…",
     legal:
-      "By continuing you agree to our Terms of Service and Privacy Policy. We use your details to save your report. Your account is created when you start the free trial.",
+      "By continuing you agree to our Terms of Service and Privacy Policy. We use your details to save your report. Your account is created when you start a paid plan or free trial.",
   },
 
   auditInsights: [
@@ -111,11 +130,11 @@ export const marketingCopy = {
     },
   ] as const,
 
-  auditInsightsClosing: "The fix is often simpler than a full rebrand—you just need to know what to do first.",
+  auditInsightsClosing: "You don’t need a full rebrand—you need to know what to fix first. Start with the free scan.",
 
   auditUpgrade: {
-    headline: "Get your daily fix list",
-    body: "Your free scan found the gaps. Start your trial to get a morning list of what needs doing—one tap to approve.",
+    headline: "Turn the scan into a daily fix list",
+    body: "Your free scan found the gaps. Start your trial for a morning list of what needs doing—one tap to approve.",
     bullets: [
       "Daily tasks from your scan—reviews, holidays, hours, posts",
       "Plain English: what needs doing and why",

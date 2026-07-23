@@ -51,7 +51,15 @@ export function SaasAuthPage({ defaultMode = "signin" }: { defaultMode?: "signin
             ))}
           </ul>
           <p className="mt-10 text-xs leading-relaxed text-[#2c2c2c]/45">
-            Auth powered by Supabase. By continuing you agree to our terms and privacy policy.
+            Secure sign-in via Supabase. By continuing you agree to our{" "}
+            <Link href="/terms" className="underline underline-offset-2">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline underline-offset-2">
+              Privacy Policy
+            </Link>
+            .
           </p>
         </div>
 

@@ -324,10 +324,14 @@ export function DemoOnboardingForm() {
 
       <p className="mt-6 text-center text-xs leading-relaxed text-[var(--color-muted-medium)]">
         By continuing you agree to our{" "}
-        <Link href="/pricing" className="underline">
-          terms
+        <Link href="/terms" className="underline">
+          Terms
         </Link>{" "}
-        and privacy policy. Prefer self-serve?{" "}
+        and{" "}
+        <Link href="/privacy" className="underline">
+          Privacy Policy
+        </Link>
+        . Prefer self-serve?{" "}
         <Link href="/audit" className="font-medium text-[var(--color-primary)] underline">
           Run a free scan
         </Link>

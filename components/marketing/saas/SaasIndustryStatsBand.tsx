@@ -1,6 +1,7 @@
 "use client";
 
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
+import { marketingCopy } from "@/lib/marketing/copy";
 import { industryStatsBand } from "@/lib/marketing/industry-stats";
 
 const FOOD_BG =
@@ -16,7 +17,7 @@ export function SaasIndustryStatsBand() {
       <div className="relative mx-auto grid max-w-[83rem] items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <h2 className="font-heading text-3xl font-semibold tracking-tight text-white md:text-5xl">
-            Your website is your front door online
+            {marketingCopy.midCtaHeadline}
           </h2>
           <ul className="mt-10 space-y-6">
             {industryStatsBand.stats.map((s) => (
@@ -31,11 +32,9 @@ export function SaasIndustryStatsBand() {
 
         <div className="rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">
           <h3 className="font-heading text-2xl font-semibold tracking-tight text-[#1a1a1a]">
-            See what guests see. Start with a free scan.
+            {marketingCopy.midCtaCardTitle}
           </h3>
-          <p className="mt-2 text-sm text-[#2c2c2c]/65">
-            Enter your restaurant name or website—results in about a minute.
-          </p>
+          <p className="mt-2 text-sm text-[#2c2c2c]/65">{marketingCopy.midCtaCardBody}</p>
           <div className="mt-6">
             <AuditBusinessSearch variant="hero" />
           </div>

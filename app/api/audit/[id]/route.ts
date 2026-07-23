@@ -77,6 +77,8 @@ export async function GET(req: Request, { params }: RouteParams) {
     mobileScore: unlocked ? audit.mobileScore : 0,
     conversionScore: unlocked ? audit.conversionScore : 0,
     geoLocation: payload.geoLocation ?? null,
+    analysisProgress: scanningPoll || unlocked ? payload.analysisProgress ?? null : null,
+    restaurantScores: scanningPoll || unlocked ? payload.restaurantScores ?? null : null,
     competitors: scanningPoll
       ? payload.competitors.map((c) => ({
           name: c.name,

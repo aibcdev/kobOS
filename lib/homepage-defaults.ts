@@ -93,7 +93,7 @@ export const homepageDefaults = {
   stats: [
     { value: "Free", label: "online scan before you pay" },
     { value: "~1 min", label: "to see guest-facing gaps" },
-    { value: "$49", label: "founding Flex rate / mo" },
+    { value: "$49", label: "Flex plan / mo" },
   ],
   leadBand: {
     headline: "See where covers leak before you spend another month guessing.",

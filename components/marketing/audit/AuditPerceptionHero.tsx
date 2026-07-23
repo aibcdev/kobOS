@@ -47,18 +47,51 @@ function ScoreRing({ score }: { score: number }) {
 export function AuditPerceptionHero({
   perception,
   pending,
+  timedOut,
+  retrying,
+  onRetry,
   restaurantName,
   payload,
 }: {
   perception: PerceptionAuditV1 | null;
   pending?: boolean;
+  timedOut?: boolean;
+  retrying?: boolean;
+  onRetry?: () => void;
   restaurantName: string;
   payload?: AuditResultPayload;
 }) {
   if (pending && !perception) {
     return (
-      <div className="rounded-2xl border border-[var(--color-hairline)] bg-[var(--color-surface-cream)]/60 p-8 animate-pulse">
-        <p className="text-sm text-[var(--color-muted)]">Analysing how guests perceive {restaurantName} online…</p>
+      <div className="rounded-2xl border border-[#2c2c2c]/8 bg-[#f9f6f1] p-8">
+        <div className="flex items-start gap-4">
+          <div
+            className="mt-1 h-10 w-10 shrink-0 animate-pulse rounded-full bg-[var(--color-forest)]/15"
+            aria-hidden
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-forest-mid)]">
+              Scoring digital positioning
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-[#2c2c2c]/70">
+              {timedOut
+                ? `Still working on how guests see ${restaurantName} online. You can retry analysis now.`
+                : `Building a clear summary of how guests perceive ${restaurantName} online…`}
+            </p>
+            {timedOut && onRetry ? (
+              <button
+                type="button"
+                onClick={onRetry}
+                disabled={retrying}
+                className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-[var(--color-forest)] px-5 text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)] disabled:opacity-60"
+              >
+                {retrying ? "Retrying…" : "Retry analysis"}
+              </button>
+            ) : (
+              <p className="mt-3 text-xs text-[#2c2c2c]/45">Usually ready in under a minute.</p>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

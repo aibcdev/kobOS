@@ -29,7 +29,8 @@ import { buildTeaserPerception } from "@/lib/marketing/audit-scan-preview";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { onlineHealthLabel } from "@/lib/marketing/audit-grader-phases";
 import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
-import type { AuditResultPayload, BenchmarkV1Section } from "@/lib/audit/types";
+import { gradeMeaning } from "@/lib/audit/restaurant-scoring";
+import type { AuditResultPayload, BenchmarkV1Section, RestaurantScoresV1 } from "@/lib/audit/types";
 
 type NavId = "overview" | "reviews" | "discovery" | "competitors" | "technical";
 
@@ -54,7 +55,15 @@ function scoreTone(score: number) {
   };
 }
 
-function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
+function ScoreRing({
+  score,
+  size = 120,
+  grade,
+}: {
+  score: number;
+  size?: number;
+  grade?: string;
+}) {
   const tone = scoreTone(score);
   const r = (size - 12) / 2;
   const c = 2 * Math.PI * r;
@@ -76,8 +85,62 @@ function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`font-head text-4xl font-semibold tabular-nums ${tone.text}`}>{score}</span>
+        {grade ? (
+          <>
+            <span className={`font-head text-4xl font-semibold leading-none ${tone.text}`}>{grade}</span>
+            <span className="mt-0.5 text-xs font-medium tabular-nums text-[var(--color-muted-medium)]">{score}</span>
+          </>
+        ) : (
+          <span className={`font-head text-4xl font-semibold tabular-nums ${tone.text}`}>{score}</span>
+        )}
       </div>
+    </div>
+  );
+}
+
+const RESTAURANT_AXIS_STRIP: { key: keyof Pick<RestaurantScoresV1, "reviews" | "gbp" | "website" | "competitors" | "technical">; label: string }[] = [
+  { key: "reviews", label: "Reviews" },
+  { key: "gbp", label: "GBP" },
+  { key: "website", label: "Website" },
+  { key: "competitors", label: "Competitive" },
+  { key: "technical", label: "Technical" },
+];
+
+function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
+  return (
+    <div className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
+            Restaurant scorecard
+          </p>
+          <p className="mt-1 font-head text-lg font-semibold">
+            Grade {scores.grade} · {scores.overall}/100
+          </p>
+        </div>
+        <p className="text-xs text-[var(--color-muted-medium)]">Confidence: {scores.confidence}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {RESTAURANT_AXIS_STRIP.map(({ key, label }) => {
+          const value = scores[key];
+          const tone = scoreTone(value);
+          return (
+            <div key={key} className="rounded-xl bg-[var(--color-surface-cream)]/70 px-3 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
+                {label}
+              </p>
+              <p className={`mt-1 font-head text-xl font-semibold tabular-nums ${tone.text}`}>{value}</p>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
+                <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${value}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
+        C = average for restaurants. {gradeMeaning(scores.grade)}.
+        {scores.dataGaps?.length ? ` Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}.` : null}
+      </p>
     </div>
   );
 }
@@ -132,22 +195,22 @@ function BenchmarkSectionCard({ title, section }: { title: string; section: Benc
 function analysisStatusLines(data: AuditBenchmarkPollSnapshot): string[] {
   const lines: string[] = [];
   if (data.scanStatus === "pending" || data.scoresPending) {
-    lines.push("Analyzing your site — scores update when the scan finishes.");
+    lines.push("Finishing your site scan — scores update when ready.");
+  }
+  if (data.perceptionAuditV1Status === "pending") {
+    lines.push("Scoring digital positioning…");
   }
   if (data.benchmarkV1Status === "pending") {
-    lines.push("AI benchmark in progress…");
+    lines.push("AI benchmark still running in the background…");
   }
   if (data.benchmarkV1MediaStatus === "pending") {
-    lines.push("Visual analysis pending — reviewing photos and video posters.");
+    lines.push("Reviewing photos for visual scoring…");
   }
   if (data.benchmarkV1MediaStatus === "failed" && data.benchmarkV1MediaError) {
     lines.push(`Visual analysis unavailable: ${data.benchmarkV1MediaError}`);
   }
   if (data.benchmarkV1MediaStatus === "skipped") {
     lines.push("No public images found for automatic visual scoring.");
-  }
-  if (data.perceptionAuditV1Status === "pending") {
-    lines.push("Building your hospitality perception report…");
   }
   return lines;
 }
@@ -225,19 +288,24 @@ export function AuditReportDashboard({
 }) {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
   const [shareLabel, setShareLabel] = useState<string | null>(null);
-  const { data } = useAuditBenchmarkPoll(audit.id, benchmarkInitial, { unlocked });
+  const { data, timedOut, retrying, retryAnalysis } = useAuditBenchmarkPoll(audit.id, benchmarkInitial, {
+    unlocked,
+  });
   const scoresReady = unlocked && isAuditScoresReady({ scoresPending: data.scoresPending, scanStatus: data.scanStatus });
   const overall = scoresReady ? data.overallScore : audit.overallScore;
+  const restaurantScores = data.restaurantScores ?? payload.restaurantScores ?? null;
   const perceptionPending = (data.perceptionAuditV1Status ?? payload.perceptionAuditV1Status) === "pending";
   const teaserPerception =
     data.perceptionTeaser && !unlocked
       ? buildTeaserPerception(data.perceptionTeaser, payload)
       : null;
   const perception = data.perceptionAuditV1 ?? payload.perceptionAuditV1 ?? teaserPerception;
-  const displayScore = perception?.digitalPositioningScore ?? overall;
+  const displayScore = restaurantScores?.overall ?? perception?.digitalPositioningScore ?? overall;
   const displayTone = scoreTone(displayScore);
-  const healthLabel = onlineHealthLabel(displayScore);
-  const tone = scoreTone(overall);
+  const healthLabel = restaurantScores
+    ? `Grade ${restaurantScores.grade} · ${onlineHealthLabel(displayScore)}`
+    : onlineHealthLabel(displayScore);
+  const tone = scoreTone(restaurantScores?.overall ?? overall);
   const restaurantDisplay = decodeHtmlEntities(audit.restaurantName);
   const locationLabel = `${restaurantDisplay}, ${audit.city}`;
   const trialCheckoutHref = `/audit/${audit.id}/upgrade/checkout`;
@@ -278,7 +346,7 @@ export function AuditReportDashboard({
   const mediaThumbs = meta && meta.length > 0 ? meta : cands;
   const showMedia = unlocked && data.benchmarkV1MediaStatus === "ready" && data.benchmarkV1Media;
   const showVideo = showMedia && Boolean(data.benchmarkV1Media?.videoPresentationQuality);
-  const showHeaderScoreRing = !perception || perceptionPending;
+  const showHeaderScoreRing = Boolean(restaurantScores) || !perception || perceptionPending;
 
   return (
     <div className="min-h-screen bg-[var(--color-surface-warm)] text-[var(--color-ink)]">
@@ -381,7 +449,7 @@ export function AuditReportDashboard({
                 {analysisLines.map((line) => (
                   <li
                     key={line}
-                    className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+                    className="rounded-2xl border border-[#2c2c2c]/8 bg-[#f9f6f1] px-4 py-3 text-sm text-[#2c2c2c]/70"
                   >
                     {line}
                   </li>
@@ -420,17 +488,23 @@ export function AuditReportDashboard({
                 </div>
                 {showHeaderScoreRing ? (
                   <div className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-white p-6 shadow-sm sm:flex-row sm:gap-6">
-                    <ScoreRing score={displayScore} size={unlocked ? 120 : 140} />
+                    <ScoreRing
+                      score={displayScore}
+                      size={unlocked ? 120 : 140}
+                      grade={restaurantScores?.grade}
+                    />
                     <div className="text-center sm:text-left">
                       <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-                        Digital positioning
+                        {restaurantScores ? "Restaurant visibility" : "Digital positioning"}
                       </p>
                       <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>{healthLabel}</p>
                       {unlocked ? (
                         <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
-                          {perceptionPending
-                            ? "Building your owner summary…"
-                            : `Your score vs. similar restaurants in ${audit.city}.`}
+                          {restaurantScores
+                            ? `Your score vs. similar restaurants in ${audit.city}.`
+                            : perceptionPending
+                              ? "Scoring digital positioning…"
+                              : `Your score vs. similar restaurants in ${audit.city}.`}
                         </p>
                       ) : (
                         <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
@@ -444,9 +518,15 @@ export function AuditReportDashboard({
 
               {activeNav === "overview" && (
                 <div className="mb-8 space-y-8">
+                  {restaurantScores ? <RestaurantAxisStrip scores={restaurantScores} /> : null}
                   <AuditPerceptionHero
                     perception={perception}
                     pending={perceptionPending}
+                    timedOut={timedOut && perceptionPending}
+                    retrying={retrying}
+                    onRetry={() => {
+                      void retryAnalysis();
+                    }}
                     restaurantName={restaurantDisplay}
                     payload={payload}
                   />
@@ -563,10 +643,16 @@ export function AuditReportDashboard({
                         <li>
                           <div className="mb-1 flex justify-between text-sm font-medium">
                             <span>{restaurantDisplay} (you)</span>
-                            <span className={tone.text}>{overall}/100</span>
+                            <span className={tone.text}>
+                              {restaurantScores?.overall ?? overall}/100
+                              {restaurantScores ? ` · ${restaurantScores.grade}` : ""}
+                            </span>
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
-                            <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${overall}%` }} />
+                            <div
+                              className={`h-full rounded-full ${tone.bar}`}
+                              style={{ width: `${restaurantScores?.overall ?? overall}%` }}
+                            />
                           </div>
                         </li>
                         {competitorsFromPlaces
@@ -640,9 +726,23 @@ export function AuditReportDashboard({
                   />
                 </section>
               ) : unlocked && data.benchmarkV1Status === "pending" ? (
-                <p className="mb-8 text-sm text-[var(--color-muted)]">
-                  Benchmark scores are still processing — refresh in a moment.
-                </p>
+                <div className="mb-8 rounded-2xl border border-[#2c2c2c]/8 bg-[#f9f6f1] px-5 py-4">
+                  <p className="text-sm text-[#2c2c2c]/70">
+                    Benchmark scores are still processing in the background.
+                  </p>
+                  {timedOut ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void retryAnalysis();
+                      }}
+                      disabled={retrying}
+                      className="mt-3 inline-flex h-9 items-center justify-center rounded-full bg-[var(--color-forest)] px-4 text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)] disabled:opacity-60"
+                    >
+                      {retrying ? "Retrying…" : "Retry analysis"}
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
 
               {showMedia && data.benchmarkV1Media && activeNav === "technical" ? (

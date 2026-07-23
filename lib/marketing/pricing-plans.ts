@@ -15,12 +15,11 @@ export type PricingPlan = {
   highlight?: boolean;
 };
 
-/** Founding offer — first venues on trykob.com */
+/** Current list pricing (strikethrough compare prices are internal reference only). */
 export const LAUNCH_PRICING = {
   active: true,
-  label: "Founding member pricing",
-  detail: "Lock in this rate as one of our first 10 restaurants.",
-  foundingSlots: 10,
+  label: "Simple pricing",
+  detail: "Month-to-month. Cancel anytime.",
 } as const;
 
 export const PRICING_PLANS: PricingPlan[] = [
@@ -39,7 +38,7 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "flat",
     name: "Flat",
-    badge: "Founding rate",
+    badge: "Best value",
     priceMonthly: 99,
     regularPriceMonthly: 250,
     priceNote: "No additional order fees",
@@ -69,7 +68,7 @@ export const OWNER_COMPARISON = {
   rows: [
     {
       label: "Monthly (flex-style plan)",
-      kob: "$49/mo founding",
+      kob: "$49/mo",
       owner: "$249/mo",
       kobWins: true,
     },
@@ -81,7 +80,7 @@ export const OWNER_COMPARISON = {
     },
     {
       label: "Monthly (flat plan)",
-      kob: "$99/mo founding",
+      kob: "$99/mo",
       owner: "$499/mo",
       kobWins: true,
     },
@@ -145,13 +144,13 @@ export const PRICING_INCLUDED_FEATURES = [
   { title: "Listing & photo checks", detail: "Flags when Google or your site looks off vs competitors." },
   { title: "Plain-English briefings", detail: "What needs doing, why, and how long—no SEO deck required." },
   { title: "7-day free trial", detail: "Start after your scan. Cancel anytime." },
-  { title: "Founding member rate", detail: "Lock in $49 or $99/mo as one of our first 10 restaurants." },
+  { title: "Transparent plans", detail: "Flex from $49/mo or Flat at $99/mo—pick what fits how you take orders." },
 ] as const;
 
 export const PRICING_FAQ = [
   {
-    q: "What is founding member pricing?",
-    a: "Our first 10 restaurants lock in $49/mo (Flex) or $99/mo (Flat)—well below typical all-in-one platforms like Owner.com ($249–$499/mo). When founding spots fill, standard pricing applies.",
+    q: "How much does KOB cost?",
+    a: "Flex is $49/mo plus 2.5% on direct orders. Flat is $99/mo with no order fees. Both include the free scan, daily task list, and credits for website, SEO, and brand requests.",
   },
   {
     q: "What is included with KOB?",
@@ -159,7 +158,7 @@ export const PRICING_FAQ = [
   },
   {
     q: "What fees do restaurants pay on orders?",
-    a: "On Flat, you pay only your monthly subscription. On Flex, you pay $49/mo founding rate plus 2.5% on direct orders—half the typical 5% flex fee on comparable platforms.",
+    a: "On Flat, you pay only your monthly subscription. On Flex, you pay $49/mo plus 2.5% on direct orders—half the typical 5% flex fee on comparable platforms.",
   },
   {
     q: "How is KOB different from Owner.com?",

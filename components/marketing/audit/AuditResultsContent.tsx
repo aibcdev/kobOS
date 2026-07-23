@@ -61,6 +61,7 @@ export function AuditResultsContent({
     designScore: audit.designScore,
     mobileScore: audit.mobileScore,
     conversionScore: audit.conversionScore,
+    restaurantScores: payload.restaurantScores ?? null,
     perceptionTeaser,
   };
 

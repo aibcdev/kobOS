@@ -84,7 +84,7 @@ export function SaasOwnerComparison() {
                   <span className="font-heading text-4xl font-semibold text-[var(--color-forest)]">
                     ${flex.priceMonthly}
                   </span>
-                  <span className="text-sm text-[#2c2c2c]/55">/mo founding</span>
+                  <span className="text-sm text-[#2c2c2c]/55">/mo</span>
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-forest-mid)]">{flex.priceNote}</p>
                 <Link
@@ -102,7 +102,7 @@ export function SaasOwnerComparison() {
                 </p>
                 <p className="mt-2 flex items-baseline gap-2">
                   <span className="font-heading text-4xl font-semibold text-[#1a1a1a]">${flat.priceMonthly}</span>
-                  <span className="text-sm text-[#2c2c2c]/55">/mo founding</span>
+                  <span className="text-sm text-[#2c2c2c]/55">/mo</span>
                 </p>
                 <p className="mt-1 text-sm text-[#2c2c2c]/60">{flat.priceNote}</p>
                 <Link

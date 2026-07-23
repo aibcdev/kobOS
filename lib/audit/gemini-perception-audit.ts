@@ -94,6 +94,107 @@ function buildExecutiveFallback(payload: AuditResultPayload) {
     ],
   };
 }
+
+/** Deterministic perception when Gemini is slow, missing, or fails — keeps Overview unblocked. */
+export function buildHeuristicPerceptionAuditV1(payload: AuditResultPayload): PerceptionAuditV1 {
+  const name = payload.evidencePack?.restaurantName ?? "Your restaurant";
+  const dps = Math.min(100, Math.max(0, Math.round(payload.scores.overall || 40)));
+  const peer = buildPeerBenchmarkContext(payload);
+  const eng = payload.evidencePack?.engagementSignals;
+  const scorecard = buildScorecardFallback(payload);
+
+  return {
+    version: 1,
+    model: "heuristic-v1",
+    scoredAt: new Date().toISOString(),
+    digitalPositioningScore: dps,
+    confidence: "low",
+    coverHeadline: "Your digital experience is likely underselling your restaurant.",
+    coverSubheadline:
+      "We reviewed mobile UX, menu structure, imagery, local discovery, and conversion from available site signals.",
+    executiveSummary: buildExecutiveFallback(payload),
+    visualScorecard: scorecard,
+    estimatedDwellSeconds: {
+      low: eng?.estimatedDwellSeconds.low ?? 8,
+      high: eng?.estimatedDwellSeconds.high ?? 25,
+      rationale:
+        eng?.rationale.join(" ").slice(0, 400) ||
+        "Estimated from content depth, imagery, and mobile signals.",
+    },
+    positioningTable: [
+      { area: "Mobile experience", current: dps < 55 ? "Friction on small screens" : "Usable but not premium", ideal: "Fast, clear, bookable in two taps" },
+      { area: "Menu presentation", current: eng?.contentDepth.hasMenuContent ? "Menu present" : "Menu hard to find", ideal: "Scannable menu with strong dish photos" },
+      { area: "Food imagery", current: "Inconsistent or thin", ideal: "Consistent, appetising plated photography" },
+      { area: "Brand consistency", current: "Mixed visual language", ideal: "Cohesive brand across site and listings" },
+      { area: "Google visibility", current: "Room to strengthen local signals", ideal: "Clear NAP, reviews, and local pages" },
+      { area: "Conversion flow", current: "Paths to book/order can be clearer", ideal: "Obvious CTAs on every key page" },
+      { area: "Social proof", current: "Reviews not leveraged enough online", ideal: "Recent praise surfaced near CTAs" },
+      { area: "Trust & polish", current: "Feels behind stronger local rivals", ideal: "Matches the quality of the room" },
+    ],
+    perceptionGap: [
+      {
+        metric: "Digital positioning",
+        current: `${dps}/100`,
+        potential: "70+/100",
+        note: "Close the gap vs sharp local peers",
+      },
+      {
+        metric: "Mobile conversion",
+        current: `${scorecard.find((r) => r.category === "Conversion flow")?.scoreOutOf10 ?? 5}/10`,
+        potential: "8/10",
+      },
+      {
+        metric: "Imagery",
+        current: `${scorecard.find((r) => r.category === "Food imagery")?.scoreOutOf10 ?? 5}/10`,
+        potential: "8/10",
+      },
+      {
+        metric: "Menu clarity",
+        current: `${scorecard.find((r) => r.category === "Menu presentation")?.scoreOutOf10 ?? 5}/10`,
+        potential: "8/10",
+      },
+      {
+        metric: "Local discovery",
+        current: `${scorecard.find((r) => r.category === "Google visibility")?.scoreOutOf10 ?? 5}/10`,
+        potential: "8/10",
+      },
+      {
+        metric: "Brand polish",
+        current: `${scorecard.find((r) => r.category === "Brand consistency")?.scoreOutOf10 ?? 5}/10`,
+        potential: "8/10",
+      },
+    ],
+    customerExperience: `${name}'s online journey does not yet match the hospitality guests get in the room. Fixing clarity, imagery, and booking paths usually recovers trust before the first visit.`,
+    modernStandard:
+      "Strong restaurants make mobile booking effortless, show plated food clearly, and keep hours, menu, and reviews consistent across Google and the website.",
+    reviewIntelligence: {
+      praiseThemes: ["Food quality", "Atmosphere"],
+      complaintThemes: ["Online clarity", "Booking friction"],
+      disconnect: "In-room praise often does not show up in the first screen guests see online.",
+    },
+    socialAnalysis: "Social and listing presence should reinforce the same brand story as the website—gaps here cost high-intent guests.",
+    commercialSeo: "Local and menu-led search demand clearer pages, schema, and consistent Google Business signals.",
+    revenueLeaks: [
+      {
+        title: "Mobile booking friction",
+        impact: "high",
+        narrative: "Guests who cannot book or order quickly on mobile often leave for a sharper rival.",
+      },
+      {
+        title: "Weak first impression online",
+        impact: "high",
+        narrative: "Thin imagery and unclear CTAs undersell the restaurant before guests ever visit.",
+      },
+      {
+        title: "Local discovery gaps",
+        impact: "medium",
+        narrative: "Incomplete local signals mean high-intent searches go to competitors first.",
+      },
+    ],
+    benchmarkAnchors: peer.suggestedAnchors.slice(0, 4),
+    overallSummary: `${name} scores ${dps}/100 on digital positioning from available site signals. Closing the gap on mobile, imagery, and conversion is the fastest path to stronger guest trust.`,
+  };
+}
 const ownerHeroSchema = z
   .object({
     revenueHeadline: z.string().min(10).max(220),

@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import type { AuditResultPayload } from "@/lib/audit/types";
+import { createInitialAnalysisProgress } from "@/lib/audit/analysis-progress";
 
 function minimalGated(restaurantName: string, city: string): AuditResultPayload["gated"] {
   return {
@@ -20,6 +21,7 @@ export function createPendingAuditSeed(input: {
   payload: AuditResultPayload;
 } {
   const scores = { overall: 0, seo: 0, design: 0, mobile: 0, conversion: 0 };
+  const initialProgress = createInitialAnalysisProgress();
   const payload: AuditResultPayload = {
     scoresPending: true,
     scores,
@@ -33,6 +35,15 @@ export function createPendingAuditSeed(input: {
     },
     gated: minimalGated(input.restaurantName, input.city),
     scanStatus: "pending",
+    analysisProgress: {
+      ...initialProgress,
+      status: "running",
+      percent: 8,
+      currentStep: "Scanning your website",
+      steps: initialProgress.steps.map((s) =>
+        s.id === "website" ? { ...s, status: "running" as const } : s,
+      ),
+    },
   };
 
   const row: Omit<Prisma.VisibilityAuditCreateInput, "id"> = {

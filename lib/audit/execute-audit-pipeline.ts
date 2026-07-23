@@ -44,11 +44,41 @@ async function enqueuePostScanJobs(
   if (process.env.GEMINI_API_KEY?.trim()) {
     sends.push({ name: "audit/gemini-benchmark.requested", data: { auditId } });
   }
+
+  let geminiEnqueued = false;
   for (const s of sends) {
     try {
       await inngest.send(s);
+      if (s.name === "audit/gemini-benchmark.requested") geminiEnqueued = true;
     } catch (inngestErr) {
       console.warn("[audit/pipeline] Inngest send skipped", s.name, inngestErr);
+    }
+  }
+
+  // If Inngest is down, still unblock Overview with perception (and continue suite inline).
+  if (process.env.GEMINI_API_KEY?.trim() && !geminiEnqueued) {
+    try {
+      const { runAndPersistGeminiAuditSuite } = await import("@/lib/audit/persist-gemini-audit");
+      await runAndPersistGeminiAuditSuite(auditId);
+    } catch (inlineErr) {
+      console.warn("[audit/pipeline] Inline Gemini suite failed", inlineErr);
+      try {
+        const { markAiJobsUnavailable } = await import("@/lib/audit/persist-gemini-audit");
+        await markAiJobsUnavailable(
+          auditId,
+          inlineErr instanceof Error ? inlineErr.message : "Inline Gemini suite failed",
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+  } else if (process.env.GEMINI_API_KEY?.trim() && geminiEnqueued) {
+    // Unblock Overview immediately; Inngest continues with benchmark + media.
+    try {
+      const { runAndPersistPerceptionStep } = await import("@/lib/audit/persist-gemini-audit");
+      await runAndPersistPerceptionStep(auditId);
+    } catch (perceptionErr) {
+      console.warn("[audit/pipeline] Inline perception failed", perceptionErr);
     }
   }
 }
@@ -134,6 +164,17 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
 
     await upsertSiteScanForAudit(auditId, payloadWithStage);
     await enqueuePostScanJobs(auditId, queueAsyncBrowserbase);
+
+    // Bind live analysis steps + restaurant scores from available signals
+    try {
+      const { syncAnalysisProgressFromPayload, persistAnalysisPayload } = await import(
+        "@/lib/audit/analysis-progress"
+      );
+      const synced = syncAnalysisProgressFromPayload(payloadWithStage);
+      await persistAnalysisPayload(auditId, synced);
+    } catch (progressErr) {
+      console.warn("[audit/pipeline] analysis progress sync failed", progressErr);
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[audit/pipeline]", auditId, e);

@@ -5,16 +5,11 @@ import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
 import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
 import { auditPageTextPreview } from "@/lib/audit/audit-page-text-preview";
 import { enrichAuditNarrative } from "@/lib/audit/enrich-openai";
-import { fetchMediaAssetsForVision } from "@/lib/audit/collect-media-assets";
-import { runGeminiDesignQualityV1 } from "@/lib/audit/gemini-design-quality";
-import { mergeBenchmarkV1MediaIntoPayload, runGeminiBenchmarkV1Media } from "@/lib/audit/gemini-benchmark-media";
-import { mergeBenchmarkV1IntoPayload, runGeminiBenchmarkV1 } from "@/lib/audit/gemini-benchmark-score";
-import { mergePerceptionAuditIntoPayload, runGeminiPerceptionAuditV1 } from "@/lib/audit/gemini-perception-audit";
-import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
-import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
+import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
 import { finalizePendingAuditScan, failPendingAuditScan } from "@/lib/audit/finalize-pending-scan";
+import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
 import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 import type { StagehandRenderedPage } from "@/lib/browserbase/stagehand-scan";
@@ -321,6 +316,16 @@ export const auditBrowserbaseScan = inngest.createFunction(
 
         await upsertSiteScanForAudit(auditId, payload);
 
+        try {
+          const { syncAnalysisProgressFromPayload, persistAnalysisPayload } = await import(
+            "@/lib/audit/analysis-progress"
+          );
+          const synced = syncAnalysisProgressFromPayload(payload);
+          await persistAnalysisPayload(auditId, synced);
+        } catch (e) {
+          console.warn("[audit/browserbase] analysis progress sync failed", e);
+        }
+
         return { ok: true as const };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -351,10 +356,21 @@ export const auditBrowserbaseScan = inngest.createFunction(
         if (process.env.GEMINI_API_KEY?.trim()) {
           sends.push({ name: "audit/gemini-benchmark.requested", data: { auditId } });
         }
-        if (sends.length) {
-          for (const s of sends) {
+        let geminiEnqueued = false;
+        for (const s of sends) {
+          try {
             await inngest.send(s);
+            if (s.name === "audit/gemini-benchmark.requested") geminiEnqueued = true;
+          } catch (e) {
+            console.warn("[audit/browserbase] Inngest send skipped", s.name, e);
           }
+        }
+        if (process.env.GEMINI_API_KEY?.trim() && !geminiEnqueued) {
+          const { runAndPersistGeminiAuditSuite } = await import("@/lib/audit/persist-gemini-audit");
+          await runAndPersistGeminiAuditSuite(auditId);
+        } else if (process.env.GEMINI_API_KEY?.trim() && geminiEnqueued) {
+          const { runAndPersistPerceptionStep } = await import("@/lib/audit/persist-gemini-audit");
+          await runAndPersistPerceptionStep(auditId);
         }
         return sends.length;
       });
@@ -418,123 +434,22 @@ export const auditGeminiBenchmark = inngest.createFunction(
       throw new Error("audit/gemini-benchmark.requested missing auditId");
     }
 
+    const {
+      markAiJobsUnavailable,
+      runAndPersistBenchmarkMediaStep,
+      runAndPersistBenchmarkTextStep,
+      runAndPersistPerceptionStep,
+    } = await import("@/lib/audit/persist-gemini-audit");
+
     if (!process.env.GEMINI_API_KEY?.trim()) {
+      await step.run("mark-no-gemini-key", () => markAiJobsUnavailable(auditId, "GEMINI_API_KEY is not configured"));
       return { auditId, skipped: true, reason: "no_gemini_key" };
     }
 
-    await step.run("gemini-benchmark-score", async () => {
-      const audit = await prisma.visibilityAudit.findUnique({ where: { id: auditId } });
-      if (!audit) return { ok: false as const, reason: "not_found" };
-      const payload = parseAuditPayload(audit.resultPayload);
-      if (!payload?.evidencePack) return { ok: false as const, reason: "no_evidence_pack" };
-
-      let merged: AuditResultPayload = payload;
-      const result = await runGeminiBenchmarkV1(payload.evidencePack);
-      if (!result.ok) {
-        merged = {
-          ...payload,
-          benchmarkV1Status: "failed" as const,
-          benchmarkV1Error: result.error,
-          benchmarkV1: null,
-          benchmarkV1MediaStatus: "skipped" as const,
-          benchmarkV1Media: null,
-          benchmarkV1MediaError: undefined,
-        };
-      } else {
-        merged = mergeBenchmarkV1IntoPayload(payload, result.data);
-      }
-
-      const candidates = merged.evidencePack?.imageCandidates ?? [];
-
-      if (candidates.length === 0) {
-        merged = {
-          ...merged,
-          benchmarkV1MediaStatus: "skipped",
-          benchmarkV1Media: null,
-          benchmarkV1MediaError: undefined,
-        };
-      } else {
-        const { assets, errors } = await fetchMediaAssetsForVision(candidates, 6);
-        const foodImageAnalysis = assets.length
-          ? await (async () => {
-              const { analyzeFoodImagesFromBuffers } = await import("@/lib/audit/analyze-food-images");
-              return analyzeFoodImagesFromBuffers(assets);
-            })()
-          : undefined;
-        merged = {
-          ...merged,
-          evidencePack: merged.evidencePack
-            ? {
-                ...merged.evidencePack,
-                version: 2,
-                mediaAssetsMeta: assets.map((a) => a.meta),
-                ...(foodImageAnalysis ? { foodImageAnalysis } : {}),
-              }
-            : merged.evidencePack,
-        };
-
-        if (assets.length === 0) {
-          merged = {
-            ...merged,
-            benchmarkV1MediaStatus: "failed",
-            benchmarkV1Media: null,
-            benchmarkV1MediaError: errors.length ? errors.join("; ") : "Could not fetch images for vision scoring",
-          };
-        } else {
-          const designRes = await runGeminiDesignQualityV1(
-            merged.evidencePack!,
-            assets,
-            merged.browserbaseScan?.screenshotPublicUrl,
-          );
-          if (designRes.ok) {
-            merged = {
-              ...merged,
-              evidencePack: {
-                ...merged.evidencePack!,
-                designQualityAnalysis: designRes.data,
-              },
-            };
-          }
-
-          const mediaRes = await runGeminiBenchmarkV1Media(merged.evidencePack!, assets);
-          if (!mediaRes.ok) {
-            merged = {
-              ...merged,
-              benchmarkV1MediaStatus: "failed",
-              benchmarkV1Media: null,
-              benchmarkV1MediaError: mediaRes.error,
-            };
-          } else {
-            merged = mergeBenchmarkV1MediaIntoPayload(merged, mediaRes.data);
-          }
-        }
-      }
-
-      const perceptionRes = await runGeminiPerceptionAuditV1(merged);
-      if (perceptionRes.ok) {
-        merged = mergePerceptionAuditIntoPayload(merged, perceptionRes.data);
-      } else {
-        merged = {
-          ...merged,
-          perceptionAuditV1Status: "failed",
-          perceptionAuditV1Error: perceptionRes.error,
-          perceptionAuditV1: null,
-        };
-      }
-
-      await prisma.visibilityAudit.update({
-        where: { id: auditId },
-        data: {
-          resultPayload: merged,
-          overallScore: merged.scores.overall,
-          seoScore: merged.scores.seo,
-          designScore: merged.scores.design,
-          mobileScore: merged.scores.mobile,
-          conversionScore: merged.scores.conversion,
-        },
-      });
-      return { ok: true as const };
-    });
+    // Perception first so Overview leaves “Analysing…” within ~30s
+    await step.run("perception-first", () => runAndPersistPerceptionStep(auditId));
+    await step.run("benchmark-text", () => runAndPersistBenchmarkTextStep(auditId));
+    await step.run("benchmark-media", () => runAndPersistBenchmarkMediaStep(auditId));
 
     return { auditId };
   },

@@ -193,6 +193,39 @@ export type AuditResultPayload = {
   perceptionAuditV1Status?: "pending" | "ready" | "failed";
   perceptionAuditV1?: PerceptionAuditV1 | null;
   perceptionAuditV1Error?: string;
+  /** Restaurant-calibrated multi-axis scores (preferred on Overview). */
+  restaurantScores?: RestaurantScoresV1;
+  /** Live analysis step progress for scanning UI. */
+  analysisProgress?: AnalysisProgressV1;
+};
+
+export type RestaurantGrade = "A" | "B" | "C" | "D" | "F";
+
+export type RestaurantScoresV1 = {
+  overall: number;
+  grade: RestaurantGrade;
+  reviews: number;
+  gbp: number;
+  website: number;
+  competitors: number;
+  technical: number;
+  confidence: "low" | "medium" | "high";
+  dataGaps?: string[];
+};
+
+export type AnalysisStepId = "website" | "reviews" | "local" | "competitors" | "technical";
+
+export type AnalysisStepStatus = "pending" | "running" | "done" | "failed";
+
+export type AnalysisProgressV1 = {
+  status: "queued" | "running" | "completed" | "failed";
+  percent: number;
+  currentStep: string;
+  steps: {
+    id: AnalysisStepId;
+    status: AnalysisStepStatus;
+    detail?: string;
+  }[];
 };
 
 export function parseAuditPayload(json: unknown): AuditResultPayload | null {

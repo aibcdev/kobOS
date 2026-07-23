@@ -48,9 +48,6 @@ export function SaasPricingPage() {
               <p className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="font-heading text-5xl font-semibold tracking-tight text-[#094413]">${plan.priceMonthly}</span>
                 <span className="text-sm text-[#2c2c2c]/60">/ month</span>
-                {plan.regularPriceMonthly && LAUNCH_PRICING.active ? (
-                  <span className="text-base text-[#2c2c2c]/40 line-through">${plan.regularPriceMonthly}/mo later</span>
-                ) : null}
               </p>
               <p className="mt-2 text-sm font-medium text-[#088924]">{plan.priceNote}</p>
               <Link
@@ -68,8 +65,7 @@ export function SaasPricingPage() {
           ))}
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-[#2c2c2c]/55">
-          Founding rates for the first {LAUNCH_PRICING.foundingSlots} restaurants—roughly 80% below typical platforms
-          like Owner.com ($249–$499/mo).
+          Built to cost less than typical all-in-one platforms like Owner.com ($249–$499/mo).
         </p>
       </section>
 
@@ -97,9 +93,14 @@ export function SaasPricingPage() {
       <SaasFaqAccordion title="Pricing questions" items={PRICING_FAQ} />
 
       <section className="px-6 py-20 text-center">
-        <p className="font-mono-brand text-xs font-semibold uppercase tracking-wider text-[#088924]">Not sure yet?</p>
-        <h2 className="font-heading mt-3 text-2xl font-semibold text-[#2c2c2c] md:text-3xl">Start with a free AI scan</h2>
+        <p className="font-mono-brand text-xs font-semibold uppercase tracking-wider text-[#088924]">
+          {marketingCopy.pricing.closingEyebrow}
+        </p>
+        <h2 className="font-heading mt-3 text-2xl font-semibold text-[#2c2c2c] md:text-3xl">
+          {marketingCopy.pricing.closingHeadline}
+        </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-[#2c2c2c]/70">{marketingCopy.auditSubline}</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-[#2c2c2c]/55">{marketingCopy.closingSuggestive}</p>
         <Link
           href="/#audit-form"
           className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#094413] px-8 text-sm font-semibold text-[#fbf8f5] hover:bg-[#088924]"

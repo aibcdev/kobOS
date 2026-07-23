@@ -1,3 +1,5 @@
+import { marketingCopy } from "@/lib/marketing/copy";
+
 import { SaasIcon } from "./SaasIcon";
 
 const STEPS = [
@@ -33,13 +35,13 @@ export function SaasHowItWorks() {
       <div className="mx-auto max-w-[83rem]">
         <div className="mx-auto max-w-2xl text-center">
           <p className="font-mono-brand text-xs font-semibold uppercase tracking-wider text-[var(--color-forest-mid)]">
-            How KOB works
+            {marketingCopy.howItWorksEyebrow}
           </p>
           <h2 className="font-heading mt-3 text-3xl font-semibold tracking-tight text-[#1a1a1a] md:text-5xl">
-            Scan. Approve. Request help.
+            {marketingCopy.howItWorksHeadline}
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-[#2c2c2c]/70 md:text-base">
-            Built for owners who want a clear next step—not another dashboard full of modules.
+            {marketingCopy.howItWorksSubline}
           </p>
         </div>
 
@@ -61,7 +63,7 @@ export function SaasHowItWorks() {
 
         <p className="mt-10 flex items-center justify-center gap-2 text-sm text-[#2c2c2c]/55">
           <SaasIcon icon="solar:shield-check-bold" className="text-[var(--color-forest-mid)]" />
-          Free scan first · No card · Cancel anytime
+          {marketingCopy.howItWorksProof}
         </p>
       </div>
     </section>
