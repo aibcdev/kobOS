@@ -50,6 +50,8 @@ export function getPreviewRestaurant(): Restaurant {
     googleBusinessUrl: null,
     aiPersonality: "BALANCED",
     useSampleData: true,
+    creditBalance: 0,
+    creditsRefreshedAt: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
   };
