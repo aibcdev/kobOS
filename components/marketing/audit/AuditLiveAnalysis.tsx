@@ -179,7 +179,7 @@ export function AuditLiveAnalysis({
       <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
         <div className="rounded-[1.5rem] border border-[#2c2c2c]/8 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-lg font-semibold text-[#1a1a1a] sm:text-xl">Your free scan is in progress</h2>
+            <h2 className="text-lg font-semibold text-[#1a1a1a] sm:text-xl">Your free audit is in progress</h2>
             <p className="text-sm text-[#2c2c2c]/55">Taking about 60 seconds</p>
           </div>
 

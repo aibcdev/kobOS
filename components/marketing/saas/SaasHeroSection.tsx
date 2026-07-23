@@ -24,13 +24,15 @@ export function SaasHeroSection() {
             {marketingCopy.heroTrustBadge}
           </p>
 
-          <h1 className="font-heading mt-3 text-[2.75rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.5rem]">
-            {marketingCopy.heroHeadlineLead}{" "}
-            <em className="italic">{marketingCopy.heroHeadlineAccent}</em>{" "}
-            {marketingCopy.heroHeadlineTail}
+          <h1 className="font-heading mt-4 space-y-1 text-[2.5rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.35rem]">
+            <span className="block">
+              Get more <em className="italic">customers</em>.
+            </span>
+            <span className="block">Keep more customers.</span>
+            <span className="block">Ask KOB to do everything else.</span>
           </h1>
 
-          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
             {marketingCopy.heroSubline}
           </p>
           <p className="mt-1.5 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
@@ -86,7 +88,13 @@ export function SaasHeroSection() {
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
-              <path d="M42 24l10 6-8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M42 24l10 6-8 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </p>
 
@@ -98,10 +106,10 @@ export function SaasHeroSection() {
               className="aspect-[4/5] w-full object-cover object-top sm:aspect-[5/6]"
             />
 
-            <div className="absolute top-6 left-4 w-[min(100%,220px)] rounded-2xl border border-white/60 bg-white/95 p-3.5 shadow-lg backdrop-blur-sm sm:top-10 sm:left-6">
+            <div className="absolute top-6 left-4 w-[min(100%,230px)] rounded-2xl border border-white/60 bg-white/95 p-3.5 shadow-lg backdrop-blur-sm sm:top-10 sm:left-6">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-semibold tracking-wider text-[#2c2c2c]/45 uppercase">
-                  Today&apos;s brief
+                  Today&apos;s growth list
                 </p>
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-forest)] px-1.5 text-[10px] font-bold text-white">
                   3
@@ -112,26 +120,26 @@ export function SaasHeroSection() {
                   <span className="mt-0.5 text-[var(--color-forest-mid)]" aria-hidden>
                     ✓
                   </span>
-                  Reply to 2 new reviews
+                  Reply to 2 reviews
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-[var(--color-forest-mid)]" aria-hidden>
                     ✓
                   </span>
-                  Update your opening hours
+                  Fix Google hours
                 </li>
                 <li className="flex items-start gap-2 text-[#2c2c2c]/55">
                   <span className="mt-0.5" aria-hidden>
                     ○
                   </span>
-                  Holiday post draft
+                  Fill tomorrow&apos;s empty covers
                 </li>
               </ul>
             </div>
 
             <div className="absolute right-4 bottom-6 w-[min(100%,210px)] rounded-2xl border border-white/60 bg-white p-3.5 shadow-lg sm:right-6 sm:bottom-10">
               <p className="text-sm font-semibold text-[#1a1a1a]">Ready to approve</p>
-              <p className="mt-1 text-xs text-[#2c2c2c]/60">3 tasks · takes ~2 minutes</p>
+              <p className="mt-1 text-xs text-[#2c2c2c]/60">3 fixes · ~2 minutes</p>
               <button
                 type="button"
                 tabIndex={-1}

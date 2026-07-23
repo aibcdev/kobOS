@@ -79,7 +79,7 @@ export function getLeadEngineConfig(): LeadEngineConfig {
     requireWeakWebsite: process.env.LEAD_ENGINE_REQUIRE_WEAK_WEBSITE?.trim() === "1",
     requireStaleWebsite: process.env.LEAD_ENGINE_REQUIRE_STALE_WEBSITE?.trim() === "1",
     dailyCap: Math.min(150, Math.max(10, Number(process.env.LEAD_ENGINE_DAILY_CAP?.trim() || "80") || 80)),
-    minScoreForOutreach: Math.min(100, Math.max(1, Number(process.env.LEAD_ENGINE_MIN_SCORE?.trim() || "60") || 60)),
+    minScoreForOutreach: Math.min(200, Math.max(1, Number(process.env.LEAD_ENGINE_MIN_SCORE?.trim() || "70") || 70)),
     outreachDailyCap: Math.min(50, Math.max(5, Number(process.env.LEAD_ENGINE_OUTREACH_DAILY_CAP?.trim() || "25") || 25)),
     analyzerDailyCap: Math.min(100, Math.max(10, Number(process.env.LEAD_ENGINE_ANALYZER_DAILY_CAP?.trim() || "50") || 50)),
     seedTarget: Math.max(100, Number(process.env.LEAD_ENGINE_SEED_TARGET?.trim() || "3000") || 3000),

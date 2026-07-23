@@ -1,29 +1,12 @@
 import { analyzeWebsiteFull } from "@/lib/audit/analyze-url";
 import type { UrlSignals } from "@/lib/audit/analyze-url";
 import type { OutboundProspect } from "@/lib/outbound/prospect-types";
-import { getOutboundIcpConfig } from "@/lib/outbound/icp-config";
+import { mapProspectToIcpInput } from "@/lib/outbound/map-to-icp-input";
+import { scoreIcp } from "@/lib/outbound/score-icp";
 
 export type QualifyResult =
-  | { ok: true; qualifyScore: number; topIssue: string }
+  | { ok: true; qualifyScore: number; topIssue: string; icpStatus: "qualified" }
   | { ok: false; reason: string };
-
-function scoreFromSignals(s: UrlSignals): number {
-  let score = 28;
-  if (s.fetched) score += 8;
-  if (s.status && s.status >= 200 && s.status < 400) score += 6;
-  if (s.isHttps) score += 6;
-  if (s.hasMetaDescription) score += 10;
-  if (s.hasJsonLd) score += 12;
-  if (s.hasViewport) score += 10;
-  if (s.hasCanonical) score += 5;
-  if (s.hasOgTitle) score += 5;
-  if (s.h1Count === 1) score += 6;
-  if (s.titleLen >= 12 && s.titleLen <= 70) score += 6;
-  if (s.hasTelLink) score += 4;
-  if (s.hasBookOrReserveKeyword) score += 4;
-  if (s.imgCount >= 3) score += 5;
-  return Math.min(100, score);
-}
 
 function topIssueFromSignals(s: UrlSignals): string {
   const issues: string[] = [];
@@ -38,7 +21,10 @@ function topIssueFromSignals(s: UrlSignals): string {
   return issues.slice(0, 2).join("; ");
 }
 
-/** Lightweight homepage check — pass only if score is below ICP threshold (weaker sites). */
+/**
+ * Qualify for cold email using ICP Fit Score (icp-fit-v1).
+ * Only status === "qualified" (score ≥ 70) passes.
+ */
 export async function qualifyProspect(prospect: OutboundProspect): Promise<QualifyResult> {
   const url = prospect.websiteUrl?.trim();
   if (!url) {
@@ -46,16 +32,46 @@ export async function qualifyProspect(prospect: OutboundProspect): Promise<Quali
   }
 
   const { signals } = await analyzeWebsiteFull(url);
-  const qualifyScore = scoreFromSignals(signals);
-  const { maxQualifyScore } = getOutboundIcpConfig();
+  const dated =
+    !signals.hasViewport ||
+    !signals.hasMetaDescription ||
+    !signals.hasJsonLd ||
+    (signals.titleLen > 0 && signals.titleLen < 12);
 
-  if (qualifyScore >= maxQualifyScore) {
-    return { ok: false, reason: `score_too_high_${qualifyScore}` };
+  const icp = scoreIcp(
+    mapProspectToIcpInput({
+      placeId: prospect.placeId,
+      name: prospect.name,
+      city: prospect.formattedAddress?.split(",").slice(-2, -1)[0]?.trim() ?? null,
+      websiteUrl: url,
+      rating: prospect.rating,
+      reviewCount: prospect.userRatingCount,
+      locationCount: 1,
+      websiteStale: dated,
+      weakWebsite: dated,
+      hasGoogleBusinessPosts: null,
+    }),
+  );
+
+  if (icp.status === "discard") {
+    return {
+      ok: false,
+      reason: icp.disqualifiers[0] ?? `icp_discard_${icp.fit_score}`,
+    };
   }
+  if (icp.status === "park") {
+    return { ok: false, reason: `icp_park_${icp.fit_score}` };
+  }
+
+  const topIssue =
+    icp.personalization_hooks[0] ??
+    icp.matched_factors[0] ??
+    topIssueFromSignals(signals);
 
   return {
     ok: true,
-    qualifyScore,
-    topIssue: topIssueFromSignals(signals),
+    qualifyScore: icp.fit_score,
+    topIssue,
+    icpStatus: "qualified",
   };
 }

@@ -14,18 +14,18 @@ const STEP_VISUALS = [
   {
     kind: "checklist" as const,
     rows: [
+      { label: "Google presence", status: "Scanned" },
       { label: "Website", status: "Scanned" },
-      { label: "Google listing", status: "Scanned" },
       { label: "Reviews", status: "Scanning" },
-      { label: "Hours", status: "Scanning" },
+      { label: "Local SEO", status: "Scanning" },
     ],
   },
   {
     kind: "approve" as const,
     rows: [
-      { label: "Reply to 2 new reviews", action: "Review" },
-      { label: "Draft holiday social post", action: "Review" },
-      { label: "Confirm opening hours", action: "Review" },
+      { label: "Reply to 2 reviews", action: "Review" },
+      { label: "Campaign for quiet Tuesday", action: "Review" },
+      { label: "Fix Google hours", action: "Review" },
     ],
   },
   {
@@ -139,7 +139,7 @@ export function SaasHowItWorks() {
             <p className="font-mono-brand text-[11px] font-semibold tracking-[0.16em] text-[var(--color-forest-mid)] uppercase">
               The proof
             </p>
-            <p className="mt-2 text-sm text-[#2c2c2c]/60">Your website is your front door online.</p>
+            <p className="mt-2 text-sm text-[#2c2c2c]/60">Most restaurants lose customers online and don’t know where.</p>
             <ul className="mt-5 space-y-5">
               {industryStatsBand.stats.map((stat, i) => (
                 <li key={stat.label} className="flex gap-4">

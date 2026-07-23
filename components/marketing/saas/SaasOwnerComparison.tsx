@@ -10,13 +10,13 @@ function Check() {
 }
 
 const BENEFITS = [
-  "Daily visibility tasks",
-  "Approve in one tap",
-  "Credits for website & SEO",
+  "Free audit that finds lost bookings",
+  "Google, reviews, website, local SEO",
+  "Daily growth list you approve",
+  "Ask KOB for campaigns when covers are soft",
   "7-day free trial",
   "No long-term contracts",
-  "Plain-English briefs",
-  "Trusted by 500+ restaurant owners",
+  "Built for independent restaurants",
 ] as const;
 
 const AVATARS = [

@@ -166,7 +166,8 @@ export function ChatWorkspace({
         <div className="flex-1 overflow-y-auto px-4 py-6">
           {messages.length === 0 && !streaming ? (
             <p className="type-body-md text-center text-[var(--color-muted)]">
-              Ask your Chief of Staff anything — reviews, posts, emails, bookings…
+              Ask KOB anything — reviews, posts, campaigns, bookings…
+
             </p>
           ) : null}
           <div className="mx-auto max-w-2xl space-y-4">
@@ -207,7 +208,7 @@ export function ChatWorkspace({
           <div className="mx-auto flex max-w-2xl gap-2">
             <input
               className={appInput}
-              placeholder="Ask your Chief of Staff…"
+              placeholder="Ask KOB…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void send()}

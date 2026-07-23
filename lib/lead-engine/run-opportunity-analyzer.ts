@@ -1,6 +1,7 @@
 import { analyzeProspectWebsite } from "@/lib/lead-engine/analyze-prospect";
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
-import { computeKobOpportunityScore } from "@/lib/lead-engine/kob-opportunity-score";
+import { mapProspectToIcpInput } from "@/lib/outbound/map-to-icp-input";
+import { scoreIcp } from "@/lib/outbound/score-icp";
 import { LeadProspectStatus, type LeadProspect } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
@@ -68,43 +69,74 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
   const analysis = await analyzeProspectWebsite(prospect);
   if (!analysis) return "icp_failed";
 
-  const score = computeKobOpportunityScore({
-    reviewCount: prospect.reviewCount,
-    rating: prospect.rating,
-    ratingBand: analysis.ratingBand,
+  const icp = scoreIcp(
+    mapProspectToIcpInput({
+      placeId: prospect.placeId,
+      name: prospect.name,
+      city: prospect.city,
+      websiteUrl: prospect.websiteUrl,
+      rating: prospect.rating,
+      reviewCount: prospect.reviewCount,
+      locationCount: analysis.locationCount,
+      instagramPostGapDays: analysis.instagramPostGapDays,
+      websiteCopyrightYear: analysis.websiteCopyrightYear,
+      websiteStale: analysis.websiteStale,
+      weakWebsite: analysis.weakWebsite,
+      hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
+      deliveryPlatforms: prospect.deliveryPlatforms,
+      platformRankPercentile: prospect.platformRankPercentile,
+    }),
+  );
+
+  const shared = {
+    instagramUrl: analysis.instagramUrl,
     instagramFollowers: analysis.instagramFollowers,
     instagramPostGapDays: analysis.instagramPostGapDays,
     hasTikTok: analysis.hasTikTok,
+    facebookUrl: analysis.facebookUrl,
+    hasContactForm: analysis.hasContactForm,
     weakWebsite: analysis.weakWebsite,
-    websiteStale: analysis.websiteStale,
     weakPhotography: analysis.weakPhotography,
     hasEmailCapture: analysis.hasEmailCapture,
+    pdfMenu: analysis.pdfMenu,
     hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
-    instagramFollowersKnown: analysis.instagramFollowers != null,
+    hasTripadvisor: analysis.hasTripadvisor,
+    hasOnlineOrdering: analysis.hasOnlineOrdering,
     locationCount: analysis.locationCount,
-    platformRankPercentile: prospect.platformRankPercentile,
-  });
+    websiteStale: analysis.websiteStale,
+    websiteCopyrightYear: analysis.websiteCopyrightYear,
+    kobOpportunityScore: icp.fit_score,
+    scoreBreakdown: {
+      version: icp.version,
+      status: icp.status,
+      matched_factors: icp.matched_factors,
+      recommended_email_angle: icp.recommended_email_angle,
+    },
+    opportunities: icp.personalization_hooks.length
+      ? icp.personalization_hooks
+      : icp.matched_factors,
+    disqualifiers:
+      icp.disqualifiers.length > 0
+        ? icp.disqualifiers
+        : icp.status !== "qualified"
+          ? [`icp_${icp.status}_${icp.fit_score}`]
+          : [],
+    analyzedAt: new Date(),
+  };
 
-  if (score.disqualifiers.length > 0) {
+  if (icp.status !== "qualified") {
     await withDbRetry(
       () =>
         prisma.leadProspect.update({
           where: { id: prospect.id },
           data: {
             status: LeadProspectStatus.ARCHIVED,
-            disqualifiers: score.disqualifiers,
-            kobOpportunityScore: score.total,
-            scoreBreakdown: score.breakdown,
-            opportunities: score.opportunities,
-            locationCount: analysis.locationCount,
-            websiteStale: analysis.websiteStale,
-            websiteCopyrightYear: analysis.websiteCopyrightYear,
-            analyzedAt: new Date(),
+            ...shared,
           },
         }),
-      "leadProspect.update(disqualified)",
+      "leadProspect.update(icp_not_qualified)",
     );
-    return "disqualified";
+    return icp.status === "park" ? "icp_park" : "disqualified";
   }
 
   await withDbRetry(
@@ -113,27 +145,7 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
         where: { id: prospect.id },
         data: {
           status: LeadProspectStatus.ANALYZED,
-          instagramUrl: analysis.instagramUrl,
-          instagramFollowers: analysis.instagramFollowers,
-          instagramPostGapDays: analysis.instagramPostGapDays,
-          hasTikTok: analysis.hasTikTok,
-          facebookUrl: analysis.facebookUrl,
-          hasContactForm: analysis.hasContactForm,
-          weakWebsite: analysis.weakWebsite,
-          weakPhotography: analysis.weakPhotography,
-          hasEmailCapture: analysis.hasEmailCapture,
-          pdfMenu: analysis.pdfMenu,
-          hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
-          hasTripadvisor: analysis.hasTripadvisor,
-          hasOnlineOrdering: analysis.hasOnlineOrdering,
-          locationCount: analysis.locationCount,
-          websiteStale: analysis.websiteStale,
-          websiteCopyrightYear: analysis.websiteCopyrightYear,
-          kobOpportunityScore: score.total,
-          scoreBreakdown: score.breakdown,
-          opportunities: score.opportunities,
-          disqualifiers: score.disqualifiers,
-          analyzedAt: new Date(),
+          ...shared,
         },
       }),
     "leadProspect.update(analyzed)",

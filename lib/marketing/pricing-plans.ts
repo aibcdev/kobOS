@@ -31,7 +31,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     regularPriceMonthly: 125,
     priceNote: "+ 2.5% platform fee per order",
     description:
-      "Daily helper for reviews, hours, and posts—plus credits to request website, SEO, or brand work. Low monthly while you grow.",
+      "Restaurant growth software to get more customers—audit, Google, reviews, and campaigns you approve. Low monthly while you grow.",
     stripeTier: "starter",
     highlight: true,
   },
@@ -43,7 +43,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     regularPriceMonthly: 250,
     priceNote: "No additional order fees",
     description:
-      "One predictable monthly price. Same daily list and credit-backed requests—without per-order fees.",
+      "One predictable monthly price. Same growth tools—more customers, keep more customers, ask KOB—without per-order fees.",
     stripeTier: "pro",
   },
 ];
@@ -60,10 +60,10 @@ export type ComparisonRow = {
 /** Structured KOB vs Owner.com — homepage + pricing reference */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
-  eyebrow: "Same kind of help.",
-  headline: "Lower price. Built for busy owners.",
+  eyebrow: "Restaurant growth software.",
+  headline: "Get more customers. Lower price than full-stack platforms.",
   subline:
-    "Owner.com sells a full stack at premium rates. KOB starts with a free scan, a daily list you approve, and credits for website, SEO, and brand requests.",
+    "Owner.com sells a full stack at premium rates. KOB helps independent restaurants get more customers—starting with a free audit, then Google, reviews, website, and campaigns you approve.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   footnote: "*Owner.com pricing verified 2023-06-19. Competitor names used for comparison only.",
@@ -138,14 +138,14 @@ export const OWNER_COMPARISON = {
 } as const;
 
 export const PRICING_INCLUDED_FEATURES = [
-  { title: "Free online scan", detail: "See what guests notice before you spend a penny." },
-  { title: "Daily task helper", detail: "Reviews, holidays, hours, and posts—in a list you approve each morning." },
-  { title: "Draft replies & posts", detail: "We prepare copy. Nothing goes live until you say so." },
-  { title: "Service requests with credits", detail: "Request website, SEO, logo, or creative work—KOB fulfills it." },
-  { title: "UK holiday calendar", detail: "Bank holidays and busy weekends flagged early." },
+  { title: "Free restaurant audit", detail: "See where you’re losing customers online before you spend." },
+  { title: "Get more customers", detail: "Google presence, website, reviews, local SEO, and social—prioritised by impact." },
+  { title: "Keep more customers", detail: "Review engine, recovery-style follow-ups, and consistent presence." },
+  { title: "Ask KOB", detail: "Campaigns and fixes in plain English—you approve before anything goes live." },
+  { title: "Weekly growth focus", detail: "A short list of what will fill more tables this week." },
   { title: "Listing & photo checks", detail: "Flags when Google or your site looks off vs competitors." },
-  { title: "Plain-English briefings", detail: "What needs doing, why, and how long—no SEO deck required." },
-  { title: "7-day free trial", detail: "Start after your scan. Cancel anytime." },
+  { title: "Plain-English briefs", detail: "What’s costing you customers, why, and how long to fix." },
+  { title: "7-day free trial", detail: "Start after your audit. Cancel anytime." },
   { title: "Transparent plans", detail: "Flex from $49/mo or Flat at $99/mo—pick what fits how you take orders." },
 ] as const;
 
@@ -164,7 +164,7 @@ export const PRICING_FAQ = [
   },
   {
     q: "How is KOB different from Owner.com?",
-    a: "Owner.com sells a full revenue stack—website, ordering, app, and marketing—starting at $249/mo plus fees. KOB focuses on a free scan, a daily list you approve, and credit-backed requests for website and SEO work. Lower price, clearer next step.",
+    a: "Owner.com sells a full revenue stack—website, ordering, app, and marketing—starting at $249/mo plus fees. KOB is restaurant growth software: get more customers, keep more customers, ask KOB for the rest—starting with a free audit. Lower price, clearer job.",
   },
   {
     q: "Do you require contracts?",
@@ -172,6 +172,6 @@ export const PRICING_FAQ = [
   },
   {
     q: "How long does setup take?",
-    a: "Run a free scan in about a minute. Trial signup takes a few minutes. Your first daily task list appears after you connect your restaurant.",
+    a: "Run a free audit in about a minute. Trial signup takes a few minutes. Your first growth list appears after you connect your restaurant.",
   },
 ] as const;

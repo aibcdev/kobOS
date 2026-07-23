@@ -33,7 +33,7 @@ export function SaasWebsiteFeaturePage() {
       <SaasPageHero
         eyebrow="Your online shop window"
         title="Guests judge you online before they walk in"
-        description="We check your site and listing, flag what looks off, and add fixes to your daily task list. Start with a free scan."
+        description="We audit where you’re losing customers online, flag the highest-impact fixes, and put them on a list you approve. Start with a free audit."
       />
 
       <SaasBenefitTabs

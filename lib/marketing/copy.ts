@@ -1,58 +1,65 @@
 /**
- * KOB public marketing copy — free scan → daily task list → approve / request with credits.
+ * KOB public marketing copy — restaurant growth: get more customers.
+ * AI is how we deliver; customers are the promise.
  */
 import { industryStats, industryStatsFootnote } from "@/lib/marketing/industry-stats";
 
 export const marketingCopy = {
-  tagline: "Your restaurant's ultimate employee.",
-  trustLine: "Built for independent restaurants and cafés",
-  trustLineShort: "For busy owners who want a clear next step",
+  tagline: "We help independent restaurants get more customers.",
+  trustLine: "Restaurant growth software for independent venues",
+  trustLineShort: "Built to fill more tables—not another stack of tools",
 
-  heroHeadline: "Your restaurant’s ultimate employee.",
-  heroHeadlineLead: "Your restaurant’s",
-  heroHeadlineAccent: "ultimate",
-  heroHeadlineTail: "employee.",
-  heroTrustBadge: "Trusted by 500+ restaurants & cafés",
+  /** Primary promise — homepage hero */
+  heroHeadline: "Get more customers.",
+  heroHeadlineLead: "Get more",
+  heroHeadlineAccent: "customers",
+  heroHeadlineTail: ".",
+  heroPromiseLines: [
+    "Get more customers.",
+    "Keep more customers.",
+    "Ask KOB to do everything else.",
+  ] as const,
+  heroTrustBadge: "Free audit for independent restaurants & cafés",
   heroSubline:
-    "KOB watches your website, Google listing, and reviews—then gives you a short daily list. Approve in one tap. Nothing goes live without you.",
+    "We find where you’re losing diners online—Google, reviews, website, social—then help you fix it and fill more tables.",
   heroSublineSecondary:
-    "Start with a free scan. See what guests see before they book.",
-  heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
-  heroSocialProof: "Trusted by 500+ restaurants & cafés",
-  heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
-  losingSalesOnline: "Your website is your front door online",
-  useAiToFix: " Free hospitality perception report.",
+    "Start with a free restaurant audit. See what’s costing you bookings before you spend a penny.",
+  heroProofPoints: ["Free audit", "Takes about 1 minute", "No card required"] as const,
+  heroSocialProof: "Built for busy independent restaurants",
+  heroAnnotation: "More covers. Clear next steps.",
+  losingSalesOnline: "Most restaurants lose customers online and don’t know where",
+  useAiToFix: " Free restaurant growth audit.",
 
   auditSubline:
-    "In about a minute we’ll show what guests notice on your site and Google listing—photos, hours, reviews, and trust. No card.",
+    "In about a minute we’ll show where guests drop off—Google, reviews, website, and local search—and what to fix first.",
   productSubline:
-    "See the gaps, approve drafts, and request website or SEO work with credits—without juggling five apps.",
+    "Restaurant growth software: get more customers, keep more customers, and ask KOB to handle the rest.",
 
   trustBandBody:
-    "Most guests decide online before they visit. KOB shows what they see, gives you a daily list to approve, and lets you request deliverables with credits.",
+    "Restaurant owners don’t wake up needing an AI chief of staff. They wake up needing more bookings. KOB exists to fill more tables.",
 
   howItWorksEyebrow: "How KOB works",
   howItWorksHeadline: "How KOB works",
   howItWorksSubline:
-    "We watch what guests see online. You approve a short daily list. Stay consistent without another agency.",
-  howItWorksProof: "Free scan first · You stay in control · Cancel anytime",
+    "One promise: more customers. Everything else—Google, reviews, website, campaigns—is how we get you there.",
+  howItWorksProof: "Free audit first · You approve every change · Cancel anytime",
 
-  midCtaHeadline: "Your website is your front door online",
-  midCtaCardTitle: "See what guests see—before another cover walks past.",
+  midCtaHeadline: "See how many customers you’re losing online",
+  midCtaCardTitle: "Free restaurant audit—where bookings leak before they reach you.",
   midCtaCardBody: "Enter your restaurant name or website. Results in about a minute. No card.",
 
   finalCtaEyebrow: "Start free",
-  finalCtaHeadline: "Don’t leave tonight’s bookings to a weak first impression.",
+  finalCtaHeadline: "Stop guessing why Tuesday is quiet.",
   finalCtaSubline:
-    "Run a free scan now. Unlock your report, then wake up to a short list you approve in one tap—so guests find the restaurant you actually run.",
-  finalCtaFinePrint: "Free scan · No card · Nothing goes live without you",
+    "Run a free audit. See what’s costing you customers online. Then use KOB to get more, keep more, and fill the gaps.",
+  finalCtaFinePrint: "Free audit · No card · Nothing goes live without you",
 
-  closingSuggestive: "Still guessing what guests see? Start with the free scan—it takes about a minute.",
+  closingSuggestive: "We found ways restaurants lose customers online every week. Start with your free audit.",
 
   cta: {
-    aiReport: "Run free scan",
+    aiReport: "Get free audit",
     freeDemo: "Book a demo",
-    freeScan: "Run free scan",
+    freeScan: "Get free audit",
     seeProduct: "See how it works",
     viewPricing: "View pricing",
     getDemo: "Talk to us",
@@ -61,60 +68,60 @@ export const marketingCopy = {
   },
 
   nav: {
-    freeAiReport: "Free scan",
+    freeAiReport: "Free audit",
   },
 
   pricing: {
-    lead: "Clear pricing for busy restaurants.",
-    subline: "Two simple plans. No long-term contracts.",
-    feeLine: "Start with a free scan—then a daily helper plus credits for website, SEO, and brand requests.",
+    lead: "Restaurant growth software. Clear pricing.",
+    subline: "One job: more customers. No long-term contracts.",
+    feeLine: "Start with a free audit—then tools that help you fill tables and keep guests coming back.",
     closingEyebrow: "Ready when you are",
-    closingHeadline: "See the gaps first. Pick a plan when it makes sense.",
+    closingHeadline: "See where you’re losing customers. Pick a plan when it makes sense.",
   },
 
   footerTagline:
-    "Your restaurant’s daily helper online—scan what guests see, approve the fixes, request the rest with credits.",
+    "Restaurant growth software—get more customers, keep more customers, ask KOB to do the rest.",
 
   scanning: {
-    headline: "Scanning…",
-    subline: "Checking what guests see when they find you online—vs strong restaurants nearby.",
-    contextLine: "Most guests decide on your website before they visit—we're checking what they see.",
-    mapStatus: (name: string) => `Scanning ${name} & competitors`,
-    gbpStatus: "Scanning Google Business Profile",
-    websiteStatus: (host: string) => `Scanning ${host}`,
-    mobileStatus: "Scanning mobile experience",
-    reviewsStatus: "Scanning Google Reviews",
+    headline: "Auditing…",
+    subline: "Finding where you’re losing customers online—vs restaurants nearby that fill more tables.",
+    contextLine: "Most guests decide online before they book—we're finding where you lose them.",
+    mapStatus: (name: string) => `Checking ${name} & local competitors`,
+    gbpStatus: "Checking Google Business Profile",
+    websiteStatus: (host: string) => `Checking ${host}`,
+    mobileStatus: "Checking mobile experience",
+    reviewsStatus: "Checking Google Reviews",
   },
 
   graderPrompts: [
-    { label: "How's my Google SEO?", icon: "search" as const },
+    { label: "Where am I losing customers?", icon: "search" as const },
     { label: "What's broken on my site?", icon: "site" as const },
-    { label: "Who's beating me and how?", icon: "crown" as const },
+    { label: "Who's beating me nearby?", icon: "crown" as const },
   ] as const,
 
   graderReport: {
-    onlineHealth: "Digital positioning",
+    onlineHealth: "Customer-acquisition score",
   },
 
   auditScanStages: {
     fetch: "Checking your website",
     render: "Reviewing pages & menus",
     extract: "Pulling photos & reviews",
-    score: "Scoring against strong brands",
+    score: "Scoring where bookings leak",
     benchmark: "Writing your summary",
     done: "Almost ready",
     local: "Checking local visibility",
   },
 
   auditUnlock: {
-    modalTitle: "Unlock your free report",
+    modalTitle: "Unlock your free audit",
     modalBody:
-      "See scores, photo gaps, and what guests notice—the same issues that put 7 in 10 people off weak sites. Then get a daily list of what to fix.",
+      "See your score, where guests drop off, and the highest-impact fixes—Google, menu, reviews, homepage. Then get a clear list to fill more tables.",
     modalSubtitleCompetitors:
-      "See why {competitorA} and {competitorB} are beating you on Google.",
+      "See why {competitorA} and {competitorB} are winning more of your local customers.",
     emailLabel: "Work email",
     phoneLabel: "Mobile number",
-    submit: "Unlock full report",
+    submit: "Unlock full audit",
     submitting: "Unlocking…",
     legal:
       "By continuing you agree to our Terms of Service and Privacy Policy. We use your details to save your report. Your account is created when you start a paid plan or free trial.",
@@ -122,55 +129,56 @@ export const marketingCopy = {
 
   auditInsights: [
     {
-      quote: `${industryStats.websiteBeforeVisit.value} of guests check your site first—slow pages and weak photos lose them before they book.`,
+      quote: `${industryStats.websiteBeforeVisit.value} of guests check you online first—weak presence loses bookings before they call.`,
+      tag: "Discovery",
+    },
+    {
+      quote: `${industryStats.deterredByWeakSite.value} are put off by a weak website—that’s lost covers, not “SEO jargon.”`,
       tag: "Website",
     },
     {
-      quote: `${industryStats.visitForMenu.value} visit mainly to see your menu—if Google can't find it, they go elsewhere.`,
-      tag: "Listings",
-    },
-    {
-      quote: `Nearly ${industryStats.deterredByWeakSite.value} are put off by a bad mobile experience before they ever visit.`,
-      tag: "Mobile",
+      quote: `Menus with great photos see ${industryStats.menuPhotoOrders.value} more orders—your audit flags what guests actually see.`,
+      tag: "Menu",
     },
   ] as const,
 
-  auditInsightsClosing: "You don’t need a full rebrand—you need to know what to fix first. Start with the free scan.",
+  auditInsightsClosing:
+    "You don’t need another AI toy—you need more customers. Start with the free audit.",
 
   auditUpgrade: {
-    headline: "Turn the scan into a daily fix list",
-    body: "Your free scan found the gaps. Start your trial for a morning list of what needs doing—one tap to approve.",
+    headline: "Turn the audit into more bookings",
+    body: "Your free audit found where customers drop off. Start your trial for a daily list that helps you get more—and keep more—guests.",
     bullets: [
-      "Daily tasks from your scan—reviews, holidays, hours, posts",
-      "Plain English: what needs doing and why",
-      "Approve in one tap—we prepare drafts for you to review",
-      "Request website, SEO, or brand work with credits",
+      "Daily growth tasks from your audit—Google, reviews, posts, hours",
+      "Plain English: what’s costing you customers and why",
+      "Approve in one tap—we prepare the work for you to review",
+      "Ask KOB when you need a campaign or a fix",
       "7-day free trial · cancel anytime",
     ] as const,
   },
 
   auditReport: {
-    dailyHelperLabel: "Your daily helper",
+    dailyHelperLabel: "Your growth list",
     shareCopied: "Link copied",
     shareFailed: "Could not share — link copied instead",
-    unlockNavHint: "Unlock your report to view this section",
+    unlockNavHint: "Unlock your audit to view this section",
   },
 
   demo: {
     step1Headline: `Tell us about your restaurant—${industryStats.websiteBeforeVisit.value} of guests check you online first`,
-    step1Hint: "We'll scan what they see before they visit or book.",
-    step2Subline: "Your report shows what's slipping through online.",
-    photosFeatureDesc: `Menus with great photos see ${industryStats.menuPhotoOrders.value} more orders—your scan flags photo gaps.`,
+    step1Hint: "We'll audit where you're losing customers before they book.",
+    step2Subline: "Your audit shows what’s costing you covers.",
+    photosFeatureDesc: `Menus with great photos see ${industryStats.menuPhotoOrders.value} more orders—your audit flags photo gaps.`,
   },
 
   auth: {
-    headline: "Your restaurant helper starts here",
+    headline: "Get more customers—start here",
     statLine:
-      "Most guests decide on your website before they visit. KOB shows you what to fix—then gives you a daily list to approve.",
+      "Most guests decide online before they visit. KOB shows where you lose them—then helps you fill more tables.",
     bullets: [
-      "Free online scan in about a minute",
-      "See what guests notice before they book",
-      "Daily tasks plus credits for website, SEO, and brand requests",
+      "Free restaurant audit in about a minute",
+      "See where you’re losing customers online",
+      "Daily growth list plus ask KOB for campaigns and fixes",
     ] as const,
     signInTitle: "Welcome back",
     signUpTitle: "Create your account",
@@ -183,17 +191,17 @@ export const marketingCopy = {
   },
 
   dashboardOnboarding: {
-    body: "Add your restaurant—we'll build your daily task list from what guests see online.",
-    websiteHint: `${industryStats.websiteBeforeVisit.value} of guests check this before they visit. We'll score it in your first scan.`,
+    body: "Add your restaurant—we'll show where you're losing customers online and what to fix first.",
+    websiteHint: `${industryStats.websiteBeforeVisit.value} of guests check this before they visit. We'll score it in your first audit.`,
   },
 
   marqueeQuotes: [
-    "Finally a clear list of what to fix—without paying an agency first.",
-    "We didn't realise how many guests were judging us online before they booked.",
-    "I approve a review reply in the morning and move on with service.",
-    "Holiday posts used to slip—we get a reminder and a draft ready.",
-    "One place for hours, menu, and reviews beat juggling five apps.",
-    "Request the website work with credits—someone actually delivers it.",
+    "Finally clear on why Tuesdays were quiet—and what to fix first.",
+    "We didn’t realise how many guests never made it to a booking.",
+    "I approve a review reply in the morning and get on with service.",
+    "It’s not another marketing tool—it’s about filling tables.",
+    "Google and reviews in one place beat juggling five apps.",
+    "Ask KOB when it’s raining and we need to fill covers tonight.",
   ] as const,
 
   input: {

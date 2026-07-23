@@ -6,8 +6,9 @@
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const defaultSiteMeta = {
-  title: `KOB | ${marketingCopy.tagline.replace(/\.$/, "")}`,
-  description: `${marketingCopy.heroSubline} Free scan of your website, SEO, photos, and reviews—then a daily list you approve in one tap.`,
+  title: "KOB | We help independent restaurants get more customers",
+  description:
+    "Restaurant growth software. Free audit shows where you’re losing diners online—Google, reviews, website—then helps you fill more tables.",
 } as const;
 
 export const DEFAULT_HERO_IMAGE =

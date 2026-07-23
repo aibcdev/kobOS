@@ -1,6 +1,7 @@
 /**
- * Owner.com-style dashboard navigation — outcome groups, not flat tool lists.
- * Maps KOB surfaces onto discovery / sales / repeat / workspace.
+ * Dashboard navigation — organised around outcomes (customers / revenue),
+ * not a flat list of tools. Delivery, catering, and phone ordering are omitted
+ * from the primary IA to keep the growth story clear.
  */
 
 export type DashboardNavIcon =
@@ -40,59 +41,57 @@ export type DashboardNavGroup = {
   items: DashboardNavItem[];
 };
 
-/** Primary owner-facing groups (Owner.com IA mapped to KOB). */
+/** Outcome-led owner navigation. */
 export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
   {
     id: "home",
     label: null,
+    items: [{ href: "/dashboard", label: "Today", icon: "home" }],
+  },
+  {
+    id: "customers",
+    label: "Get more customers",
     items: [
-      { href: "/dashboard", label: "Today", icon: "home" },
-      { href: "/dashboard/chat", label: "Chat", icon: "chat" },
-      { href: "/dashboard/requests", label: "Requests", icon: "requests" },
+      { href: "/dashboard/listings", label: "Google Presence", icon: "listings" },
+      { href: "/dashboard/website", label: "Website", icon: "website" },
+      { href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
+      { href: "/dashboard/seo", label: "Local SEO", icon: "seo" },
+      { href: "/dashboard/content", label: "Social Media", icon: "content" },
     ],
   },
   {
-    id: "discovery",
-    label: "Grow online discovery",
-    items: [
-      { href: "/dashboard/website", label: "Restaurant Website", icon: "website" },
-      { href: "/dashboard/seo", label: "Restaurant SEO", icon: "seo" },
-      { href: "/dashboard/menu", label: "Online Menu", icon: "menu" },
-      { href: "/dashboard/reviews", label: "Reviews Engine", icon: "reviews" },
-      { href: "/dashboard/listings", label: "Listings Management", icon: "listings" },
-    ],
-  },
-  {
-    id: "sales",
-    label: "Grow online sales",
+    id: "revenue",
+    label: "Increase revenue",
     items: [
       { href: "/dashboard/ordering", label: "Online Ordering", icon: "ordering" },
-      { href: "/dashboard/upsells", label: "Smart Upsells", icon: "upsells" },
-      { href: "/dashboard/delivery", label: "Delivery", icon: "delivery" },
-      { href: "/dashboard/catering", label: "Catering", icon: "catering" },
-      {
-        href: "/dashboard/phone-ordering",
-        label: "AI Phone Ordering",
-        icon: "phone",
-        badge: "Waitlist",
-      },
+      { href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
+      { href: "/dashboard/customers", label: "Loyalty & recovery", icon: "customers" },
+      { href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
     ],
   },
   {
-    id: "repeat",
-    label: "Grow repeat visits",
+    id: "chief",
+    label: "Chief of Staff",
     items: [
-      { href: "/dashboard/content", label: "Posts & Email", icon: "content" },
-      { href: "/dashboard/customers", label: "Customers", icon: "customers" },
-      { href: "/dashboard/brand", label: "Brand & Photos", icon: "brand" },
-      { href: "/dashboard/creative", label: "Creative drafts", icon: "creative" },
+      { href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
+      { href: "/dashboard/requests", label: "Create campaigns", icon: "requests" },
+      { href: "/dashboard/analytics", label: "Analyse performance", icon: "analytics" },
+    ],
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    items: [
+      { href: "/dashboard/customers", label: "Customer trends", icon: "customers" },
+      { href: "/dashboard/analytics", label: "Revenue & traffic", icon: "analytics" },
+      { href: "/dashboard/menu", label: "Menu", icon: "menu" },
+      { href: "/dashboard/brand", label: "Brand & photos", icon: "brand" },
     ],
   },
   {
     id: "account",
     label: "Account",
     items: [
-      { href: "/dashboard/analytics", label: "Traffic & Sales", icon: "analytics" },
       { href: "/dashboard/settings", label: "Settings", icon: "settings" },
       { href: "/dashboard/billing", label: "Billing", icon: "billing" },
     ],

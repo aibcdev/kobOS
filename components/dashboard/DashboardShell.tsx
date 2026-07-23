@@ -222,7 +222,7 @@ export function DashboardShell({
             href={withRestaurantQuery("/dashboard/chat", restaurantId)}
             className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[var(--color-ink)] px-4 py-3 text-sm font-medium text-[var(--color-text-warm)] shadow-lg no-underline transition-transform active:scale-95"
           >
-            Ask Chief of Staff
+            Ask KOB
           </Link>
         </div>
       ) : null}
