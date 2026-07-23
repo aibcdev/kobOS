@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { assertOpsStatusAccess } from "@/lib/ops/assert-ops-status-access";
 
-/** Safe health check — never exposes full secrets. */
-export async function GET() {
+/** Safe health check — never exposes full secrets. Ops-gated in production. */
+export async function GET(req: Request) {
+  const denied = assertOpsStatusAccess(req);
+  if (denied) return denied;
+
   const signing = process.env.INNGEST_SIGNING_KEY?.trim() ?? "";
   const event = process.env.INNGEST_EVENT_KEY?.trim() ?? "";
 

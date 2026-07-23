@@ -100,7 +100,7 @@ export async function executeChatTool(
       return { ok: true, summary: `Open ${path}`, link: `${path}?r=${restaurantId}` };
     }
     case "lead_engine_stats": {
-      const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || restaurantId;
+      const workspaceId = restaurantId;
       const [found, contactable, topCities] = await Promise.all([
         prisma.leadProspect.count({ where: platformFoundWhere(workspaceId) }),
         prisma.leadProspect.count({ where: platformQualifiedWhere(workspaceId) }),
@@ -120,7 +120,7 @@ export async function executeChatTool(
       };
     }
     case "approve_lead_batch": {
-      const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || restaurantId;
+      const workspaceId = restaurantId;
       const max = Math.min(50, Math.max(1, Number(args.max ?? 25) || 25));
       const rows = await prisma.leadProspect.findMany({
         where: {
@@ -136,7 +136,7 @@ export async function executeChatTool(
         return { ok: false, error: "No contactable leads with email to queue." };
       }
       await prisma.leadProspect.updateMany({
-        where: { id: { in: rows.map((r) => r.id) } },
+        where: { id: { in: rows.map((r) => r.id) }, workspaceRestaurantId: workspaceId },
         data: { status: LeadProspectStatus.QUEUED },
       });
       return {

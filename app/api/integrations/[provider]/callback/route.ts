@@ -2,6 +2,7 @@ import { IntegrationProvider, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { encryptSecret } from "@/lib/crypto/tokens";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
+import { decodeOAuthState } from "@/lib/integrations/oauth-state";
 import { prisma } from "@/lib/db/prisma";
 
 export async function GET(req: Request, ctx: { params: Promise<{ provider: string }> }) {
@@ -13,14 +14,19 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
     return NextResponse.redirect(`${url.origin}/dashboard/settings?error=oauth`);
   }
 
-  let state: { restaurantId: string; provider: string };
-  try {
-    state = JSON.parse(Buffer.from(stateRaw, "base64url").toString("utf8")) as {
-      restaurantId: string;
-      provider: string;
-    };
-  } catch {
+  const state = decodeOAuthState(stateRaw);
+  if (!state || state.provider !== providerRaw) {
     return NextResponse.redirect(`${url.origin}/dashboard/settings?error=state`);
+  }
+
+  const member = await prisma.teamMember.findUnique({
+    where: {
+      userId_restaurantId: { userId: state.userId, restaurantId: state.restaurantId },
+    },
+    select: { id: true },
+  });
+  if (!member) {
+    return NextResponse.redirect(`${url.origin}/dashboard/settings?error=forbidden`);
   }
 
   const provider = providerRaw as IntegrationProvider;
@@ -72,7 +78,6 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
     },
   });
 
-  // First sync now so the greeting and Need-to-know reflect the connection immediately.
   try {
     if (provider === "GOOGLE_CALENDAR") {
       const { syncGoogleCalendarEvents } = await import("@/lib/integrations/providers/google-calendar");

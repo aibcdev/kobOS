@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { geminiTextCompletion, getGeminiModelName, isGeminiConfigured } from "@/lib/ai/gemini-config";
+import { assertOpsStatusAccess } from "@/lib/ops/assert-ops-status-access";
 
-/** Safe Gemini check — tests a tiny live call when configured. */
-export async function GET() {
+/** Safe Gemini check — tests a tiny live call when configured. Ops-gated in production. */
+export async function GET(req: Request) {
+  const denied = assertOpsStatusAccess(req);
+  if (denied) return denied;
+
   const key = process.env.GEMINI_API_KEY?.trim() ?? "";
   const model = getGeminiModelName();
   const configured = isGeminiConfigured();

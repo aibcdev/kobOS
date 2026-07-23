@@ -88,7 +88,10 @@ export async function GET(request: NextRequest) {
 
   try {
     await ensureAppUser(verify.data.user);
-    await ensureSalesWorkspaceMembership(verify.data.user.id);
+    await ensureSalesWorkspaceMembership(
+      verify.data.user.id,
+      verify.data.user.email,
+    );
   } catch {
     return loginErrorRedirect(origin, "profile");
   }

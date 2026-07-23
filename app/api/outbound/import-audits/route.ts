@@ -5,7 +5,10 @@ import { requireApiUser } from "@/lib/auth/api-session";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
 import { importAuditLeadsToOutbound } from "@/lib/outbound/import-audit-leads";
-import { canUseOutboundWorkspace } from "@/lib/outbound/sales-access";
+import {
+  canUseOutboundWorkspace,
+  isOutboundSalesWorkspace,
+} from "@/lib/outbound/sales-access";
 
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
@@ -15,7 +18,7 @@ const bodySchema = z.object({
 
 export const runtime = "nodejs";
 
-/** Import unlocked audit emails into the outbound approval queue. */
+/** Import unlocked audit emails into the outbound approval queue (sales workspace only). */
 export async function POST(req: Request) {
   const session = await requireApiUser();
   if (!session.ok) {
@@ -40,6 +43,12 @@ export async function POST(req: Request) {
   }
   if (!canUseOutboundWorkspace(restaurant.subscriptionPlan)) {
     return jsonUpgradeRequired(SubscriptionPlan.PRO, restaurant.subscriptionPlan);
+  }
+  if (!isOutboundSalesWorkspace(restaurant.id)) {
+    return NextResponse.json(
+      { error: "Audit lead import is limited to the KOB sales workspace." },
+      { status: 403 },
+    );
   }
 
   const result = await importAuditLeadsToOutbound(restaurant.id, {

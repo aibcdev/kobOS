@@ -3,7 +3,10 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { inngest } from "@/inngest/client";
-import { canUseOutboundWorkspace } from "@/lib/outbound/sales-access";
+import {
+  canUseOutboundWorkspace,
+  isOutboundSalesWorkspace,
+} from "@/lib/outbound/sales-access";
 import { isUkColdOutboundMode } from "@/lib/outbound/icp-config";
 
 const bodySchema = z.object({
@@ -14,7 +17,7 @@ const bodySchema = z.object({
 
 export const runtime = "nodejs";
 
-/** Manually enqueue daily outbound jobs (same as cron + Inngest). */
+/** Manually enqueue daily outbound jobs (same as cron + Inngest). Scoped to caller's restaurant. */
 export async function POST(req: Request) {
   const session = await requireApiUser();
   if (!session.ok) {
@@ -38,22 +41,52 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  /** Platform-wide finder/UK cold only from the sales workspace. */
+  const salesWorkspace = isOutboundSalesWorkspace(restaurant.id);
   const step = parsed.data.step ?? "both";
   const events: { name: string; data: Record<string, string> }[] = [];
 
   if (step === "draft" || step === "both") {
-    events.push({ name: "lead-engine/finder.requested", data: { source: "dashboard" } });
-    events.push({ name: "lead-engine/analyzer.requested", data: { source: "dashboard" } });
-    events.push({ name: "lead-engine/outreach-writer.requested", data: { source: "dashboard" } });
-    if (isUkColdOutboundMode()) {
-      events.push({ name: "outbound/uk-cold.requested", data: { source: "dashboard" } });
-      events.push({ name: "outbound/audit-import.requested", data: { source: "dashboard" } });
+    if (salesWorkspace) {
+      events.push({
+        name: "lead-engine/finder.requested",
+        data: { source: "dashboard", restaurantId: restaurant.id },
+      });
+      events.push({
+        name: "lead-engine/analyzer.requested",
+        data: { source: "dashboard", restaurantId: restaurant.id },
+      });
+      events.push({
+        name: "lead-engine/outreach-writer.requested",
+        data: { source: "dashboard", restaurantId: restaurant.id },
+      });
+      if (isUkColdOutboundMode()) {
+        events.push({
+          name: "outbound/uk-cold.requested",
+          data: { source: "dashboard", restaurantId: restaurant.id },
+        });
+        events.push({
+          name: "outbound/audit-import.requested",
+          data: { source: "dashboard", restaurantId: restaurant.id },
+        });
+      } else {
+        events.push({
+          name: "outbound/daily.requested",
+          data: { source: "dashboard", restaurantId: restaurant.id },
+        });
+      }
     } else {
-      events.push({ name: "outbound/daily.requested", data: { source: "dashboard", restaurantId: restaurant.id } });
+      events.push({
+        name: "outbound/daily.requested",
+        data: { source: "dashboard", restaurantId: restaurant.id },
+      });
     }
   }
   if (step === "send" || step === "both") {
-    events.push({ name: "outbound/send.requested", data: { source: "dashboard" } });
+    events.push({
+      name: "outbound/send.requested",
+      data: { source: "dashboard", restaurantId: restaurant.id },
+    });
   }
 
   await inngest.send(events);

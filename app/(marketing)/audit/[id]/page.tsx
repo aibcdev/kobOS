@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavailable";
 import { AuditResultsContent } from "@/components/marketing/audit/AuditResultsContent";
+import { stripAuditPayloadForPublic } from "@/lib/audit/public-audit-payload";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { isPrismaDbUnreachableError } from "@/lib/db/prisma-errors";
 import { prisma } from "@/lib/db/prisma";
@@ -55,6 +56,9 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
     redirect(`/audit/${id}/scanning`);
   }
 
+  const unlocked = Boolean(audit.leadCapturedAt);
+  const clientPayload = unlocked ? payload : stripAuditPayloadForPublic(payload);
+
   return (
     <AuditResultsContent
       scanStillRunning={previewEarly && payload.scanStatus === "pending"}
@@ -64,16 +68,16 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
         city: audit.city,
         websiteUrl: audit.websiteUrl,
         leadCapturedAt: audit.leadCapturedAt,
-        leadEmail: audit.leadEmail,
+        leadEmail: unlocked ? audit.leadEmail : null,
         createdAt: audit.createdAt,
-        overallScore: audit.overallScore,
-        seoScore: audit.seoScore,
-        designScore: audit.designScore,
-        mobileScore: audit.mobileScore,
-        conversionScore: audit.conversionScore,
+        overallScore: unlocked ? audit.overallScore : 0,
+        seoScore: unlocked ? audit.seoScore : 0,
+        designScore: unlocked ? audit.designScore : 0,
+        mobileScore: unlocked ? audit.mobileScore : 0,
+        conversionScore: unlocked ? audit.conversionScore : 0,
         updatedAt: audit.updatedAt,
       }}
-      payload={payload}
+      payload={clientPayload}
     />
   );
 }

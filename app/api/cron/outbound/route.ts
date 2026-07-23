@@ -10,18 +10,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const events: { name: string; data: { source: string } }[] = [
-    { name: "lead-engine/finder.requested", data: { source: "http-cron" } },
-    { name: "lead-engine/analyzer.requested", data: { source: "http-cron" } },
-    { name: "lead-engine/outreach-writer.requested", data: { source: "http-cron" } },
-    { name: "outbound/send.requested", data: { source: "http-cron" } },
-    { name: "outbound/audit-import.requested", data: { source: "http-cron" } },
+  const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || "";
+  const base = { source: "http-cron", ...(workspaceId ? { restaurantId: workspaceId } : {}) };
+
+  const events: { name: string; data: Record<string, string> }[] = [
+    { name: "lead-engine/finder.requested", data: { ...base } },
+    { name: "lead-engine/analyzer.requested", data: { ...base } },
+    { name: "lead-engine/outreach-writer.requested", data: { ...base } },
+    { name: "outbound/send.requested", data: { ...base } },
+    { name: "outbound/audit-import.requested", data: { ...base } },
   ];
 
   if (process.env.OUTBOUND_MODE?.trim().toLowerCase() === "uk_cold") {
-    events.push({ name: "outbound/uk-cold.requested", data: { source: "http-cron" } });
+    events.push({ name: "outbound/uk-cold.requested", data: { ...base } });
   } else {
-    events.push({ name: "outbound/daily.requested", data: { source: "http-cron" } });
+    events.push({ name: "outbound/daily.requested", data: { ...base } });
   }
 
   await inngest.send(events);

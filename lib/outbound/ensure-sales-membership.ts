@@ -1,12 +1,22 @@
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
-import { isOutboundSalesMode } from "@/lib/outbound/sales-access";
+import {
+  isOutboundSalesAllowlisted,
+  isOutboundSalesMode,
+} from "@/lib/outbound/sales-access";
 
-/** Ensures the logged-in user can access the KOB sales workspace (UK cold / Today). */
-export async function ensureSalesWorkspaceMembership(userId: string): Promise<void> {
+/**
+ * Ensures allowlisted sales operators can access the KOB sales workspace.
+ * Fail closed: OUTBOUND_SALES_MODE alone does not grant access — require OUTBOUND_SALES_ALLOWLIST.
+ */
+export async function ensureSalesWorkspaceMembership(
+  userId: string,
+  email?: string | null,
+): Promise<void> {
   if (isUiPreviewEnabled()) return;
   if (!isOutboundSalesMode()) return;
+  if (!isOutboundSalesAllowlisted(email)) return;
 
   const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
   if (!workspaceId) return;

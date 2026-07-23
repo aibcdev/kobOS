@@ -8,20 +8,41 @@ import {
 import { parseAuditPayload } from "@/lib/audit/types";
 import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
+import {
+  checkSimpleRateLimit,
+  clientIpFromHeaders,
+} from "@/lib/security/simple-rate-limit";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**
- * Re-run perception (and optionally the full Gemini suite) when Overview is stuck on Analysing…
+ * Re-run perception (and optionally the full Gemini suite) when Overview is stuck.
+ * Requires lead unlock (paid funnel gate) + strict IP rate limit.
  */
 export async function POST(req: Request, { params }: RouteParams) {
   const { id } = await params;
+
+  const ip = clientIpFromHeaders(req.headers) ?? "unknown";
+  const rl = checkSimpleRateLimit(`retry-analysis:${ip}`, {
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+  });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "rate_limited", retryAfterSec: rl.retryAfterSec },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
+
   const audit = await prisma.visibilityAudit.findUnique({
     where: { id },
-    select: { id: true, resultPayload: true },
+    select: { id: true, resultPayload: true, leadCapturedAt: true },
   });
   if (!audit) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  if (!audit.leadCapturedAt) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   const payload = parseAuditPayload(audit.resultPayload);
@@ -41,7 +62,6 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json({ ok: true, mode: "heuristic", reason: "no_gemini_key" });
   }
 
-  // Prefer re-enqueue; if Inngest is down, run inline.
   let enqueued = false;
   try {
     await inngest.send({ name: "audit/gemini-benchmark.requested", data: { auditId: id } });
@@ -55,7 +75,11 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json({ ok: true, mode: "inline_suite", ...result, enqueued });
   }
 
-  // Fast path: unblock Overview now; Inngest continues benchmark/media
   const perception = await runAndPersistPerceptionStep(id);
-  return NextResponse.json({ ok: true, mode: "perception_plus_enqueue", perception: perception.ok, enqueued });
+  return NextResponse.json({
+    ok: true,
+    mode: "perception_plus_enqueue",
+    perception: perception.ok,
+    enqueued,
+  });
 }

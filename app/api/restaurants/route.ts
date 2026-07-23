@@ -19,7 +19,6 @@ const createSchema = z.object({
   state: z.string().max(120).optional().nullable(),
   timezone: z.string().max(80).optional(),
   website: z.string().max(2048).optional(),
-  subscriptionPlan: z.nativeEnum(SubscriptionPlan).optional(),
 });
 
 export async function GET() {
@@ -78,7 +77,7 @@ export async function POST(req: Request) {
           state: parsed.data.state ?? undefined,
           timezone: parsed.data.timezone ?? undefined,
           website: websiteUrl,
-          subscriptionPlan: parsed.data.subscriptionPlan ?? SubscriptionPlan.FREE,
+          subscriptionPlan: SubscriptionPlan.FREE,
         },
       });
 

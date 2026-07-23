@@ -19,7 +19,7 @@ export async function POST() {
 
   try {
     await ensureAppUser(user);
-    await ensureSalesWorkspaceMembership(user.id);
+    await ensureSalesWorkspaceMembership(user.id, user.email);
   } catch {
     return NextResponse.json({ error: "profile" }, { status: 500 });
   }

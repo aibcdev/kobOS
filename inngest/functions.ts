@@ -551,7 +551,7 @@ export const outboundSendApprovedDaily = inngest.createFunction(
     name: "Outbound · send approved",
     triggers: [cron("55 14 * * *"), { event: "outbound/send.requested" }],
   },
-  async ({ step }) => {
+  async ({ step, event }) => {
     const key = process.env.RESEND_API_KEY?.trim();
     if (!key) {
       return { skipped: true as const, reason: "RESEND_API_KEY missing" };
@@ -561,8 +561,18 @@ export const outboundSendApprovedDaily = inngest.createFunction(
     const delaySec = Math.max(2, Number(process.env.OUTBOUND_SEND_DELAY_SEC?.trim() || "3") || 3);
 
     const leads = await step.run("list-approved-with-email", async () => {
+      const fromEvent =
+        event && typeof event === "object" && "data" in event
+          ? (event as { data?: { restaurantId?: string } }).data?.restaurantId?.trim()
+          : undefined;
+      const workspaceId =
+        fromEvent || process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || "";
+      if (!workspaceId) {
+        return [] as Awaited<ReturnType<typeof prisma.outboundLead.findMany>>;
+      }
       const rows = await prisma.outboundLead.findMany({
         where: {
+          workspaceRestaurantId: workspaceId,
           status: OutboundLeadStatus.APPROVED,
           contactEmail: { not: null },
           messageBody: { not: null },

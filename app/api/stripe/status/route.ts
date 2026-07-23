@@ -5,9 +5,13 @@ import {
   getStripePriceStarter,
   getStripe,
 } from "@/lib/billing/stripe-server";
+import { assertOpsStatusAccess } from "@/lib/ops/assert-ops-status-access";
 
-/** Safe Stripe config check — never exposes secrets. */
-export async function GET() {
+/** Safe Stripe config check — never exposes secrets. Ops-gated in production. */
+export async function GET(req: Request) {
+  const denied = assertOpsStatusAccess(req);
+  if (denied) return denied;
+
   const secret = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
   const webhook = process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? "";
   const publishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() ?? "";

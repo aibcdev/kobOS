@@ -39,7 +39,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   await ensureAppUser(user);
-  await ensureSalesWorkspaceMembership(user.id);
+  await ensureSalesWorkspaceMembership(user.id, user.email);
 
   const memberships = await prisma.teamMember.findMany({
     where: { userId: user.id },

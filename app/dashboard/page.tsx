@@ -41,7 +41,7 @@ export default async function DashboardPage({
   }
 
   const user = await getDashboardPageUser();
-  await ensureSalesWorkspaceMembership(user.id);
+  await ensureSalesWorkspaceMembership(user.id, user.email);
   const sp = await searchParams;
   const { memberships, restaurantId, restaurant } = await getActiveRestaurantContext(user.id, sp.r);
 

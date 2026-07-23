@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { isValidAuditPhone, normalizeAuditPhone } from "@/lib/marketing/audit-lead";
+import {
+  checkSimpleRateLimit,
+  clientIpFromHeaders,
+} from "@/lib/security/simple-rate-limit";
 
 const bodySchema = z.object({
   email: z.string().trim().email().max(254),
@@ -18,6 +22,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   if (!id || id.length < 8) {
     return NextResponse.json({ error: "Invalid audit id" }, { status: 400 });
+  }
+
+  const ip = clientIpFromHeaders(req.headers) ?? "unknown";
+  const rl = checkSimpleRateLimit(`audit-lead:${ip}`, {
+    windowMs: 60 * 60 * 1000,
+    max: 20,
+  });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many unlock attempts. Try again later.", retryAfterSec: rl.retryAfterSec },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
   }
 
   let body: unknown;

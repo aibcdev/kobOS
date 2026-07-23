@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { buildOAuthUrl, isOAuthConfigured } from "@/lib/integrations/oauth-config";
+import { encodeOAuthState } from "@/lib/integrations/oauth-state";
 
 const PROVIDERS = new Set(Object.values(IntegrationProvider));
 
@@ -32,7 +33,16 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
 
   const origin = new URL(req.url).origin;
   const redirectUri = `${origin}/api/integrations/${provider}/callback`;
-  const state = Buffer.from(JSON.stringify({ restaurantId, provider, userId: session.userId })).toString("base64url");
+  let state: string;
+  try {
+    state = encodeOAuthState({
+      restaurantId,
+      provider,
+      userId: session.userId,
+    });
+  } catch {
+    return NextResponse.json({ error: "OAuth state signing unavailable" }, { status: 503 });
+  }
   const url = buildOAuthUrl(provider, state, redirectUri);
   if (!url) return NextResponse.json({ error: "OAuth URL build failed" }, { status: 503 });
 
