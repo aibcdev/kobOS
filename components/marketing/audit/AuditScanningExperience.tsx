@@ -95,7 +95,6 @@ export function AuditScanningExperience({
       preview={preview}
       previewImageUrl={previewImageUrl}
       showChrome
-      showLogoWall
     />
   );
 }

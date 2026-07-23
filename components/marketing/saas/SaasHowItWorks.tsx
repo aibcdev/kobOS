@@ -52,19 +52,19 @@ export function SaasHowItWorks() {
   }));
 
   return (
-    <section id="how-it-works" className="bg-[#f9f6f1] px-6 py-20 md:py-28">
+    <section id="how-it-works" className="bg-[#f9f6f1] px-6 py-10 md:py-14">
       <div className="mx-auto max-w-[83rem]">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-heading text-3xl tracking-tight text-[#1a1a1a] md:text-5xl">
             {marketingCopy.howItWorksHeadline}
           </h2>
-          <p className="mt-4 text-sm leading-relaxed text-[#2c2c2c]/70 md:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-[#2c2c2c]/70 md:text-base">
             {marketingCopy.howItWorksSubline}
           </p>
         </div>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-          <div className="grid gap-6 md:grid-cols-3">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+          <div className="grid gap-5 md:grid-cols-3">
             {steps.map((step) => (
               <article key={step.n} className="flex flex-col rounded-[1.5rem] border border-[#2c2c2c]/8 bg-white p-4 shadow-sm">
                 <div className="mb-4 flex items-center gap-3">
@@ -140,7 +140,7 @@ export function SaasHowItWorks() {
               The proof
             </p>
             <p className="mt-2 text-sm text-[#2c2c2c]/60">Your website is your front door online.</p>
-            <ul className="mt-8 space-y-8">
+            <ul className="mt-5 space-y-5">
               {industryStatsBand.stats.map((stat, i) => (
                 <li key={stat.label} className="flex gap-4">
                   <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[var(--color-forest)] shadow-sm">
@@ -155,7 +155,7 @@ export function SaasHowItWorks() {
                 </li>
               ))}
             </ul>
-            <p className="mt-8 text-xs text-[#2c2c2c]/40">{industryStatsBand.footnote}</p>
+            <p className="mt-5 text-xs text-[#2c2c2c]/40">{industryStatsBand.footnote}</p>
           </aside>
         </div>
       </div>

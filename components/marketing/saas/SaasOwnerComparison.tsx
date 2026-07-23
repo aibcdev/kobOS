@@ -42,17 +42,17 @@ export function SaasOwnerComparison() {
   const flat = PRICING_PLANS.find((p) => p.id === "flat");
 
   return (
-    <section id="compare" className="border-t border-[#2c2c2c]/5 bg-[#f9f6f1] px-6 py-20 md:py-28">
+    <section id="compare" className="border-t border-[#2c2c2c]/5 bg-[#f9f6f1] px-6 py-10 md:py-14">
       <div className="mx-auto max-w-[83rem]">
-        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.15fr_0.85fr] lg:items-start lg:gap-8">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.15fr_0.85fr] lg:items-start lg:gap-6">
           <div>
             <p className="font-mono-brand text-[11px] font-semibold tracking-[0.16em] text-[var(--color-forest-mid)] uppercase">
               {OWNER_COMPARISON.eyebrow}
             </p>
-            <h2 className="font-heading mt-3 text-3xl tracking-tight text-[#1a1a1a] md:text-4xl">
+            <h2 className="font-heading mt-2 text-3xl tracking-tight text-[#1a1a1a] md:text-4xl">
               {OWNER_COMPARISON.headline}
             </h2>
-            <ul className="mt-8 space-y-3">
+            <ul className="mt-5 space-y-2.5">
               {BENEFITS.map((b) => (
                 <li key={b} className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a]">
                   <Check />
@@ -62,7 +62,7 @@ export function SaasOwnerComparison() {
             </ul>
             <Link
               href="/signup"
-              className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[var(--color-forest)] px-6 text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)]"
+              className="mt-5 inline-flex h-12 items-center justify-center rounded-full bg-[var(--color-forest)] px-6 text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)]"
             >
               {marketingCopy.cta.startTrial} →
             </Link>
@@ -166,7 +166,7 @@ export function SaasOwnerComparison() {
           </div>
         </div>
 
-        <p className="mt-10 text-center text-xs text-[#2c2c2c]/45">{OWNER_COMPARISON.footnote}</p>
+        <p className="mt-6 text-center text-xs text-[#2c2c2c]/45">{OWNER_COMPARISON.footnote}</p>
       </div>
     </section>
   );

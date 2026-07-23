@@ -16,32 +16,32 @@ const AVATARS = [
 
 export function SaasHeroSection() {
   return (
-    <section id="audit-form" className="relative overflow-hidden bg-[#f9f6f1] px-6 pb-12 pt-10 md:pb-16 md:pt-14">
-      <div className="mx-auto grid max-w-[83rem] items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+    <section id="audit-form" className="relative overflow-hidden bg-[#f9f6f1] px-6 pb-6 pt-8 md:pb-8 md:pt-10">
+      <div className="mx-auto grid max-w-[83rem] items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
         <div className="max-w-xl">
           <p className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-[#2c2c2c]/55 uppercase">
             <SaasIcon icon="solar:shield-check-bold" className="text-[var(--color-forest-mid)]" />
             {marketingCopy.heroTrustBadge}
           </p>
 
-          <h1 className="font-heading mt-4 text-[2.75rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.5rem]">
+          <h1 className="font-heading mt-3 text-[2.75rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.5rem]">
             {marketingCopy.heroHeadlineLead}{" "}
             <em className="italic">{marketingCopy.heroHeadlineAccent}</em>{" "}
             {marketingCopy.heroHeadlineTail}
           </h1>
 
-          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
+          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
             {marketingCopy.heroSubline}
           </p>
-          <p className="mt-2 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
+          <p className="mt-1.5 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
             {marketingCopy.heroSublineSecondary}
           </p>
 
-          <div className="mt-8">
+          <div className="mt-5">
             <AuditBusinessSearch variant="hero" />
           </div>
 
-          <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#2c2c2c]/70">
+          <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#2c2c2c]/70">
             {marketingCopy.heroProofPoints.map((item) => (
               <li key={item} className="flex items-center gap-1.5">
                 <SaasIcon icon="solar:check-circle-bold" className="text-[var(--color-forest-mid)]" />
@@ -50,7 +50,7 @@ export function SaasHeroSection() {
             ))}
           </ul>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <div className="flex -space-x-2">
               {AVATARS.map((src) => (
                 // eslint-disable-next-line @next/next/no-img-element

@@ -6,19 +6,19 @@ import { SaasIcon } from "./SaasIcon";
 
 export function SaasFinalCta() {
   return (
-    <section className="bg-[#fbf8f5] px-6 py-24">
+    <section className="bg-[#fbf8f5] px-6 py-12 md:py-16">
       <div className="mx-auto max-w-[83rem]">
-        <div className="relative overflow-hidden rounded-[3.5rem] bg-gradient-to-tr from-[#094413] to-[#088924] p-12 text-center text-[#fbf8f5] shadow-2xl md:p-20">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-tr from-[#094413] to-[#088924] p-10 text-center text-[#fbf8f5] shadow-2xl md:p-14">
           <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
 
           <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center">
-            <span className="font-mono-brand mb-4 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#088924]">
+            <span className="font-mono-brand mb-3 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#088924]">
               {marketingCopy.finalCtaEyebrow}
             </span>
-            <h2 className="font-heading mb-4 text-3xl leading-tight tracking-tight md:text-5xl">
+            <h2 className="font-heading mb-3 text-3xl leading-tight tracking-tight md:text-5xl">
               {marketingCopy.finalCtaHeadline}
             </h2>
-            <p className="mb-8 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
+            <p className="mb-6 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
               {marketingCopy.finalCtaSubline}
             </p>
 

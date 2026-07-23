@@ -1,7 +1,6 @@
 "use client";
 
 import { SaasIcon } from "@/components/marketing/saas/SaasIcon";
-import { SaasLogoWall } from "@/components/marketing/saas/SaasLogoWall";
 import { ANALYSIS_STEP_LABELS } from "@/lib/audit/analysis-progress";
 import type { AnalysisProgressV1, AnalysisStepId, AnalysisStepStatus } from "@/lib/audit/types";
 import type { AuditScanPreview } from "@/lib/marketing/audit-scan-preview";
@@ -110,7 +109,6 @@ export function AuditLiveAnalysis({
   preview,
   previewImageUrl,
   showChrome = true,
-  showLogoWall = false,
 }: {
   mode?: "demo" | "live";
   restaurantName?: string;
@@ -120,7 +118,6 @@ export function AuditLiveAnalysis({
   preview?: AuditScanPreview | null;
   previewImageUrl?: string | null;
   showChrome?: boolean;
-  showLogoWall?: boolean;
 }) {
   const isDemo = mode === "demo";
   const active = isDemo ? DEMO_PROGRESS : (progress ?? DEMO_PROGRESS);
@@ -193,7 +190,7 @@ export function AuditLiveAnalysis({
             />
           </div>
 
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {steps.map((step) => (
               <div key={step.id} className="min-w-0">
                 <div
@@ -218,7 +215,7 @@ export function AuditLiveAnalysis({
             ))}
           </div>
 
-          <p className="mt-8 flex items-center gap-2 text-sm text-[#2c2c2c]/55">
+          <p className="mt-5 flex items-center gap-2 text-sm text-[#2c2c2c]/55">
             <SaasIcon icon="solar:bell-linear" className="text-[var(--color-forest-mid)]" />
             We&apos;ll notify you as soon as your report is ready.
           </p>
@@ -259,13 +256,11 @@ export function AuditLiveAnalysis({
           </ul>
         </aside>
       </div>
-
-      {showLogoWall ? <SaasLogoWall className="mt-14" /> : null}
     </div>
   );
 
   if (!showChrome) {
-    return <section className="bg-[#f9f6f1] py-10 md:py-14">{panel}</section>;
+    return <section className="bg-[#f9f6f1] py-4 md:py-6">{panel}</section>;
   }
 
   return (
@@ -276,7 +271,7 @@ export function AuditLiveAnalysis({
           <p className="text-sm text-[#2c2c2c]/55">Scanning {restaurantName}…</p>
         </div>
       </div>
-      <div className="py-10 md:py-14">{panel}</div>
+      <div className="py-6 md:py-8">{panel}</div>
     </div>
   );
 }
