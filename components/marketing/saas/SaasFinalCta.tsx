@@ -15,7 +15,7 @@ export function SaasFinalCta() {
             <span className="font-mono-brand mb-4 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#088924]">
               {marketingCopy.finalCtaEyebrow}
             </span>
-            <h2 className="font-heading mb-4 text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
+            <h2 className="font-heading mb-4 text-3xl leading-tight tracking-tight md:text-5xl">
               {marketingCopy.finalCtaHeadline}
             </h2>
             <p className="mb-8 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
@@ -25,13 +25,13 @@ export function SaasFinalCta() {
             <div className="flex w-full flex-col justify-center gap-4 sm:flex-row">
               <Link
                 href="/#audit-form"
-                className="rounded-xl bg-[#094413] px-8 py-4 text-sm font-medium text-[#fbf8f5] shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-black"
+                className="rounded-full bg-white px-8 py-4 text-sm font-semibold text-[var(--color-forest)] shadow-md transition-all duration-300 hover:-translate-y-0.5"
               >
-                {marketingCopy.cta.aiReport}
+                {marketingCopy.cta.aiReport} →
               </Link>
               <Link
                 href="/demo"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/10 px-8 py-4 text-sm font-medium text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
+                className="flex items-center justify-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-8 py-4 text-sm font-medium text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
               >
                 {marketingCopy.cta.freeDemo}
                 <SaasIcon icon="solar:arrow-right-linear" className="text-base" />

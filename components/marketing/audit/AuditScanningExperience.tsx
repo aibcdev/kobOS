@@ -87,12 +87,15 @@ export function AuditScanningExperience({
 
   return (
     <AuditLiveAnalysis
+      mode="live"
       restaurantName={displayName}
       websiteHost={websiteHost}
       city={city}
       progress={poll?.analysisProgress ?? null}
       preview={preview}
       previewImageUrl={previewImageUrl}
+      showChrome
+      showLogoWall
     />
   );
 }

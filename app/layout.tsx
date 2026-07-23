@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Caveat, DM_Sans } from "next/font/google";
+import { Caveat, DM_Sans, Instrument_Serif } from "next/font/google";
 import { defaultSiteMeta } from "@/lib/homepage-defaults";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
@@ -14,6 +14,13 @@ const caveat = Caveat({
   variable: "--font-accent-script",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -42,7 +49,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${caveat.variable} h-full scroll-smooth antialiased`}>
+    <html
+      lang="en"
+      className={`${dmSans.variable} ${caveat.variable} ${instrumentSerif.variable} h-full scroll-smooth antialiased`}
+    >
       <body className="min-h-full bg-[var(--color-surface-soft)] text-[var(--color-body)]">{children}</body>
     </html>
   );

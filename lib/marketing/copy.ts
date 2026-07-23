@@ -12,9 +12,14 @@ export const marketingCopy = {
   heroHeadlineLead: "Your restaurant’s",
   heroHeadlineAccent: "ultimate",
   heroHeadlineTail: "employee.",
+  heroTrustBadge: "Trusted by 500+ restaurants & cafés",
   heroSubline:
-    "Guests judge you online before they book. Run a free scan, get a clear list of what to fix, and request website or SEO help when you need it—nothing goes live without you.",
-  heroProofPoints: ["Free · ~1 minute", "No card required", "You approve every change"] as const,
+    "KOB watches your website, Google listing, and reviews—then gives you a short daily list. Approve in one tap. Nothing goes live without you.",
+  heroSublineSecondary:
+    "Start with a free scan. See what guests see before they book.",
+  heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
+  heroSocialProof: "Trusted by 500+ restaurants & cafés",
+  heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
   losingSalesOnline: "Your website is your front door online",
   useAiToFix: " Free hospitality perception report.",
 
@@ -27,9 +32,9 @@ export const marketingCopy = {
     "Most guests decide online before they visit. KOB shows what they see, gives you a daily list to approve, and lets you request deliverables with credits.",
 
   howItWorksEyebrow: "How KOB works",
-  howItWorksHeadline: "Scan. Approve. Request help.",
+  howItWorksHeadline: "How KOB works",
   howItWorksSubline:
-    "One clear path from “what’s wrong online?” to “done”—without another dashboard full of modules.",
+    "We watch what guests see online. You approve a short daily list. Stay consistent without another agency.",
   howItWorksProof: "Free scan first · You stay in control · Cancel anytime",
 
   midCtaHeadline: "Your website is your front door online",
@@ -52,7 +57,7 @@ export const marketingCopy = {
     viewPricing: "View pricing",
     getDemo: "Talk to us",
     getStarted: "Get started",
-    startTrial: "Start free trial",
+    startTrial: "Start 7-day free trial",
   },
 
   nav: {
