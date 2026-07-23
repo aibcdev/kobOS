@@ -1,5 +1,4 @@
-import { fetchRenderedPage, isBrowserbaseConfigured } from "@/lib/browserbase/fetch-page";
-import { chromium } from "playwright-core";
+import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import { existsSync } from "node:fs";
 
 const BROWSER_UA =
@@ -12,11 +11,14 @@ function chromiumExecutable(): string | undefined {
   if (existsSync(macChrome)) return macChrome;
   return undefined;
 }
+
+/** Lazy playwright — do not statically import playwright-core (breaks Netlify Inngest serve). */
 export async function fetchRenderedHtml(url: string, waitMs = 4000): Promise<string | null> {
   if (process.env.LEAD_ENGINE_DISABLE_BROWSER?.trim() === "1") return null;
 
   if (isBrowserbaseConfigured()) {
     try {
+      const { fetchRenderedPage } = await import("@/lib/browserbase/fetch-page");
       const page = await fetchRenderedPage(url);
       return page.html;
     } catch (e) {
@@ -27,6 +29,7 @@ export async function fetchRenderedHtml(url: string, waitMs = 4000): Promise<str
   const executablePath = chromiumExecutable();
   if (!executablePath) return null;
 
+  const { chromium } = await import("playwright-core");
   let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
   try {
     browser = await chromium.launch({

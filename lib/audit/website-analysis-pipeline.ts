@@ -5,7 +5,6 @@ import type { AuditVisualIntelligenceResult } from "@/lib/audit/visual-intellige
 import type { AuditStagehandExtraction } from "@/lib/browserbase/stagehand-schema";
 import { getAuditBrowserbaseMode, shouldSyncBrowserbaseRender } from "@/lib/audit/browserbase-policy";
 import { isAuditBrowserbaseEnabled } from "@/lib/audit/is-audit-browserbase-enabled";
-import { fetchRenderedPageWithRetry } from "@/lib/browserbase/fetch-page";
 import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 
 function utcNow() {
@@ -115,6 +114,7 @@ export async function runAuditWebsitePipeline(
   }
 
   try {
+    const { fetchRenderedPageWithRetry } = await import("@/lib/browserbase/fetch-page");
     const page = await fetchRenderedPageWithRetry(websiteUrl.trim(), 2);
     const rendered = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
       httpStatus: page.statusCode ?? undefined,

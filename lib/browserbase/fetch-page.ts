@@ -1,5 +1,4 @@
 import Browserbase from "@browserbasehq/sdk";
-import { chromium } from "playwright-core";
 import {
   hostFromAuditUrl,
   mergeNetworkFacts,
@@ -28,6 +27,7 @@ function normalizeUrl(raw: string): string {
 /**
  * Render URL in Browserbase via Playwright CDP — JS-heavy / Owner.com style sites.
  * Caller must catch errors; always attempts browser disconnect.
+ * Playwright is loaded lazily so Inngest /api/inngest can boot on Netlify without playwright-core.
  */
 export async function fetchRenderedPage(url: string): Promise<BrowserbaseRenderedPage> {
   const apiKey = process.env.BROWSERBASE_API_KEY?.trim();
@@ -35,6 +35,8 @@ export async function fetchRenderedPage(url: string): Promise<BrowserbaseRendere
   if (!apiKey || !projectId) {
     throw new Error("browserbase_not_configured");
   }
+
+  const { chromium } = await import("playwright-core");
 
   const target = normalizeUrl(url);
   try {
