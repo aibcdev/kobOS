@@ -60,10 +60,10 @@ export type ComparisonRow = {
 /** Structured KOB vs Owner.com — homepage + pricing reference */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
-  eyebrow: "Restaurant growth software.",
-  headline: "Get more customers. Lower price than full-stack platforms.",
+  eyebrow: "Same kind of help.",
+  headline: "Lower price. Built for busy owners.",
   subline:
-    "Owner.com sells a full stack at premium rates. KOB helps independent restaurants get more customers—starting with a free audit, then Google, reviews, website, and campaigns you approve.",
+    "Owner.com sells a full stack at premium rates. KOB starts with a free scan, a daily list you approve, and credits for website, SEO, and brand requests.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   footnote: "*Owner.com pricing verified 2023-06-19. Competitor names used for comparison only.",
@@ -75,9 +75,9 @@ export const OWNER_COMPARISON = {
       kobWins: true,
     },
     {
-      label: "Per-order fee (flex plan)",
-      kob: "2.5%",
-      owner: "5%",
+      label: "Daily 24/7 assistance employee",
+      kob: "Yes (included)",
+      owner: "No",
       kobWins: true,
     },
     {

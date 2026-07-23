@@ -3,6 +3,7 @@
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
 import { marketingCopy } from "@/lib/marketing/copy";
 
+import { HeroQuestionSlideshow } from "./HeroQuestionSlideshow";
 import { SaasIcon } from "./SaasIcon";
 
 const CHEF_IMAGE =
@@ -16,31 +17,30 @@ const AVATARS = [
 
 export function SaasHeroSection() {
   return (
-    <section id="audit-form" className="relative overflow-hidden bg-[#f9f6f1] px-6 pb-6 pt-8 md:pb-8 md:pt-10">
-      <div className="mx-auto grid max-w-[83rem] items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+    <section id="audit-form" className="relative overflow-hidden bg-[#f9f6f1] px-6 pb-8 pt-8 md:pb-10 md:pt-12">
+      <div className="mx-auto grid max-w-[83rem] items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         <div className="max-w-xl">
           <p className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-[#2c2c2c]/55 uppercase">
             <SaasIcon icon="solar:shield-check-bold" className="text-[var(--color-forest-mid)]" />
             {marketingCopy.heroTrustBadge}
           </p>
 
-          <h1 className="font-heading mt-4 space-y-1 text-[2.5rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.35rem]">
-            <span className="block">
-              Get more <em className="italic">customers</em>.
-            </span>
-            <span className="block">Keep more customers.</span>
-            <span className="block">Ask KOB to do everything else.</span>
+          <h1 className="font-heading mt-4 text-[2.75rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.5rem]">
+            {marketingCopy.heroHeadlineLead}{" "}
+            <em className="italic text-[var(--color-forest)]">{marketingCopy.heroHeadlineAccent}</em>{" "}
+            {marketingCopy.heroHeadlineTail}
           </h1>
 
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
+          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
             {marketingCopy.heroSubline}
           </p>
-          <p className="mt-1.5 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
+          <p className="mt-2 max-w-md text-[15px] leading-relaxed text-[#2c2c2c]/70 md:text-base">
             {marketingCopy.heroSublineSecondary}
           </p>
 
-          <div className="mt-5">
+          <div className="mt-6">
             <AuditBusinessSearch variant="hero" />
+            <HeroQuestionSlideshow />
           </div>
 
           <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#2c2c2c]/70">
@@ -52,7 +52,7 @@ export function SaasHeroSection() {
             ))}
           </ul>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="flex -space-x-2">
               {AVATARS.map((src) => (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -109,7 +109,7 @@ export function SaasHeroSection() {
             <div className="absolute top-6 left-4 w-[min(100%,230px)] rounded-2xl border border-white/60 bg-white/95 p-3.5 shadow-lg backdrop-blur-sm sm:top-10 sm:left-6">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-semibold tracking-wider text-[#2c2c2c]/45 uppercase">
-                  Today&apos;s growth list
+                  Today&apos;s brief
                 </p>
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-forest)] px-1.5 text-[10px] font-bold text-white">
                   3
@@ -132,7 +132,7 @@ export function SaasHeroSection() {
                   <span className="mt-0.5" aria-hidden>
                     ○
                   </span>
-                  Fill tomorrow&apos;s empty covers
+                  Draft holiday post
                 </li>
               </ul>
             </div>

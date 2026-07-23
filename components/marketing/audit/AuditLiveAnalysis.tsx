@@ -1,6 +1,7 @@
 "use client";
 
 import { SaasIcon } from "@/components/marketing/saas/SaasIcon";
+import { SaasLogoWall } from "@/components/marketing/saas/SaasLogoWall";
 import { ANALYSIS_STEP_LABELS } from "@/lib/audit/analysis-progress";
 import type { AnalysisProgressV1, AnalysisStepId, AnalysisStepStatus } from "@/lib/audit/types";
 import type { AuditScanPreview } from "@/lib/marketing/audit-scan-preview";
@@ -109,6 +110,7 @@ export function AuditLiveAnalysis({
   preview,
   previewImageUrl,
   showChrome = true,
+  showLogoWall = false,
 }: {
   mode?: "demo" | "live";
   restaurantName?: string;
@@ -118,6 +120,7 @@ export function AuditLiveAnalysis({
   preview?: AuditScanPreview | null;
   previewImageUrl?: string | null;
   showChrome?: boolean;
+  showLogoWall?: boolean;
 }) {
   const isDemo = mode === "demo";
   const active = isDemo ? DEMO_PROGRESS : (progress ?? DEMO_PROGRESS);
@@ -179,7 +182,9 @@ export function AuditLiveAnalysis({
       <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
         <div className="rounded-[1.5rem] border border-[#2c2c2c]/8 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-lg font-semibold text-[#1a1a1a] sm:text-xl">Your free audit is in progress</h2>
+            <h2 className="text-lg font-semibold text-[#1a1a1a] sm:text-xl">
+              Your free scan is in progress
+            </h2>
             <p className="text-sm text-[#2c2c2c]/55">Taking about 60 seconds</p>
           </div>
 
@@ -256,6 +261,8 @@ export function AuditLiveAnalysis({
           </ul>
         </aside>
       </div>
+
+      {showLogoWall ? <SaasLogoWall className="mt-10 md:mt-14" /> : null}
     </div>
   );
 

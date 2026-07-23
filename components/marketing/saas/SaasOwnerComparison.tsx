@@ -10,13 +10,13 @@ function Check() {
 }
 
 const BENEFITS = [
-  "Free audit that finds lost bookings",
-  "Google, reviews, website, local SEO",
-  "Daily growth list you approve",
-  "Ask KOB for campaigns when covers are soft",
+  "Daily visibility tasks",
+  "Approve in one tap",
+  "Credits for website & SEO",
   "7-day free trial",
   "No long-term contracts",
-  "Built for independent restaurants",
+  "Plain-English briefs",
+  "Trusted by 500+ restaurant owners",
 ] as const;
 
 const AVATARS = [
@@ -29,7 +29,7 @@ const AVATARS = [
 const HOME_ROWS = OWNER_COMPARISON.rows.filter((row) =>
   [
     "Monthly (flex-style plan)",
-    "Per-order fee (flex plan)",
+    "Daily 24/7 assistance employee",
     "Monthly (flat plan)",
     "Daily task list (reviews, holidays, hours)",
     "7-day free trial",

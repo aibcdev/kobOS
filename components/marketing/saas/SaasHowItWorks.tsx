@@ -14,18 +14,18 @@ const STEP_VISUALS = [
   {
     kind: "checklist" as const,
     rows: [
-      { label: "Google presence", status: "Scanned" },
       { label: "Website", status: "Scanned" },
+      { label: "Google listing", status: "Scanned" },
       { label: "Reviews", status: "Scanning" },
-      { label: "Local SEO", status: "Scanning" },
+      { label: "Hours", status: "Scanning" },
     ],
   },
   {
     kind: "approve" as const,
     rows: [
-      { label: "Reply to 2 reviews", action: "Review" },
-      { label: "Campaign for quiet Tuesday", action: "Review" },
-      { label: "Fix Google hours", action: "Review" },
+      { label: "Reply to 2 new reviews", action: "Review" },
+      { label: "Draft holiday social post", action: "Review" },
+      { label: "Confirm opening hours", action: "Review" },
     ],
   },
   {
@@ -66,7 +66,10 @@ export function SaasHowItWorks() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
           <div className="grid gap-5 md:grid-cols-3">
             {steps.map((step) => (
-              <article key={step.n} className="flex flex-col rounded-[1.5rem] border border-[#2c2c2c]/8 bg-white p-4 shadow-sm">
+              <article
+                key={step.n}
+                className="flex flex-col rounded-[1.5rem] border border-[#2c2c2c]/8 bg-white p-4 shadow-sm"
+              >
                 <div className="mb-4 flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-forest)] font-heading text-sm text-white">
                     {step.n}
@@ -139,7 +142,9 @@ export function SaasHowItWorks() {
             <p className="font-mono-brand text-[11px] font-semibold tracking-[0.16em] text-[var(--color-forest-mid)] uppercase">
               The proof
             </p>
-            <p className="mt-2 text-sm text-[#2c2c2c]/60">Most restaurants lose customers online and don’t know where.</p>
+            <p className="mt-2 text-sm text-[#2c2c2c]/60">
+              Most restaurants lose customers online and don’t know where.
+            </p>
             <ul className="mt-5 space-y-5">
               {industryStatsBand.stats.map((stat, i) => (
                 <li key={stat.label} className="flex gap-4">

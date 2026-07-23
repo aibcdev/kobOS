@@ -5,44 +5,43 @@
 import { industryStats, industryStatsFootnote } from "@/lib/marketing/industry-stats";
 
 export const marketingCopy = {
-  tagline: "We help independent restaurants get more customers.",
-  trustLine: "Restaurant growth software for independent venues",
-  trustLineShort: "Built to fill more tables—not another stack of tools",
+  tagline: "Your restaurant's ultimate employee.",
+  trustLine: "Built for independent restaurants and cafés",
+  trustLineShort: "For busy owners who want a clear next step",
 
-  /** Primary promise — homepage hero */
-  heroHeadline: "Get more customers.",
-  heroHeadlineLead: "Get more",
-  heroHeadlineAccent: "customers",
-  heroHeadlineTail: ".",
+  /** Primary promise — homepage hero (mock: italic “ultimate” in forest) */
+  heroHeadline: "Your restaurant’s ultimate employee.",
+  heroHeadlineLead: "Your restaurant’s",
+  heroHeadlineAccent: "ultimate",
+  heroHeadlineTail: "employee.",
   heroPromiseLines: [
     "Get more customers.",
     "Keep more customers.",
     "Ask KOB to do everything else.",
   ] as const,
-  heroTrustBadge: "Free audit for independent restaurants & cafés",
+  heroTrustBadge: "Trusted by 500+ restaurants & cafés",
   heroSubline:
-    "We find where you’re losing diners online—Google, reviews, website, social—then help you fix it and fill more tables.",
-  heroSublineSecondary:
-    "Start with a free restaurant audit. See what’s costing you bookings before you spend a penny.",
-  heroProofPoints: ["Free audit", "Takes about 1 minute", "No card required"] as const,
-  heroSocialProof: "Built for busy independent restaurants",
-  heroAnnotation: "More covers. Clear next steps.",
+    "KOB watches your website, Google listing, and reviews—then gives you a short daily list. Approve in one tap. Nothing goes live without you.",
+  heroSublineSecondary: "Start with a free scan. See what guests see before they book.",
+  heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
+  heroSocialProof: "Trusted by 500+ restaurants & cafés",
+  heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
   losingSalesOnline: "Most restaurants lose customers online and don’t know where",
-  useAiToFix: " Free restaurant growth audit.",
+  useAiToFix: " Free hospitality perception report.",
 
   auditSubline:
-    "In about a minute we’ll show where guests drop off—Google, reviews, website, and local search—and what to fix first.",
+    "In about a minute we’ll show what guests notice on your site and Google listing—photos, hours, reviews, and trust. No card.",
   productSubline:
-    "Restaurant growth software: get more customers, keep more customers, and ask KOB to handle the rest.",
+    "See the gaps, approve drafts, and request website or SEO work with credits—without juggling five apps.",
 
   trustBandBody:
-    "Restaurant owners don’t wake up needing an AI chief of staff. They wake up needing more bookings. KOB exists to fill more tables.",
+    "Most guests decide online before they visit. KOB shows what they see, gives you a daily list to approve, and lets you request deliverables with credits.",
 
   howItWorksEyebrow: "How KOB works",
   howItWorksHeadline: "How KOB works",
   howItWorksSubline:
-    "One promise: more customers. Everything else—Google, reviews, website, campaigns—is how we get you there.",
-  howItWorksProof: "Free audit first · You approve every change · Cancel anytime",
+    "We watch what guests see online. You approve a short daily list. Stay consistent without another agency.",
+  howItWorksProof: "Free scan first · You stay in control · Cancel anytime",
 
   midCtaHeadline: "See how many customers you’re losing online",
   midCtaCardTitle: "Free restaurant audit—where bookings leak before they reach you.",
@@ -57,9 +56,9 @@ export const marketingCopy = {
   closingSuggestive: "We found ways restaurants lose customers online every week. Start with your free audit.",
 
   cta: {
-    aiReport: "Get free audit",
+    aiReport: "Run free scan →",
     freeDemo: "Book a demo",
-    freeScan: "Get free audit",
+    freeScan: "Run free scan",
     seeProduct: "See how it works",
     viewPricing: "View pricing",
     getDemo: "Talk to us",
@@ -68,7 +67,7 @@ export const marketingCopy = {
   },
 
   nav: {
-    freeAiReport: "Free audit",
+    freeAiReport: "Free scan",
   },
 
   pricing: {

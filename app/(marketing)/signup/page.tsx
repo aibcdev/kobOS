@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 
-import { SaasAuthPage } from "@/components/marketing/saas/SaasAuthPage";
+import { SaasSignupPage } from "@/components/marketing/saas/SaasSignupPage";
 
 export const metadata: Metadata = {
-  title: "Create account | KOB",
-  description: "Create your KOB account and start your free trial.",
+  title: "Start free trial | KOB",
+  description:
+    "Start your free 7-day trial. See what’s holding your restaurant back — opportunity report in minutes. No card required.",
 };
 
 export default function MarketingSignupPage() {
-  return <SaasAuthPage defaultMode="signup" />;
+  return <SaasSignupPage />;
 }
