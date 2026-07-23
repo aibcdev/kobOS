@@ -135,4 +135,6 @@ npx tsx scripts/score-icp.ts restaurants.json --qualified-only
 cat scraped.json | npx tsx scripts/score-icp.ts - --qualified-only
 ```
 
+For investment-grade opportunity metrics (lost revenue, likelihood to buy), use the Opportunity Score Engine — see [references/opportunity-score.md](references/opportunity-score.md) and `npx tsx scripts/score-opportunity.ts`.
+
 See [references/fit-score-details.md](references/fit-score-details.md).

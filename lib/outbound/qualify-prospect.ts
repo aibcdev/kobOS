@@ -2,7 +2,7 @@ import { analyzeWebsiteFull } from "@/lib/audit/analyze-url";
 import type { UrlSignals } from "@/lib/audit/analyze-url";
 import type { OutboundProspect } from "@/lib/outbound/prospect-types";
 import { mapProspectToIcpInput } from "@/lib/outbound/map-to-icp-input";
-import { scoreIcp } from "@/lib/outbound/score-icp";
+import { calculateOpportunityScore } from "@/lib/outbound/score-opportunity";
 
 export type QualifyResult =
   | { ok: true; qualifyScore: number; topIssue: string; icpStatus: "qualified" }
@@ -22,8 +22,8 @@ function topIssueFromSignals(s: UrlSignals): string {
 }
 
 /**
- * Qualify for cold email using ICP Fit Score (icp-fit-v1).
- * Only status === "qualified" (score ≥ 70) passes.
+ * Qualify for cold email using Opportunity Score Engine (opportunity-v1).
+ * Only status === "qualified" passes (fit ≥ 70 and likelihood ≥ 60).
  */
 export async function qualifyProspect(prospect: OutboundProspect): Promise<QualifyResult> {
   const url = prospect.websiteUrl?.trim();
@@ -38,8 +38,8 @@ export async function qualifyProspect(prospect: OutboundProspect): Promise<Quali
     !signals.hasJsonLd ||
     (signals.titleLen > 0 && signals.titleLen < 12);
 
-  const icp = scoreIcp(
-    mapProspectToIcpInput({
+  const opp = calculateOpportunityScore({
+    ...mapProspectToIcpInput({
       placeId: prospect.placeId,
       name: prospect.name,
       city: prospect.formattedAddress?.split(",").slice(-2, -1)[0]?.trim() ?? null,
@@ -51,26 +51,31 @@ export async function qualifyProspect(prospect: OutboundProspect): Promise<Quali
       weakWebsite: dated,
       hasGoogleBusinessPosts: null,
     }),
-  );
+    avg_ticket: 32,
+    currency: "GBP",
+  });
 
-  if (icp.status === "discard") {
+  if (opp.status === "discard") {
     return {
       ok: false,
-      reason: icp.disqualifiers[0] ?? `icp_discard_${icp.fit_score}`,
+      reason: opp.disqualifiers[0] ?? `opportunity_discard_fit${opp.fit_proxy ?? 0}`,
     };
   }
-  if (icp.status === "park") {
-    return { ok: false, reason: `icp_park_${icp.fit_score}` };
+  if (opp.status === "park") {
+    return { ok: false, reason: `opportunity_park_fit${opp.fit_proxy ?? 0}` };
   }
 
+  const metrics = opp.opportunity_score;
   const topIssue =
-    icp.personalization_hooks[0] ??
-    icp.matched_factors[0] ??
+    opp.personalization_hooks[0] ??
+    (metrics
+      ? `Est. ${metrics.est_monthly_lost_customers} lost customers/mo (~£${metrics.est_lost_revenue})`
+      : null) ??
     topIssueFromSignals(signals);
 
   return {
     ok: true,
-    qualifyScore: icp.fit_score,
+    qualifyScore: opp.fit_proxy ?? metrics?.likelihood_to_buy ?? 0,
     topIssue,
     icpStatus: "qualified",
   };

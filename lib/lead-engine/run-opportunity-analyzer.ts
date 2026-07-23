@@ -1,7 +1,7 @@
 import { analyzeProspectWebsite } from "@/lib/lead-engine/analyze-prospect";
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
 import { mapProspectToIcpInput } from "@/lib/outbound/map-to-icp-input";
-import { scoreIcp } from "@/lib/outbound/score-icp";
+import { calculateOpportunityScore } from "@/lib/outbound/score-opportunity";
 import { LeadProspectStatus, type LeadProspect } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
@@ -69,25 +69,30 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
   const analysis = await analyzeProspectWebsite(prospect);
   if (!analysis) return "icp_failed";
 
-  const icp = scoreIcp(
-    mapProspectToIcpInput({
-      placeId: prospect.placeId,
-      name: prospect.name,
-      city: prospect.city,
-      websiteUrl: prospect.websiteUrl,
-      rating: prospect.rating,
-      reviewCount: prospect.reviewCount,
-      locationCount: analysis.locationCount,
-      instagramPostGapDays: analysis.instagramPostGapDays,
-      websiteCopyrightYear: analysis.websiteCopyrightYear,
-      websiteStale: analysis.websiteStale,
-      weakWebsite: analysis.weakWebsite,
-      hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
-      deliveryPlatforms: prospect.deliveryPlatforms,
-      platformRankPercentile: prospect.platformRankPercentile,
-    }),
-  );
+  const mapped = mapProspectToIcpInput({
+    placeId: prospect.placeId,
+    name: prospect.name,
+    city: prospect.city,
+    websiteUrl: prospect.websiteUrl,
+    rating: prospect.rating,
+    reviewCount: prospect.reviewCount,
+    locationCount: analysis.locationCount,
+    instagramPostGapDays: analysis.instagramPostGapDays,
+    websiteCopyrightYear: analysis.websiteCopyrightYear,
+    websiteStale: analysis.websiteStale,
+    weakWebsite: analysis.weakWebsite,
+    hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
+    deliveryPlatforms: prospect.deliveryPlatforms,
+    platformRankPercentile: prospect.platformRankPercentile,
+  });
 
+  const opp = calculateOpportunityScore({
+    ...mapped,
+    avg_ticket: 32,
+    currency: "GBP",
+  });
+
+  const metrics = opp.opportunity_score;
   const shared = {
     instagramUrl: analysis.instagramUrl,
     instagramFollowers: analysis.instagramFollowers,
@@ -105,26 +110,35 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
     locationCount: analysis.locationCount,
     websiteStale: analysis.websiteStale,
     websiteCopyrightYear: analysis.websiteCopyrightYear,
-    kobOpportunityScore: icp.fit_score,
+    kobOpportunityScore: opp.fit_proxy ?? 0,
     scoreBreakdown: {
-      version: icp.version,
-      status: icp.status,
-      matched_factors: icp.matched_factors,
-      recommended_email_angle: icp.recommended_email_angle,
+      version: opp.version,
+      status: opp.status,
+      fit_proxy: opp.fit_proxy,
+      opportunity_score: metrics,
+      recommended_email_angle: opp.recommended_email_angle,
+      reasons: opp.reasons,
     },
-    opportunities: icp.personalization_hooks.length
-      ? icp.personalization_hooks
-      : icp.matched_factors,
+    opportunities: opp.personalization_hooks.length
+      ? [
+          ...opp.personalization_hooks,
+          ...(metrics
+            ? [
+                `Est. ${metrics.est_monthly_lost_customers} lost customers/mo (~${metrics.currency}${metrics.est_lost_revenue})`,
+              ]
+            : []),
+        ]
+      : opp.reasons,
     disqualifiers:
-      icp.disqualifiers.length > 0
-        ? icp.disqualifiers
-        : icp.status !== "qualified"
-          ? [`icp_${icp.status}_${icp.fit_score}`]
+      opp.disqualifiers.length > 0
+        ? opp.disqualifiers
+        : opp.status !== "qualified"
+          ? [`opportunity_${opp.status}_fit${opp.fit_proxy ?? 0}`]
           : [],
     analyzedAt: new Date(),
   };
 
-  if (icp.status !== "qualified") {
+  if (opp.status !== "qualified") {
     await withDbRetry(
       () =>
         prisma.leadProspect.update({
@@ -134,9 +148,9 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
             ...shared,
           },
         }),
-      "leadProspect.update(icp_not_qualified)",
+      "leadProspect.update(opportunity_not_qualified)",
     );
-    return icp.status === "park" ? "icp_park" : "disqualified";
+    return opp.status === "park" ? "opportunity_park" : "disqualified";
   }
 
   await withDbRetry(
