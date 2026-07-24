@@ -99,102 +99,134 @@ function ScoreRing({
   );
 }
 
-const RESTAURANT_AXIS_STRIP: {
-  key: keyof Pick<RestaurantScoresV1, "reviews" | "gbp" | "website" | "competitors" | "technical">;
-  label: string;
-  explain: (score: number) => string;
-}[] = [
-  {
-    key: "gbp",
-    label: "Discovery",
-    explain: (s) =>
-      s < 50
-        ? "Guests struggle to find you in local search vs nearby places."
-        : s < 70
-          ? "You appear in search, but the listing isn’t winning enough clicks."
-          : "Local search presence is competitive enough to get found.",
-  },
-  {
-    key: "reviews",
-    label: "Trust",
-    explain: (s) =>
-      s < 50
-        ? "Review signals trail nearby restaurants — guests notice silence."
-        : s < 70
-          ? "Reviews exist, but trust still lags stronger local competitors."
-          : "Reviews and reputation support guest confidence.",
-  },
-  {
-    key: "website",
-    label: "Website",
-    explain: (s) =>
-      s < 50
-        ? "The path to book, order, or visit is unclear — especially on mobile."
-        : s < 70
-          ? "The site works, but the next action still isn’t obvious enough."
-          : "Website clarity is strong enough to convert interest.",
-  },
-  {
-    key: "competitors",
-    label: "Competition",
-    explain: (s) =>
-      `You're below ${Math.max(5, 100 - s)}% of similar restaurants nearby.`,
-  },
-  {
-    key: "technical",
-    label: "Momentum",
-    explain: (s) =>
-      s < 50
-        ? "Technical and listing hygiene is slowing ongoing discovery."
-        : s < 70
-          ? "Foundations are OK — consistency is what creates momentum."
-          : "Technical foundations support ongoing visibility.",
-  },
-];
+function plainEnglishStatus(score: number): {
+  label: "Strong" | "Good" | "Needs attention" | "Weak" | "Below average";
+  tone: ReturnType<typeof scoreTone>;
+} {
+  if (score >= 80) return { label: "Strong", tone: scoreTone(90) };
+  if (score >= 65) return { label: "Good", tone: scoreTone(75) };
+  if (score >= 50) return { label: "Needs attention", tone: scoreTone(55) };
+  if (score >= 40) return { label: "Below average", tone: scoreTone(45) };
+  return { label: "Weak", tone: scoreTone(30) };
+}
+
+/** Low visibility score = more upside — reframes “failing” as opportunity. */
+function growthOpportunityLabel(overall: number): "Significant" | "High" | "Moderate" | "Limited" {
+  if (overall < 50) return "Significant";
+  if (overall < 65) return "High";
+  if (overall < 80) return "Moderate";
+  return "Limited";
+}
+
+function blendScores(...parts: number[]): number {
+  const valid = parts.filter((n) => Number.isFinite(n));
+  if (!valid.length) return 50;
+  return Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
+}
+
+type OwnerPillar = {
+  id: "find" | "trust" | "choose";
+  question: string;
+  /** One-line owner translation */
+  meaning: string;
+  score: number;
+};
+
+function ownerPillarsFromScores(scores: RestaurantScoresV1): OwnerPillar[] {
+  const find = blendScores(scores.gbp, scores.technical);
+  const trust = blendScores(scores.reviews, Math.round(scores.website * 0.35 + scores.reviews * 0.65));
+  const choose = blendScores(scores.competitors, scores.website);
+
+  return [
+    {
+      id: "find",
+      question: "Can customers find you?",
+      meaning: "Google presence, maps, and search visibility",
+      score: find,
+    },
+    {
+      id: "trust",
+      question: "Can customers trust you?",
+      meaning: "Reviews, replies, and how the brand feels online",
+      score: trust,
+    },
+    {
+      id: "choose",
+      question: "Can customers choose you?",
+      meaning: "Booking path and how you stack up nearby",
+      score: choose,
+    },
+  ];
+}
+
+function ownerStoryLine(pillars: OwnerPillar[]): string {
+  const ranked = [...pillars].sort((a, b) => a.score - b.score);
+  const weak = ranked[0];
+  const strong = ranked[ranked.length - 1];
+  if (!weak || !strong) return "";
+  if (weak.id === "choose" && strong.id === "find") {
+    return "People can find you — but they’re often choosing competitors instead.";
+  }
+  if (weak.id === "trust") {
+    return "Guests can find you, but trust signals are where you’re losing them.";
+  }
+  if (weak.id === "find") {
+    return "The biggest gap is discovery — too many nearby diners never see you.";
+  }
+  return "The booking and comparison step is where nearby restaurants pull ahead.";
+}
 
 function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
+  const pillars = ownerPillarsFromScores(scores);
+  const opportunity = growthOpportunityLabel(scores.overall);
+  const story = ownerStoryLine(pillars);
+
   return (
-    <div className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+    <div className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-sm md:p-6">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
             Restaurant scorecard
           </p>
           <p className="mt-1 font-head text-lg font-semibold">
-            Restaurant Visibility · {scores.overall}/100
+            Growth opportunity · {opportunity}
+          </p>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            How guests experience you online today — and how much room there is to grow.
           </p>
         </div>
         <p className="text-xs text-[var(--color-muted-medium)]">Confidence: {scores.confidence}</p>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-        {RESTAURANT_AXIS_STRIP.map(({ key, label, explain }) => {
-          const value = scores[key];
-          const tone = scoreTone(value);
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {pillars.map((pillar) => {
+          const status = plainEnglishStatus(pillar.score);
           return (
-            <div key={key} className="rounded-xl bg-[var(--color-surface-cream)]/70 px-3 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
-                {label}
-              </p>
-              <p className={`mt-1 font-head text-xl font-semibold tabular-nums ${tone.text}`}>{value}</p>
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
-                <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${value}%` }} />
+            <div key={pillar.id} className="rounded-xl bg-[var(--color-surface-cream)]/70 px-4 py-4">
+              <p className="text-sm font-semibold text-[var(--color-ink)]">{pillar.question}</p>
+              <p className={`mt-3 font-head text-2xl font-semibold ${status.tone.text}`}>{status.label}</p>
+              <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
+                <div
+                  className={`h-full rounded-full ${status.tone.bar}`}
+                  style={{ width: `${pillar.score}%` }}
+                />
               </div>
-              <p className="mt-2 text-[11px] leading-snug text-[var(--color-muted)]">{explain(value)}</p>
+              <p className="mt-2 text-[11px] leading-snug text-[var(--color-muted)]">{pillar.meaning}</p>
             </div>
           );
         })}
       </div>
-      {scores.dataGaps?.length ? (
-        <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
-          How we calculate this: public Google, website, and nearby restaurant signals.
-          {` Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}.`}
+
+      {story ? (
+        <p className="mt-5 rounded-xl bg-[var(--color-surface-cream)]/80 px-4 py-3 text-sm font-medium leading-relaxed text-[var(--color-ink)]">
+          {story}
         </p>
-      ) : (
-        <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
-          How we calculate this: public Google visibility, review activity, website conversion, and
-          nearby restaurant signals.
-        </p>
-      )}
+      ) : null}
+
+      <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
+        Built from public Google, website, review, and nearby restaurant signals
+        {scores.dataGaps?.length ? ` · Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}` : ""}.
+      </p>
     </div>
   );
 }
@@ -370,7 +402,7 @@ export function AuditReportDashboard({
   const perception = data.perceptionAuditV1 ?? payload.perceptionAuditV1 ?? teaserPerception;
   const displayScore = restaurantScores?.overall ?? perception?.digitalPositioningScore ?? overall;
   const displayTone = scoreTone(displayScore);
-  const healthLabel = `${displayScore}/100`;
+  const healthLabel = growthOpportunityLabel(displayScore);
   const tone = scoreTone(restaurantScores?.overall ?? overall);
   const restaurantDisplay = decodeHtmlEntities(audit.restaurantName);
   const locationLabel = `${restaurantDisplay}, ${audit.city}`;
