@@ -595,12 +595,12 @@ export function AuditReportDashboard({
                       <ScoreRing score={displayScore} size={120} />
                       <div className="text-center sm:text-left">
                         <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-                          Restaurant Visibility
+                          Growth opportunity
                         </p>
                         <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>{healthLabel}</p>
                         <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
                           {restaurantScores
-                            ? `Your score vs. similar restaurants in ${audit.city}.`
+                            ? `Visibility ${displayScore}/100 vs similar restaurants in ${audit.city}.`
                             : perceptionPending
                               ? `Comparing ${restaurantDisplay} against ${cuisineLabel} in ${audit.city}…`
                               : `Your score vs. similar restaurants in ${audit.city}.`}
