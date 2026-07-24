@@ -132,6 +132,9 @@ export async function analyzeProspectWebsite(
     | "contactPhone"
     | "contactEmail"
     | "platformRankPercentile"
+    | "lastReviewAt"
+    | "businessType"
+    | "deliveryPlatforms"
   >,
 ): Promise<ProspectAnalysis | null> {
   const url = prospect.websiteUrl?.trim();

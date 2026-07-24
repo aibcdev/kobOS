@@ -206,7 +206,7 @@ async function main() {
       {
         finalPending: await pendingCount(wid),
         sample: sample.map((s) => ({
-          company: s.companyName,
+          company: s.leadProspect?.name ?? s.restaurantName,
           reviews: s.leadProspect?.reviewCount,
           type: s.leadProspect?.businessType,
           city: s.leadProspect?.city,

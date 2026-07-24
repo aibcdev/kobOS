@@ -126,7 +126,7 @@ async function main() {
       {
         finalPending,
         sample: sample.map((s) => ({
-          name: s.companyName,
+          name: s.leadProspect?.name ?? s.restaurantName,
           reviews: s.leadProspect?.reviewCount,
           city: s.leadProspect?.city,
         })),
