@@ -15,7 +15,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Public audits + team review — skip auth session work so bots / preview tools get a clean response.
-  if (path.startsWith("/audit/") || path.startsWith("/review/")) {
+  if (
+    path.startsWith("/audit/") ||
+    path.startsWith("/audit-reviews/") ||
+    path.startsWith("/review/") ||
+    path.startsWith("/api/audit/")
+  ) {
     return NextResponse.next();
   }
 
@@ -43,6 +48,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Skip static assets including plain-text audit dumps under /public
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt|html|css|js|map|ico|woff2?)$).*)",
   ],
 };
