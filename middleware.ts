@@ -14,8 +14,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Public audits — skip auth session work so bots / preview tools get a clean response.
-  if (path.startsWith("/audit/")) {
+  // Public audits + team review — skip auth session work so bots / preview tools get a clean response.
+  if (path.startsWith("/audit/") || path.startsWith("/review/")) {
     return NextResponse.next();
   }
 

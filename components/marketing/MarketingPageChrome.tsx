@@ -7,7 +7,7 @@ import { SaasMarketingShell } from "@/components/marketing/saas/SaasMarketingShe
 /** Audit funnel: report, scanning, upgrade, plain share view — Owner header only (no marketing footer). */
 function isAuditFunnelPath(pathname: string | null) {
   if (!pathname) return false;
-  return /^\/audit\/[^/]+(\/(scanning|upgrade(\/checkout)?|plain)?)?$/.test(pathname);
+  return /^\/audit\/[^/]+(\/(scanning|upgrade(\/checkout)?|plain|share)?)?$/.test(pathname);
 }
 
 /** All other marketing routes use SaaS template header + footer. */

@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!audit) return { title: "Audit · KOB" };
     const pathKey = audit.slug || audit.id;
     const url = `https://trykob.com/audit/${pathKey}`;
-    const plainUrl = `${url}/plain`;
+    const shareUrl = `${url}/share`;
     return {
       title: `${audit.restaurantName} · Visibility ${audit.overallScore} · KOB`,
       description: `Public visibility audit for ${audit.restaurantName} in ${audit.city}. No login required.`,
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: `${audit.restaurantName} · KOB audit`,
         description: `Growth score ${audit.overallScore}/100 for ${audit.restaurantName}. Open without logging in.`,
-        url: plainUrl,
+        url: shareUrl,
         siteName: "KOB",
         type: "article",
         locale: "en_GB",
@@ -34,12 +34,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       twitter: {
         card: "summary",
         title: `${audit.restaurantName} · KOB audit`,
-        description: `Public audit — no login required. Simple view: ${plainUrl}`,
+        description: `Public audit — no login required. Share view: ${shareUrl}`,
       },
       alternates: {
         canonical: url,
         types: {
-          "text/html": plainUrl,
+          "text/html": shareUrl,
         },
       },
     };
@@ -83,9 +83,13 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   return (
     <>
       <div className="border-b border-[var(--color-hairline)] bg-white px-5 py-2.5 text-center text-sm text-[var(--color-muted)] md:px-8">
-        Public report · no login needed ·{" "}
-        <a href={`/audit/${pathKeyForLinks}/plain`} className="font-medium text-[var(--color-primary)] underline">
-          Simple text view (best for sharing)
+        Public report · no login ·{" "}
+        <a href={`/audit/${pathKeyForLinks}/share`} className="font-medium text-[var(--color-primary)] underline">
+          Share view (static HTML — best for team review)
+        </a>
+        {" · "}
+        <a href="/review/audits" className="font-medium text-[var(--color-primary)] underline">
+          All review links
         </a>
       </div>
       <AuditResultsContent
