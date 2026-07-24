@@ -1,0 +1,69 @@
+KOB OPPORTUNITY REPORT (plain text — no login required)
+=======================================================
+
+Restaurant: Ambiance
+City: Your area
+Website: https://ambiance.co.uk/
+Interactive UI: https://trykob.com/audit/ambiance
+Static HTML: https://trykob.com/audit/ambiance/share
+
+RESTAURANT GROWTH SCORE
+----------------------
+Score: 77 / 100
+Bottom 23% vs similar restaurants
+Customers lost / month: ~30
+
+BIGGEST WINS
+------------
+1. Update Google photos + posts
+   Fresh photos win the map pack
+   +12 customers / month
+
+2. Make your homepage clearer for guests
+   Make your homepage clearer for guests
+   +10 customers / month
+
+3. Help Google understand your restaurant
+   Help Google understand your restaurant
+   +8 customers / month
+
+NEARBY COMPARISON
+-----------------
+(no nearby rows in this scan)
+
+SCORE TRAJECTORY
+----------------
+Today 77 → next month ~85
+
+ISSUES FOUND
+------------
+- Multiple H1 tags confuse search engines (medium) — Keep a single H1; demote other headings to H2/H3.
+- JSON-LD found but not Restaurant schema (medium) — Use schema.org Restaurant (or LocalBusiness) with name, address, and opening hours.
+- Social / Open Graph preview is incomplete (medium) — Set og:title and og:image so shares look intentional on Instagram, Facebook, and Google.
+- Reservation path is not obvious (high) — Put “Reserve a table” above the fold with a single dominant CTA.
+
+OPPORTUNITIES
+-------------
+- Hyper-local page: “Best nights out near Your area”: High — captures planners 2–4 weeks ahead
+- Menu micro-copy tuned for search + upsell: Medium — lifts average check on high-intent traffic
+- Expand schema to menus + events for rich results: Medium — more SERP real estate
+
+30 / 60 / 90 ROADMAP
+-------------------
+30 days:
+  - Fix crawl blockers + meta hygiene on core pages
+  - Publish 3 hyper-local landing pages with proof (reviews, photos)
+  - Add one high-intent CTA module on homepage hero
+60 days:
+  - Launch weekly content cadence (events, chef story, neighborhood guides)
+  - Expand structured data to menu + FAQ
+  - A/B test reservation vs order CTAs
+90 days:
+  - Competitor gap report + counter-positioning pages
+  - Automated slow-night recovery campaign templates
+  - Reputation velocity program (reviews + responses)
+
+NEXT STEP
+---------
+Start free trial: https://trykob.com/signup
+Book walkthrough: https://trykob.com/demo

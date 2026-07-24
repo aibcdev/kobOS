@@ -83,13 +83,20 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   return (
     <>
       <div className="border-b border-[var(--color-hairline)] bg-white px-5 py-2.5 text-center text-sm text-[var(--color-muted)] md:px-8">
-        Public report · no login ·{" "}
-        <a href={`/audit/${pathKeyForLinks}/share`} className="font-medium text-[var(--color-primary)] underline">
-          Share view (static HTML — best for team review)
+        Team review:{" "}
+        <a href="/review/INDEX.txt" className="font-medium text-[var(--color-primary)] underline">
+          plain-text INDEX
         </a>
         {" · "}
-        <a href="/review/audits" className="font-medium text-[var(--color-primary)] underline">
-          All review links
+        <a
+          href={`/review/${pathKeyForLinks}.txt`}
+          className="font-medium text-[var(--color-primary)] underline"
+        >
+          this audit .txt
+        </a>
+        {" · "}
+        <a href={`/api/audit/${pathKeyForLinks}/txt`} className="font-medium text-[var(--color-primary)] underline">
+          API txt
         </a>
       </div>
       <AuditResultsContent

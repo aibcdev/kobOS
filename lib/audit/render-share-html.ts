@@ -197,3 +197,111 @@ export function renderAuditShareHtmlFromPayload(
   }
   return html;
 }
+
+/**
+ * Plain-text Opportunity Report — for AI/review tools that cannot render HTML.
+ */
+export function renderAuditShareMarkdown(input: ShareHtmlInput): string | null {
+  const payload = parseAuditPayload(input.resultPayload);
+  if (!payload) return null;
+
+  const opportunity = ensureMoneyFirstOpportunityReport(
+    payload.opportunityReport ??
+      computeAuditOpportunityReport(payload, {
+        name: input.restaurantName,
+        city: input.city,
+        websiteUrl: input.websiteUrl,
+      }),
+    payload,
+  );
+
+  const pathKey = input.slug || input.id;
+  const growthScore = opportunity.growthScore ?? input.overallScore;
+  const lostCustomers = opportunity.opportunity_score?.est_monthly_lost_customers ?? 0;
+  const peerBottom = opportunity.peerPercentileBottom ?? Math.max(5, 100 - growthScore);
+  const projected = opportunity.projectedGrowthScore ?? Math.min(95, growthScore + 12);
+  const wins = opportunity.topFixes.slice(0, 5);
+  const nearby = opportunity.nearbyComparison ?? [];
+  const issues = payload.issues ?? [];
+  const rs = payload.restaurantScores;
+  const website = input.websiteUrl ?? "";
+
+  const lines: string[] = [
+    `KOB OPPORTUNITY REPORT (plain text — no login required)`,
+    `=======================================================`,
+    ``,
+    `Restaurant: ${input.restaurantName}`,
+    `City: ${input.city}`,
+    website ? `Website: ${website}` : null,
+    `Interactive UI: https://trykob.com/audit/${pathKey}`,
+    `Static HTML: https://trykob.com/audit/${pathKey}/share`,
+    ``,
+    `RESTAURANT GROWTH SCORE`,
+    `----------------------`,
+    `Score: ${growthScore} / 100`,
+    `Bottom ${peerBottom}% vs similar restaurants`,
+    `Customers lost / month: ~${lostCustomers}`,
+    rs
+      ? `Axes: Grade ${rs.grade} | Reviews ${rs.reviews} | GBP ${rs.gbp} | Website ${rs.website} | Competitive ${rs.competitors} | Technical ${rs.technical}`
+      : null,
+    ``,
+    `BIGGEST WINS`,
+    `------------`,
+  ].filter((x): x is string => x != null);
+
+  if (wins.length === 0) {
+    lines.push(`(none listed)`);
+  } else {
+    wins.forEach((w, i) => {
+      lines.push(`${i + 1}. ${w.title}`);
+      lines.push(`   ${w.detail}`);
+      lines.push(`   +${w.customersPerMonth} customers / month`);
+      lines.push(``);
+    });
+  }
+
+  lines.push(`NEARBY COMPARISON`, `-----------------`);
+  if (nearby.length === 0) {
+    lines.push(`(no nearby rows in this scan)`);
+  } else {
+    nearby.forEach((r) => lines.push(`${r.label}: you=${r.you} | nearby=${r.nearby}`));
+  }
+
+  lines.push(``, `SCORE TRAJECTORY`, `----------------`, `Today ${growthScore} → next month ~${projected}`);
+
+  lines.push(``, `ISSUES FOUND`, `------------`);
+  if (issues.length === 0) {
+    lines.push(`(none)`);
+  } else {
+    issues.forEach((iss) => {
+      lines.push(`- ${iss.title} (${iss.impact})${iss.fixHint ? ` — ${iss.fixHint}` : ""}`);
+    });
+  }
+
+  if (payload.opportunities?.length) {
+    lines.push(``, `OPPORTUNITIES`, `-------------`);
+    payload.opportunities.forEach((o) => lines.push(`- ${o.title}: ${o.impactEstimate}`));
+  }
+
+  const roadmap = payload.gated?.roadmap;
+  if (roadmap) {
+    lines.push(``, `30 / 60 / 90 ROADMAP`, `-------------------`);
+    lines.push(`30 days:`);
+    roadmap.days30.forEach((x) => lines.push(`  - ${x}`));
+    lines.push(`60 days:`);
+    roadmap.days60.forEach((x) => lines.push(`  - ${x}`));
+    lines.push(`90 days:`);
+    roadmap.days90.forEach((x) => lines.push(`  - ${x}`));
+  }
+
+  lines.push(
+    ``,
+    `NEXT STEP`,
+    `---------`,
+    `Start free trial: https://trykob.com/signup`,
+    `Book walkthrough: https://trykob.com/demo`,
+  );
+
+  return lines.join("\n");
+}
+
