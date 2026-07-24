@@ -501,10 +501,14 @@ export function ensureMoneyFirstOpportunityReport(
     return {
       ...report,
       nearbyComparison: report.nearbyComparison ?? buildNearbyComparison(payload),
-      topFixes: report.topFixes.map((f) => ({
-        ...f,
-        title: plainEnglishFixTitle(f.title),
-      })),
+      topFixes: report.topFixes.map((f) => {
+        const specific = specificTopFixCopy(f, payload);
+        return {
+          ...f,
+          title: specific.title,
+          detail: specific.detail,
+        };
+      }),
     };
   }
   return enrichMoneyFirstFields(report, payload);
