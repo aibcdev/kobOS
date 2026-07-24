@@ -84,12 +84,12 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
     <>
       <div className="border-b border-[var(--color-hairline)] bg-white px-5 py-2.5 text-center text-sm text-[var(--color-muted)] md:px-8">
         Team review:{" "}
-        <a href="/review/INDEX.txt" className="font-medium text-[var(--color-primary)] underline">
+        <a href="/audit-reviews/INDEX.txt" className="font-medium text-[var(--color-primary)] underline">
           plain-text INDEX
         </a>
         {" · "}
         <a
-          href={`/review/${pathKeyForLinks}.txt`}
+          href={`/audit-reviews/${pathKeyForLinks}.txt`}
           className="font-medium text-[var(--color-primary)] underline"
         >
           this audit .txt

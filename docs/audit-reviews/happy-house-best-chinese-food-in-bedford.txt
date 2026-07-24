@@ -1,0 +1,70 @@
+KOB OPPORTUNITY REPORT (plain text — no login required)
+=======================================================
+
+Restaurant: Happy House - Best Chinese Food In Bedford
+City: Your area
+Website: https://happyhouse.com/
+Interactive UI: https://trykob.com/audit/happy-house-best-chinese-food-in-bedford
+Static HTML: https://trykob.com/audit/happy-house-best-chinese-food-in-bedford/share
+
+RESTAURANT GROWTH SCORE
+----------------------
+Score: 64 / 100
+Bottom 36% vs similar restaurants
+Customers lost / month: ~69
+
+BIGGEST WINS
+------------
+1. Improve your homepage
+   Clearer path to book, order, or visit
+   +29 customers / month
+
+2. Update Google photos + posts
+   Fresh photos win the map pack
+   +23 customers / month
+
+3. Improve how you show up in Google
+   Aim for roughly 140–160 characters so Google doesn’t truncate your pi…
+   +17 customers / month
+
+NEARBY COMPARISON
+-----------------
+(no nearby rows in this scan)
+
+SCORE TRAJECTORY
+----------------
+Today 64 → next month ~81
+
+ISSUES FOUND
+------------
+- Meta description length is off (medium) — Aim for roughly 140–160 characters so Google doesn’t truncate your pitch.
+- No structured data (JSON-LD) detected (medium) — Add Restaurant / LocalBusiness schema so Google can show rich results.
+- No XML sitemap detected (medium) — Publish /sitemap.xml and reference it in robots.txt so Google can crawl menu and location pages.
+- Most images lack alt text (medium) — Describe dishes and rooms in alt text — helps SEO and accessibility.
+- Site is not served over HTTPS (high) — HTTPS is required for trust, forms, and modern browser features.
+
+OPPORTUNITIES
+-------------
+- Hyper-local page: “Best nights out near Your area”: High — captures planners 2–4 weeks ahead
+- Menu micro-copy tuned for search + upsell: Medium — lifts average check on high-intent traffic
+- Launch "Happy House - Best Chinese Food In Bedford Your area" landing cluster: High — closes local-intent searches competitors ignore
+
+30 / 60 / 90 ROADMAP
+-------------------
+30 days:
+  - Fix crawl blockers + meta hygiene on core pages
+  - Publish 3 hyper-local landing pages with proof (reviews, photos)
+  - Add one high-intent CTA module on homepage hero
+60 days:
+  - Launch weekly content cadence (events, chef story, neighborhood guides)
+  - Expand structured data to menu + FAQ
+  - A/B test reservation vs order CTAs
+90 days:
+  - Competitor gap report + counter-positioning pages
+  - Automated slow-night recovery campaign templates
+  - Reputation velocity program (reviews + responses)
+
+NEXT STEP
+---------
+Start free trial: https://trykob.com/signup
+Book walkthrough: https://trykob.com/demo

@@ -9,7 +9,7 @@ import { renderAuditShareMarkdown } from "../lib/audit/render-share-html";
 
 async function main() {
   const prisma = new PrismaClient();
-  const outDir = join(process.cwd(), "public", "review");
+  const outDir = join(process.cwd(), "public", "audit-reviews");
   mkdirSync(outDir, { recursive: true });
 
   const audits = await prisma.visibilityAudit.findMany({
@@ -41,7 +41,7 @@ async function main() {
     if (!md) continue;
     const file = `${key}.txt`;
     writeFileSync(join(outDir, file), md, "utf8");
-    const url = `https://trykob.com/review/${file}`;
+    const url = `https://trykob.com/audit-reviews/${file}`;
     indexLines.push(`${a.restaurantName} — ${a.city}`);
     indexLines.push(url);
     indexLines.push("");
@@ -56,7 +56,7 @@ async function main() {
 a{color:#094413}</style></head><body>
 <h1>KOB team audit review</h1>
 <p>These are <strong>static text files</strong> — open any link. No login. No JavaScript.</p>
-<p><a href="/review/INDEX.txt">INDEX.txt (all links)</a></p>
+<p><a href="/audit-reviews/INDEX.txt">INDEX.txt (all links)</a></p>
 <ul>
 ${audits
   .map((a) => {
@@ -70,7 +70,7 @@ ${audits
   );
 
   await prisma.$disconnect();
-  console.log("Done. Open https://trykob.com/review/INDEX.txt after deploy.");
+  console.log("Done. Open https://trykob.com/audit-reviews/INDEX.txt after deploy.");
 }
 
 main().catch((e) => {

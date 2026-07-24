@@ -1,0 +1,38 @@
+KOB team audit review — STATIC TEXT FILES
+Open these URLs (plain text, no JavaScript):
+
+Kingsway Karahi — Your area
+https://trykob.com/audit-reviews/kingsway-karahi-luton.txt
+
+Happy House - Best Chinese Food In Bedford — Your area
+https://trykob.com/audit-reviews/happy-house-best-chinese-food-in-bedford.txt
+
+Park Express — Your area
+https://trykob.com/audit-reviews/park-express-eastbourne.txt
+
+Deepdale Tandoori — Your area
+https://trykob.com/audit-reviews/deepdale-tandoori-preston.txt
+
+Central — Your area
+https://trykob.com/audit-reviews/central-manchester.txt
+
+Afterhours — Your area
+https://trykob.com/audit-reviews/afterhours-london.txt
+
+Osaka — Your area
+https://trykob.com/audit-reviews/osaka.txt
+
+KeyStore - Great Western Road — Your area
+https://trykob.com/audit-reviews/keystore-great-western-road.txt
+
+Christof's Sandwich Shop — Your area
+https://trykob.com/audit-reviews/christofs-sandwich-shop.txt
+
+The Curry Kitchen — Your area
+https://trykob.com/audit-reviews/the-curry-kitchen.txt
+
+Ambiance — Your area
+https://trykob.com/audit-reviews/ambiance.txt
+
+Riverside Diner — Your area
+https://trykob.com/audit-reviews/riverside-diner.txt
