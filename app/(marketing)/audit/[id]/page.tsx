@@ -18,7 +18,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!audit) return { title: "Audit · KOB" };
     const pathKey = audit.slug || audit.id;
     const url = `https://trykob.com/audit/${pathKey}`;
-    const shareUrl = `${url}/share`;
     return {
       title: `${audit.restaurantName} · Visibility ${audit.overallScore} · KOB`,
       description: `Public visibility audit for ${audit.restaurantName} in ${audit.city}. No login required.`,
@@ -26,21 +25,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: `${audit.restaurantName} · KOB audit`,
         description: `Growth score ${audit.overallScore}/100 for ${audit.restaurantName}. Open without logging in.`,
-        url: shareUrl,
+        url,
         siteName: "KOB",
         type: "article",
         locale: "en_GB",
       },
       twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: `${audit.restaurantName} · KOB audit`,
-        description: `Public audit — no login required. Share view: ${shareUrl}`,
+        description: `Public audit — no login required.`,
       },
       alternates: {
         canonical: url,
-        types: {
-          "text/html": shareUrl,
-        },
       },
     };
   } catch (e) {
@@ -79,26 +75,8 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   }
 
   // Full report is public — no lead unlock / payload strip.
-  const pathKeyForLinks = audit.slug || audit.id;
   return (
     <>
-      <div className="border-b border-[var(--color-hairline)] bg-white px-5 py-2.5 text-center text-sm text-[var(--color-muted)] md:px-8">
-        Team review:{" "}
-        <a href="/audit-reviews/INDEX.txt" className="font-medium text-[var(--color-primary)] underline">
-          plain-text INDEX
-        </a>
-        {" · "}
-        <a
-          href={`/audit-reviews/${pathKeyForLinks}.txt`}
-          className="font-medium text-[var(--color-primary)] underline"
-        >
-          this audit .txt
-        </a>
-        {" · "}
-        <a href={`/api/audit/${pathKeyForLinks}/txt`} className="font-medium text-[var(--color-primary)] underline">
-          API txt
-        </a>
-      </div>
       <AuditResultsContent
         scanStillRunning={previewEarly && payload.scanStatus === "pending"}
         initialEmail={prefillEmail}
