@@ -1,5 +1,6 @@
 import { createPendingAuditSeed } from "@/lib/audit/create-pending-audit";
 import { normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
+import { verifyWebsiteMatchesRestaurant } from "@/lib/audit/website-identity";
 import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
 import { slugify } from "@/lib/utils/slugify";
@@ -62,6 +63,7 @@ async function allocateAuditSlug(name: string, city: string): Promise<string> {
 /**
  * Create (or reuse) a VisibilityAudit for an outbound restaurant and queue the scan.
  * Public email links use the pretty **slug** (`/audit/restaurant-name`).
+ * Refuses to attach a website that fails restaurant identity verification.
  */
 export async function ensureOutboundAudit(
   input: EnsureOutboundAuditInput,
@@ -71,12 +73,38 @@ export async function ensureOutboundAudit(
     return { ok: false as const, error: "invalid_website" };
   }
 
+  const restaurantName = input.restaurantName.trim() || "Restaurant";
+  const city = input.city.trim() || "Your area";
+
+  const identity = await verifyWebsiteMatchesRestaurant({
+    restaurantName,
+    city,
+    websiteUrl,
+  });
+  if (!identity.matched) {
+    console.warn(
+      `[ensureOutboundAudit] website_mismatch for ${restaurantName}: ${identity.reason} (${websiteUrl})`,
+    );
+    return { ok: false as const, error: "website_mismatch" };
+  }
+
   if (input.existingAuditId?.trim()) {
     const existing = await prisma.visibilityAudit.findUnique({
       where: { id: input.existingAuditId.trim() },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, websiteUrl: true },
     });
     if (existing) {
+      const existingUrl = existing.websiteUrl?.trim();
+      if (existingUrl && existingUrl !== websiteUrl) {
+        const existingIdentity = await verifyWebsiteMatchesRestaurant({
+          restaurantName,
+          city,
+          websiteUrl: existingUrl,
+        });
+        if (!existingIdentity.matched) {
+          return { ok: false as const, error: "website_mismatch" };
+        }
+      }
       const pathKey = existing.slug?.trim() || existing.id;
       return {
         auditId: existing.id,
@@ -87,8 +115,6 @@ export async function ensureOutboundAudit(
     }
   }
 
-  const restaurantName = input.restaurantName.trim() || "Restaurant";
-  const city = input.city.trim() || "Your area";
   const slug = await allocateAuditSlug(restaurantName, city);
   const { row } = createPendingAuditSeed({ restaurantName, city, websiteUrl });
 

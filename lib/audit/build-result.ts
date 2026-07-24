@@ -15,6 +15,7 @@ import type { AuditEngagementSignals } from "@/lib/audit/engagement-signals";
 import { mergeWebsiteAnalyses } from "@/lib/audit/merge-analyses";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { designScoreNudgeFromVisual } from "@/lib/audit/visual-intelligence";
+import { scoreWebsiteIdentityFromSnippets } from "@/lib/audit/website-identity";
 import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
 import { buildEstimatedCompetitors, fetchNearbyCompetitors } from "@/lib/audit/fetch-nearby-competitors";
 import { placesGeocodeCityUk } from "@/lib/places/google-places-server";
@@ -455,16 +456,52 @@ export function buildAuditPayloadAndRow(
   );
 
   const hadUrl = Boolean(input.websiteUrl?.trim());
+  const siteIdentity = scoreWebsiteIdentityFromSnippets({
+    restaurantName: input.restaurantName,
+    city: input.city,
+    url: input.websiteUrl?.trim() || null,
+    titleSnippet: analysis.pageEvidence.titleSnippet,
+    metaDescriptionSnippet: analysis.pageEvidence.metaDescriptionSnippet,
+  });
+  const siteMatched = !hadUrl || siteIdentity.matched;
+
   const issues = buildIssues(signals, input.restaurantName, hadUrl);
-  const opportunities = buildOpportunities(input.city, input.restaurantName, signals, hadUrl);
+  if (hadUrl && !siteIdentity.matched) {
+    issues.unshift({
+      title: "Website does not appear to belong to this restaurant",
+      impact: "high",
+      fixHint: `${siteIdentity.reason}. Confirm the correct restaurant website or Google Business Profile before trusting this scan.`,
+    });
+  }
+
+  const opportunities = siteMatched
+    ? buildOpportunities(input.city, input.restaurantName, signals, hadUrl)
+    : [
+        {
+          title: "Confirm the correct website for this restaurant",
+          impactEstimate: "Critical — do not act on site findings until ownership is verified",
+        },
+        {
+          title: "Use Google Business Profile as the source of truth",
+          impactEstimate: "High — listing data is safer when the website is wrong or missing",
+        },
+      ];
   const competitors =
     options?.competitors ??
-    buildEstimatedCompetitors(input.city, input.restaurantName + (input.websiteUrl ?? ""));
-  const teaser = {
-    headline: `${input.restaurantName} — modern guest-first layout`,
-    subline: "Hero imagery, crisp typography, and a single dominant reservation path.",
-    paletteNote: "Cream field, deep green actions, warm ink body copy — hospitality premium.",
-  };
+    (siteMatched
+      ? buildEstimatedCompetitors(input.city, input.restaurantName + (input.websiteUrl ?? ""))
+      : []);
+  const teaser = siteMatched
+    ? {
+        headline: `${input.restaurantName} — modern guest-first layout`,
+        subline: "Hero imagery, crisp typography, and a single dominant reservation path.",
+        paletteNote: "Cream field, deep green actions, warm ink body copy — hospitality premium.",
+      }
+    : {
+        headline: `${input.restaurantName} — website ownership could not be verified`,
+        subline: siteIdentity.reason,
+        paletteNote: "This scan may describe a different business. Do not treat site findings as restaurant advice.",
+      };
 
   const scanStatus = options?.scanStatus ?? "ready";
   const deferAi = Boolean(options?.deferInitialAiJobs);
@@ -472,6 +509,12 @@ export function buildAuditPayloadAndRow(
 
   const payload: AuditResultPayload = {
     scoresPending: scanStatus !== "ready",
+    siteIdentity: {
+      matched: siteMatched,
+      score: siteIdentity.score,
+      reason: siteIdentity.reason,
+      pageTitle: analysis.pageEvidence.titleSnippet,
+    },
     scores: {
       overall,
       seo: scoresPart.seo,
@@ -484,13 +527,24 @@ export function buildAuditPayloadAndRow(
     competitors,
     ...(options?.geoLocation !== undefined ? { geoLocation: options.geoLocation } : {}),
     teaser,
-    gated: buildGated(input.city, input.restaurantName, competitors),
+    gated: siteMatched
+      ? buildGated(input.city, input.restaurantName, competitors)
+      : {
+          competitorDeepDive: [],
+          keywordOpportunities: [],
+          roadmap: {
+            days30: ["Confirm the correct website or Google listing for this restaurant"],
+            days60: ["Re-run the audit only after the website is verified"],
+            days90: ["Build hospitality improvements from verified sources only"],
+          },
+          redesignPreviewNotes: "Website ownership unverified — redesign preview withheld.",
+        },
     evidencePack,
     scanStatus,
     ...(options?.browserbaseScan ? { browserbaseScan: options.browserbaseScan } : {}),
     ...(options?.visualMetrics ? { visualMetrics: options.visualMetrics } : {}),
     ...(options?.stagehandExtraction ? { stagehandExtraction: options.stagehandExtraction } : {}),
-    ...(geminiKey && !deferAi
+    ...(geminiKey && !deferAi && siteMatched
       ? {
           benchmarkV1Status: "pending" as const,
           benchmarkV1MediaStatus:

@@ -149,6 +149,24 @@ export async function scanLeadContacts(lead: MergedPlatformLead): Promise<Contac
     websiteUrl = await discoverWebsiteByDomainGuess(prepared.name, prepared.city);
   }
 
+  // Final gate: never keep a URL that fails restaurant identity (wrong industry / name).
+  if (websiteUrl?.trim()) {
+    const { verifyWebsiteMatchesRestaurant } = await import("@/lib/audit/website-identity");
+    const identity = await verifyWebsiteMatchesRestaurant({
+      restaurantName: prepared.name,
+      city: prepared.city,
+      websiteUrl,
+    });
+    if (!identity.matched) {
+      console.warn(
+        `[scanLeadContacts] rejecting website for ${prepared.name}: ${identity.reason} (${websiteUrl})`,
+      );
+      websiteUrl = null;
+    } else {
+      websiteUrl = identity.finalUrl || websiteUrl;
+    }
+  }
+
   if (websiteUrl?.trim()) {
     if (!contactEmail) {
       contactEmail = await scrapeEmailFromSite(websiteUrl);

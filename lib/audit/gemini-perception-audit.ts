@@ -102,6 +102,87 @@ export function buildHeuristicPerceptionAuditV1(payload: AuditResultPayload): Pe
   const peer = buildPeerBenchmarkContext(payload);
   const eng = payload.evidencePack?.engagementSignals;
   const scorecard = buildScorecardFallback(payload);
+  const siteMismatch = payload.siteIdentity?.matched === false;
+
+  if (siteMismatch) {
+    const reason = payload.siteIdentity?.reason ?? "The scanned URL could not be verified as this restaurant.";
+    const pageTitle = payload.siteIdentity?.pageTitle?.trim();
+    return {
+      version: 1,
+      model: "heuristic-v1-site-mismatch",
+      scoredAt: new Date().toISOString(),
+      digitalPositioningScore: Math.min(dps, 40),
+      confidence: "low",
+      coverHeadline: "We could not verify this website belongs to your restaurant.",
+      coverSubheadline: pageTitle
+        ? `The page title we saw was “${pageTitle}”. ${reason}`
+        : reason,
+      executiveSummary: {
+        strengths: ["We refused to invent a food / booking story for an unverified site."],
+        gapStatement:
+          "Until the correct website or Google Business Profile is confirmed, treat site scores as unreliable.",
+        impacts: [
+          "Wrong-site audits destroy trust with owners",
+          "Hospitality advice on a non-restaurant page is false",
+          "Outbound emails must not link a mismatched report",
+        ],
+      },
+      visualScorecard: [
+        {
+          category: "Website ownership",
+          scoreOutOf10: 2,
+          note: reason.slice(0, 220),
+        },
+        {
+          category: "Google visibility",
+          scoreOutOf10: payload.evidencePack?.googlePlace ? 5 : 2,
+          note: payload.evidencePack?.googlePlace
+            ? "Google listing signals available — prefer these over the unmatched website."
+            : "Google Business Profile was not resolved for this restaurant.",
+        },
+      ],
+      estimatedDwellSeconds: { low: 5, high: 12, rationale: "Withheld — website ownership unverified." },
+      positioningTable: [
+        {
+          area: "Website ownership",
+          current: "Not verified",
+          ideal: "Homepage clearly names this restaurant and city",
+        },
+        {
+          area: "Google listing",
+          current: payload.evidencePack?.googlePlace ? "Available" : "Missing",
+          ideal: "Claimed Google Business Profile with correct NAP",
+        },
+      ],
+      perceptionGap: [
+        {
+          metric: "Website ownership",
+          current: "Unverified",
+          potential: "Verified",
+          note: reason,
+        },
+      ],
+      customerExperience: `${name}: we will not describe food, menus, or bookings from a website we could not prove belongs to this restaurant.`,
+      modernStandard:
+        "A trustworthy audit only scores pages that match the restaurant — name, city, and hospitality signals on the homepage.",
+      reviewIntelligence: {
+        praiseThemes: [],
+        complaintThemes: [],
+        disconnect: "Review intelligence withheld until the correct listing/website is confirmed.",
+      },
+      socialAnalysis: "Social analysis withheld — website ownership unverified.",
+      commercialSeo: "SEO recommendations withheld for mismatched websites.",
+      revenueLeaks: [
+        {
+          title: "Unverified website",
+          impact: "high",
+          narrative: reason,
+        },
+      ],
+      benchmarkAnchors: peer.suggestedAnchors.slice(0, 3),
+      overallSummary: `Do not treat this report as a restaurant website audit until ownership is verified. ${reason}`,
+    };
+  }
 
   return {
     version: 1,

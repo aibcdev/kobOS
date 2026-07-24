@@ -150,6 +150,16 @@ export type AuditScanStatus = "pending" | "ready" | "failed";
 export type AuditResultPayload = {
   /** When true, UI must not show headline scores (scan still running). */
   scoresPending?: boolean;
+  /**
+   * Whether the scanned website was verified as belonging to this restaurant.
+   * When matched=false, hospitality copy must not invent food/booking claims about that site.
+   */
+  siteIdentity?: {
+    matched: boolean;
+    score: number;
+    reason: string;
+    pageTitle?: string | null;
+  };
   scores: {
     overall: number;
     seo: number;

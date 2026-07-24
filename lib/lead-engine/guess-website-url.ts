@@ -1,21 +1,10 @@
 /** Guess owner website when Just Eat HTML and Google Places are unavailable. */
 
-const STOP_WORDS = new Set([
-  "and",
-  "the",
-  "at",
-  "in",
-  "of",
-  "ltd",
-  "limited",
-  "uk",
-  "restaurant",
-  "takeaway",
-  "cafe",
-  "bar",
-  "grill",
-  "kitchen",
-]);
+import {
+  nameTokensForIdentity,
+  scoreWebsiteIdentity,
+  websiteIdentityMinScore,
+} from "@/lib/audit/website-identity";
 
 function compactSlug(input: string): string {
   return input
@@ -30,32 +19,37 @@ function citySlug(city: string): string {
   return compactSlug(city);
 }
 
+/** @deprecated Prefer nameTokensForIdentity — kept for callers. */
 export function nameTokens(name: string): string[] {
-  return name
-    .toLowerCase()
-    .replace(/24\s*\/\s*7/g, "247")
-    .split(/[^a-z0-9]+/i)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 1 && !STOP_WORDS.has(t));
+  return nameTokensForIdentity(name);
 }
 
 export function buildDomainCandidates(name: string, city: string): string[] {
   const full = compactSlug(name);
   const cityPart = citySlug(city);
-  const tokens = nameTokens(name);
+  const tokens = nameTokensForIdentity(name);
   const short = compactSlug(tokens.slice(0, 2).join(""));
+  // Never lead with a single first-token .com (Kingsway → kingsway.com).
+  // Prefer full/short stems; only include first token when paired with city.
   const first = compactSlug(tokens[0] ?? name);
+  const nameCity = cityPart ? `${first}${cityPart}` : null;
+  const shortCity = cityPart ? `${short}${cityPart}` : null;
 
-  const nameCity = `${first}${cityPart}`;
-  const shortCity = `${short}${cityPart}`;
-  const stems = full.match(/\d/)
-    ? [full, `${full}${cityPart}`, short, nameCity, shortCity, first]
-    : [short, full, `${full}${cityPart}`, nameCity, shortCity, first];
+  const stems = [
+    short,
+    full,
+    cityPart ? `${full}${cityPart}` : null,
+    nameCity,
+    shortCity,
+  ].filter(Boolean) as string[];
+
   const suffixes = ["", "indian", "takeaway", "food", "pizza", "kebab"];
   const hosts: string[] = [];
   for (const stem of stems) {
+    if (stem.length < 5) continue;
     for (const suffix of suffixes) {
       const s = suffix ? `${stem}${suffix}` : stem;
+      // Prefer UK TLDs first for UK restaurants
       hosts.push(`${s}.co.uk`, `${s}.uk`, `${s}.com`);
       if (cityPart) {
         hosts.push(`${s}${cityPart}.co.uk`, `${s}${cityPart}.uk`);
@@ -67,9 +61,6 @@ export function buildDomainCandidates(name: string, city: string): string[] {
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-
-const PARKED_PAGE_RE =
-  /domain for sale|buy this domain|parked free|godaddy|sedo\.com|hugedomains|is for sale|coming soon/i;
 
 export function alternateWebsiteTld(url: string): string | null {
   try {
@@ -91,44 +82,8 @@ export function scoreWebsiteHtmlMatch(
   html: string,
   url: string,
 ): number {
-  if (html.length < 800) return -100;
-  if (PARKED_PAGE_RE.test(html)) return -1000;
-
-  const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.toLowerCase() ?? "";
-  const body = html.slice(0, 60_000).toLowerCase();
-  const tokens = nameTokens(name);
-  const cityCompact = citySlug(city);
-  const nameCompact = compactSlug(name);
-
-  let score = 0;
-
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "").replace(/\.(co\.uk|uk|com)$/, "");
-    if (nameCompact.length >= 4 && host.includes(nameCompact)) score += 50;
-    else if (tokens.length >= 2) {
-      const joined = compactSlug(tokens.slice(0, 2).join(""));
-      if (joined.length >= 4 && host.includes(joined)) score += 35;
-    }
-  } catch {
-    /* ignore */
-  }
-
-  for (const token of tokens) {
-    if (token.length < 3) continue;
-    if (title.includes(token)) score += 25;
-    else if (body.includes(token)) score += 8;
-  }
-
-  if (cityCompact.length >= 3) {
-    if (body.includes(city.toLowerCase()) || body.includes(cityCompact)) score += 20;
-  }
-
-  if (tokens.length <= 1 && score < 30) return -100;
-
-  return score;
+  return scoreWebsiteIdentity({ restaurantName: name, city, html, url }).score;
 }
-
-const MIN_MATCH_SCORE = 25;
 
 async function fetchCandidateHtml(url: string, timeoutMs: number): Promise<string | null> {
   try {
@@ -155,15 +110,21 @@ export async function discoverWebsiteByDomainGuess(
 ): Promise<string | null> {
   const candidates = [...new Set(buildDomainCandidates(name, city))].slice(0, 24);
   const timeoutMs = Math.max(3000, Number(process.env.LEAD_ENGINE_DOMAIN_TIMEOUT_MS?.trim() || "5000") || 5000);
+  const minScore = websiteIdentityMinScore();
 
   let best: { url: string; score: number } | null = null;
 
   const checks = candidates.map(async (candidate) => {
     const html = await fetchCandidateHtml(candidate, timeoutMs);
     if (!html) return null;
-    const score = scoreWebsiteHtmlMatch(name, city, html, candidate);
-    if (score < MIN_MATCH_SCORE) return null;
-    return { url: candidate, score };
+    const identity = scoreWebsiteIdentity({
+      restaurantName: name,
+      city,
+      html,
+      url: candidate,
+    });
+    if (!identity.matched || identity.score < minScore) return null;
+    return { url: candidate, score: identity.score };
   });
 
   const results = await Promise.all(checks);
