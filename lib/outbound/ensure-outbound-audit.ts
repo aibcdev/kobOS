@@ -61,8 +61,7 @@ async function allocateAuditSlug(name: string, city: string): Promise<string> {
 
 /**
  * Create (or reuse) a VisibilityAudit for an outbound restaurant and queue the scan.
- * Public email links use the audit **id** (cuid) — works on production today.
- * Pretty slugs are stored for later / once slug routing is deployed.
+ * Public email links use the pretty **slug** (`/audit/restaurant-name`).
  */
 export async function ensureOutboundAudit(
   input: EnsureOutboundAuditInput,
@@ -78,11 +77,11 @@ export async function ensureOutboundAudit(
       select: { id: true, slug: true },
     });
     if (existing) {
+      const pathKey = existing.slug?.trim() || existing.id;
       return {
         auditId: existing.id,
-        slug: existing.slug ?? existing.id,
-        // Use cuid path — slug routes 404 until production ships slug lookup
-        auditUrl: buildAuditPublicUrl(existing.id, input.contactEmail),
+        slug: pathKey,
+        auditUrl: buildAuditPublicUrl(pathKey, input.contactEmail),
         created: false,
       };
     }
@@ -140,7 +139,7 @@ export async function ensureOutboundAudit(
   return {
     auditId: created.id,
     slug,
-    auditUrl: buildAuditPublicUrl(created.id, input.contactEmail),
+    auditUrl: buildAuditPublicUrl(slug, input.contactEmail),
     created: true,
   };
 }
