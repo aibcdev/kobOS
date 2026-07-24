@@ -3,26 +3,34 @@
 import Link from "next/link";
 import type { VisibilityAudit } from "@prisma/client";
 import { useCallback, useState } from "react";
-import { OperatorAuditReport } from "@/components/marketing/audit/OperatorAuditReport";
+import { AuditOpportunityReport } from "@/components/marketing/audit/AuditOpportunityReport";
 import { AuditFunnelHeader } from "@/components/marketing/audit/AuditFunnelHeader";
+import { AuditPerceptionGapTable } from "@/components/marketing/audit/AuditPerceptionGapTable";
+import { AuditPerceptionHero } from "@/components/marketing/audit/AuditPerceptionHero";
+import { AuditPositioningTable } from "@/components/marketing/audit/AuditPositioningTable";
 import {
   AuditCommercialSeoBlock,
+  AuditNarrativeSection,
   AuditReviewSocialIntel,
 } from "@/components/marketing/audit/AuditNarrativeSection";
+import { AuditVisualScorecard, AuditExecutiveSummary } from "@/components/marketing/audit/AuditVisualScorecard";
 import {
   AuditEvidenceSources,
+  AuditEvidenceSourcesDetail,
   collectAuditEvidenceSources,
   formatEvidenceSourcesSummary,
 } from "@/components/marketing/audit/AuditEvidenceSources";
 import { AuditUpgradePanel } from "@/components/marketing/audit/AuditUpgradePanel";
+import { AuditRevenueLeaks } from "@/components/marketing/audit/AuditRevenueLeaks";
 import { useAuditBenchmarkPoll } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { isAuditScoresReady } from "@/lib/audit/audit-score-display";
+import { gradeMeaning } from "@/lib/audit/restaurant-scoring";
 import { buildTeaserPerception } from "@/lib/marketing/audit-scan-preview";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { onlineHealthLabel } from "@/lib/marketing/audit-grader-phases";
 import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
-import type { AuditResultPayload, BenchmarkV1Section } from "@/lib/audit/types";
+import type { AuditResultPayload, BenchmarkV1Section, RestaurantScoresV1 } from "@/lib/audit/types";
 
 type NavId = "overview" | "reviews" | "discovery" | "competitors" | "technical";
 
@@ -86,6 +94,53 @@ function ScoreRing({
           <span className={`font-head text-4xl font-semibold tabular-nums ${tone.text}`}>{score}</span>
         )}
       </div>
+    </div>
+  );
+}
+
+const RESTAURANT_AXIS_STRIP: { key: keyof Pick<RestaurantScoresV1, "reviews" | "gbp" | "website" | "competitors" | "technical">; label: string }[] = [
+  { key: "reviews", label: "Reviews" },
+  { key: "gbp", label: "GBP" },
+  { key: "website", label: "Website" },
+  { key: "competitors", label: "Competitive" },
+  { key: "technical", label: "Technical" },
+];
+
+function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
+  return (
+    <div className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
+            Restaurant scorecard
+          </p>
+          <p className="mt-1 font-head text-lg font-semibold">
+            Grade {scores.grade} · {scores.overall}/100
+          </p>
+        </div>
+        <p className="text-xs text-[var(--color-muted-medium)]">Confidence: {scores.confidence}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {RESTAURANT_AXIS_STRIP.map(({ key, label }) => {
+          const value = scores[key];
+          const tone = scoreTone(value);
+          return (
+            <div key={key} className="rounded-xl bg-[var(--color-surface-cream)]/70 px-3 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
+                {label}
+              </p>
+              <p className={`mt-1 font-head text-xl font-semibold tabular-nums ${tone.text}`}>{value}</p>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
+                <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${value}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
+        C = average for restaurants. {gradeMeaning(scores.grade)}.
+        {scores.dataGaps?.length ? ` Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}.` : null}
+      </p>
     </div>
   );
 }
@@ -296,10 +351,7 @@ export function AuditReportDashboard({
   const mediaThumbs = meta && meta.length > 0 ? meta : cands;
   const showMedia = unlocked && data.benchmarkV1MediaStatus === "ready" && data.benchmarkV1Media;
   const showVideo = showMedia && Boolean(data.benchmarkV1Media?.videoPresentationQuality);
-  const showHeaderScoreRing =
-    unlocked &&
-    activeNav !== "overview" &&
-    (Boolean(restaurantScores) || !perception || perceptionPending);
+  const showHeaderScoreRing = unlocked && (Boolean(restaurantScores) || !perception || perceptionPending);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface-warm)] text-[var(--color-ink)]">
@@ -417,7 +469,7 @@ export function AuditReportDashboard({
             ) : null}
 
             <div>
-              {unlocked && activeNav !== "overview" ? (
+              {unlocked ? (
                 <div className="mb-8 flex flex-col items-center gap-6 text-center md:flex-row md:items-end md:justify-between md:text-left">
                   <div className="md:text-left">
                     <h1 className="font-head text-3xl font-semibold tracking-tight md:text-4xl">
@@ -456,14 +508,57 @@ export function AuditReportDashboard({
               ) : null}
 
               {activeNav === "overview" && (
-                <div className="mb-8">
-                  <OperatorAuditReport
+                <div className="mb-8 space-y-10">
+                  <AuditOpportunityReport
+                    auditId={audit.id}
                     restaurantName={restaurantDisplay}
                     city={audit.city}
                     websiteUrl={audit.websiteUrl}
                     payload={payload}
+                    unlocked={unlocked}
+                    report={payload.opportunityReport ?? null}
                     trialHref={trialCheckoutHref}
+                    onUnlockClick={() => {
+                      onRequestUnlock?.();
+                    }}
                   />
+
+                  {unlocked && restaurantScores ? <RestaurantAxisStrip scores={restaurantScores} /> : null}
+
+                  {unlocked ? (
+                    <>
+                      <AuditPerceptionHero
+                        perception={perception}
+                        pending={perceptionPending}
+                        timedOut={timedOut && perceptionPending}
+                        retrying={retrying}
+                        onRetry={() => {
+                          void retryAnalysis();
+                        }}
+                        restaurantName={restaurantDisplay}
+                        payload={payload}
+                      />
+                      {perception ? (
+                        <div>
+                          {perception.overallSummary ? (
+                            <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
+                              {perception.overallSummary}
+                            </p>
+                          ) : null}
+                          <AuditExecutiveSummary perception={perception} />
+                          <AuditVisualScorecard rows={perception.visualScorecard} />
+                          <AuditPositioningTable rows={perception.positioningTable} />
+                          <AuditPerceptionGapTable rows={perception.perceptionGap} locked={false} />
+                          <AuditRevenueLeaks leaks={perception.revenueLeaks} />
+                          <AuditEvidenceSourcesDetail payload={payload} />
+                          <AuditNarrativeSection
+                            customerExperience={perception.customerExperience}
+                            modernStandard={perception.modernStandard}
+                          />
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
               )}
 
