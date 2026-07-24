@@ -1,5 +1,7 @@
 import { geminiJsonCompletion } from "@/lib/growth-agent/gemini-json-completion";
 import { parseJsonWithSchema } from "@/lib/growth-agent/openai-json-completion";
+import { buildOutboundAbDraft, type OutboundAbDraft } from "@/lib/outbound/email-templates-ab";
+import { OutboundEmailVariant } from "@prisma/client";
 import { z } from "zod";
 
 const draftSchema = z.object({
@@ -8,18 +10,28 @@ const draftSchema = z.object({
   suggested_tone: z.string(),
 });
 
-export type UkColdDraft = z.infer<typeof draftSchema>;
+/** @deprecated Prefer OutboundAbDraft — kept for type compatibility with persist helpers. */
+export type UkColdDraft = {
+  email_subject: string;
+  message_body: string;
+  suggested_tone: string;
+  variant?: OutboundEmailVariant;
+};
 
-const SYSTEM = `You write short, helpful B2B cold emails to independent UK restaurant owners.
-Return JSON only. Under 160 words in message_body. Mention one specific visibility issue from the brief.
-Include a line offering a free visibility scan. Do not claim you already emailed them. Professional, not pushy.`;
+/**
+ * Primary outbound draft path: fixed A/B templates + pre-generated audit URL.
+ * `stableId` should be the OutboundLead id (or prospect id before lead exists).
+ */
+export function generateOutboundAbEmail(input: {
+  stableId: string;
+  companyName: string;
+  auditUrl: string;
+  variant?: OutboundEmailVariant;
+}): OutboundAbDraft {
+  return buildOutboundAbDraft(input);
+}
 
-const LEAD_ENGINE_SYSTEM = `You write short, helpful B2B cold emails to independent UK/Ireland restaurant owners.
-Return JSON only. Under 180 words in message_body.
-Open with: we analyzed their restaurant and found N specific opportunities (use the list provided).
-Mention their KOB opportunity score. Pick 2-3 concrete issues from the list — not all of them.
-Include a line offering a free visibility scan. Professional, not pushy. No fake familiarity.`;
-
+/** @deprecated Use generateOutboundAbEmail — Gemini path kept only as emergency fallback. */
 export async function generateLeadEngineDraft(input: {
   restaurantName: string;
   city: string;
@@ -28,69 +40,71 @@ export async function generateLeadEngineDraft(input: {
   opportunities: string[];
   reviewCount: number | null;
   rating: number | null;
+  emailAngle?: string | null;
+  auditUrl?: string;
+  stableId?: string;
 }): Promise<{ ok: true; draft: UkColdDraft } | { ok: false; error: string }> {
-  const oppList = input.opportunities.length
-    ? input.opportunities.map((o, i) => `${i + 1}. ${o}`).join("\n")
-    : "1. Room to improve local visibility and conversion";
+  if (input.auditUrl && input.stableId) {
+    const draft = generateOutboundAbEmail({
+      stableId: input.stableId,
+      companyName: input.restaurantName,
+      auditUrl: input.auditUrl,
+    });
+    return {
+      ok: true,
+      draft: {
+        email_subject: draft.email_subject,
+        message_body: draft.message_body,
+        suggested_tone: draft.suggested_tone,
+        variant: draft.variant,
+      },
+    };
+  }
 
-  const user = `Restaurant: ${input.restaurantName}
-City: ${input.city}
-Website: ${input.websiteUrl}
-KOB Opportunity Score: ${input.kobOpportunityScore}/100 (higher = more we can help)
-Google reviews: ${input.reviewCount ?? "unknown"} · rating: ${input.rating ?? "unknown"}
+  const hooks = input.opportunities.filter((o) => !/^Est\.\s+\d+\s+lost/i.test(o));
+  const primary = hooks[0] ?? input.opportunities[0] ?? "Room to improve local Google visibility";
 
-Opportunities we found:
-${oppList}
-
-Return JSON: { "email_subject": "", "message_body": "", "suggested_tone": "" }`;
-
-  const completion = await geminiJsonCompletion({ system: LEAD_ENGINE_SYSTEM, user, temperature: 0.65 });
+  const SYSTEM = `You write short B2B cold emails. Return JSON only. Under 110 words. CTA https://trykob.com/audit. Sign Tim.`;
+  const user = `Restaurant: ${input.restaurantName}\nCity: ${input.city}\nHook: ${primary}`;
+  const completion = await geminiJsonCompletion({ system: SYSTEM, user, temperature: 0.55 });
   if (!completion.ok) return completion;
-
   const parsed = parseJsonWithSchema(completion.raw, draftSchema);
   if (!parsed.ok) return parsed;
-
-  const footer =
-    "\n\n—\nIf you'd rather not hear from us, reply \"unsubscribe\" and we won't follow up.";
-
-  return {
-    ok: true,
-    draft: {
-      ...parsed.data,
-      message_body: parsed.data.message_body.trim() + footer,
-    },
-  };
+  return { ok: true, draft: parsed.data };
 }
 
+/** @deprecated Use generateOutboundAbEmail. */
 export async function generateUkColdDraft(input: {
   restaurantName: string;
   city: string;
   topIssue: string;
   qualifyScore: number;
   websiteUrl: string;
+  auditUrl?: string;
+  stableId?: string;
 }): Promise<{ ok: true; draft: UkColdDraft } | { ok: false; error: string }> {
-  const user = `Restaurant: ${input.restaurantName}
-City: ${input.city}
-Website: ${input.websiteUrl}
-Visibility score (our quick check): ${input.qualifyScore}/100 — weaker is worse
-Top issue: ${input.topIssue}
+  if (input.auditUrl && input.stableId) {
+    const draft = generateOutboundAbEmail({
+      stableId: input.stableId,
+      companyName: input.restaurantName,
+      auditUrl: input.auditUrl,
+    });
+    return {
+      ok: true,
+      draft: {
+        email_subject: draft.email_subject,
+        message_body: draft.message_body,
+        suggested_tone: draft.suggested_tone,
+        variant: draft.variant,
+      },
+    };
+  }
 
-Return JSON: { "email_subject": "", "message_body": "", "suggested_tone": "" }`;
-
-  const completion = await geminiJsonCompletion({ system: SYSTEM, user, temperature: 0.65 });
+  const SYSTEM = `You write short B2B cold emails. Return JSON only. Under 110 words. CTA https://trykob.com/audit. Sign Tim.`;
+  const user = `Restaurant: ${input.restaurantName}\nIssue: ${input.topIssue}`;
+  const completion = await geminiJsonCompletion({ system: SYSTEM, user, temperature: 0.55 });
   if (!completion.ok) return completion;
-
   const parsed = parseJsonWithSchema(completion.raw, draftSchema);
   if (!parsed.ok) return parsed;
-
-  const footer =
-    "\n\n—\nIf you'd rather not hear from us, reply \"unsubscribe\" and we won't follow up.";
-
-  return {
-    ok: true,
-    draft: {
-      ...parsed.data,
-      message_body: parsed.data.message_body.trim() + footer,
-    },
-  };
+  return { ok: true, draft: parsed.data };
 }

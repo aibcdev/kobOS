@@ -48,8 +48,16 @@ html {
 
 .font-heading {
   font-family: var(--font-display), "Instrument Serif", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-synthesis-weight: auto;
+}
+
+/* Page / section titles — slightly larger + heavier by default */
+h1.font-heading,
+h2.font-heading,
+h3.font-heading {
+  font-weight: 700;
 }
 
 .font-accent-script {
@@ -242,6 +250,7 @@ html {
 
 .font-display {
   font-family: var(--font-display), "Instrument Serif", Georgia, serif;
+  font-weight: 700;
 }
 
 body {

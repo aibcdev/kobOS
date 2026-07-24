@@ -2,23 +2,19 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavailable";
 import { AuditResultsContent } from "@/components/marketing/audit/AuditResultsContent";
-import { stripAuditPayloadForPublic } from "@/lib/audit/public-audit-payload";
+import { findVisibilityAuditByIdOrSlug } from "@/lib/audit/find-audit-by-id-or-slug";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { isPrismaDbUnreachableError } from "@/lib/db/prisma-errors";
-import { prisma } from "@/lib/db/prisma";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ preview?: string }>;
+  searchParams: Promise<{ preview?: string; email?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   try {
-    const audit = await prisma.visibilityAudit.findUnique({
-      where: { id },
-      select: { restaurantName: true, city: true, overallScore: true },
-    });
+    const audit = await findVisibilityAuditByIdOrSlug(id);
     if (!audit) return { title: "Audit · KOB" };
     return {
       title: `${audit.restaurantName} · Visibility ${audit.overallScore} · KOB`,
@@ -34,9 +30,10 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
   const previewEarly = sp.preview === "1";
+  const prefillEmail = sp.email?.trim() || null;
   let audit;
   try {
-    audit = await prisma.visibilityAudit.findUnique({ where: { id } });
+    audit = await findVisibilityAuditByIdOrSlug(id);
   } catch (e) {
     if (isPrismaDbUnreachableError(e)) {
       return (
@@ -52,32 +49,33 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   const payload = parseAuditPayload(audit.resultPayload);
   if (!payload) notFound();
 
+  const pathKey = audit.slug || audit.id;
   if (payload.scanStatus === "pending" && !previewEarly) {
-    redirect(`/audit/${id}/scanning`);
+    const emailQs = prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : "";
+    redirect(`/audit/${pathKey}/scanning${emailQs}`);
   }
 
-  const unlocked = Boolean(audit.leadCapturedAt);
-  const clientPayload = unlocked ? payload : stripAuditPayloadForPublic(payload);
-
+  // Full report is public — no lead unlock / payload strip.
   return (
     <AuditResultsContent
       scanStillRunning={previewEarly && payload.scanStatus === "pending"}
+      initialEmail={prefillEmail}
       audit={{
         id: audit.id,
         restaurantName: audit.restaurantName,
         city: audit.city,
         websiteUrl: audit.websiteUrl,
         leadCapturedAt: audit.leadCapturedAt,
-        leadEmail: unlocked ? audit.leadEmail : null,
+        leadEmail: audit.leadEmail,
         createdAt: audit.createdAt,
-        overallScore: unlocked ? audit.overallScore : 0,
-        seoScore: unlocked ? audit.seoScore : 0,
-        designScore: unlocked ? audit.designScore : 0,
-        mobileScore: unlocked ? audit.mobileScore : 0,
-        conversionScore: unlocked ? audit.conversionScore : 0,
+        overallScore: audit.overallScore,
+        seoScore: audit.seoScore,
+        designScore: audit.designScore,
+        mobileScore: audit.mobileScore,
+        conversionScore: audit.conversionScore,
         updatedAt: audit.updatedAt,
       }}
-      payload={clientPayload}
+      payload={payload}
     />
   );
 }

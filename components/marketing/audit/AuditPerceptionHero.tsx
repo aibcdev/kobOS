@@ -10,11 +10,6 @@ function scoreTone(score: number) {
   return { stroke: "var(--color-accent)", text: "text-[var(--color-accent)]", label: "Strong foundation" };
 }
 
-function formatGbp(n: number) {
-  if (n >= 1000) return `£${Math.round(n / 100) / 10}k`;
-  return `£${n}`;
-}
-
 function ScoreRing({ score }: { score: number }) {
   const size = 96;
   const tone = scoreTone(score);
@@ -107,11 +102,6 @@ export function AuditPerceptionHero({
     perception.coverSubheadline ??
     "We reviewed mobile UX, menu structure, imagery, local discovery, and conversion.";
 
-  const showRevenueBand =
-    hero?.monthlyRevenueBandLowGbp != null &&
-    hero?.monthlyRevenueBandHighGbp != null &&
-    hero.monthlyRevenueBandHighGbp > hero.monthlyRevenueBandLowGbp;
-
   return (
     <div className="rounded-2xl border border-[var(--color-hairline)] bg-gradient-to-br from-[var(--color-surface-cream)] to-white p-6 sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-primary)]">
@@ -133,17 +123,6 @@ export function AuditPerceptionHero({
               {hero.bookingLeakPercentLow}–{hero.bookingLeakPercentHigh}%
               <span className="ml-2 text-sm font-normal text-[var(--color-muted)]">of high-intent bookings</span>
             </p>
-            {showRevenueBand ? (
-              <p className="mt-2 text-sm font-medium text-[var(--color-ink)]">
-                Est. {formatGbp(hero.monthlyRevenueBandLowGbp!)}–{formatGbp(hero.monthlyRevenueBandHighGbp!)}/month
-                in direct booking leakage
-              </p>
-            ) : null}
-            {showRevenueBand ? (
-              <p className="mt-1 text-[10px] text-[var(--color-muted-medium)]">
-                Estimate based on typical direct-booking patterns — not a guarantee.
-              </p>
-            ) : null}
             <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">{hero.revenueDetail}</p>
             <ul className="mt-4 space-y-1.5">
               {hero.customerLossBullets.map((bullet, idx) => (

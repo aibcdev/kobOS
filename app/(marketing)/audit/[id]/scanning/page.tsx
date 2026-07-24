@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavailable";
 import { AuditScanningExperience } from "@/components/marketing/audit/AuditScanningExperience";
+import { findVisibilityAuditIdOrSlugSelect } from "@/lib/audit/find-audit-by-id-or-slug";
 import { isPrismaDbUnreachableError } from "@/lib/db/prisma-errors";
-import { prisma } from "@/lib/db/prisma";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ email?: string }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   try {
-    const audit = await prisma.visibilityAudit.findUnique({
-      where: { id },
-      select: { restaurantName: true },
-    });
+    const audit = await findVisibilityAuditIdOrSlugSelect(id, { restaurantName: true });
     if (!audit) return { title: "Scanning · KOB" };
     return { title: `Scanning ${audit.restaurantName} · KOB` };
   } catch (e) {
@@ -22,13 +22,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function AuditScanningPage({ params }: Props) {
+export default async function AuditScanningPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const sp = await searchParams;
   let audit;
   try {
-    audit = await prisma.visibilityAudit.findUnique({
-      where: { id },
-      select: { id: true, restaurantName: true, websiteUrl: true, city: true },
+    audit = await findVisibilityAuditIdOrSlugSelect(id, {
+      id: true,
+      restaurantName: true,
+      websiteUrl: true,
+      city: true,
+      slug: true,
     });
   } catch (e) {
     if (isPrismaDbUnreachableError(e)) {
@@ -48,6 +52,8 @@ export default async function AuditScanningPage({ params }: Props) {
       initialName={audit.restaurantName}
       initialWebsiteUrl={audit.websiteUrl ?? ""}
       initialCity={audit.city}
+      resultPathKey={audit.slug || audit.id}
+      initialEmail={sp.email?.trim() || null}
     />
   );
 }

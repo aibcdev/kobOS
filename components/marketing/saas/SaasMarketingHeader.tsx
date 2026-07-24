@@ -14,7 +14,7 @@ export function SaasMarketingHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-[#2c2c2c]/5 bg-[#f9f6f1]/90 backdrop-blur-md">
       <div className="mx-auto flex h-[4.5rem] max-w-[83rem] items-center justify-between px-6 md:px-12">
         <Link href="/" className="group flex items-center gap-1.5">
-          <span className="font-heading text-2xl tracking-tight text-[var(--color-forest)]">KOB</span>
+          <span className="font-heading text-[1.65rem] font-bold tracking-tight text-[var(--color-forest)]">KOB</span>
           <span className="block h-2 w-2 rounded-full bg-[var(--color-bright-green)] transition-transform group-hover:scale-125" />
         </Link>
 

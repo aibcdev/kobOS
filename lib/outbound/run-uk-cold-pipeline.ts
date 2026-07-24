@@ -1,6 +1,5 @@
 import { discoverProspectsInCity } from "@/lib/outbound/discover-prospects";
 import { enrichProspectEmail } from "@/lib/outbound/enrich-email";
-import { generateUkColdDraft } from "@/lib/outbound/generate-uk-cold-draft";
 import { getOutboundIcpConfig } from "@/lib/outbound/icp-config";
 import { isUkColdLeadDuplicate, persistUkColdLead } from "@/lib/outbound/persist-uk-cold-lead";
 import { qualifyProspect } from "@/lib/outbound/qualify-prospect";
@@ -60,19 +59,11 @@ export async function runUkColdPipeline(
       enrichmentSource: emailResult.source,
     };
 
-    const draftResult = await generateUkColdDraft({
-      restaurantName: p.name,
-      city,
-      topIssue: q.topIssue,
-      qualifyScore: q.qualifyScore,
-      websiteUrl: p.websiteUrl!,
-    });
-    if (!draftResult.ok) {
-      bump("draft_failed");
+    const persisted = await persistUkColdLead(workspaceRestaurantId, city, qualifiedProspect);
+    if (!persisted.ok) {
+      bump(persisted.reason);
       continue;
     }
-
-    await persistUkColdLead(workspaceRestaurantId, city, qualifiedProspect, draftResult.draft);
     inserted++;
   }
 

@@ -1,7 +1,7 @@
 import { buildJustEatMenuPath } from "@/lib/lead-engine/justeat-menu-url";
 import { buildCanonicalKey } from "@/lib/lead-engine/normalize-name";
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
-import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
+import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
 import type { DeliveryPlatform, PlatformListing } from "@/lib/lead-engine/scrapers/types";
 
 export type MergedPlatformLead = {
@@ -30,7 +30,7 @@ export function mergePlatformListings(listings: PlatformListing[]): MergedPlatfo
   for (const l of listings) {
     if (l.isBrand) continue;
     if (l.rankPercentile > topPct) continue;
-    if (isLikelyChainRestaurant(l.name, null)) continue;
+    if (isExcludedFromOutboundIcp(l.name, null)) continue;
 
     const canonicalKey = buildCanonicalKey(l.name, l.city);
     const existing = byKey.get(canonicalKey);

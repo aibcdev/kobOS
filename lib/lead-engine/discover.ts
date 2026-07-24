@@ -2,7 +2,7 @@ import type { LeadQueryType } from "@/lib/lead-engine/config";
 import { passesLeadIcpFilters } from "@/lib/lead-engine/icp-filters";
 import { placesPlaceAuditEnrichment } from "@/lib/places/google-places-server";
 import type { OutboundProspect } from "@/lib/outbound/prospect-types";
-import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
+import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
 import { placesPlaceDetailsNew } from "@/lib/places/google-places-server";
 
 export type DiscoveredLead = OutboundProspect & {
@@ -79,7 +79,7 @@ export async function discoverLeadsInCity(
     const name = p.displayName?.text?.trim();
     const placeId = p.id?.replace(/^places\//, "") ?? "";
     if (!name || !placeId) continue;
-    if (isLikelyChainRestaurant(name, p.websiteUri ?? null)) continue;
+    if (isExcludedFromOutboundIcp(name, p.websiteUri ?? null)) continue;
 
     let websiteUrl = p.websiteUri?.trim() || null;
     if (!websiteUrl) {

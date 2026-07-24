@@ -1,4 +1,4 @@
-import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
+import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
 import type { OutboundProspect } from "@/lib/outbound/prospect-types";
 import { getOutboundIcpConfig } from "@/lib/outbound/icp-config";
 import { placesPlaceDetailsNew } from "@/lib/places/google-places-server";
@@ -13,7 +13,7 @@ function passesIcpFilters(
   },
   icp: ReturnType<typeof getOutboundIcpConfig>,
 ): boolean {
-  if (isLikelyChainRestaurant(p.name, p.websiteUrl)) return false;
+  if (isExcludedFromOutboundIcp(p.name, p.websiteUrl)) return false;
   const rating = p.rating;
   if (rating == null || rating > icp.ratingMax) return false;
   if (icp.requireWebsite && !p.websiteUrl?.trim()) return false;

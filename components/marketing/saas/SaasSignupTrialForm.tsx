@@ -161,7 +161,7 @@ export function SaasSignupTrialForm() {
 
   return (
     <div className="rounded-[1.5rem] border border-[#2c2c2c]/08 bg-white p-6 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.35)] sm:p-8">
-      <h2 className="font-heading text-2xl tracking-tight text-[#1a1a1a] md:text-[1.65rem]">
+      <h2 className="font-heading text-[1.75rem] tracking-tight text-[#1a1a1a] md:text-[1.85rem]">
         Start your free 7-day trial
       </h2>
 

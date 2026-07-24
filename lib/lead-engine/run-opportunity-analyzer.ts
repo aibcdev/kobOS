@@ -1,5 +1,5 @@
 import { analyzeProspectWebsite } from "@/lib/lead-engine/analyze-prospect";
-import { getLeadEngineConfig } from "@/lib/lead-engine/config";
+import { getLeadEngineAnalyzerConcurrency, getLeadEngineConfig } from "@/lib/lead-engine/config";
 import { mapProspectToIcpInput } from "@/lib/outbound/map-to-icp-input";
 import { calculateOpportunityScore } from "@/lib/outbound/score-opportunity";
 import { LeadProspectStatus, type LeadProspect } from "@prisma/client";
@@ -25,6 +25,20 @@ async function withDbRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
   throw new Error(`${label}: unreachable`);
 }
 
+async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]!);
+    }
+  }
+  const n = Math.max(1, Math.min(concurrency, items.length || 1));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return results;
+}
+
 export type OpportunityAnalyzerResult = {
   processed: number;
   analyzed: number;
@@ -37,6 +51,7 @@ export async function runOpportunityAnalyzer(
 ): Promise<OpportunityAnalyzerResult> {
   const config = getLeadEngineConfig();
   const max = options?.max ?? config.analyzerDailyCap;
+  const concurrency = getLeadEngineAnalyzerConcurrency();
   const skipped: Record<string, number> = {};
   const bump = (key: string) => {
     skipped[key] = (skipped[key] ?? 0) + 1;
@@ -52,10 +67,9 @@ export async function runOpportunityAnalyzer(
     take: max,
   });
 
+  const outcomes = await mapPool(prospects, concurrency, (prospect) => analyzeAndPersistProspect(prospect));
   let analyzed = 0;
-
-  for (const prospect of prospects) {
-    const result = await analyzeAndPersistProspect(prospect);
+  for (const result of outcomes) {
     if (result === "analyzed") analyzed++;
     else bump(result);
   }
@@ -67,7 +81,39 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
   if (!prospect.websiteUrl) return "no_website";
 
   const analysis = await analyzeProspectWebsite(prospect);
-  if (!analysis) return "icp_failed";
+  if (!analysis) {
+    // Don't leave DISCOVERED+email rows in a retry loop forever
+    await withDbRetry(
+      () =>
+        prisma.leadProspect.update({
+          where: { id: prospect.id },
+          data: {
+            status: LeadProspectStatus.ARCHIVED,
+            disqualifiers: ["icp_or_analyze_failed"],
+            analyzedAt: new Date(),
+          },
+        }),
+      "leadProspect.update(icp_failed)",
+    );
+    return "icp_failed";
+  }
+  const locationMax = getLeadEngineConfig().locationMax;
+  if (analysis.locationCount > locationMax) {
+    await withDbRetry(
+      () =>
+        prisma.leadProspect.update({
+          where: { id: prospect.id },
+          data: {
+            status: LeadProspectStatus.ARCHIVED,
+            locationCount: analysis.locationCount,
+            disqualifiers: [`too_many_locations (${analysis.locationCount})`],
+            analyzedAt: new Date(),
+          },
+        }),
+      "leadProspect.update(too_many_locations)",
+    );
+    return "too_many_locations";
+  }
 
   const mapped = mapProspectToIcpInput({
     placeId: prospect.placeId,

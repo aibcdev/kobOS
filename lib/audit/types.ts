@@ -24,6 +24,11 @@ export type AuditCompetitor = {
   source?: "places" | "estimated";
   lat?: number;
   lng?: number;
+  /** Real Places metrics when available — never invent for peers. */
+  rating?: number | null;
+  reviewCount?: number | null;
+  photoCount?: number | null;
+  websiteUrl?: string | null;
 };
 
 export type AuditGeoLocation = {

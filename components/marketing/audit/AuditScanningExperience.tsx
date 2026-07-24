@@ -28,16 +28,22 @@ export function AuditScanningExperience({
   initialName,
   initialWebsiteUrl,
   initialCity = "",
+  resultPathKey,
+  initialEmail = null,
 }: {
   auditId: string;
   initialName: string;
   initialWebsiteUrl: string;
   initialCity?: string;
+  /** Pretty slug or cuid for the results URL after scan. */
+  resultPathKey?: string;
+  initialEmail?: string | null;
 }) {
   const router = useRouter();
   const [poll, setPoll] = useState<PollPayload | null>(null);
   const startRef = useRef(Date.now());
   const redirected = useRef(false);
+  const pathKey = resultPathKey || auditId;
 
   useEffect(() => {
     let cancelled = false;
@@ -75,8 +81,9 @@ export function AuditScanningExperience({
 
     if (!canLeave) return;
     redirected.current = true;
-    router.replace(`/audit/${auditId}`);
-  }, [auditId, poll, router]);
+    const emailQs = initialEmail ? `?email=${encodeURIComponent(initialEmail)}` : "";
+    router.replace(`/audit/${pathKey}${emailQs}`);
+  }, [auditId, pathKey, initialEmail, poll, router]);
 
   const displayName = decodeHtmlEntities(poll?.restaurantName ?? initialName);
   const city = poll?.city ?? initialCity;

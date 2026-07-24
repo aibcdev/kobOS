@@ -6,7 +6,7 @@ import { industryStats, industryStatsFootnote } from "@/lib/marketing/industry-s
 
 export const marketingCopy = {
   tagline: "Your restaurant's ultimate employee.",
-  trustLine: "Built for independent restaurants and cafés",
+  trustLine: "Built for busy independent restaurants",
   trustLineShort: "For busy owners who want a clear next step",
 
   /** Primary promise — homepage hero (mock: italic “ultimate” in forest) */
@@ -24,7 +24,7 @@ export const marketingCopy = {
     "KOB watches your website, Google listing, and reviews—then gives you a short daily list. Approve in one tap. Nothing goes live without you.",
   heroSublineSecondary: "Start with a free scan. See what guests see before they book.",
   heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
-  heroSocialProof: "Trusted by 500+ restaurants & cafés",
+  heroSocialProof: "Built for busy independent restaurants",
   heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
   losingSalesOnline: "Most restaurants lose customers online and don’t know where",
   useAiToFix: " Free hospitality perception report.",

@@ -1,5 +1,9 @@
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
-import { generateLeadEngineDraft } from "@/lib/outbound/generate-uk-cold-draft";
+import { passesHighStreetRestaurantIcp } from "@/lib/lead-engine/high-street-icp";
+import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
+import { ensureOutboundAudit } from "@/lib/outbound/ensure-outbound-audit";
+import { generateOutboundAbEmail } from "@/lib/outbound/generate-uk-cold-draft";
+import { isValidProspectEmail } from "@/lib/outbound/validate-prospect-email";
 import { LeadProspectStatus, OutboundLeadSource, OutboundLeadStatus, type LeadProspect } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
@@ -54,24 +58,47 @@ export async function queueProspectOutreach(
   const config = getLeadEngineConfig();
 
   if (!prospect.contactEmail) return "no_email";
+  if (!prospect.websiteUrl?.trim()) return "no_website";
   if (prospect.outboundLeadId) return "already_queued";
+  if (isExcludedFromOutboundIcp(prospect.name, prospect.websiteUrl)) return "chain_or_elite";
+  if (!isValidProspectEmail(prospect.contactEmail, prospect.websiteUrl).ok) return "invalid_email";
+
+  const hs = passesHighStreetRestaurantIcp({
+    name: prospect.name,
+    websiteUrl: prospect.websiteUrl,
+    reviewCount: prospect.reviewCount,
+    googleReviewMin: config.googleReviewMin,
+    lastReviewAt: prospect.lastReviewAt,
+    instagramUrl: prospect.instagramUrl,
+    instagramPostGapDays: prospect.instagramPostGapDays,
+    businessType: prospect.businessType,
+    deliveryPlatforms: prospect.deliveryPlatforms,
+    hasOnlineOrdering: prospect.hasOnlineOrdering,
+  });
+  if (!hs.ok) return hs.reason;
+
   if ((prospect.kobOpportunityScore ?? 0) < config.minScoreForOutreach) return "score_too_low";
   if (prospect.disqualifiers.length > 0) return "disqualified";
+  if (prospect.locationCount == null || prospect.locationCount < 1 || prospect.locationCount > config.locationMax) {
+    return "too_many_locations";
+  }
 
-  const draftResult = await generateLeadEngineDraft({
+  const auditResult = await ensureOutboundAudit({
     restaurantName: prospect.name,
     city: prospect.city,
-    websiteUrl: prospect.websiteUrl ?? "",
-    kobOpportunityScore: prospect.kobOpportunityScore ?? 0,
-    opportunities: prospect.opportunities,
-    reviewCount: prospect.reviewCount,
-    rating: prospect.rating,
+    websiteUrl: prospect.websiteUrl,
+    placeId: prospect.placeId,
+    formattedAddress: prospect.formattedAddress,
+    contactEmail: prospect.contactEmail,
+    existingAuditId: prospect.visibilityAuditId,
   });
-
-  if (!draftResult.ok) return "draft_failed";
+  if ("ok" in auditResult && auditResult.ok === false) {
+    return auditResult.error;
+  }
+  if (!("auditId" in auditResult)) return "audit_failed";
 
   const oppCount = prospect.opportunities.length || 1;
-  const insightSummary = `Lead engine · KOB score ${prospect.kobOpportunityScore}/100 · ${oppCount} opportunities`;
+  const insightSummary = `Lead engine · KOB score ${prospect.kobOpportunityScore}/100 · ${oppCount} opportunities · variant pending`;
 
   const outboundLead = await prisma.outboundLead.create({
     data: {
@@ -82,14 +109,33 @@ export async function queueProspectOutreach(
       websiteUrl: prospect.websiteUrl,
       contactEmail: prospect.contactEmail,
       insightSummary,
-      messageSubject: draftResult.draft.email_subject,
-      messageBody: draftResult.draft.message_body,
-      suggestedTone: draftResult.draft.suggested_tone,
+      messageSubject: "",
+      messageBody: "",
+      suggestedTone: "",
       status: OutboundLeadStatus.PENDING_APPROVAL,
       source: OutboundLeadSource.LEAD_ENGINE,
       qualifyScore: prospect.kobOpportunityScore,
       reviewCount: prospect.reviewCount,
       enrichmentSource: prospect.enrichmentSource,
+      visibilityAuditId: auditResult.auditId,
+      auditUrl: auditResult.auditUrl,
+    },
+  });
+
+  const draft = generateOutboundAbEmail({
+    stableId: outboundLead.id,
+    companyName: prospect.name,
+    auditUrl: auditResult.auditUrl,
+  });
+
+  await prisma.outboundLead.update({
+    where: { id: outboundLead.id },
+    data: {
+      emailVariant: draft.variant,
+      messageSubject: draft.email_subject,
+      messageBody: draft.message_body,
+      suggestedTone: draft.suggested_tone,
+      insightSummary: `Lead engine · KOB score ${prospect.kobOpportunityScore}/100 · email ${draft.variant} · ${auditResult.slug}`,
     },
   });
 
@@ -98,6 +144,7 @@ export async function queueProspectOutreach(
     data: {
       status: LeadProspectStatus.QUEUED,
       outboundLeadId: outboundLead.id,
+      visibilityAuditId: auditResult.auditId,
     },
   });
 

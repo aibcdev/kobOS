@@ -54,7 +54,8 @@
     "lead-engine:audit-platforms": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-audit-platforms.ts",
     "lead-engine:bulk-import": "dotenv -e .env -e .env.local -- npx tsx scripts/lead-engine-bulk-import.ts",
     "resend:doctor": "dotenv -e .env -e .env.local -- bash -c 'export PATH=\"$HOME/.resend/bin:$PATH\" && resend doctor'",
-    "resend:test-outbound": "dotenv -e .env -e .env.local -- npx tsx scripts/resend-test-outbound.ts"
+    "resend:test-outbound": "dotenv -e .env -e .env.local -- npx tsx scripts/resend-test-outbound.ts",
+    "outbound:ab-backfill": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-ab-backfill.ts"
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.74",

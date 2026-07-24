@@ -137,7 +137,7 @@ export function AuditLiveAnalysis({
   const snapImage =
     previewImageUrl ??
     (isDemo
-      ? "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80"
+      ? "/marketing/hero/restaurant-storefront.jpg"
       : null);
 
   const seo = preview?.seoChecks;

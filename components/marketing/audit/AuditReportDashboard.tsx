@@ -267,6 +267,7 @@ export function AuditReportDashboard({
   unlocked,
   scanStillRunning,
   onRequestUnlock,
+  trialHref = "/signup",
 }: {
   audit: Pick<
     VisibilityAudit,
@@ -287,6 +288,8 @@ export function AuditReportDashboard({
   unlocked: boolean;
   scanStillRunning?: boolean;
   onRequestUnlock?: () => void;
+  /** Free-trial onboarding — all Fix / Start CTAs. */
+  trialHref?: string;
 }) {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
   const [shareLabel, setShareLabel] = useState<string | null>(null);
@@ -310,7 +313,7 @@ export function AuditReportDashboard({
   const tone = scoreTone(restaurantScores?.overall ?? overall);
   const restaurantDisplay = decodeHtmlEntities(audit.restaurantName);
   const locationLabel = `${restaurantDisplay}, ${audit.city}`;
-  const trialCheckoutHref = `/audit/${audit.id}/upgrade/checkout`;
+  const trialCheckoutHref = trialHref;
   const reportUrl =
     typeof window !== "undefined" ? `${window.location.origin}/audit/${audit.id}` : `/audit/${audit.id}`;
 
@@ -514,6 +517,7 @@ export function AuditReportDashboard({
                     payload={payload}
                     unlocked={unlocked}
                     report={payload.opportunityReport ?? null}
+                    trialHref={trialCheckoutHref}
                     onUnlockClick={() => {
                       onRequestUnlock?.();
                     }}

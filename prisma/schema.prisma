@@ -730,8 +730,15 @@ model AgentAction {
   @@schema("public")
 }
 
+enum OutboundEmailVariant {
+  A
+  B
+
+  @@schema("public")
+}
+
 model OutboundLead {
-  id                     String             @id @default(cuid())
+  id                     String               @id @default(cuid())
   workspaceRestaurantId  String?
   placeId                String?
   city                   String?
@@ -742,19 +749,24 @@ model OutboundLead {
   messageSubject         String?
   messageBody            String?
   suggestedTone          String?
-  status                 OutboundLeadStatus @default(DRAFT)
-  source                 OutboundLeadSource @default(LEGACY)
+  status                 OutboundLeadStatus   @default(DRAFT)
+  source                 OutboundLeadSource   @default(LEGACY)
+  emailVariant           OutboundEmailVariant?
+  visibilityAuditId      String?
+  auditUrl               String?
   qualifyScore           Int?
   reviewCount            Int?
   enrichmentSource       String?
-  createdAt              DateTime           @default(now())
-  workspaceRestaurant    Restaurant?      @relation(fields: [workspaceRestaurantId], references: [id], onDelete: Cascade)
+  createdAt              DateTime             @default(now())
+  workspaceRestaurant    Restaurant?          @relation(fields: [workspaceRestaurantId], references: [id], onDelete: Cascade)
   leadProspect           LeadProspect?
 
   @@index([status, createdAt])
   @@index([workspaceRestaurantId, status, createdAt])
   @@index([workspaceRestaurantId, source, status])
   @@index([placeId])
+  @@index([visibilityAuditId])
+  @@index([emailVariant, status])
   @@schema("public")
 }
 
@@ -835,6 +847,8 @@ model VisibilityAudit {
   restaurantName    String
   city              String
   websiteUrl        String?
+  /** Pretty public path segment: /audit/{slug} */
+  slug              String?   @unique
   overallScore      Int
   seoScore          Int
   designScore       Int

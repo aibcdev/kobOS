@@ -31,7 +31,7 @@ export function getOutboundIcpConfig(): OutboundIcpConfig {
     .filter(Boolean);
 
   return {
-    reviewMin: Math.max(0, Number(process.env.OUTBOUND_REVIEW_MIN?.trim() || "50") || 50),
+    reviewMin: Math.max(100, Number(process.env.OUTBOUND_REVIEW_MIN?.trim() || "100") || 100),
     reviewMax: Math.max(1, Number(process.env.OUTBOUND_REVIEW_MAX?.trim() || "2500") || 2500),
     ratingMin: Number(process.env.OUTBOUND_RATING_MIN?.trim() || "4.0") || 4.0,
     ratingMax: Number(process.env.OUTBOUND_RATING_MAX?.trim() || "4.6") || 4.6,

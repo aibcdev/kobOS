@@ -7,7 +7,7 @@ function platformBaseParts(workspaceRestaurantId: string) {
   return { icp, topPct, workspaceRestaurantId };
 }
 
-/** Top 20% on delivery apps, 50+ reviews — full prospect list. */
+/** Top 20% on delivery apps, 50+ reviews — full prospect list (location may be unknown until analyzed). */
 export function platformFoundWhere(workspaceRestaurantId: string): Prisma.LeadProspectWhereInput {
   const { icp, topPct } = platformBaseParts(workspaceRestaurantId);
   return {
@@ -20,7 +20,10 @@ export function platformFoundWhere(workspaceRestaurantId: string): Prisma.LeadPr
   };
 }
 
-/** Found + email — ready for email outreach (phone-only rows excluded). */
+/**
+ * Email-ready for outreach: must have 1..locationMax locations (hard ≤5 by default).
+ * Unknown location counts are excluded until the analyzer fills them.
+ */
 export function platformQualifiedWhere(workspaceRestaurantId: string): Prisma.LeadProspectWhereInput {
   const { icp, topPct, workspaceRestaurantId: ws } = platformBaseParts(workspaceRestaurantId);
   return {
@@ -30,7 +33,7 @@ export function platformQualifiedWhere(workspaceRestaurantId: string): Prisma.Le
     platformRankPercentile: { lte: topPct },
     reviewCount: { gt: icp.googleReviewMin - 1 },
     contactEmail: { not: null },
-    AND: [{ OR: [{ locationCount: null }, { locationCount: { lte: icp.locationMax } }] }],
+    locationCount: { gte: 1, lte: icp.locationMax },
   };
 }
 

@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { findVisibilityAuditByIdOrSlug } from "@/lib/audit/find-audit-by-id-or-slug";
 import { prisma } from "@/lib/db/prisma";
 import { isValidAuditPhone, normalizeAuditPhone } from "@/lib/marketing/audit-lead";
 import {
@@ -20,7 +21,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
-  if (!id || id.length < 8) {
+  if (!id || id.length < 3) {
     return NextResponse.json({ error: "Invalid audit id" }, { status: 400 });
   }
 
@@ -53,13 +54,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   try {
-    const existing = await prisma.visibilityAudit.findUnique({ where: { id } });
+    const existing = await findVisibilityAuditByIdOrSlug(id);
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     await prisma.visibilityAudit.update({
-      where: { id },
+      where: { id: existing.id },
       data: {
         leadEmail: parsed.data.email,
         leadPhone: normalizeAuditPhone(parsed.data.phone),
@@ -67,7 +68,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       },
     });
 
-    revalidatePath(`/audit/${id}`);
+    revalidatePath(`/audit/${existing.id}`);
+    if (existing.slug) revalidatePath(`/audit/${existing.slug}`);
     revalidatePath("/audit");
 
     return NextResponse.json({ ok: true });

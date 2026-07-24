@@ -25,7 +25,7 @@ export function SaasPageHero({
         {eyebrow ? (
           <p className="font-mono-brand text-xs font-semibold uppercase tracking-[0.12em] text-[#088924]">{eyebrow}</p>
         ) : null}
-        <h1 className="font-heading mt-4 max-w-4xl text-balance text-4xl font-semibold leading-[1.05] tracking-tight text-[#2c2c2c] md:text-5xl">
+        <h1 className="font-heading mt-4 max-w-4xl text-balance text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[#2c2c2c] md:text-[3.15rem]">
           {title}
         </h1>
         {description ? <p className="font-body mt-6 max-w-2xl text-base leading-relaxed text-[#2c2c2c]/75">{description}</p> : null}

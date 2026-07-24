@@ -7,6 +7,8 @@ export type OutboundEmailPayload = {
   to: string;
   subject: string;
   body: string;
+  /** Resend tags for A/B reporting, e.g. { name: "variant", value: "A" } */
+  tags?: Array<{ name: string; value: string }>;
 };
 
 function replyToAddress(): string | undefined {
@@ -67,6 +69,7 @@ export async function sendOutboundEmailViaResend(
     html: htmlBody(text),
     ...(replyTo ? { replyTo } : {}),
     ...(Object.keys(headers).length ? { headers } : {}),
+    ...(payload.tags?.length ? { tags: payload.tags } : {}),
   });
 
   if (error) return { ok: false, error: error.message };

@@ -57,7 +57,7 @@ export type IcpScoreResult = {
   recommended_email_angle: IcpEmailAngle | null;
 };
 
-const LOCATION_MAX = 6;
+const LOCATION_MAX = 5;
 const RATING_FLOOR = 3.2;
 const REVIEW_REPLY_LOW = 0.3;
 

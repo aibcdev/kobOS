@@ -15,7 +15,7 @@ export function SaasFinalCta() {
             <span className="font-mono-brand mb-3 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#088924]">
               {marketingCopy.finalCtaEyebrow}
             </span>
-            <h2 className="font-heading mb-3 text-3xl leading-tight tracking-tight md:text-5xl">
+            <h2 className="font-heading mb-3 text-[2rem] leading-tight tracking-tight md:text-[3.15rem]">
               {marketingCopy.finalCtaHeadline}
             </h2>
             <p className="mb-6 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">

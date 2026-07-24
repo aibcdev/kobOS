@@ -63,14 +63,14 @@ export function getLeadEngineConfig(): LeadEngineConfig {
   }));
 
   return {
-    reviewMin: Math.max(50, Number(process.env.OUTBOUND_REVIEW_MIN?.trim() || "50") || 50),
-    googleReviewMin: Math.max(40, Number(process.env.LEAD_ENGINE_GOOGLE_REVIEW_MIN?.trim() || "40") || 40),
+    reviewMin: Math.max(100, Number(process.env.OUTBOUND_REVIEW_MIN?.trim() || "100") || 100),
+    googleReviewMin: Math.max(100, Number(process.env.LEAD_ENGINE_GOOGLE_REVIEW_MIN?.trim() || "100") || 100),
     reviewMax: Math.max(1, Number(process.env.OUTBOUND_REVIEW_MAX?.trim() || "2500") || 2500),
     ratingMin: Number(process.env.OUTBOUND_RATING_MIN?.trim() || "4.0") || 4.0,
     ratingMax: Number(process.env.OUTBOUND_RATING_MAX?.trim() || "4.5") || 4.5,
     requireWebsite: process.env.OUTBOUND_REQUIRE_WEBSITE?.trim() === "1",
     requireRecentReviewDays: Math.max(7, Number(process.env.LEAD_ENGINE_RECENT_REVIEW_DAYS?.trim() || "30") || 30),
-    locationMax: Math.max(1, Number(process.env.LEAD_ENGINE_LOCATION_MAX?.trim() || "3") || 3),
+    locationMax: Math.max(1, Number(process.env.LEAD_ENGINE_LOCATION_MAX?.trim() || "5") || 5),
     platformTopPct: Math.min(100, Math.max(5, Number(process.env.LEAD_ENGINE_PLATFORM_TOP_PCT?.trim() || "20") || 20)),
     staleWebsiteYears: Math.max(
       1,
@@ -80,13 +80,26 @@ export function getLeadEngineConfig(): LeadEngineConfig {
     requireStaleWebsite: process.env.LEAD_ENGINE_REQUIRE_STALE_WEBSITE?.trim() === "1",
     dailyCap: Math.min(150, Math.max(10, Number(process.env.LEAD_ENGINE_DAILY_CAP?.trim() || "80") || 80)),
     minScoreForOutreach: Math.min(200, Math.max(1, Number(process.env.LEAD_ENGINE_MIN_SCORE?.trim() || "70") || 70)),
-    outreachDailyCap: Math.min(50, Math.max(5, Number(process.env.LEAD_ENGINE_OUTREACH_DAILY_CAP?.trim() || "25") || 25)),
-    analyzerDailyCap: Math.min(100, Math.max(10, Number(process.env.LEAD_ENGINE_ANALYZER_DAILY_CAP?.trim() || "50") || 50)),
+    outreachDailyCap: Math.min(80, Math.max(5, Number(process.env.LEAD_ENGINE_OUTREACH_DAILY_CAP?.trim() || "40") || 40)),
+    analyzerDailyCap: Math.min(200, Math.max(10, Number(process.env.LEAD_ENGINE_ANALYZER_DAILY_CAP?.trim() || "100") || 100)),
     seedTarget: Math.max(100, Number(process.env.LEAD_ENGINE_SEED_TARGET?.trim() || "3000") || 3000),
     cities: citiesWithCountry.length ? citiesWithCountry : [{ city: "London", country: "GB" }],
   };
 }
 
+/** Parallel website analyses per analyzer wave. */
+export function getLeadEngineAnalyzerConcurrency(): number {
+  return Math.min(12, Math.max(1, Number(process.env.LEAD_ENGINE_CONCURRENCY?.trim() || "6") || 6));
+}
+
+export function isLeadEngineFastAnalyze(): boolean {
+  return process.env.LEAD_ENGINE_FAST_ANALYZE?.trim() !== "0";
+}
+
 export type LeadQueryType = "restaurant" | "cafe" | "takeaway";
 
-export const LEAD_QUERY_TYPES: LeadQueryType[] = ["restaurant", "cafe", "takeaway"];
+/** Discovery bias: high-street restaurants first (takeaway/cafe optional via env). */
+export const LEAD_QUERY_TYPES: LeadQueryType[] =
+  process.env.LEAD_ENGINE_INCLUDE_CAFE_TAKEAWAY?.trim() === "1"
+    ? ["restaurant", "cafe", "takeaway"]
+    : ["restaurant"];

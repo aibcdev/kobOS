@@ -11,13 +11,15 @@ export function AuditLeadFormFields({
   formId = "audit-lead-form",
   onSuccess,
   hideLegal,
+  initialEmail = null,
 }: {
   auditId: string;
   formId?: string;
   onSuccess?: () => void;
   hideLegal?: boolean;
+  initialEmail?: string | null;
 }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail?.trim() ?? "");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

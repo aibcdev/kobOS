@@ -71,7 +71,7 @@ function hardDisqualifiers(r: OpportunityRestaurantInput): string[] {
   const locations = r.locations ?? 0;
   const rating = r.rating;
 
-  if (locations > 6 || (r.is_chain === true && locations > 5)) {
+  if (locations > 5 || (r.is_chain === true && locations > 5)) {
     disqualifiers.push("too_many_locations");
   }
   if (r.is_ghost_kitchen === true) {

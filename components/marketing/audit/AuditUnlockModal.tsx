@@ -39,6 +39,7 @@ export function AuditUnlockModal({
   teaser,
   open,
   onClose,
+  initialEmail = null,
 }: {
   auditId: string;
   restaurantName: string;
@@ -46,6 +47,7 @@ export function AuditUnlockModal({
   teaser?: AuditUnlockTeaser;
   open: boolean;
   onClose?: () => void;
+  initialEmail?: string | null;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -153,6 +155,7 @@ export function AuditUnlockModal({
             auditId={auditId}
             formId="audit-unlock-modal"
             hideLegal
+            initialEmail={initialEmail}
             onSuccess={() => router.refresh()}
           />
         </div>

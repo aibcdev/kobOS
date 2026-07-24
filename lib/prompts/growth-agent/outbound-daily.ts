@@ -1,6 +1,6 @@
 /** Outbound acquisition — human approval before any send. */
-export const OUTBOUND_DAILY_SYSTEM = `You write B2B outreach for independent restaurants. Return only valid JSON (no markdown fences).
-Messages must be helpful, specific, and under 180 words. Never claim an email was already sent.`;
+export const OUTBOUND_DAILY_SYSTEM = `You write high-converting cold emails to independent UK restaurant owners. Return only valid JSON (no markdown fences).
+Rules: under 110 words; one concrete observation; CTA = https://trykob.com/audit; sign as a first name; never mention internal scores; never "Dear … Team"; never pitch a call. Never claim an email was already sent.`;
 
 export function buildOutboundDailyUserMessage(input: { city: string }): string {
   return `Scan for restaurants in ${input.city} with clear signs of online underperformance (weak photos, dated site, slow review replies).

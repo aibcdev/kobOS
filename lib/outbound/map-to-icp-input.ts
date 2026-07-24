@@ -1,4 +1,4 @@
-import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
+import { isExcludedFromOutboundIcp, isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
 import type { IcpRestaurantInput } from "@/lib/outbound/score-icp";
 
 const COMPETITIVE_CITIES = new Set(
@@ -50,7 +50,9 @@ export type IcpMapSource = {
 /** Map enriched prospect fields → ICP Fit Score input (icp-fit-v1). */
 export function mapProspectToIcpInput(source: IcpMapSource): IcpRestaurantInput {
   const websiteUrl = source.websiteUrl?.trim() || null;
-  const chain = isLikelyChainRestaurant(source.name, websiteUrl);
+  const chain =
+    isLikelyChainRestaurant(source.name, websiteUrl) ||
+    isExcludedFromOutboundIcp(source.name, websiteUrl);
   const hotel = HOTEL_NAME.test(source.name);
   const year = source.websiteCopyrightYear;
   const ageYears =

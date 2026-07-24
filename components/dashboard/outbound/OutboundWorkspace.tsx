@@ -21,6 +21,9 @@ type LeadRow = {
   qualifyScore: number | null;
   reviewCount: number | null;
   enrichmentSource: string | null;
+  emailVariant: string | null;
+  auditUrl: string | null;
+  visibilityAuditId: string | null;
   createdAt: string;
 };
 
@@ -95,6 +98,7 @@ function LeadCard({
           <p className="type-label-md text-[var(--color-ink)]">{lead.restaurantName ?? "Unknown venue"}</p>
           <p className="type-caption text-[var(--color-muted-medium)]">
             {lead.city ?? "—"} · {lead.status}
+            {lead.emailVariant ? ` · email ${lead.emailVariant}` : ""}
             {lead.qualifyScore != null ? ` · score ${lead.qualifyScore}` : ""}
             {lead.reviewCount != null ? ` · ${lead.reviewCount} reviews` : ""}
             {lead.enrichmentSource ? ` · email via ${lead.enrichmentSource}` : ""}
@@ -123,6 +127,14 @@ function LeadCard({
       </div>
       {lead.contactEmail ? (
         <p className="type-caption mt-2 text-[var(--color-muted)]">To: {lead.contactEmail}</p>
+      ) : null}
+      {lead.auditUrl ? (
+        <p className="type-caption mt-1 text-[var(--color-muted)]">
+          Audit:{" "}
+          <a href={lead.auditUrl} target="_blank" rel="noreferrer" className="underline">
+            {lead.auditUrl.replace(/\?.*$/, "")}
+          </a>
+        </p>
       ) : null}
       {lead.insightSummary ? <p className="type-body-sm mt-3 text-[var(--color-muted)]">{lead.insightSummary}</p> : null}
       {lead.messageSubject ? (

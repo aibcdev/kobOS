@@ -5,8 +5,8 @@ import {
   runAndPersistGeminiAuditSuite,
   runAndPersistPerceptionStep,
 } from "@/lib/audit/persist-gemini-audit";
+import { findVisibilityAuditIdOrSlugSelect } from "@/lib/audit/find-audit-by-id-or-slug";
 import { parseAuditPayload } from "@/lib/audit/types";
-import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
 import {
   checkSimpleRateLimit,
@@ -34,9 +34,10 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  const audit = await prisma.visibilityAudit.findUnique({
-    where: { id },
-    select: { id: true, resultPayload: true, leadCapturedAt: true },
+  const audit = await findVisibilityAuditIdOrSlugSelect(id, {
+    id: true,
+    resultPayload: true,
+    leadCapturedAt: true,
   });
   if (!audit) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -58,24 +59,24 @@ export async function POST(req: Request, { params }: RouteParams) {
   }
 
   if (!process.env.GEMINI_API_KEY?.trim()) {
-    await markAiJobsUnavailable(id, "GEMINI_API_KEY is not configured");
+    await markAiJobsUnavailable(audit.id, "GEMINI_API_KEY is not configured");
     return NextResponse.json({ ok: true, mode: "heuristic", reason: "no_gemini_key" });
   }
 
   let enqueued = false;
   try {
-    await inngest.send({ name: "audit/gemini-benchmark.requested", data: { auditId: id } });
+    await inngest.send({ name: "audit/gemini-benchmark.requested", data: { auditId: audit.id } });
     enqueued = true;
   } catch (e) {
     console.warn("[audit/retry-analysis] Inngest send failed", e);
   }
 
   if (!enqueued || body.full) {
-    const result = await runAndPersistGeminiAuditSuite(id);
+    const result = await runAndPersistGeminiAuditSuite(audit.id);
     return NextResponse.json({ ok: true, mode: "inline_suite", ...result, enqueued });
   }
 
-  const perception = await runAndPersistPerceptionStep(id);
+  const perception = await runAndPersistPerceptionStep(audit.id);
   return NextResponse.json({
     ok: true,
     mode: "perception_plus_enqueue",

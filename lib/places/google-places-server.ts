@@ -189,6 +189,8 @@ export type NearbyPlace = {
   lng: number;
   rating: number | null;
   userRatingCount: number | null;
+  photoCount: number | null;
+  websiteUri: string | null;
 };
 
 function hostFromWebsiteUrl(raw: string): string {
@@ -279,7 +281,7 @@ export async function placesSearchNearbyRestaurants(
       "Content-Type": "application/json",
       "X-Goog-Api-Key": key,
       "X-Goog-FieldMask":
-        "places.id,places.displayName,places.location,places.rating,places.userRatingCount",
+        "places.id,places.displayName,places.location,places.rating,places.userRatingCount,places.photos,places.websiteUri",
     },
     body: JSON.stringify({
       includedTypes: ["restaurant"],
@@ -307,6 +309,8 @@ export async function placesSearchNearbyRestaurants(
       location?: { latitude?: number; longitude?: number };
       rating?: number;
       userRatingCount?: number;
+      photos?: unknown[];
+      websiteUri?: string;
     }>;
   };
 
@@ -331,6 +335,8 @@ export async function placesSearchNearbyRestaurants(
       lng: plng,
       rating: p.rating ?? null,
       userRatingCount: p.userRatingCount ?? null,
+      photoCount: Array.isArray(p.photos) ? p.photos.length : null,
+      websiteUri: p.websiteUri?.trim() || null,
     });
     if (out.length >= maxResults) break;
   }

@@ -598,6 +598,12 @@ export const outboundSendApprovedDaily = inngest.createFunction(
           to,
           subject,
           body: lead.messageBody || "",
+          tags: lead.emailVariant
+            ? [
+                { name: "variant", value: lead.emailVariant },
+                { name: "outbound", value: "1" },
+              ]
+            : [{ name: "outbound", value: "1" }],
         });
         if (!result.ok) {
           throw new Error(result.error);

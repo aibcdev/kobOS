@@ -65,6 +65,10 @@ export async function fetchNearbyCompetitors(input: {
       source: "places" as const,
       lat: p.lat,
       lng: p.lng,
+      rating: p.rating,
+      reviewCount: p.userRatingCount,
+      photoCount: p.photoCount,
+      websiteUrl: p.websiteUri,
     }));
   } catch (e) {
     console.warn("[audit] fetchNearbyCompetitors", e);

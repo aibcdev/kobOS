@@ -32,6 +32,9 @@ function mapLead(r: {
   qualifyScore: number | null;
   reviewCount: number | null;
   enrichmentSource: string | null;
+  emailVariant: string | null;
+  auditUrl: string | null;
+  visibilityAuditId: string | null;
   createdAt: Date;
 }) {
   return {
@@ -49,6 +52,9 @@ function mapLead(r: {
     qualifyScore: r.qualifyScore,
     reviewCount: r.reviewCount,
     enrichmentSource: r.enrichmentSource,
+    emailVariant: r.emailVariant,
+    auditUrl: r.auditUrl,
+    visibilityAuditId: r.visibilityAuditId,
     createdAt: r.createdAt.toISOString(),
   };
 }

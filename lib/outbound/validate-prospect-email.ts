@@ -13,9 +13,12 @@ const BLOCKED_EMAIL_DOMAINS = new Set([
   "email.com",
   "domain.com",
   "yoursite.com",
+  "mysite.com",
   "godaddy.com",
   "squarespace.com",
   "wordpress.com",
+  "instagram.com",
+  "facebook.com",
 ]);
 
 /** Owners often list personal inboxes on their site — allow when scraped from their pages. */

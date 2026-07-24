@@ -1,5 +1,6 @@
-import { isLikelyChainRestaurant } from "@/lib/outbound/chain-denylist";
+import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
+import { isFastFoodOrPubFormat, passesHighStreetRestaurantIcp } from "@/lib/lead-engine/high-street-icp";
 
 export function isStrictLeadIcp(): boolean {
   return process.env.LEAD_ENGINE_STRICT_ICP?.trim() === "1";
@@ -15,6 +16,12 @@ export type IcpCandidate = {
   platformReviewCount?: number | null;
   locationCount?: number | null;
   platformRankPercentile?: number | null;
+  lastReviewAt?: Date | string | null;
+  instagramUrl?: string | null;
+  instagramPostGapDays?: number | null;
+  businessType?: string | null;
+  deliveryPlatforms?: string[] | null;
+  hasOnlineOrdering?: boolean | null;
 };
 
 export type IcpFilterResult =
@@ -27,18 +34,35 @@ export function effectiveReviewCount(candidate: IcpCandidate): number {
 
 export function passesReviewThreshold(candidate: IcpCandidate): boolean {
   const icp = getLeadEngineConfig();
-  const googleReviews = candidate.reviewCount ?? 0;
-  const platformReviews = candidate.platformReviewCount ?? 0;
-  return googleReviews >= icp.googleReviewMin || platformReviews >= icp.reviewMin;
+  // Hard floor: Google reviews (not platform-only)
+  return (candidate.reviewCount ?? 0) >= icp.googleReviewMin;
 }
 
-/** Top 20% delivery, 40+ Google OR 50+ platform reviews, email required, ≤3 loc, not a chain. */
+/** High-street independent restaurant ICP for outbound. */
 export function passesLeadIcpFilters(candidate: IcpCandidate): IcpFilterResult {
   const icp = getLeadEngineConfig();
 
-  if (isLikelyChainRestaurant(candidate.name, candidate.websiteUrl ?? null)) {
-    return { ok: false, reason: "chain" };
+  if (isExcludedFromOutboundIcp(candidate.name, candidate.websiteUrl ?? null)) {
+    return { ok: false, reason: "chain_or_elite" };
   }
+
+  if (isFastFoodOrPubFormat(candidate.name)) {
+    return { ok: false, reason: "fast_food_or_pub" };
+  }
+
+  const hs = passesHighStreetRestaurantIcp({
+    name: candidate.name,
+    websiteUrl: candidate.websiteUrl,
+    reviewCount: candidate.reviewCount,
+    googleReviewMin: icp.googleReviewMin,
+    lastReviewAt: candidate.lastReviewAt,
+    instagramUrl: candidate.instagramUrl,
+    instagramPostGapDays: candidate.instagramPostGapDays,
+    businessType: candidate.businessType,
+    deliveryPlatforms: candidate.deliveryPlatforms,
+    hasOnlineOrdering: candidate.hasOnlineOrdering,
+  });
+  if (!hs.ok) return { ok: false, reason: hs.reason };
 
   const topPct = icp.platformTopPct / 100;
 

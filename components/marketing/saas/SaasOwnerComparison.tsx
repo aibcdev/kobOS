@@ -4,6 +4,7 @@ import { OWNER_COMPARISON, PRICING_PLANS } from "@/lib/marketing/pricing-plans";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 import { SaasIcon } from "./SaasIcon";
+import { SaasSocialProof } from "./SaasSocialProof";
 
 function Check() {
   return <SaasIcon icon="solar:check-circle-bold" className="text-lg text-[var(--color-forest-mid)]" aria-hidden />;
@@ -16,13 +17,6 @@ const BENEFITS = [
   "7-day free trial",
   "No long-term contracts",
   "Plain-English briefs",
-  "Trusted by 500+ restaurant owners",
-] as const;
-
-const AVATARS = [
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=64&h=64&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=64&h=64&q=80",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=64&h=64&q=80",
 ] as const;
 
 /** Compact comparison rows for homepage mock */
@@ -49,7 +43,7 @@ export function SaasOwnerComparison() {
             <p className="font-mono-brand text-[11px] font-semibold tracking-[0.16em] text-[var(--color-forest-mid)] uppercase">
               {OWNER_COMPARISON.eyebrow}
             </p>
-            <h2 className="font-heading mt-2 text-3xl tracking-tight text-[#1a1a1a] md:text-4xl">
+            <h2 className="font-heading mt-2 text-[2rem] tracking-tight text-[#1a1a1a] md:text-[2.5rem]">
               {OWNER_COMPARISON.headline}
             </h2>
             <ul className="mt-5 space-y-2.5">
@@ -66,6 +60,7 @@ export function SaasOwnerComparison() {
             >
               {marketingCopy.cta.startTrial} →
             </Link>
+            <SaasSocialProof className="mt-5" label="Trusted by 500+ restaurant owners" />
           </div>
 
           <div>
@@ -90,39 +85,20 @@ export function SaasOwnerComparison() {
               ))}
             </div>
 
-            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-5">
               <Link
                 href="/pricing"
                 className="inline-flex h-11 items-center justify-center rounded-full border border-[#2c2c2c]/15 bg-white px-5 text-sm font-semibold text-[#1a1a1a] hover:border-[var(--color-forest)]"
               >
                 View full pricing
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
-                  {AVATARS.map((src) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={src}
-                      src={src}
-                      alt=""
-                      className="h-8 w-8 rounded-full border-2 border-[#f9f6f1] object-cover"
-                    />
-                  ))}
-                </div>
-                <div className="text-sm text-[#2c2c2c]/70">
-                  <span className="text-[#e8a317]" aria-label="5 stars">
-                    ★★★★★
-                  </span>{" "}
-                  Trusted by 500+ restaurant owners.
-                </div>
-              </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
             {flex ? (
               <div className="relative rounded-2xl border border-[#2c2c2c]/10 bg-white p-6 shadow-sm">
-                <span className="absolute -top-3 left-5 rounded-full bg-[var(--color-bright-green)] px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-[#1a1a1a] uppercase">
+                <span className="absolute -top-3 right-5 rounded-full bg-[#c8e6c0] px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-[var(--color-forest)] uppercase">
                   Most popular
                 </span>
                 <p className="font-mono-brand text-[10px] font-semibold tracking-wider text-[var(--color-forest-mid)] uppercase">
@@ -139,7 +115,7 @@ export function SaasOwnerComparison() {
                   href="/signup"
                   className="mt-5 flex h-11 items-center justify-center rounded-full bg-[var(--color-forest)] text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)]"
                 >
-                  {marketingCopy.cta.startTrial}
+                  {marketingCopy.cta.startTrial} →
                 </Link>
               </div>
             ) : null}
@@ -157,7 +133,7 @@ export function SaasOwnerComparison() {
                 <p className="mt-1 text-sm text-[#2c2c2c]/60">{flat.priceNote}</p>
                 <Link
                   href="/signup"
-                  className="mt-5 flex h-11 items-center justify-center rounded-full border border-[#2c2c2c]/20 text-sm font-semibold text-[#1a1a1a] hover:border-[var(--color-forest)] hover:text-[var(--color-forest)]"
+                  className="mt-5 flex h-11 items-center justify-center rounded-full border border-[var(--color-forest)] text-sm font-semibold text-[var(--color-forest)] hover:bg-[var(--color-forest)] hover:text-white"
                 >
                   {marketingCopy.cta.startTrial}
                 </Link>

@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import type { VisibilityAudit } from "@prisma/client";
 import { AuditReportDashboard } from "@/components/marketing/audit/AuditReportDashboard";
-import { AuditUnlockModal } from "@/components/marketing/audit/AuditUnlockModal";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { auditCard, auditCardMuted } from "@/lib/marketing/audit-theme";
-import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
 import {
   computeAuditOpportunityReport,
   ensureMoneyFirstOpportunityReport,
@@ -16,12 +13,15 @@ import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-pre
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
 
+/** Original audit dashboard layout — always fully visible; Fix CTAs → /signup. */
 export function AuditResultsContent({
   audit,
   payload,
   scanStillRunning = false,
 }: {
   scanStillRunning?: boolean;
+  /** Kept for URL ?email= compatibility. */
+  initialEmail?: string | null;
   audit: Pick<
     VisibilityAudit,
     | "id"
@@ -40,8 +40,7 @@ export function AuditResultsContent({
   >;
   payload: AuditResultPayload;
 }) {
-  const unlocked = Boolean(audit.leadCapturedAt);
-  const [unlockOpen, setUnlockOpen] = useState(false);
+  const unlocked = true;
   const perceptionTeaser = buildPerceptionTeaserFromPayload(payload, audit.overallScore);
 
   const opportunity = ensureMoneyFirstOpportunityReport(
@@ -83,27 +82,6 @@ export function AuditResultsContent({
     perceptionTeaser,
   };
 
-  const competitorNames = payload.competitors.slice(0, 2).map((c) => c.name);
-  const perception = payload.perceptionAuditV1;
-  const ownerHero =
-    perception?.ownerHero ??
-    (perception ? buildOwnerHeroFallback(payload, perception) : perceptionTeaser.ownerHero);
-
-  const unlockTeaser = {
-    score:
-      opportunity.opportunity_score?.marketing_maturity ??
-      perception?.digitalPositioningScore ??
-      perceptionTeaser.digitalPositioningScore,
-    leakPercentLow: ownerHero?.bookingLeakPercentLow,
-    leakPercentHigh: ownerHero?.bookingLeakPercentHigh,
-    revenueLeakCount:
-      opportunity.opportunity_score?.est_monthly_lost_customers ??
-      perception?.revenueLeaks?.length ??
-      perceptionTeaser.revenueLeakCount,
-    screenshotUrl: perceptionTeaser.screenshotUrl,
-    lostRevenueGbp: opportunity.opportunity_score?.est_lost_revenue,
-  };
-
   const payloadWithOpp: AuditResultPayload = {
     ...payload,
     opportunityReport: opportunity,
@@ -111,78 +89,67 @@ export function AuditResultsContent({
 
   return (
     <>
-      <AuditUnlockModal
-        auditId={audit.id}
-        restaurantName={audit.restaurantName}
-        competitorNames={competitorNames}
-        teaser={unlockTeaser}
-        open={!unlocked && unlockOpen}
-        onClose={() => setUnlockOpen(false)}
-      />
-
       <AuditReportDashboard
         audit={audit}
         payload={payloadWithOpp}
         benchmarkInitial={benchmarkInitial}
         unlocked={unlocked}
         scanStillRunning={scanStillRunning}
-        onRequestUnlock={() => setUnlockOpen(true)}
+        trialHref="/signup"
       />
 
-      {unlocked ? (
-        <div className="mx-auto max-w-[90rem] border-t border-[var(--color-hairline)] bg-[#f9fafb] px-6 py-12 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
-          <div className="max-w-3xl space-y-14">
-            <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
-              {marketingCopy.auditUpgrade.body}
-            </p>
-            <section>
-              <h2 className="font-head text-xl font-semibold">Opportunities</h2>
-              <ul className="mt-4 space-y-3">
-                {payload.opportunities.map((o) => (
-                  <li key={o.title} className={`${auditCard} flex flex-col gap-1 p-5 sm:flex-row sm:justify-between`}>
-                    <span className="font-medium">{o.title}</span>
-                    <span className="text-sm text-[var(--color-muted)]">{o.impactEstimate}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+      <div className="mx-auto max-w-[90rem] border-t border-[var(--color-hairline)] bg-[#f9fafb] px-6 py-12 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
+        <div className="max-w-3xl space-y-14">
+          <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
+            {marketingCopy.auditUpgrade.body}
+          </p>
+          <section>
+            <h2 className="font-head text-xl font-semibold">Opportunities</h2>
+            <ul className="mt-4 space-y-3">
+              {payload.opportunities.map((o) => (
+                <li key={o.title} className={`${auditCard} flex flex-col gap-1 p-5 sm:flex-row sm:justify-between`}>
+                  <span className="font-medium">{o.title}</span>
+                  <span className="text-sm text-[var(--color-muted)]">{o.impactEstimate}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-            <section className={`${auditCardMuted} p-8`}>
-              <h2 className="font-head text-xl font-semibold">30 / 60 / 90 roadmap</h2>
-              <div className="mt-6 grid gap-6 md:grid-cols-3">
-                {(
-                  [
-                    ["30 days", payload.gated.roadmap.days30],
-                    ["60 days", payload.gated.roadmap.days60],
-                    ["90 days", payload.gated.roadmap.days90],
-                  ] as const
-                ).map(([label, items]) => (
-                  <div key={label}>
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-primary)]">{label}</h3>
-                    <ul className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
-                      {items.map((x) => (
-                        <li key={x}>{x}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/pricing"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--color-hairline)] bg-white px-6 text-sm font-medium no-underline"
-              >
-                View pricing
-              </Link>
-              <Link href="/audit" className="inline-flex min-h-11 items-center px-2 text-sm text-[var(--color-muted)] underline">
-                New scan
-              </Link>
+          <section className={`${auditCardMuted} p-8`}>
+            <h2 className="font-head text-xl font-semibold">30 / 60 / 90 roadmap</h2>
+            <div className="mt-6 grid gap-6 md:grid-cols-3">
+              {(
+                [
+                  ["30 days", payload.gated.roadmap.days30],
+                  ["60 days", payload.gated.roadmap.days60],
+                  ["90 days", payload.gated.roadmap.days90],
+                ] as const
+              ).map(([label, items]) => (
+                <div key={label}>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-primary)]">{label}</h3>
+                  <ul className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
+                    {items.map((x) => (
+                      <li key={x}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
+          </section>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--color-hairline)] bg-white px-6 text-sm font-medium no-underline"
+            >
+              Start free trial
+            </Link>
+            <Link href="/audit" className="inline-flex min-h-11 items-center px-2 text-sm text-[var(--color-muted)] underline">
+              New scan
+            </Link>
           </div>
         </div>
-      ) : null}
+      </div>
     </>
   );
 }

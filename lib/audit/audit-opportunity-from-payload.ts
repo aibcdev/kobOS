@@ -250,10 +250,27 @@ export function buildNearbyComparison(payload: AuditResultPayload): AuditNearbyC
   }
 
   if (gp?.photoCount != null && gp.photoCount >= 0) {
+    const peerPhotos = placesComps
+      .map((c) => c.photoCount)
+      .filter((n): n is number => typeof n === "number" && n >= 0);
     rows.push({
       label: "Google photos",
       you: String(gp.photoCount),
-      nearby: String(Math.max(gp.photoCount + 15, Math.round(gp.photoCount * 1.6))),
+      // Never fabricate peer photo counts
+      nearby: peerPhotos.length
+        ? String(Math.round(peerPhotos.reduce((a, b) => a + b, 0) / peerPhotos.length))
+        : "—",
+    });
+  }
+
+  const peerReviews = placesComps
+    .map((c) => c.reviewCount)
+    .filter((n): n is number => typeof n === "number" && n > 0);
+  if (gp?.reviewCount != null && peerReviews.length > 0) {
+    rows.push({
+      label: "Review count",
+      you: gp.reviewCount.toLocaleString("en-GB"),
+      nearby: Math.round(peerReviews.reduce((a, b) => a + b, 0) / peerReviews.length).toLocaleString("en-GB"),
     });
   }
 

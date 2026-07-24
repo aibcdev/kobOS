@@ -9,13 +9,6 @@ import {
 import type { AuditOpportunityReportV1, AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
 
-function currencySymbol(code: string) {
-  if (code === "GBP") return "£";
-  if (code === "USD") return "$";
-  if (code === "EUR") return "€";
-  return `${code} `;
-}
-
 function FixWithKobButton({
   unlocked,
   trialHref,
@@ -47,7 +40,7 @@ function FixWithKobButton({
 }
 
 export function AuditOpportunityReport({
-  auditId,
+  auditId: _auditId,
   restaurantName,
   city,
   websiteUrl,
@@ -55,6 +48,7 @@ export function AuditOpportunityReport({
   unlocked,
   report: reportProp,
   onUnlockClick,
+  trialHref = "/signup",
 }: {
   auditId: string;
   restaurantName: string;
@@ -64,6 +58,8 @@ export function AuditOpportunityReport({
   unlocked: boolean;
   report?: AuditOpportunityReportV1 | null;
   onUnlockClick?: () => void;
+  /** Free-trial onboarding. */
+  trialHref?: string;
 }) {
   const baseReport =
     reportProp ??
@@ -76,21 +72,16 @@ export function AuditOpportunityReport({
 
   const metrics = report.opportunity_score;
   const lostCustomers = metrics?.est_monthly_lost_customers ?? 0;
-  const lostRevenue = metrics?.est_lost_revenue ?? 0;
-  const cur = currencySymbol(metrics?.currency ?? "GBP");
   const growthScore = report.growthScore ?? 55;
   const peerBottom = report.peerPercentileBottom ?? Math.max(5, 100 - growthScore);
   const projected = report.projectedGrowthScore ?? Math.min(95, growthScore + 12);
   const nearby = report.nearbyComparison ?? [];
   const wins = report.topFixes.slice(0, 3);
 
-  const trialHref = `/audit/${auditId}/upgrade/checkout`;
-
   return (
     <div className="mx-auto max-w-3xl">
       <p className="mb-4 text-[11px] leading-snug text-[#2c2c2c]/45">
-        Estimates from a public web scan — location count, city, and revenue figures can differ from
-        your internal data.
+        Estimates from a public web scan — location count and city can differ from your internal data.
       </p>
 
       <div className="mb-8">
@@ -106,7 +97,7 @@ export function AuditOpportunityReport({
         </p>
       </div>
 
-      {/* Hero: Growth Score */}
+      {/* Hero: Growth Score — customers only (no £ / revenue estimates). */}
       <div className="mb-6 overflow-hidden rounded-3xl border border-[#2c2c2c]/10 bg-white shadow-sm">
         <div className="flex flex-col items-center gap-6 px-6 py-8 sm:flex-row sm:justify-between sm:px-8">
           <div className="text-center sm:text-left">
@@ -121,18 +112,11 @@ export function AuditOpportunityReport({
               Bottom {peerBottom}% vs similar restaurants
             </p>
           </div>
-          <div className="grid w-full max-w-sm grid-cols-1 gap-3 sm:w-auto sm:min-w-[240px]">
+          <div className="w-full max-w-sm sm:w-auto sm:min-w-[240px]">
             <div className="rounded-2xl bg-red-50 px-4 py-3 text-center sm:text-left">
               <p className="text-xs font-medium text-red-800/70">Customers lost / month</p>
               <p className="mt-0.5 text-2xl font-semibold tabular-nums text-red-900">
                 ~{lostCustomers.toLocaleString("en-GB")}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-red-50/70 px-4 py-3 text-center sm:text-left">
-              <p className="text-xs font-medium text-red-800/70">Potential revenue / month</p>
-              <p className="mt-0.5 text-2xl font-semibold tabular-nums text-red-900">
-                {cur}
-                {lostRevenue.toLocaleString("en-GB")}
               </p>
             </div>
           </div>

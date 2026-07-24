@@ -1,19 +1,12 @@
 "use client";
 
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
+import { MARKETING_HERO } from "@/lib/marketing/assets";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 import { HeroQuestionSlideshow } from "./HeroQuestionSlideshow";
 import { SaasIcon } from "./SaasIcon";
-
-const CHEF_IMAGE =
-  "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80";
-
-const AVATARS = [
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=64&h=64&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=64&h=64&q=80",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=64&h=64&q=80",
-] as const;
+import { SaasSocialProof } from "./SaasSocialProof";
 
 export function SaasHeroSection() {
   return (
@@ -25,9 +18,9 @@ export function SaasHeroSection() {
             {marketingCopy.heroTrustBadge}
           </p>
 
-          <h1 className="font-heading mt-4 text-[2.75rem] leading-[1.08] tracking-tight text-[var(--color-forest)] sm:text-5xl md:text-[3.5rem]">
+          <h1 className="font-heading mt-4 text-[2.9rem] leading-[1.06] tracking-tight text-[var(--color-forest)] sm:text-[3.15rem] md:text-[3.75rem]">
             {marketingCopy.heroHeadlineLead}{" "}
-            <em className="italic text-[var(--color-forest)]">{marketingCopy.heroHeadlineAccent}</em>{" "}
+            <em className="italic font-normal text-[var(--color-forest)]">{marketingCopy.heroHeadlineAccent}</em>{" "}
             {marketingCopy.heroHeadlineTail}
           </h1>
 
@@ -52,25 +45,7 @@ export function SaasHeroSection() {
             ))}
           </ul>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <div className="flex -space-x-2">
-              {AVATARS.map((src) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={src}
-                  src={src}
-                  alt=""
-                  className="h-8 w-8 rounded-full border-2 border-[#f9f6f1] object-cover"
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-1.5 text-sm text-[#2c2c2c]/70">
-              <span className="tracking-tight text-[#e8a317]" aria-label="5 stars">
-                ★★★★★
-              </span>
-              <span>{marketingCopy.heroSocialProof}</span>
-            </div>
-          </div>
+          <SaasSocialProof className="mt-5" label={marketingCopy.heroSocialProof} />
         </div>
 
         <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
@@ -101,8 +76,8 @@ export function SaasHeroSection() {
           <div className="relative overflow-hidden rounded-[2rem] bg-[#e8e2d8] shadow-[0_30px_60px_-28px_rgba(0,0,0,0.35)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={CHEF_IMAGE}
-              alt="Restaurant ready for service"
+              src={MARKETING_HERO.restaurantWorker}
+              alt="Restaurant team member ready for service"
               className="aspect-[4/5] w-full object-cover object-top sm:aspect-[5/6]"
             />
 

@@ -25,7 +25,7 @@ export function SaasAuthPage({ defaultMode = "signin" }: { defaultMode?: "signin
             <span className="text-2xl font-bold tracking-tight text-[#094413]">KOB</span>
             <span className="block h-2 w-2 rounded-full bg-[#088924]" />
           </Link>
-          <h1 className="mt-8 text-3xl font-semibold tracking-tight text-[#1a1a1a] md:text-4xl">
+          <h1 className="font-heading mt-8 text-[2rem] font-bold tracking-tight text-[#1a1a1a] md:text-[2.5rem]">
             {isSignUp ? "Start growing online" : "Welcome back"}
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-[#2c2c2c]/70">
