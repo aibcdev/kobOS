@@ -5,7 +5,17 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  if (path.startsWith("/api/inngest") || path.startsWith("/api/stripe/status") || path.startsWith("/api/gemini/status") || path.startsWith("/api/auth/status")) {
+  if (
+    path.startsWith("/api/inngest") ||
+    path.startsWith("/api/stripe/status") ||
+    path.startsWith("/api/gemini/status") ||
+    path.startsWith("/api/auth/status")
+  ) {
+    return NextResponse.next();
+  }
+
+  // Public audits — skip auth session work so bots / preview tools get a clean response.
+  if (path.startsWith("/audit/")) {
     return NextResponse.next();
   }
 

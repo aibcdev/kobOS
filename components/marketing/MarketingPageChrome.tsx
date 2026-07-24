@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SaasMarketingShell } from "@/components/marketing/saas/SaasMarketingShell";
 
-/** Audit funnel: report, scanning, upgrade — Owner header only (no marketing footer). */
+/** Audit funnel: report, scanning, upgrade, plain share view — Owner header only (no marketing footer). */
 function isAuditFunnelPath(pathname: string | null) {
   if (!pathname) return false;
-  return /^\/audit\/[^/]+(\/(scanning|upgrade(\/checkout)?)?)?$/.test(pathname);
+  return /^\/audit\/[^/]+(\/(scanning|upgrade(\/checkout)?|plain)?)?$/.test(pathname);
 }
 
 /** All other marketing routes use SaaS template header + footer. */

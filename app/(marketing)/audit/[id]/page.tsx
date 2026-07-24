@@ -16,9 +16,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const audit = await findVisibilityAuditByIdOrSlug(id);
     if (!audit) return { title: "Audit · KOB" };
+    const pathKey = audit.slug || audit.id;
+    const url = `https://trykob.com/audit/${pathKey}`;
+    const plainUrl = `${url}/plain`;
     return {
       title: `${audit.restaurantName} · Visibility ${audit.overallScore} · KOB`,
-      description: `Visibility audit for ${audit.restaurantName} in ${audit.city}.`,
+      description: `Public visibility audit for ${audit.restaurantName} in ${audit.city}. No login required.`,
+      robots: { index: true, follow: true },
+      openGraph: {
+        title: `${audit.restaurantName} · KOB audit`,
+        description: `Growth score ${audit.overallScore}/100 for ${audit.restaurantName}. Open without logging in.`,
+        url: plainUrl,
+        siteName: "KOB",
+        type: "article",
+        locale: "en_GB",
+      },
+      twitter: {
+        card: "summary",
+        title: `${audit.restaurantName} · KOB audit`,
+        description: `Public audit — no login required. Simple view: ${plainUrl}`,
+      },
+      alternates: {
+        canonical: url,
+        types: {
+          "text/html": plainUrl,
+        },
+      },
     };
   } catch (e) {
     if (isPrismaDbUnreachableError(e)) return { title: "Audit · KOB" };
@@ -56,26 +79,35 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   }
 
   // Full report is public — no lead unlock / payload strip.
+  const pathKeyForLinks = audit.slug || audit.id;
   return (
-    <AuditResultsContent
-      scanStillRunning={previewEarly && payload.scanStatus === "pending"}
-      initialEmail={prefillEmail}
-      audit={{
-        id: audit.id,
-        restaurantName: audit.restaurantName,
-        city: audit.city,
-        websiteUrl: audit.websiteUrl,
-        leadCapturedAt: audit.leadCapturedAt,
-        leadEmail: audit.leadEmail,
-        createdAt: audit.createdAt,
-        overallScore: audit.overallScore,
-        seoScore: audit.seoScore,
-        designScore: audit.designScore,
-        mobileScore: audit.mobileScore,
-        conversionScore: audit.conversionScore,
-        updatedAt: audit.updatedAt,
-      }}
-      payload={payload}
-    />
+    <>
+      <div className="border-b border-[var(--color-hairline)] bg-white px-5 py-2.5 text-center text-sm text-[var(--color-muted)] md:px-8">
+        Public report · no login needed ·{" "}
+        <a href={`/audit/${pathKeyForLinks}/plain`} className="font-medium text-[var(--color-primary)] underline">
+          Simple text view (best for sharing)
+        </a>
+      </div>
+      <AuditResultsContent
+        scanStillRunning={previewEarly && payload.scanStatus === "pending"}
+        initialEmail={prefillEmail}
+        audit={{
+          id: audit.id,
+          restaurantName: audit.restaurantName,
+          city: audit.city,
+          websiteUrl: audit.websiteUrl,
+          leadCapturedAt: audit.leadCapturedAt,
+          leadEmail: audit.leadEmail,
+          createdAt: audit.createdAt,
+          overallScore: audit.overallScore,
+          seoScore: audit.seoScore,
+          designScore: audit.designScore,
+          mobileScore: audit.mobileScore,
+          conversionScore: audit.conversionScore,
+          updatedAt: audit.updatedAt,
+        }}
+        payload={payload}
+      />
+    </>
   );
 }
