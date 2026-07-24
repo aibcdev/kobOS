@@ -76,11 +76,6 @@ export default async function AuditPlainPage({ params }: Props) {
         restaurantName={audit.restaurantName}
         city={audit.city}
         websiteUrl={audit.websiteUrl}
-        overallScore={audit.overallScore}
-        seoScore={audit.seoScore}
-        designScore={audit.designScore}
-        mobileScore={audit.mobileScore}
-        conversionScore={audit.conversionScore}
         payload={payload}
         interactiveHref={`/audit/${pathKey}`}
       />
