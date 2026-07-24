@@ -66,12 +66,12 @@ export function AuditPerceptionHero({
           />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-forest-mid)]">
-              Scoring digital positioning
+              Comparing nearby restaurants
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[#2c2c2c]/70">
               {timedOut
-                ? `Still working on how guests see ${restaurantName} online. You can retry analysis now.`
-                : `Building a clear summary of how guests perceive ${restaurantName} online…`}
+                ? `Still working on how guests decide on ${restaurantName} online. You can retry analysis now.`
+                : `KOB is mapping the customer decision journey for ${restaurantName} — discovery, trust, photos, and website.`}
             </p>
             {timedOut && onRetry ? (
               <button
@@ -105,7 +105,7 @@ export function AuditPerceptionHero({
   return (
     <div className="rounded-2xl border border-[var(--color-hairline)] bg-gradient-to-br from-[var(--color-surface-cream)] to-white p-6 sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-primary)]">
-        Hospitality perception report
+        Restaurant Growth Report
       </p>
       <h1 className="mt-2 font-head text-xl font-semibold leading-snug text-[var(--color-ink)] sm:text-2xl">
         {headline}

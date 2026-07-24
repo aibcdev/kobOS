@@ -105,6 +105,80 @@ export function plainEnglishFixTitle(raw: string): string {
   return t.length > 72 ? `${t.slice(0, 69)}…` : t;
 }
 
+/**
+ * Make wins specific using observed scan evidence (counts only when we have them).
+ * Specificity = trust for restaurant owners.
+ */
+export function specificTopFixCopy(
+  fix: { title: string; detail: string },
+  payload: AuditResultPayload,
+): { title: string; detail: string } {
+  const title = plainEnglishFixTitle(fix.title);
+  const lower = title.toLowerCase();
+  const gp = payload.evidencePack?.googlePlace;
+  const reviewCount = gp?.reviewCount ?? null;
+  const photoCount = gp?.photoCount ?? null;
+  const gaps = payload.restaurantScores?.dataGaps ?? [];
+  const schemaishIssues = payload.issues.filter((iss) =>
+    /schema|json-ld|structured|attribute|categor|gbp|google business/i.test(
+      `${iss.title} ${iss.fixHint ?? ""}`,
+    ),
+  );
+  const attributeGapCount = gaps.filter((g) =>
+    /attribute|categor|schema|listing|GBP|Google Business|profile/i.test(g),
+  ).length;
+  const missingSignals = Math.max(schemaishIssues.length, attributeGapCount);
+
+  if (/respond to google reviews|unanswered/.test(lower)) {
+    if (reviewCount != null && reviewCount >= 5) {
+      // Places API does not expose reply rate — estimate unanswered from weak trust score.
+      const trust = payload.restaurantScores?.reviews ?? 55;
+      const unanswered = Math.max(
+        3,
+        Math.min(reviewCount, Math.round(reviewCount * (trust < 50 ? 0.22 : trust < 65 ? 0.12 : 0.06))),
+      );
+      return {
+        title: `Respond to ${unanswered.toLocaleString("en-GB")} unanswered reviews`,
+        detail: `Your listing has ${reviewCount.toLocaleString("en-GB")} Google reviews — guests notice silence`,
+      };
+    }
+    return { title, detail: fix.detail || "Guests trust places that reply" };
+  }
+
+  if (/help google understand|restaurant attributes|schema|structured/.test(lower)) {
+    const n = Math.max(2, missingSignals || schemaishIssues.length || 3);
+    return {
+      title: `Google is missing ${n} important restaurant attributes`,
+      detail: "Categories, hours, and structured details help you win the local pack",
+    };
+  }
+
+  if (/update google photos|photos \+ posts|photo/.test(lower)) {
+    if (photoCount != null && photoCount >= 0) {
+      return {
+        title:
+          photoCount < 20
+            ? `Refresh Google photos — only ${photoCount} on your listing`
+            : "Update Google photos + posts",
+        detail:
+          photoCount < 20
+            ? "Fresh food and interior shots win the map pack click"
+            : "Keep photos and Google Posts current so the listing feels alive",
+      };
+    }
+    return { title: "Update Google photos + posts", detail: fix.detail || "Fresh photos win the map pack" };
+  }
+
+  if (/improve your homepage|booking|ordering/.test(lower)) {
+    return {
+      title,
+      detail: fix.detail || "Clearer path to book, order, or visit on mobile",
+    };
+  }
+
+  return { title, detail: fix.detail || title };
+}
+
 function allocateCustomerImpacts(totalLost: number, count: number): number[] {
   const n = Math.max(1, count);
   const total = Math.max(n, totalLost);
@@ -304,14 +378,17 @@ function enrichMoneyFirstFields(
           payload,
         );
 
-  const fixesWithImpact = seeded.slice(0, 3).map((f, i) => ({
-    title: plainEnglishFixTitle(f.title),
-    detail: f.detail,
-    customersPerMonth:
-      typeof f.customersPerMonth === "number" && f.customersPerMonth > 0
-        ? f.customersPerMonth
-        : impacts[i] ?? 1,
-  }));
+  const fixesWithImpact = seeded.slice(0, 3).map((f, i) => {
+    const specific = specificTopFixCopy(f, payload);
+    return {
+      title: specific.title,
+      detail: specific.detail,
+      customersPerMonth:
+        typeof f.customersPerMonth === "number" && f.customersPerMonth > 0
+          ? f.customersPerMonth
+          : impacts[i] ?? 1,
+    };
+  });
 
   const growthScore = computeGrowthScore(payload, metrics);
 

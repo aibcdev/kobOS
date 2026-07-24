@@ -9,6 +9,7 @@ import {
   computeAuditOpportunityReport,
   ensureMoneyFirstOpportunityReport,
 } from "@/lib/audit/audit-opportunity-from-payload";
+import { buildDecisionJourneyReport } from "@/lib/audit/decision-journey";
 import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
@@ -116,24 +117,26 @@ export function AuditResultsContent({
           </section>
 
           <section className={`${auditCardMuted} p-8`}>
-            <h2 className="font-head text-xl font-semibold">30 / 60 / 90 roadmap</h2>
+            <h2 className="font-head text-xl font-semibold">What I&apos;d do if this was my restaurant</h2>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">
+              A three-week plan starting at the biggest drop-off in the customer journey.
+            </p>
             <div className="mt-6 grid gap-6 md:grid-cols-3">
-              {(
-                [
-                  ["30 days", payload.gated.roadmap.days30],
-                  ["60 days", payload.gated.roadmap.days60],
-                  ["90 days", payload.gated.roadmap.days90],
-                ] as const
-              ).map(([label, items]) => (
-                <div key={label}>
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-primary)]">{label}</h3>
-                  <ul className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
-                    {items.map((x) => (
-                      <li key={x}>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+              {buildDecisionJourneyReport(payloadWithOpp, {
+                restaurantName: audit.restaurantName,
+                city: audit.city,
+                websiteUrl: audit.websiteUrl,
+              })
+                .repairPlan.slice(0, 3)
+                .map((week) => (
+                  <div key={week.week}>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+                      Week {week.week}
+                    </h3>
+                    <p className="mt-2 text-sm font-medium text-[var(--color-ink)]">{week.title}</p>
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">{week.action}</p>
+                  </div>
+                ))}
             </div>
           </section>
 

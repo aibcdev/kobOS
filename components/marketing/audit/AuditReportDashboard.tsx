@@ -25,12 +25,19 @@ import { AuditRevenueLeaks } from "@/components/marketing/audit/AuditRevenueLeak
 import { useAuditBenchmarkPoll } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { isAuditScoresReady } from "@/lib/audit/audit-score-display";
-import { gradeMeaning } from "@/lib/audit/restaurant-scoring";
+import { inferCuisineKey } from "@/lib/audit/growth-report-v2";
 import { buildTeaserPerception } from "@/lib/marketing/audit-scan-preview";
 import { marketingCopy } from "@/lib/marketing/copy";
-import { onlineHealthLabel } from "@/lib/marketing/audit-grader-phases";
 import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
 import type { AuditResultPayload, BenchmarkV1Section, RestaurantScoresV1 } from "@/lib/audit/types";
+
+const CUISINE_LABEL: Record<string, string> = {
+  burger: "burger / grill restaurants",
+  pizza: "pizza restaurants",
+  coffee: "cafés",
+  asian: "Pakistani / Indian / Asian restaurants",
+  general: "independent restaurants",
+};
 
 type NavId = "overview" | "reviews" | "discovery" | "competitors" | "technical";
 
@@ -58,11 +65,9 @@ function scoreTone(score: number) {
 function ScoreRing({
   score,
   size = 120,
-  grade,
 }: {
   score: number;
   size?: number;
-  grade?: string;
 }) {
   const tone = scoreTone(score);
   const r = (size - 12) / 2;
@@ -85,25 +90,66 @@ function ScoreRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {grade ? (
-          <>
-            <span className={`font-head text-4xl font-semibold leading-none ${tone.text}`}>{grade}</span>
-            <span className="mt-0.5 text-xs font-medium tabular-nums text-[var(--color-muted-medium)]">{score}</span>
-          </>
-        ) : (
-          <span className={`font-head text-4xl font-semibold tabular-nums ${tone.text}`}>{score}</span>
-        )}
+        <span className={`font-head text-4xl font-semibold tabular-nums ${tone.text}`}>{score}</span>
+        <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+          /100
+        </span>
       </div>
     </div>
   );
 }
 
-const RESTAURANT_AXIS_STRIP: { key: keyof Pick<RestaurantScoresV1, "reviews" | "gbp" | "website" | "competitors" | "technical">; label: string }[] = [
-  { key: "reviews", label: "Reviews" },
-  { key: "gbp", label: "GBP" },
-  { key: "website", label: "Website" },
-  { key: "competitors", label: "Competitive" },
-  { key: "technical", label: "Technical" },
+const RESTAURANT_AXIS_STRIP: {
+  key: keyof Pick<RestaurantScoresV1, "reviews" | "gbp" | "website" | "competitors" | "technical">;
+  label: string;
+  explain: (score: number) => string;
+}[] = [
+  {
+    key: "gbp",
+    label: "Discovery",
+    explain: (s) =>
+      s < 50
+        ? "Guests struggle to find you in local search vs nearby places."
+        : s < 70
+          ? "You appear in search, but the listing isn’t winning enough clicks."
+          : "Local search presence is competitive enough to get found.",
+  },
+  {
+    key: "reviews",
+    label: "Trust",
+    explain: (s) =>
+      s < 50
+        ? "Review signals trail nearby restaurants — guests notice silence."
+        : s < 70
+          ? "Reviews exist, but trust still lags stronger local competitors."
+          : "Reviews and reputation support guest confidence.",
+  },
+  {
+    key: "website",
+    label: "Website",
+    explain: (s) =>
+      s < 50
+        ? "The path to book, order, or visit is unclear — especially on mobile."
+        : s < 70
+          ? "The site works, but the next action still isn’t obvious enough."
+          : "Website clarity is strong enough to convert interest.",
+  },
+  {
+    key: "competitors",
+    label: "Competition",
+    explain: (s) =>
+      `You're below ${Math.max(5, 100 - s)}% of similar restaurants nearby.`,
+  },
+  {
+    key: "technical",
+    label: "Momentum",
+    explain: (s) =>
+      s < 50
+        ? "Technical and listing hygiene is slowing ongoing discovery."
+        : s < 70
+          ? "Foundations are OK — consistency is what creates momentum."
+          : "Technical foundations support ongoing visibility.",
+  },
 ];
 
 function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
@@ -115,13 +161,13 @@ function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
             Restaurant scorecard
           </p>
           <p className="mt-1 font-head text-lg font-semibold">
-            Grade {scores.grade} · {scores.overall}/100
+            Restaurant Visibility · {scores.overall}/100
           </p>
         </div>
         <p className="text-xs text-[var(--color-muted-medium)]">Confidence: {scores.confidence}</p>
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {RESTAURANT_AXIS_STRIP.map(({ key, label }) => {
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+        {RESTAURANT_AXIS_STRIP.map(({ key, label, explain }) => {
           const value = scores[key];
           const tone = scoreTone(value);
           return (
@@ -133,14 +179,22 @@ function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
               <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
                 <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${value}%` }} />
               </div>
+              <p className="mt-2 text-[11px] leading-snug text-[var(--color-muted)]">{explain(value)}</p>
             </div>
           );
         })}
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
-        C = average for restaurants. {gradeMeaning(scores.grade)}.
-        {scores.dataGaps?.length ? ` Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}.` : null}
-      </p>
+      {scores.dataGaps?.length ? (
+        <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
+          How we calculate this: public Google, website, and nearby restaurant signals.
+          {` Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}.`}
+        </p>
+      ) : (
+        <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
+          How we calculate this: public Google visibility, review activity, website conversion, and
+          nearby restaurant signals.
+        </p>
+      )}
     </div>
   );
 }
@@ -192,20 +246,29 @@ function BenchmarkSectionCard({ title, section }: { title: string; section: Benc
   );
 }
 
-function analysisStatusLines(data: AuditBenchmarkPollSnapshot): string[] {
+function analysisStatusLines(
+  data: AuditBenchmarkPollSnapshot,
+  opts: { restaurantName: string; city: string; competitorCount: number; cuisineLabel: string },
+): string[] {
   const lines: string[] = [];
-  if (data.scanStatus === "pending" || data.scoresPending) {
-    lines.push("Finishing your site scan — scores update when ready.");
+  const { competitorCount, cuisineLabel, city, restaurantName } = opts;
+
+  if (
+    data.scanStatus === "pending" ||
+    data.scoresPending ||
+    data.perceptionAuditV1Status === "pending" ||
+    data.benchmarkV1Status === "pending" ||
+    data.benchmarkV1MediaStatus === "pending"
+  ) {
+    lines.push(
+      `KOB is comparing ${restaurantName} against ${cuisineLabel} in ${city}${
+        competitorCount > 0
+          ? ` — including ${competitorCount} nearby restaurant${competitorCount === 1 ? "" : "s"} we scored directly`
+          : ""
+      }.`,
+    );
   }
-  if (data.perceptionAuditV1Status === "pending") {
-    lines.push("Scoring digital positioning…");
-  }
-  if (data.benchmarkV1Status === "pending") {
-    lines.push("AI benchmark still running in the background…");
-  }
-  if (data.benchmarkV1MediaStatus === "pending") {
-    lines.push("Reviewing photos for visual scoring…");
-  }
+
   if (data.benchmarkV1MediaStatus === "failed" && data.benchmarkV1MediaError) {
     lines.push(`Visual analysis unavailable: ${data.benchmarkV1MediaError}`);
   }
@@ -307,15 +370,16 @@ export function AuditReportDashboard({
   const perception = data.perceptionAuditV1 ?? payload.perceptionAuditV1 ?? teaserPerception;
   const displayScore = restaurantScores?.overall ?? perception?.digitalPositioningScore ?? overall;
   const displayTone = scoreTone(displayScore);
-  const healthLabel = restaurantScores
-    ? `Grade ${restaurantScores.grade} · ${onlineHealthLabel(displayScore)}`
-    : onlineHealthLabel(displayScore);
+  const healthLabel = `${displayScore}/100`;
   const tone = scoreTone(restaurantScores?.overall ?? overall);
   const restaurantDisplay = decodeHtmlEntities(audit.restaurantName);
   const locationLabel = `${restaurantDisplay}, ${audit.city}`;
   const trialCheckoutHref = trialHref;
   const reportUrl =
     typeof window !== "undefined" ? `${window.location.origin}/audit/${audit.id}` : `/audit/${audit.id}`;
+  const cuisineKey = inferCuisineKey(audit.restaurantName, audit.websiteUrl);
+  const cuisineLabel = CUISINE_LABEL[cuisineKey] ?? "independent restaurants";
+  const competitorCount = payload.competitors.filter((c) => c.source === "places").length;
 
   const shareReport = useCallback(async () => {
     const url = typeof window !== "undefined" ? window.location.href : reportUrl;
@@ -342,7 +406,14 @@ export function AuditReportDashboard({
 
   const issueIcons = ["🔴", "🟠", "🟡"] as const;
   const reviewsScore = reviewsHealthScore(data, payload);
-  const analysisLines = unlocked ? analysisStatusLines(data) : [];
+  const analysisLines = unlocked
+    ? analysisStatusLines(data, {
+        restaurantName: restaurantDisplay,
+        city: audit.city,
+        competitorCount,
+        cuisineLabel,
+      })
+    : [];
   const competitorsFromPlaces =
     payload.competitors.length > 0 && payload.competitors.some((c) => c.source === "places");
   const competitorInsight = competitorInsightCopy(payload, data.benchmarkV1, audit.city);
@@ -472,11 +543,16 @@ export function AuditReportDashboard({
               {unlocked ? (
                 <div className="mb-8 flex flex-col items-center gap-6 text-center md:flex-row md:items-end md:justify-between md:text-left">
                   <div className="md:text-left">
-                    <h1 className="font-head text-3xl font-semibold tracking-tight md:text-4xl">
-                      Your hospitality perception report
+                    <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+                      Restaurant Growth Report
+                    </p>
+                    <h1 className="mt-1 font-head text-3xl font-semibold tracking-tight md:text-4xl">
+                      Your next customers are judging your restaurant before they ever visit.
                     </h1>
                     <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-                      {`Generated ${new Date(audit.updatedAt).toLocaleDateString("en-GB", { dateStyle: "medium" })} · ${formatEvidenceSourcesSummary(collectAuditEvidenceSources(payload))}`}
+                      We analysed every step of that journey. Generated{" "}
+                      {new Date(audit.updatedAt).toLocaleDateString("en-GB", { dateStyle: "medium" })} ·{" "}
+                      {formatEvidenceSourcesSummary(collectAuditEvidenceSources(payload))}
                     </p>
                     <div className="mt-3">
                       <AuditEvidenceSources payload={payload} />
@@ -484,21 +560,17 @@ export function AuditReportDashboard({
                   </div>
                   {showHeaderScoreRing ? (
                     <div className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-white p-6 shadow-sm sm:flex-row sm:gap-6">
-                      <ScoreRing
-                        score={displayScore}
-                        size={120}
-                        grade={restaurantScores?.grade}
-                      />
+                      <ScoreRing score={displayScore} size={120} />
                       <div className="text-center sm:text-left">
                         <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-                          {restaurantScores ? "Restaurant visibility" : "Digital positioning"}
+                          Restaurant Visibility
                         </p>
                         <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>{healthLabel}</p>
                         <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
                           {restaurantScores
                             ? `Your score vs. similar restaurants in ${audit.city}.`
                             : perceptionPending
-                              ? "Scoring digital positioning…"
+                              ? `Comparing ${restaurantDisplay} against ${cuisineLabel} in ${audit.city}…`
                               : `Your score vs. similar restaurants in ${audit.city}.`}
                         </p>
                       </div>

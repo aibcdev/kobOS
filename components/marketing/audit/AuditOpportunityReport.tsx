@@ -6,10 +6,11 @@ import {
   ensureMoneyFirstOpportunityReport,
   computeAuditOpportunityReport,
 } from "@/lib/audit/audit-opportunity-from-payload";
+import { CustomerDecisionJourney } from "@/components/marketing/audit/CustomerDecisionJourney";
 import type { AuditOpportunityReportV1, AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
 
-function FixWithKobButton({
+function RecoverCustomersButton({
   unlocked,
   trialHref,
   onUnlockClick,
@@ -27,14 +28,14 @@ function FixWithKobButton({
   if (unlocked) {
     return (
       <Link href={trialHref} className={base}>
-        Fix automatically with KOB
+        Start recovering customers
       </Link>
     );
   }
 
   return (
     <button type="button" onClick={onUnlockClick} className={base}>
-      Fix automatically with KOB
+      Start recovering customers
     </button>
   );
 }
@@ -77,20 +78,21 @@ export function AuditOpportunityReport({
   const projected = report.projectedGrowthScore ?? Math.min(95, growthScore + 12);
   const nearby = report.nearbyComparison ?? [];
   const wins = report.topFixes.slice(0, 3);
+  const competitorCount = payload.competitors.filter((c) => c.source === "places").length;
+  const peerLine =
+    competitorCount > 0
+      ? `Compared with ${competitorCount} nearby restaurant${competitorCount === 1 ? "" : "s"} we analysed in ${report.displayCity || city}.`
+      : `Bottom ${peerBottom}% vs similar restaurants in ${report.displayCity || city}.`;
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="mb-4 text-[11px] leading-snug text-[#2c2c2c]/45">
-        Estimates from a public web scan — location count and city can differ from your internal data.
-      </p>
-
       <div className="mb-8">
         <p className="font-mono-brand text-xs font-semibold tracking-wider text-[var(--color-forest-mid)] uppercase">
           Opportunity Report
         </p>
-        <h1 className="font-heading mt-1 text-3xl tracking-tight text-[#1a1a1a] md:text-4xl">
+        <h2 className="font-heading mt-1 text-3xl tracking-tight text-[#1a1a1a] md:text-4xl">
           {restaurantName}
-        </h1>
+        </h2>
         <p className="mt-1 text-sm text-[#2c2c2c]/55">
           {report.locationLabel}
           {report.displayCity ? ` · ${report.displayCity}` : ""}
@@ -102,15 +104,13 @@ export function AuditOpportunityReport({
         <div className="flex flex-col items-center gap-6 px-6 py-8 sm:flex-row sm:justify-between sm:px-8">
           <div className="text-center sm:text-left">
             <p className="text-xs font-medium tracking-wide text-[#2c2c2c]/50 uppercase">
-              Restaurant Growth Score
+              Restaurant Visibility
             </p>
             <p className="mt-2 text-5xl font-semibold tracking-tight text-[#1a1a1a] tabular-nums">
               {growthScore}
               <span className="text-2xl font-normal text-[#2c2c2c]/35">/100</span>
             </p>
-            <p className="mt-2 text-sm font-medium text-[#b45309]">
-              Bottom {peerBottom}% vs similar restaurants
-            </p>
+            <p className="mt-2 text-sm font-medium text-[#b45309]">{peerLine}</p>
           </div>
           <div className="w-full max-w-sm sm:w-auto sm:min-w-[240px]">
             <div className="rounded-2xl bg-red-50 px-4 py-3 text-center sm:text-left">
@@ -118,10 +118,21 @@ export function AuditOpportunityReport({
               <p className="mt-0.5 text-2xl font-semibold tabular-nums text-red-900">
                 ~{lostCustomers.toLocaleString("en-GB")}
               </p>
+              <p className="mt-2 text-[11px] leading-snug text-red-900/55">
+                Estimated using Google visibility, review activity, website conversion and similar
+                restaurants.
+              </p>
             </div>
           </div>
         </div>
       </div>
+
+      <CustomerDecisionJourney
+        payload={payload}
+        restaurantName={restaurantName}
+        city={city}
+        websiteUrl={websiteUrl}
+      />
 
       {/* Biggest wins */}
       <div className="mb-8 rounded-3xl border border-[#2c2c2c]/10 bg-white p-6 md:p-8">
@@ -129,7 +140,7 @@ export function AuditOpportunityReport({
           Biggest wins
         </h2>
         <p className="mt-2 text-sm text-[#2c2c2c]/60">
-          Three changes that recover the most customers — fix them automatically with KOB.
+          Three specific changes that recover the most customers.
         </p>
 
         <ol className="mt-6 space-y-5">
@@ -150,7 +161,7 @@ export function AuditOpportunityReport({
                   </p>
                 </div>
               </div>
-              <FixWithKobButton
+              <RecoverCustomersButton
                 unlocked={unlocked}
                 trialHref={trialHref}
                 onUnlockClick={onUnlockClick}
@@ -214,14 +225,14 @@ export function AuditOpportunityReport({
       {/* Primary CTA */}
       <div className="mb-8 rounded-3xl bg-[var(--color-forest)] p-8 text-center text-white">
         <h2 className="font-heading text-xl tracking-tight md:text-2xl">
-          Fix this automatically with KOB
+          Start recovering customers
         </h2>
         <p className="mx-auto mt-3 max-w-md text-sm text-white/75">
           KOB handles the reviews, homepage, and social work so you stop leaving customers on the
           table.
         </p>
         <div className="mt-6">
-          <FixWithKobButton
+          <RecoverCustomersButton
             unlocked={unlocked}
             trialHref={trialHref}
             onUnlockClick={onUnlockClick}

@@ -114,7 +114,7 @@ export function inferCuisineKey(name: string, websiteUrl: string | null): string
   if (/\b(burger|grill|smoke|pit|bbq)\b/.test(text)) return "burger";
   if (/\b(pizza|pizzeria|slice)\b/.test(text)) return "pizza";
   if (/\b(coffee|café|cafe|espresso|roast)\b/.test(text)) return "coffee";
-  if (/\b(indian|curry|tandoori|balti|biryani)\b/.test(text)) return "asian";
+  if (/\b(indian|curry|tandoori|balti|biryani|karahi|pakistani)\b/.test(text)) return "asian";
   if (/\b(thai|sushi|ramen|asian|wok|dim sum|chinese|japanese|korean|vietnamese|lebanese|turkish)\b/.test(text))
     return "asian";
   return "general";
