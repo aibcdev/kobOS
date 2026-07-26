@@ -25,7 +25,8 @@ export type DashboardNavIcon =
   | "analytics"
   | "settings"
   | "billing"
-  | "outbound";
+  | "outbound"
+  | "demand";
 
 export type DashboardNavItem = {
   href: string;
@@ -52,6 +53,7 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
     id: "customers",
     label: "Get more customers",
     items: [
+      { href: "/dashboard/demand-engine", label: "Demand Engine", icon: "demand" },
       { href: "/dashboard/listings", label: "Google Presence", icon: "listings" },
       { href: "/dashboard/website", label: "Website", icon: "website" },
       { href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },

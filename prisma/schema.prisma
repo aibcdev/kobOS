@@ -94,6 +94,8 @@ enum ServiceRequestType {
   SEO_RESURFACE
   CREATIVE_PACK
   OTHER
+  /** Free trial / audit win — owner requests; KOB fulfills manually (0 credits). */
+  AUDIT_FIX
   @@schema("public")
 }
 
@@ -392,6 +394,9 @@ model Restaurant {
   creativePacks      CreativePack[]
   serviceRequests    ServiceRequest[]
   creditLedger       CreditLedgerEntry[]
+  demandRecommendations DemandRecommendation[]
+  liveOffers         LiveOffer[]
+  automationRules    AutomationRule[]
 
   @@index([organizationId])
   @@schema("public")
@@ -499,6 +504,9 @@ model Campaign {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  liveOffers   LiveOffer[]
+  demandRecommendations DemandRecommendation[]
+  performances CampaignPerformance[]
 
   @@index([restaurantId, status])
   @@schema("public")
@@ -760,6 +768,7 @@ model OutboundLead {
   createdAt              DateTime             @default(now())
   workspaceRestaurant    Restaurant?          @relation(fields: [workspaceRestaurantId], references: [id], onDelete: Cascade)
   leadProspect           LeadProspect?
+  sequence               OutboundSequence?
 
   @@index([status, createdAt])
   @@index([workspaceRestaurantId, status, createdAt])
@@ -767,6 +776,65 @@ model OutboundLead {
   @@index([placeId])
   @@index([visibilityAuditId])
   @@index([emailVariant, status])
+  @@schema("public")
+}
+
+enum OutboundSequenceStatus {
+  EMAIL_SENT
+  INSTAGRAM_QUEUED
+  INSTAGRAM_SENT
+  READY_FOR_FACEBOOK
+  FACEBOOK_QUEUED
+  FACEBOOK_SENT
+  REPLIED
+  COMPLETED
+  STOPPED
+  @@schema("public")
+}
+
+enum OutboundChannelStatus {
+  PENDING
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED
+  REPLIED
+  @@schema("public")
+}
+
+/** Multi-channel follow-up after cold email (IG DM → Facebook fallback). */
+model OutboundSequence {
+  id                   String                 @id @default(cuid())
+  outboundLeadId       String                 @unique
+  workspaceRestaurantId String?
+  restaurantName       String
+  city                 String                 @default("")
+  observation          String
+  emailAngle           String                 @default("general")
+  emailSentAt          DateTime
+  emailReplied         Boolean                @default(false)
+  emailOpened          Boolean?
+  instagramHandle      String?
+  instagramUrl         String?
+  instagramDmText      String?
+  instagramDmStatus    OutboundChannelStatus  @default(PENDING)
+  instagramDmQueuedAt  DateTime?
+  instagramDmSentAt    DateTime?
+  facebookPageUrl      String?
+  facebookMsgText      String?
+  facebookMsgStatus    OutboundChannelStatus  @default(PENDING)
+  facebookMsgQueuedAt  DateTime?
+  facebookMsgSentAt    DateTime?
+  sequenceStatus       OutboundSequenceStatus @default(EMAIL_SENT)
+  stopReason           String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  outboundLead         OutboundLead           @relation(fields: [outboundLeadId], references: [id], onDelete: Cascade)
+
+  @@index([sequenceStatus, emailSentAt])
+  @@index([instagramDmStatus, emailSentAt])
+  @@index([facebookMsgStatus, instagramDmSentAt])
+  @@index([workspaceRestaurantId, sequenceStatus])
   @@schema("public")
 }
 
@@ -953,5 +1021,139 @@ model CreditLedgerEntry {
   restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId, createdAt])
+  @@schema("public")
+}
+
+/** Demand Engine — AI offer suggestion awaiting restaurant approve/dismiss. */
+enum DemandRecommendationStatus {
+  PENDING
+  APPROVED
+  DISMISSED
+  EXPIRED
+  @@schema("public")
+}
+
+enum LiveOfferStatus {
+  DRAFT
+  LIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  @@schema("public")
+}
+
+enum ChannelPublishStatus {
+  QUEUED
+  PUBLISHED
+  FAILED
+  SKIPPED
+  @@schema("public")
+}
+
+enum AutomationRuleMode {
+  NOTIFY_ONLY
+  AUTO_APPROVE
+  @@schema("public")
+}
+
+model DemandRecommendation {
+  id                       String                      @id @default(cuid())
+  restaurantId             String
+  status                   DemandRecommendationStatus  @default(PENDING)
+  title                    String
+  reason                   String
+  confidence               Int                         @default(70)
+  impactScore              Int                         @default(50)
+  estimatedExtraCustomers  Int                         @default(0)
+  estimatedExtraRevenue    Int                         @default(0)
+  /** StructuredOffer JSON */
+  offer                    Json                        @default("{}")
+  templateKey              String?
+  expiresAt                DateTime?
+  campaignId               String?
+  liveOfferId              String?
+  createdAt                DateTime                    @default(now())
+  updatedAt                DateTime                    @updatedAt
+  restaurant               Restaurant                  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  campaign                 Campaign?                   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  liveOffer                LiveOffer?                  @relation(fields: [liveOfferId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, status])
+  @@index([restaurantId, createdAt])
+  @@schema("public")
+}
+
+model LiveOffer {
+  id               String          @id @default(cuid())
+  restaurantId     String
+  campaignId       String?
+  status           LiveOfferStatus @default(DRAFT)
+  title            String
+  discountLabel    String?
+  /** StructuredOffer JSON */
+  offer            Json            @default("{}")
+  validFrom        DateTime
+  validTo          DateTime
+  lat              Float?
+  lng              Float?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  restaurant       Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  campaign         Campaign?       @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  channelPublishes ChannelPublish[]
+  performances     CampaignPerformance[]
+  demandRecommendations DemandRecommendation[]
+
+  @@index([restaurantId, status])
+  @@index([status, validTo])
+  @@schema("public")
+}
+
+model ChannelPublish {
+  id          String               @id @default(cuid())
+  liveOfferId String
+  channel     CampaignChannel
+  status      ChannelPublishStatus @default(QUEUED)
+  publishedAt DateTime?
+  metadata    Json                 @default("{}")
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  liveOffer   LiveOffer            @relation(fields: [liveOfferId], references: [id], onDelete: Cascade)
+
+  @@index([liveOfferId, channel])
+  @@schema("public")
+}
+
+model CampaignPerformance {
+  id                String    @id @default(cuid())
+  campaignId        String?
+  liveOfferId       String?
+  extraCustomers    Int       @default(0)
+  estimatedRevenue  Int       @default(0)
+  redemptions       Int       @default(0)
+  channelBreakdown  Json      @default("{}")
+  periodStart       DateTime
+  periodEnd         DateTime
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  campaign          Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  liveOffer         LiveOffer? @relation(fields: [liveOfferId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([liveOfferId])
+  @@schema("public")
+}
+
+model AutomationRule {
+  id           String             @id @default(cuid())
+  restaurantId String
+  mode         AutomationRuleMode @default(NOTIFY_ONLY)
+  enabled      Boolean            @default(true)
+  config       Json               @default("{}")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
   @@schema("public")
 }

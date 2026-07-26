@@ -167,6 +167,13 @@ export function DashboardNavIconGlyph({
           <path d="M4 12h12M12 6l6 6-6 6" />
         </svg>
       );
+    case "demand":
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <path d="M12 3v3M12 18v3M4.9 5.1l2.1 2.1M17 16.8l2.1 2.1M3 12h3M18 12h3M4.9 18.9 7 16.8M17 7.2l2.1-2.1" />
+          <circle cx="12" cy="12" r="3.5" />
+        </svg>
+      );
     default:
       return (
         <svg viewBox="0 0 24 24" {...common}>
