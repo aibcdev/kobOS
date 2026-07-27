@@ -68,7 +68,10 @@
     "outbound:sequence-mark": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-sequence-mark.ts",
     "outbound:pool": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-pool-status.ts",
     "outbound:verify-instagram": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-verify-instagram.ts",
-    "outbound:ig-search-setup": "python3 -m venv .venv-ig && .venv-ig/bin/pip install -U ddgs"
+    "outbound:audit-instagram-food": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-audit-instagram-food.ts",
+    "outbound:reddit-intent": "dotenv -e .env -e .env.local -- npx tsx scripts/reddit-intent-scan.ts",
+    "outbound:ig-search-setup": "python3 -m venv .venv-ig && .venv-ig/bin/pip install -U ddgs",
+    "ads:b2b-audit": "npx tsx scripts/google-ads-b2b-audit-campaign.ts"
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.74",

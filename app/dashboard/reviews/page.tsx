@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { ReviewsRelationshipPanel } from "@/components/dashboard/reviews/ReviewsRelationshipPanel";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
+import { RequestServiceButton } from "@/components/dashboard/RequestServiceButton";
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { prisma } from "@/lib/db/prisma";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { getServiceRequestSurfaceState } from "@/lib/dashboard/service-request-surface";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
@@ -38,6 +40,12 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
     replied: r.replied,
   }));
 
+  const reviewsSurface = await getServiceRequestSurfaceState(
+    restaurantId,
+    restaurant.subscriptionPlan,
+    "REVIEWS",
+  );
+
   return (
     <div className="mx-auto max-w-5xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Reviews &amp; reviewer relationships</h1>
@@ -45,6 +53,25 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
         Smart replies and relationship ideas for {restaurant.name}. Drafts use your workspace tone and reviewer notes
         when available.
       </p>
+
+      <div className={`mt-6 ${appCardSurface}`}>
+        <p className="type-label-md text-[var(--color-ink)]">Need a full reviews engine setup?</p>
+        <p className="type-body-sm mt-1 text-[var(--color-muted)]">
+          Request it — status becomes Requested and our team picks up the ticket.
+        </p>
+        <div className="mt-3">
+          <RequestServiceButton
+            restaurantId={restaurantId}
+            type="REVIEWS"
+            title="Reviews engine"
+            creditCost={reviewsSurface.creditCost}
+            isPaid={reviewsSurface.isPaid}
+            billingHref={`/dashboard/billing?r=${encodeURIComponent(restaurantId)}&tier=starter`}
+            openStatus={reviewsSurface.openStatus}
+            label="Request reviews setup"
+          />
+        </div>
+      </div>
 
       <div className="mt-10">
         <ReviewsRelationshipPanel restaurantId={restaurantId} reviews={reviewItems} />

@@ -18,6 +18,7 @@ export async function GET(req: Request) {
     { name: "lead-engine/analyzer.requested", data: { ...base } },
     { name: "lead-engine/outreach-writer.requested", data: { ...base } },
     { name: "outbound/send.requested", data: { ...base } },
+    { name: "outbound/sequence.requested", data: { ...base } },
     { name: "outbound/audit-import.requested", data: { ...base } },
   ];
 

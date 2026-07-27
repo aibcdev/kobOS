@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { appBtnPrimary, appCardSurface } from "@/lib/app-ui-classes";
+import { appCardSurface } from "@/lib/app-ui-classes";
+import { RequestServiceButton } from "@/components/dashboard/RequestServiceButton";
 
-/** Shared product surface for Owner-mapped modules (live or waitlist). */
+/** Shared product surface for Owner-mapped modules (live or requestable). */
 export function DashboardProductSurface({
   title,
   eyebrow,
@@ -10,7 +10,10 @@ export function DashboardProductSurface({
   restaurantId,
   status = "live",
   bullets,
-  ctaHref,
+  serviceType,
+  creditCost = 15,
+  isPaid = false,
+  openStatus,
   ctaLabel,
 }: {
   title: string;
@@ -20,22 +23,16 @@ export function DashboardProductSurface({
   restaurantId?: string | null;
   status?: "live" | "waitlist" | "request";
   bullets?: string[];
-  ctaHref?: string;
+  /** When set with status=request, one-click creates a ServiceRequest. */
+  serviceType?: string;
+  creditCost?: number;
+  isPaid?: boolean;
+  openStatus?: string | null;
   ctaLabel?: string;
 }) {
-  const requestHref = restaurantId
-    ? `/dashboard/requests?r=${encodeURIComponent(restaurantId)}`
-    : "/dashboard/requests";
-  const href =
-    ctaHref ??
-    (status === "request" || status === "waitlist" ? requestHref : undefined);
-  const label =
-    ctaLabel ??
-    (status === "waitlist"
-      ? "Join waitlist via Requests"
-      : status === "request"
-        ? "Request this with credits"
-        : undefined);
+  const billingHref = restaurantId
+    ? `/dashboard/billing?r=${encodeURIComponent(restaurantId)}&tier=starter`
+    : "/dashboard/billing?tier=starter";
 
   return (
     <div className="mx-auto max-w-3xl px-[var(--spacing-md)] py-10">
@@ -49,6 +46,11 @@ export function DashboardProductSurface({
         {status === "waitlist" ? (
           <span className="rounded-full bg-[var(--color-muted-faint)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-muted)]">
             Waitlist
+          </span>
+        ) : null}
+        {openStatus === "REQUESTED" || openStatus === "IN_PROGRESS" ? (
+          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900">
+            {openStatus === "IN_PROGRESS" ? "In progress" : "Requested"}
           </span>
         ) : null}
       </div>
@@ -71,16 +73,22 @@ export function DashboardProductSurface({
           </ul>
         ) : (
           <p className="type-body-sm text-[var(--color-muted)]">
-            This surface is mapped to Owner.com&apos;s product model. Use Requests to put work in
-            motion with credits while we deepen the automation.
+            Request this work and our team will pick it up like an order ticket.
           </p>
         )}
 
-        {href && label ? (
+        {status === "request" && restaurantId && serviceType ? (
           <div className="mt-6">
-            <Link href={href} className={appBtnPrimary}>
-              {label}
-            </Link>
+            <RequestServiceButton
+              restaurantId={restaurantId}
+              type={serviceType}
+              title={title}
+              creditCost={creditCost}
+              isPaid={isPaid}
+              billingHref={billingHref}
+              openStatus={openStatus}
+              label={ctaLabel}
+            />
           </div>
         ) : null}
       </div>

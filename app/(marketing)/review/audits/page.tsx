@@ -46,6 +46,15 @@ export default function TeamAuditReviewPage() {
           Open the live website report (full Opportunity Report UI — no login).
         </p>
 
+        <p className="mt-8 text-sm font-semibold">Ops · service tickets</p>
+        <p className="mt-2 rounded-xl bg-white px-4 py-3 font-mono text-sm break-all shadow-sm">
+          <a className="font-semibold text-[#094413] underline" href="/ops/requests">
+            /ops/requests
+          </a>
+          {" "}
+          (operator emails only)
+        </p>
+
         <p className="mt-8 text-sm font-semibold">Sample — Kingsway Karahi</p>
         <p className="mt-2 rounded-xl bg-white px-4 py-3 font-mono text-sm break-all shadow-sm">
           <a className="font-semibold text-[#094413] underline" href="/audit/kingsway-karahi-luton">

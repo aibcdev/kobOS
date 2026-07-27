@@ -11,6 +11,7 @@ import { ReviewDrawer } from "@/components/dashboard/chief-of-staff/ReviewDrawer
 import { SuggestionsCard } from "@/components/dashboard/chief-of-staff/SuggestionsCard";
 import { TaskFeedColumn } from "@/components/dashboard/chief-of-staff/TaskFeedColumn";
 import { TaskInputBar } from "@/components/dashboard/chief-of-staff/TaskInputBar";
+import { AuditRecoveryWins } from "@/components/dashboard/AuditRecoveryWins";
 import { cosCanvas } from "@/lib/dashboard/chief-of-staff-theme";
 
 type ToastState = {
@@ -307,6 +308,8 @@ export function ChiefOfStaffHome({
           Welcome — your daily helper is ready for {restaurantName}.
         </p>
       ) : null}
+
+      {!previewMode ? <AuditRecoveryWins restaurantId={restaurantId} /> : null}
 
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button

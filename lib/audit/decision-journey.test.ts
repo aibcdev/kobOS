@@ -106,6 +106,12 @@ describe("scoreDesireStage", () => {
     const p = basePayload();
     expect(scoreDesireStage(p, p.restaurantScores)).toBe(48);
   });
+
+  it("returns null without a linked Google listing", () => {
+    const p = basePayload();
+    if (p.evidencePack) delete p.evidencePack.googlePlace;
+    expect(scoreDesireStage(p, p.restaurantScores)).toBeNull();
+  });
 });
 
 describe("buildDecisionJourneyReport", () => {
@@ -129,5 +135,24 @@ describe("buildDecisionJourneyReport", () => {
     expect(report.repairPlan[0].stageLabel).toBe("Trust");
     expect(report.closer.startStageLabel).toBeTruthy();
     expect(report.competitorFactors.length).toBeGreaterThan(0);
+  });
+
+  it("does not invent weak Google findability without a linked listing", () => {
+    const p = basePayload({
+      scores: { seo: 18, design: 32, mobile: 80, overall: 36, conversion: 40 },
+      restaurantScores: undefined,
+    });
+    if (p.evidencePack) delete p.evidencePack.googlePlace;
+    const report = buildDecisionJourneyReport(p, {
+      restaurantName: "Vincenzo Trattoria",
+      city: "Manchester",
+      websiteUrl: "http://www.vincenzomanchester.co.uk/",
+    });
+    const discovery = report.stages.find((s) => s.id === "discovery");
+    expect(discovery?.score).toBeNull();
+    expect(discovery?.status).toBeNull();
+    expect(discovery?.experience).toMatch(/wasn.?t verified|won.?t guess/i);
+    expect(report.dropOffs.every((d) => d.stageId !== "discovery" || d.score == null)).toBe(true);
+    expect(report.dropOffs.some((d) => /struggle to find/i.test(d.body))).toBe(false);
   });
 });

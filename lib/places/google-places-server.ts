@@ -18,6 +18,15 @@ export type PlaceDetailsResult = {
   lng: number | null;
 };
 
+/** Fields needed by the restaurant classifier (categories + dine-in). */
+export type PlaceClassifierFields = {
+  placeId: string;
+  primaryType: string | null;
+  types: string[];
+  dineIn: boolean | null;
+  editorialSummary: string | null;
+};
+
 function getApiKey(): string | null {
   const k = process.env.GOOGLE_PLACES_API_KEY?.trim();
   return k || null;
@@ -125,6 +134,51 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     phoneNumber: json.nationalPhoneNumber?.trim() ? json.nationalPhoneNumber.trim() : null,
     lat,
     lng,
+  };
+}
+
+/** Primary type / types / dineIn for restaurant vs caterer classification. */
+export async function placesPlaceClassifierFields(
+  placeId: string,
+): Promise<PlaceClassifierFields | null> {
+  const key = getApiKey();
+  if (!key || !placeId.trim()) return null;
+
+  const id = placeId.trim();
+  const pathId = encodeURIComponent(id);
+  const url = `https://places.googleapis.com/v1/places/${pathId}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask": "id,primaryType,types,dineIn,editorialSummary",
+    },
+  });
+
+  if (!res.ok) {
+    console.warn("[places] classifier fields HTTP", res.status);
+    return null;
+  }
+
+  const json = (await res.json()) as {
+    id?: string;
+    primaryType?: string;
+    types?: string[];
+    dineIn?: boolean;
+    editorialSummary?: { text?: string };
+  };
+
+  const types = (json.types ?? []).map((t) => t.replace(/_/g, " "));
+  const primary = json.primaryType?.replace(/_/g, " ") ?? null;
+  const categories = primary ? [primary, ...types.filter((t) => t !== primary)] : types;
+
+  return {
+    placeId: json.id ?? id,
+    primaryType: primary,
+    types: categories,
+    dineIn: typeof json.dineIn === "boolean" ? json.dineIn : null,
+    editorialSummary: json.editorialSummary?.text?.trim() || null,
   };
 }
 

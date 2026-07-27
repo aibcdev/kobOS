@@ -9,6 +9,8 @@ export type OutboundEmailPayload = {
   body: string;
   /** Resend tags for A/B reporting, e.g. { name: "variant", value: "A" } */
   tags?: Array<{ name: string; value: string }>;
+  /** ISO 8601 or natural language (e.g. "in 1 hour") — Resend schedules delivery. */
+  scheduledAt?: string;
 };
 
 function replyToAddress(): string | undefined {
@@ -47,7 +49,7 @@ function htmlBody(body: string): string {
 export async function sendOutboundEmailViaResend(
   apiKey: string,
   payload: OutboundEmailPayload,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; id?: string } | { ok: false; error: string }> {
   const from = fromAddress();
   assertVerifiedFrom(from);
   const replyTo = replyToAddress();
@@ -61,7 +63,7 @@ export async function sendOutboundEmailViaResend(
     headers["List-Unsubscribe"] = `<mailto:${replyTo}?subject=unsubscribe>`;
   }
 
-  const { error } = await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from,
     to: [payload.to.trim()],
     subject: payload.subject.trim() || "A note from KOB",
@@ -70,8 +72,9 @@ export async function sendOutboundEmailViaResend(
     ...(replyTo ? { replyTo } : {}),
     ...(Object.keys(headers).length ? { headers } : {}),
     ...(payload.tags?.length ? { tags: payload.tags } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
   });
 
   if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  return { ok: true, id: data?.id };
 }

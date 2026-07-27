@@ -267,10 +267,11 @@ export type RestaurantGrade = "A" | "B" | "C" | "D" | "F";
 export type RestaurantScoresV1 = {
   overall: number;
   grade: RestaurantGrade;
-  reviews: number;
-  gbp: number;
+  /** Null when Google listing was not linked — do not invent a low score. */
+  reviews: number | null;
+  gbp: number | null;
   website: number;
-  competitors: number;
+  competitors: number | null;
   technical: number;
   confidence: "low" | "medium" | "high";
   dataGaps?: string[];

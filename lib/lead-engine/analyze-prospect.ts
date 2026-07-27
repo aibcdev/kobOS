@@ -208,6 +208,9 @@ export async function analyzeProspectWebsite(
     deliveryPlatforms: prospect.deliveryPlatforms,
     hasOnlineOrdering:
       engagement?.ctaAudit.orderOnline ?? /\b(order\s*online|deliveroo|uber\s*eats|just\s*eat)\b/i.test(htmlStr),
+    websiteText: htmlStr.slice(0, 50_000),
+    hasDineIn:
+      /\b(book\s+a\s+table|reserve\s+a\s+table|dine[\s-]?in|reservations)\b/i.test(htmlStr) || null,
   });
   if (!icp.ok) return null;
 

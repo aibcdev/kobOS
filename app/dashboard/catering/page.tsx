@@ -4,11 +4,12 @@ import { DashboardProductSurface } from "@/components/dashboard/DashboardProduct
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { getServiceRequestSurfaceState } from "@/lib/dashboard/service-request-surface";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
   title: "Catering · KOB",
-  description: "Catering inquiries and packages.",
+  description: "Catering inquiry capture on your site.",
 };
 
 export default async function CateringPage({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
@@ -20,19 +21,26 @@ export default async function CateringPage({ searchParams }: { searchParams: Pro
   const { restaurantId, restaurant } = await getActiveRestaurantContext(userId, sp.r);
   if (!restaurantId || !restaurant) return <DashboardEmptyRestaurant />;
 
+  const surface = await getServiceRequestSurfaceState(restaurantId, restaurant.subscriptionPlan, "CATERING");
+
   return (
     <DashboardProductSurface
-      eyebrow="Grow online sales"
+      eyebrow="Increase revenue"
       title="Catering"
       restaurantName={restaurant.name}
       restaurantId={restaurantId}
       status="request"
-      description="Make catering obvious on your site — packages, lead form, and follow-up — so office orders do not go to competitors."
+      serviceType="CATERING"
+      creditCost={surface.creditCost}
+      isPaid={surface.isPaid}
+      openStatus={surface.openStatus}
+      description="Group orders and catering inquiries shouldn’t die in an inbox — capture them on your site."
       bullets={[
-        "Catering page and package copy",
-        "Inquiry form wired to your inbox",
-        "Request website updates with credits",
+        "Inquiry form / flow on your website",
+        "Clear catering offer presentation",
+        "Manual fulfillment after you request",
       ]}
+      ctaLabel="Request catering capture"
     />
   );
 }

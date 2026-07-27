@@ -12,6 +12,8 @@ export type AuditPipelineInput = {
   siteScope: "one" | "multiple";
   userSocial?: AuditUserSocialInput | null;
   userImageUrls?: string[] | null;
+  /** Prefer lead/audit city over the "Your area" bootstrap. */
+  fallbackCity?: string | null;
   place?: {
     name?: string;
     placeId?: string;
@@ -122,12 +124,17 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
   const prevPayload = parseAuditPayload(existing.resultPayload);
 
   try {
+    const cityHint =
+      input.fallbackCity?.trim() ||
+      (existing.city?.trim() && existing.city.trim() !== "Your area" ? existing.city.trim() : null);
+
     const { payload, row, queueAsyncBrowserbase } = await buildAuditResult({
       websiteUrl: input.websiteUrl,
       siteScope: input.siteScope,
       userSocial: input.userSocial,
       userImageUrls: input.userImageUrls?.length ? input.userImageUrls : undefined,
       place: input.place,
+      fallbackCity: cityHint,
     });
 
     const placesCompetitors = payload.competitors.filter((c) => c.source === "places").length;
@@ -147,11 +154,16 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       },
     };
 
+    const resolvedCity =
+      row.city?.trim() && row.city.trim() !== "Your area"
+        ? row.city.trim()
+        : cityHint || existing.city;
+
     await prisma.visibilityAudit.update({
       where: { id: auditId },
       data: {
         restaurantName: row.restaurantName,
-        city: row.city,
+        city: resolvedCity,
         websiteUrl: row.websiteUrl,
         overallScore: row.overallScore,
         seoScore: row.seoScore,
@@ -176,7 +188,7 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       const synced = syncAnalysisProgressFromPayload(payloadWithStage);
       const withOpp = await applyOpportunityReportToPayload(synced, {
         name: row.restaurantName,
-        city: row.city,
+        city: resolvedCity,
         websiteUrl: row.websiteUrl,
       });
       await persistAnalysisPayload(auditId, withOpp);

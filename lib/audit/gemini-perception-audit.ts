@@ -61,10 +61,23 @@ function buildScorecardFallback(payload: AuditResultPayload) {
         note = design?.summary ?? "Visual consistency across hero and content blocks.";
         if (design?.tier === "amateur") score = Math.min(score, 4);
         break;
-      case "Google visibility":
-        score = scoreOutOf10From100(seo);
-        note = "Local discovery and search readiness.";
+      case "Google visibility": {
+        const gp = payload.evidencePack?.googlePlace;
+        if (gp?.placeId) {
+          const gbp = payload.restaurantScores?.gbp;
+          score =
+            gbp != null
+              ? scoreOutOf10From100(gbp)
+              : scoreOutOf10From100(
+                  Math.min(100, 40 + (gp.reviewCount ?? 0) / 5 + (gp.rating ?? 0) * 8),
+                );
+          note = `Google listing linked · ${gp.reviewCount ?? 0} reviews${gp.rating != null ? ` · ${gp.rating}★` : ""}.`;
+        } else {
+          score = 5;
+          note = "Google listing not verified in this scan — website SEO is not used as findability.";
+        }
         break;
+      }
       case "Conversion flow":
         score = scoreOutOf10From100(conv);
         note = eng

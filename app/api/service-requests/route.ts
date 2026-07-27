@@ -8,6 +8,7 @@ import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
 import { ensureMonthlyCredits, spendCredits } from "@/lib/credits/balance";
 import { catalogItem, SERVICE_CATALOG } from "@/lib/credits/catalog";
 import { prisma } from "@/lib/db/prisma";
+import { notifyOperatorServiceRequest } from "@/lib/ops/notify-service-request";
 
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
@@ -63,6 +64,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
   }
 
+  if (parsed.data.type === ServiceRequestType.AUDIT_FIX || parsed.data.type === ServiceRequestType.OTHER) {
+    return NextResponse.json({ error: "Unknown service type" }, { status: 422 });
+  }
+
   const restaurant = await getRestaurantForMember(session.userId, parsed.data.restaurantId);
   if (!restaurant) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -85,11 +90,15 @@ export async function POST(req: Request) {
       type: parsed.data.type,
       status: { in: ["REQUESTED", "IN_PROGRESS"] },
     },
-    select: { id: true },
+    select: { id: true, status: true },
   });
   if (openSame) {
     return NextResponse.json(
-      { error: "You already have an open request for this service.", requestId: openSame.id },
+      {
+        error: "You already have an open request for this service.",
+        requestId: openSame.id,
+        request: openSame,
+      },
       { status: 409 },
     );
   }
@@ -101,6 +110,7 @@ export async function POST(req: Request) {
       title: item.title,
       notes: parsed.data.notes?.trim() || "",
       creditCost: item.creditCost,
+      status: "REQUESTED",
     },
   });
 
@@ -119,12 +129,34 @@ export async function POST(req: Request) {
     );
   }
 
+  const owner = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { email: true },
+  });
+  const linkedAudit = await prisma.visibilityAudit.findFirst({
+    where: { restaurantId: parsed.data.restaurantId },
+    select: { id: true, slug: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  void notifyOperatorServiceRequest({
+    restaurantName: restaurant.name,
+    restaurantId: restaurant.id,
+    ownerEmail: owner?.email ?? null,
+    title: item.title,
+    type: item.type,
+    notes: parsed.data.notes,
+    creditCost: item.creditCost,
+    requestId: created.id,
+    auditId: linkedAudit?.slug || linkedAudit?.id || null,
+  }).catch((e) => console.error("[service-requests] notify", e));
+
   return NextResponse.json(
     {
       ok: true,
       request: created,
       creditBalance: spent.balanceAfter,
-      message: "Request received. Our team will deliver this manually — we'll update you when it's ready.",
+      message: "Requested. Our team will pick this up — you'll see status update when work starts or ships.",
     },
     { status: 201 },
   );

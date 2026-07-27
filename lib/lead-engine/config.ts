@@ -63,13 +63,13 @@ export function getLeadEngineConfig(): LeadEngineConfig {
   }));
 
   return {
-    reviewMin: Math.max(100, Number(process.env.OUTBOUND_REVIEW_MIN?.trim() || "100") || 100),
-    googleReviewMin: Math.max(100, Number(process.env.LEAD_ENGINE_GOOGLE_REVIEW_MIN?.trim() || "100") || 100),
+    reviewMin: Math.max(50, Number(process.env.OUTBOUND_REVIEW_MIN?.trim() || "50") || 50),
+    googleReviewMin: Math.max(50, Number(process.env.LEAD_ENGINE_GOOGLE_REVIEW_MIN?.trim() || "50") || 50),
     reviewMax: Math.max(1, Number(process.env.OUTBOUND_REVIEW_MAX?.trim() || "2500") || 2500),
-    ratingMin: Number(process.env.OUTBOUND_RATING_MIN?.trim() || "4.0") || 4.0,
-    ratingMax: Number(process.env.OUTBOUND_RATING_MAX?.trim() || "4.5") || 4.5,
+    ratingMin: Number(process.env.OUTBOUND_RATING_MIN?.trim() || "3.2") || 3.2,
+    ratingMax: Number(process.env.OUTBOUND_RATING_MAX?.trim() || "4.7") || 4.7,
     requireWebsite: process.env.OUTBOUND_REQUIRE_WEBSITE?.trim() === "1",
-    requireRecentReviewDays: Math.max(7, Number(process.env.LEAD_ENGINE_RECENT_REVIEW_DAYS?.trim() || "30") || 30),
+    requireRecentReviewDays: Math.max(7, Number(process.env.LEAD_ENGINE_RECENT_REVIEW_DAYS?.trim() || "180") || 180),
     locationMax: Math.max(1, Number(process.env.LEAD_ENGINE_LOCATION_MAX?.trim() || "5") || 5),
     platformTopPct: Math.min(100, Math.max(5, Number(process.env.LEAD_ENGINE_PLATFORM_TOP_PCT?.trim() || "20") || 20)),
     staleWebsiteYears: Math.max(
@@ -78,11 +78,12 @@ export function getLeadEngineConfig(): LeadEngineConfig {
     ),
     requireWeakWebsite: process.env.LEAD_ENGINE_REQUIRE_WEAK_WEBSITE?.trim() === "1",
     requireStaleWebsite: process.env.LEAD_ENGINE_REQUIRE_STALE_WEBSITE?.trim() === "1",
-    dailyCap: Math.min(150, Math.max(10, Number(process.env.LEAD_ENGINE_DAILY_CAP?.trim() || "80") || 80)),
+    // Throughput: target ~1k scraped/enriched per day. ICP quality is scoreIcp ≥70, not tiny caps.
+    dailyCap: Math.min(2000, Math.max(50, Number(process.env.LEAD_ENGINE_DAILY_CAP?.trim() || "1000") || 1000)),
     minScoreForOutreach: Math.min(200, Math.max(1, Number(process.env.LEAD_ENGINE_MIN_SCORE?.trim() || "70") || 70)),
-    outreachDailyCap: Math.min(80, Math.max(5, Number(process.env.LEAD_ENGINE_OUTREACH_DAILY_CAP?.trim() || "40") || 40)),
-    analyzerDailyCap: Math.min(200, Math.max(10, Number(process.env.LEAD_ENGINE_ANALYZER_DAILY_CAP?.trim() || "100") || 100)),
-    seedTarget: Math.max(100, Number(process.env.LEAD_ENGINE_SEED_TARGET?.trim() || "3000") || 3000),
+    outreachDailyCap: Math.min(1500, Math.max(20, Number(process.env.LEAD_ENGINE_OUTREACH_DAILY_CAP?.trim() || "1000") || 1000)),
+    analyzerDailyCap: Math.min(2000, Math.max(20, Number(process.env.LEAD_ENGINE_ANALYZER_DAILY_CAP?.trim() || "1000") || 1000)),
+    seedTarget: Math.max(100, Number(process.env.LEAD_ENGINE_SEED_TARGET?.trim() || "5000") || 5000),
     cities: citiesWithCountry.length ? citiesWithCountry : [{ city: "London", country: "GB" }],
   };
 }

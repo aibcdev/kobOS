@@ -142,24 +142,13 @@ export async function ensureOutboundAudit(
       },
     });
   } catch (err) {
-    console.warn("[ensureOutboundAudit] Inngest queue failed — starting inline scan", err);
-    void import("@/lib/audit/execute-audit-pipeline")
-      .then(({ executeAuditPipeline }) =>
-        executeAuditPipeline(created.id, {
-          websiteUrl,
-          siteScope: "one",
-          userSocial: null,
-          userImageUrls: null,
-          place: {
-            name: restaurantName,
-            placeId: input.placeId ?? undefined,
-            formattedAddress: input.formattedAddress ?? undefined,
-            lat: null,
-            lng: null,
-          },
-        }),
-      )
-      .catch((e) => console.warn("[ensureOutboundAudit] inline scan failed", e));
+    // Don't block outbound queue on local Inngest being down — leave audit pending.
+    // Requeue later with: npx tsx scripts/outbound-requeue-audits.ts
+    console.warn(
+      "[ensureOutboundAudit] Inngest unavailable — audit left pending",
+      created.id,
+      err instanceof Error ? err.message : err,
+    );
   }
 
   return {

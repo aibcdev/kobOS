@@ -13,19 +13,25 @@ import { buildDecisionJourneyReport } from "@/lib/audit/decision-journey";
 import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { buildDashboardFromAuditHref, buildSignupTrialHref } from "@/lib/marketing/signup-trial-href";
 
-/** Original audit dashboard layout — always fully visible; Fix CTAs → /signup. */
+/** Original audit dashboard — core results unlock after email signup. */
 export function AuditResultsContent({
   audit,
   payload,
   scanStillRunning = false,
+  initialEmail = null,
+  unlocked = false,
 }: {
   scanStillRunning?: boolean;
   /** Kept for URL ?email= compatibility. */
   initialEmail?: string | null;
+  /** True when the viewer has an account (email signup). */
+  unlocked?: boolean;
   audit: Pick<
     VisibilityAudit,
     | "id"
+    | "slug"
     | "restaurantName"
     | "city"
     | "websiteUrl"
@@ -41,7 +47,15 @@ export function AuditResultsContent({
   >;
   payload: AuditResultPayload;
 }) {
-  const unlocked = true;
+  const pathKey = audit.slug || audit.id;
+  const signupHref = buildSignupTrialHref({
+    auditIdOrSlug: pathKey,
+    email: initialEmail || audit.leadEmail,
+    restaurantName: audit.restaurantName,
+  });
+  const dashboardHref = buildDashboardFromAuditHref({ auditIdOrSlug: pathKey });
+  /** Locked → email signup. Unlocked → dashboard to shop services (card only on Request). */
+  const primaryHref = unlocked ? dashboardHref : signupHref;
   const perceptionTeaser = buildPerceptionTeaserFromPayload(payload, audit.overallScore);
 
   const opportunity = ensureMoneyFirstOpportunityReport(
@@ -96,9 +110,10 @@ export function AuditResultsContent({
         benchmarkInitial={benchmarkInitial}
         unlocked={unlocked}
         scanStillRunning={scanStillRunning}
-        trialHref="/signup"
+        trialHref={primaryHref}
       />
 
+      {unlocked ? (
       <div className="mx-auto max-w-[90rem] border-t border-[var(--color-hairline)] bg-[#f9fafb] px-6 py-12 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
         <div className="max-w-3xl space-y-14">
           <p className="rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 text-sm leading-relaxed text-[var(--color-muted)]">
@@ -142,10 +157,10 @@ export function AuditResultsContent({
 
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/signup"
+              href={dashboardHref}
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--color-hairline)] bg-white px-6 text-sm font-medium no-underline"
             >
-              Start free trial
+              Open dashboard · shop services
             </Link>
             <Link href="/audit" className="inline-flex min-h-11 items-center px-2 text-sm text-[var(--color-muted)] underline">
               New scan
@@ -153,6 +168,22 @@ export function AuditResultsContent({
           </div>
         </div>
       </div>
+      ) : (
+        <div className="mx-auto max-w-[90rem] border-t border-[var(--color-hairline)] bg-[#f9fafb] px-6 py-12 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
+          <div className="max-w-lg rounded-2xl border border-[var(--color-hairline)] bg-white p-8">
+            <h2 className="font-head text-xl font-semibold">Sign up with email to see your results</h2>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">
+              Free account — no card. Browse your report and dashboard. Card only when you request work (7-day trial).
+            </p>
+            <Link
+              href={signupHref}
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 text-sm font-semibold text-white no-underline"
+            >
+              Sign up with email
+            </Link>
+          </div>
+        </div>
+      )}
     </>
   );
 }

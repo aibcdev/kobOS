@@ -118,10 +118,14 @@ function clampScore(n: number | null | undefined, fallback: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-/** Desire = photo / visual freshness on Google — never invent peer photo counts. */
-export function scoreDesireStage(payload: AuditResultPayload, rs: RestaurantScoresV1 | null | undefined): number {
+/** Desire = photo / visual freshness on Google — null when listing wasn’t resolved. */
+export function scoreDesireStage(
+  payload: AuditResultPayload,
+  rs: RestaurantScoresV1 | null | undefined,
+): number | null {
   const gp = payload.evidencePack?.googlePlace;
-  const photos = gp?.photoCount;
+  if (!gp?.placeId) return null;
+  const photos = gp.photoCount;
   if (photos != null && Number.isFinite(photos)) {
     if (photos >= 50) return 82;
     if (photos >= 30) return 68;
@@ -129,25 +133,35 @@ export function scoreDesireStage(payload: AuditResultPayload, rs: RestaurantScor
     if (photos >= 8) return 48;
     return 38;
   }
-  // Fallback: blend GBP + reviews without inventing photo numbers
-  const gbp = rs?.gbp ?? 50;
-  const reviews = rs?.reviews ?? 50;
-  return Math.round(gbp * 0.55 + reviews * 0.45);
+  // Listing linked but photo count missing — blend GBP + reviews only
+  const gbp = rs?.gbp;
+  const reviews = rs?.reviews;
+  if (gbp == null && reviews == null) return null;
+  return Math.round((gbp ?? 55) * 0.55 + (reviews ?? 55) * 0.45);
 }
 
 function experienceFor(
   id: JourneyStageId,
   status: JourneyStatus | null,
+  opts?: { hasGooglePlace?: boolean },
 ): string {
   if (id === "outcome") return "Decision happens here";
-  if (!status) return "Not enough data yet";
+  if (!status) {
+    if (id === "discovery" && !opts?.hasGooglePlace) {
+      return "Google listing wasn’t verified in this scan — we won’t guess findability";
+    }
+    if ((id === "trust" || id === "desire") && !opts?.hasGooglePlace) {
+      return "Needs a linked Google listing before we score this";
+    }
+    return "Not enough data yet";
+  }
   switch (id) {
     case "discovery":
       return status === "Strong" || status === "Acceptable"
         ? "You appear in search with a competitive listing"
         : status === "Leaking"
           ? "You appear, but weaker than the places next door"
-          : "Guests struggle to find you in local search";
+          : "Listing signals look weak vs nearby options (not a search-rank measurement)";
     case "trust":
       return status === "Broken"
         ? "Guests see unanswered reviews and go elsewhere"
@@ -215,22 +229,27 @@ function dropOffCopy(
 
 function stageDetailFor(
   id: JourneyStageId,
-  score: number,
+  score: number | null,
   payload: AuditResultPayload,
   topFixTitle: string | null,
 ): JourneyStageDetail {
   const gaps = payload.restaurantScores?.dataGaps ?? [];
+  const hasPlace = Boolean(payload.evidencePack?.googlePlace?.placeId);
+  const displayScore = score ?? 0;
+
   if (id === "discovery") {
     return {
       stageId: id,
       stageLabel: "Discovery – Google Presence",
-      score,
-      observed:
-        gaps.find((g) => /Google Business|GBP|listing|schema/i.test(g)) ??
-        "Missing or incomplete signals (categories, attributes, schema) weaken local pack presence.",
-      whyItMatters: "Local pack ranking decides whether guests ever see you.",
-      highestLeverageFix:
-        topFixTitle && /google|schema|post|listing|gbp|discover/i.test(topFixTitle)
+      score: displayScore,
+      observed: !hasPlace
+        ? "Google Business Profile was not linked in this scan — findability was not measured."
+        : (gaps.find((g) => /Google Business|GBP|listing|schema/i.test(g)) ??
+          "Listing completeness signals (categories, attributes, schema) from available Places data."),
+      whyItMatters: "Local pack presence decides whether guests ever see you — but only when we have listing data.",
+      highestLeverageFix: !hasPlace
+        ? "Re-run the scan with a linked Google listing before acting on discovery advice."
+        : topFixTitle && /google|schema|post|listing|gbp|discover/i.test(topFixTitle)
           ? topFixTitle
           : "Complete Restaurant schema + keep Google Posts active weekly.",
     };
@@ -239,13 +258,15 @@ function stageDetailFor(
     return {
       stageId: id,
       stageLabel: "Trust – Reviews",
-      score,
-      observed:
-        gaps.find((g) => /review/i.test(g)) ??
-        "Low owner reply rate on Google reviews — guests notice silence.",
+      score: displayScore,
+      observed: !hasPlace
+        ? "Reviews were not loaded — Google listing missing from this scan."
+        : (gaps.find((g) => /review/i.test(g)) ??
+          "Low owner reply rate on Google reviews — guests notice silence."),
       whyItMatters: "Unanswered reviews are a visible trust filter before anyone visits.",
-      highestLeverageFix:
-        topFixTitle && /review|reply/i.test(topFixTitle)
+      highestLeverageFix: !hasPlace
+        ? "Link the Google listing, then reply to open reviews."
+        : topFixTitle && /review|reply/i.test(topFixTitle)
           ? topFixTitle
           : "Reply to every open review from the last 90 days within the next 7 days.",
     };
@@ -254,13 +275,15 @@ function stageDetailFor(
     return {
       stageId: id,
       stageLabel: "Desire – Photos & Visuals",
-      score,
-      observed:
-        gaps.find((g) => /photo/i.test(g)) ??
-        "Old photos and infrequent Google Posts make the listing feel static.",
+      score: displayScore,
+      observed: !hasPlace
+        ? "Photo freshness wasn’t scored — Google listing missing from this scan."
+        : (gaps.find((g) => /photo/i.test(g)) ??
+          "Old photos and infrequent Google Posts make the listing feel static."),
       whyItMatters: "Appetite is decided visually in the map pack before the website.",
-      highestLeverageFix:
-        topFixTitle && /photo|post|visual/i.test(topFixTitle)
+      highestLeverageFix: !hasPlace
+        ? "Link the Google listing before judging photo competitiveness."
+        : topFixTitle && /photo|post|visual/i.test(topFixTitle)
           ? topFixTitle
           : "Replace 8–10 weakest photos with current food/interior shots; publish two posts this month.",
     };
@@ -268,7 +291,7 @@ function stageDetailFor(
   return {
     stageId: id,
     stageLabel: "Conversion – Website",
-    score,
+    score: displayScore,
     observed:
       gaps.find((g) => /CTA|website|menu/i.test(g)) ??
       "The next action (call / order / reserve) isn’t obvious enough on the first screen.",
@@ -341,12 +364,22 @@ export function buildDecisionJourneyReport(
   );
 
   const rs = payload.restaurantScores;
-  const discovery = clampScore(rs?.gbp ?? rs?.competitors ?? payload.scores?.seo, 55);
-  const trust = clampScore(rs?.reviews, 50);
+  const hasGooglePlace = Boolean(payload.evidencePack?.googlePlace?.placeId);
+
+  // Discovery / trust / desire require a linked Google listing.
+  // Never use website SEO as a proxy for “Finds you on Google” — that falsely
+  // flags strong local brands with thin on-page SEO (e.g. Vincenzo Trattoria).
+  const discovery = hasGooglePlace ? clampScore(rs?.gbp ?? rs?.competitors, 55) : null;
+  const trust = hasGooglePlace ? clampScore(rs?.reviews, 50) : null;
   const desire = scoreDesireStage(payload, rs);
   const conversion = clampScore(rs?.website ?? payload.scores?.conversion, 60);
 
-  const scored: Array<{ id: Exclude<JourneyStageId, "outcome">; label: string; action: string; score: number }> = [
+  const scored: Array<{
+    id: Exclude<JourneyStageId, "outcome">;
+    label: string;
+    action: string;
+    score: number | null;
+  }> = [
     { id: "discovery", label: "Discovery", action: "Finds you on Google", score: discovery },
     { id: "trust", label: "Trust", action: "Looks at reviews", score: trust },
     { id: "desire", label: "Desire", action: "Looks at photos", score: desire },
@@ -355,14 +388,14 @@ export function buildDecisionJourneyReport(
 
   const stages: JourneyStage[] = [
     ...scored.map((s) => {
-      const status = journeyStatusFromScore(s.score);
+      const status = s.score == null ? null : journeyStatusFromScore(s.score);
       return {
         id: s.id,
         label: s.label,
         customerAction: s.action,
         score: s.score,
         status,
-        experience: experienceFor(s.id, status),
+        experience: experienceFor(s.id, status, { hasGooglePlace }),
       };
     }),
     {
@@ -375,7 +408,8 @@ export function buildDecisionJourneyReport(
     },
   ];
 
-  const dropOffs = [...scored]
+  const dropOffs = scored
+    .filter((s): s is typeof s & { score: number } => s.score != null)
     .sort((a, b) => a.score - b.score)
     .slice(0, 3)
     .map((s) => {
@@ -396,8 +430,9 @@ export function buildDecisionJourneyReport(
   const cuisineKey = inferCuisineKey(meta.restaurantName, meta.websiteUrl ?? null);
   const aov = AOV_BY_CUISINE[cuisineKey] ?? 32;
   const revenue = revenueRangeFromCustomers(customersLow, customersHigh, aov);
-  const confidence = rs?.confidence ?? "medium";
-  const city = meta.city?.trim() || "your area";
+  const confidence = !hasGooglePlace ? "low" : (rs?.confidence ?? "medium");
+  const cityRaw = meta.city?.trim() || "";
+  const city = cityRaw && cityRaw !== "Your area" ? cityRaw : "your area";
   const cuisineReason = CUISINE_REASON[cuisineKey] ?? "independent restaurants";
 
   const fixes = opportunity.topFixes ?? [];
@@ -422,10 +457,12 @@ export function buildDecisionJourneyReport(
     (opportunity.nearbyComparison?.length ?? 0) > 0 ||
     payload.competitors.some((c) => c.source === "places");
 
-  const howYouSit: HowYouSit[] = scored.map((s) => ({
-    stageLabel: s.label,
-    position: positionVsScore(s.score),
-  }));
+  const howYouSit: HowYouSit[] = scored
+    .filter((s): s is typeof s & { score: number } => s.score != null)
+    .map((s) => ({
+      stageLabel: s.label,
+      position: positionVsScore(s.score),
+    }));
 
   const weakest = dropOffs[0];
   const repairPlan: RepairWeek[] = [
@@ -465,7 +502,9 @@ export function buildDecisionJourneyReport(
     version: "decision-journey-v1",
     restaurantName: meta.restaurantName,
     city,
-    opening: `We analysed the exact journey your next customer takes before deciding where to eat in ${city}. Here are the three places you’re currently losing them.`,
+    opening: hasGooglePlace
+      ? `We analysed the exact journey your next customer takes before deciding where to eat in ${city}. Here are the three places you’re currently losing them.`
+      : `We analysed your website journey for ${meta.restaurantName}. Google listing findability wasn’t verified in this scan, so we only call out website drop-offs we can evidence.`,
     stages,
     dropOffs,
     evidence: {
@@ -474,12 +513,18 @@ export function buildDecisionJourneyReport(
       revenueLowGbp: revenue.low,
       revenueHighGbp: revenue.high,
       confidence,
-      reasoning: [
-        `Local search volume proxies for ${cuisineReason} in ${city}.`,
-        "Observed difference in profile actions between restaurants that reply to reviews vs those that don’t.",
-        "Typical conversion lift when Google photos and posts are current vs dated.",
-        `Conservative average ticket assumption for this category (~£${aov}).`,
-      ],
+      reasoning: hasGooglePlace
+        ? [
+            `Local search volume proxies for ${cuisineReason} in ${city}.`,
+            "Observed difference in profile actions between restaurants that reply to reviews vs those that don’t.",
+            "Typical conversion lift when Google photos and posts are current vs dated.",
+            `Conservative average ticket assumption for this category (~£${aov}).`,
+          ]
+        : [
+            "Google Business Profile was not linked — discovery/trust/desire scores withheld.",
+            "Website conversion and on-page signals only.",
+            `Conservative average ticket assumption for this category (~£${aov}).`,
+          ],
     },
     stageDetails,
     competitorFactors: COMPETITOR_FACTORS,
@@ -487,8 +532,10 @@ export function buildDecisionJourneyReport(
     peerDataAvailable,
     repairPlan,
     closer: {
-      startStageLabel: weakest?.stageLabel ?? "Trust",
-      body: `Start with the ${weakest?.stageLabel ?? "Trust"} stage first — that’s where guests are most visibly dropping off before they ever reach you. Run this plan yourself, or let KOB handle daily execution with Daily Co-Pilot.`,
+      startStageLabel: weakest?.stageLabel ?? "Conversion",
+      body: hasGooglePlace
+        ? `Start with the ${weakest?.stageLabel ?? "Trust"} stage first — that’s where guests are most visibly dropping off before they ever reach you. Run this plan yourself, or let KOB handle daily execution with Daily Co-Pilot.`
+        : "Start with website conversion fixes we can evidence from the scan. Re-link Google to score discovery, reviews, and photos.",
     },
     cuisineLabel: cuisineReason,
   };

@@ -23,10 +23,37 @@ export function buildAuditTasksFromPayload(
   if (!payload) return [];
 
   const tasks: TaskDraftInput[] = [];
+
+  // Prefer the same Biggest Wins the owner saw on the public audit.
+  const topFixes = payload.opportunityReport?.topFixes?.slice(0, 3) ?? [];
+  for (const fix of topFixes) {
+    tasks.push({
+      title: fix.title,
+      detail: `${fix.detail}${
+        fix.customersPerMonth > 0
+          ? ` · +${fix.customersPerMonth} customers / month if fixed`
+          : ""
+      }`.slice(0, 280),
+      category: /review/i.test(fix.title)
+        ? "REVIEWS"
+        : /photo|post|social/i.test(fix.title)
+          ? "CONTENT"
+          : "OPERATIONS",
+      source: "AUDIT",
+      impactLabel:
+        fix.customersPerMonth > 0
+          ? `+${fix.customersPerMonth} customers / mo`
+          : "Biggest win",
+      estimatedMinutes: 10,
+      confidenceScore: 90,
+      auditId,
+    });
+  }
+
   const perception = payload.perceptionAuditV1;
   const hero = perception?.ownerHero ?? (perception ? buildOwnerHeroFallback(payload, perception) : null);
 
-  if (perception?.revenueLeaks?.length) {
+  if (topFixes.length === 0 && perception?.revenueLeaks?.length) {
     for (const leak of perception.revenueLeaks.slice(0, 4)) {
       tasks.push({
         title: leak.title,

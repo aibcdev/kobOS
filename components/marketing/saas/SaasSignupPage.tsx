@@ -10,7 +10,7 @@ import { SaasSignupTestimonials } from "./SaasSignupTestimonials";
 import { SaasSignupTrialForm } from "./SaasSignupTrialForm";
 import { SaasSocialProof } from "./SaasSocialProof";
 
-const CHECKS = ["Takes less than 60 seconds", "No card required", "Get your report instantly"] as const;
+const CHECKS = ["Takes less than 60 seconds", "Email signup — no card", "Card only when you request"] as const;
 
 export function SaasSignupPage() {
   return (
@@ -173,7 +173,7 @@ export function SaasSignupPage() {
             Ready to see your full report?
           </h2>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#2c2c2c]/75">
-            {["Free 7-day trial", "No card required", "Cancel anytime"].map((item) => (
+            {["Free email signup", "Browse dashboard free", "7-day trial when you request"].map((item) => (
               <li key={item} className="flex items-center gap-1.5">
                 <SaasIcon icon="solar:check-circle-bold" className="text-[var(--color-forest-mid)]" />
                 {item}

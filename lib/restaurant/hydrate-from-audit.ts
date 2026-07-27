@@ -77,6 +77,45 @@ export async function hydrateRestaurantFromLinkedAudit(restaurantId: string): Pr
   return true;
 }
 
+/** Link a specific audit (by id or slug) to a restaurant, then hydrate. */
+export async function linkAuditToRestaurant(
+  restaurantId: string,
+  auditIdOrSlug: string,
+): Promise<string | null> {
+  const key = auditIdOrSlug.trim();
+  if (!key) return null;
+
+  const audit = await prisma.visibilityAudit.findFirst({
+    where: {
+      OR: [{ id: key }, { slug: key }],
+      restaurantId: null,
+    },
+    select: { id: true },
+  });
+  if (!audit) {
+    // Already linked to this restaurant is OK
+    const existing = await prisma.visibilityAudit.findFirst({
+      where: {
+        OR: [{ id: key }, { slug: key }],
+        restaurantId,
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      await hydrateRestaurantFromLinkedAudit(restaurantId);
+      return existing.id;
+    }
+    return null;
+  }
+
+  await prisma.visibilityAudit.update({
+    where: { id: audit.id },
+    data: { restaurantId },
+  });
+  await hydrateRestaurantFromLinkedAudit(restaurantId);
+  return audit.id;
+}
+
 /** Link the latest unlocked audit for this email to a new restaurant. */
 export async function linkLatestAuditForEmail(restaurantId: string, email: string): Promise<string | null> {
   const normalized = email.trim().toLowerCase();

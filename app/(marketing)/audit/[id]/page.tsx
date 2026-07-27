@@ -4,6 +4,7 @@ import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavaila
 import { AuditResultsContent } from "@/components/marketing/audit/AuditResultsContent";
 import { findVisibilityAuditByIdOrSlug } from "@/lib/audit/find-audit-by-id-or-slug";
 import { parseAuditPayload } from "@/lib/audit/types";
+import { getOptionalAppUser } from "@/lib/auth/optional-user";
 import { isPrismaDbUnreachableError } from "@/lib/db/prisma-errors";
 
 type Props = {
@@ -20,11 +21,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const url = `https://trykob.com/audit/${pathKey}`;
     return {
       title: `${audit.restaurantName} · Visibility ${audit.overallScore} · KOB`,
-      description: `Public visibility audit for ${audit.restaurantName} in ${audit.city}. No login required.`,
+      description: `Visibility audit for ${audit.restaurantName} in ${audit.city}. Sign up with email to see your core results.`,
       robots: { index: true, follow: true },
       openGraph: {
         title: `${audit.restaurantName} · KOB audit`,
-        description: `Growth score ${audit.overallScore}/100 for ${audit.restaurantName}. Open without logging in.`,
+        description: `Growth score for ${audit.restaurantName}. Sign up with email to unlock.`,
         url,
         siteName: "KOB",
         type: "article",
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       twitter: {
         card: "summary_large_image",
         title: `${audit.restaurantName} · KOB audit`,
-        description: `Public audit — no login required.`,
+        description: `Sign up with email to see your core results.`,
       },
       alternates: {
         canonical: url,
@@ -74,14 +75,18 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
     redirect(`/audit/${pathKey}/scanning${emailQs}`);
   }
 
-  // Full report is public — no lead unlock / payload strip.
+  const user = await getOptionalAppUser();
+  const unlocked = Boolean(user);
+
   return (
     <>
       <AuditResultsContent
         scanStillRunning={previewEarly && payload.scanStatus === "pending"}
         initialEmail={prefillEmail}
+        unlocked={unlocked}
         audit={{
           id: audit.id,
+          slug: audit.slug,
           restaurantName: audit.restaurantName,
           city: audit.city,
           websiteUrl: audit.websiteUrl,

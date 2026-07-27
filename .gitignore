@@ -47,3 +47,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python (open-source DDG scraper for Instagram verify)
+.venv-ig/
+.venv/
+__pycache__/
+*.pyc
+error.log
+combined.log

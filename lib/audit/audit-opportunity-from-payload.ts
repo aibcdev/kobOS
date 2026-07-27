@@ -89,7 +89,7 @@ export function plainEnglishFixTitle(raw: string): string {
   if (/h1|headline/.test(lower)) return "Make your homepage clearer for guests";
   if (/json-ld|schema|structured data/.test(lower)) return "Help Google understand your restaurant";
   if (/meta description|meta tag|title tag|og:|open graph/.test(lower)) {
-    return "Improve how you show up in Google";
+    return "Improve the snippet Google shows for your website";
   }
   if (/lighthouse|lcp|cls|inp|core web|page ?speed|compress|webp/.test(lower)) {
     return "Speed up your website on mobile";

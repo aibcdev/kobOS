@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CampaignChannel" ADD VALUE IF NOT EXISTS 'GOOGLE_ADS';

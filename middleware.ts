@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!hasSupabase) {
-    if (path.startsWith("/dashboard") || path.startsWith("/app")) {
+    if (path.startsWith("/dashboard") || path.startsWith("/app") || path.startsWith("/ops")) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("error", "missing_env");

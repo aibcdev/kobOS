@@ -7,7 +7,7 @@ function pooledDatabaseUrl(raw: string | undefined): string | undefined {
   if (!raw?.trim()) return raw;
   if (/connection_limit=/i.test(raw)) return raw;
   const sep = raw.includes("?") ? "&" : "?";
-  return `${raw}${sep}connection_limit=5&pool_timeout=30`;
+  return `${raw}${sep}connection_limit=5&pool_timeout=30&connect_timeout=30`;
 }
 
 export const prisma =

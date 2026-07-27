@@ -35,7 +35,15 @@ export function SaasSignupTrialForm() {
   const params = useSearchParams();
   const plan = params.get("plan");
   const planTier = plan === "flat" ? "pro" : plan === "flex" ? "starter" : null;
-  const nextPath = planTier ? `/dashboard/billing?tier=${planTier}` : "/dashboard?welcome=1";
+  const auditFromQuery = params.get("audit")?.trim() || null;
+  const nextFromQuery = params.get("next")?.trim() || null;
+  const nextPath = planTier
+    ? `/dashboard/billing?tier=${planTier}`
+    : nextFromQuery && nextFromQuery.startsWith("/")
+      ? nextFromQuery
+      : auditFromQuery
+        ? `/audit/${auditFromQuery}`
+        : "/dashboard?welcome=1";
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -56,6 +64,8 @@ export function SaasSignupTrialForm() {
   useEffect(() => {
     const emailFromQuery = params.get("email")?.trim();
     if (emailFromQuery) setEmail(emailFromQuery);
+    const nameFromQuery = params.get("name")?.trim();
+    if (nameFromQuery) setRestaurantName(nameFromQuery);
   }, [params]);
 
   function persistIntent() {
@@ -71,6 +81,7 @@ export function SaasSignupTrialForm() {
           restaurantName: restaurantName.trim(),
           locations,
           role,
+          audit: auditFromQuery,
         }),
       );
     } catch {
@@ -322,7 +333,7 @@ export function SaasSignupTrialForm() {
 
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-[#2c2c2c]/50">
             <SaasIcon icon="solar:lock-keyhole-linear" className="text-sm" />
-            No card required · Cancel anytime
+            No card to sign up · Card only when you request work (7-day trial)
           </p>
         </form>
       )}

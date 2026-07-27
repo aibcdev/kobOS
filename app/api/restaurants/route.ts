@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { prisma } from "@/lib/db/prisma";
-import { linkLatestAuditForEmail } from "@/lib/restaurant/hydrate-from-audit";
+import { linkAuditToRestaurant, linkLatestAuditForEmail } from "@/lib/restaurant/hydrate-from-audit";
 import { slugify } from "@/lib/utils/slugify";
 
 const createSchema = z.object({
@@ -19,6 +19,8 @@ const createSchema = z.object({
   state: z.string().max(120).optional().nullable(),
   timezone: z.string().max(80).optional(),
   website: z.string().max(2048).optional(),
+  /** Audit id or slug from signup (?audit=) so the same 3 wins show on the dashboard. */
+  auditId: z.string().min(2).max(120).optional(),
 });
 
 export async function GET() {
@@ -93,7 +95,9 @@ export async function POST(req: Request) {
     });
 
     const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { email: true } });
-    if (user?.email) {
+    if (parsed.data.auditId?.trim()) {
+      await linkAuditToRestaurant(restaurant.id, parsed.data.auditId.trim());
+    } else if (user?.email) {
       await linkLatestAuditForEmail(restaurant.id, user.email);
     }
 

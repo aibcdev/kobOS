@@ -23,6 +23,7 @@ import { runLeadFinder } from "@/lib/lead-engine/run-lead-finder";
 import { runOpportunityAnalyzer } from "@/lib/lead-engine/run-opportunity-analyzer";
 import { runOutreachWriter } from "@/lib/lead-engine/run-outreach-writer";
 import { sendOutboundEmailViaResend } from "@/lib/outbound/send-resend-outbound-email";
+import { promoteReadyOutboundBatch } from "@/lib/outbound/promote-ready-batch";
 import { runUkColdPipeline } from "@/lib/outbound/run-uk-cold-pipeline";
 import { detectInsightsFromRules } from "@/lib/growth/detect";
 import { summarizeMetadata } from "@/lib/growth/normalize";
@@ -544,12 +545,15 @@ export const outboundDraftDaily = inngest.createFunction(
   },
 );
 
-/** Sends Resend emails for human-approved leads with `contactEmail` set (batch + polite delay). */
+/** Sends up to OUTBOUND_SEND_BATCH (default 100) Resend emails daily at 07:00 BST.
+ * Auto-promotes PENDING leads that already have ready audits + message bodies.
+ */
 export const outboundSendApprovedDaily = inngest.createFunction(
   {
     id: "outbound-send-approved",
     name: "Outbound · send approved",
-    triggers: [cron("55 14 * * *"), { event: "outbound/send.requested" }],
+    // 07:00 BST = 06:00 UTC (British Summer Time). Aligns with Resend daily reset / morning send.
+    triggers: [cron("0 6 * * *"), { event: "outbound/send.requested" }],
   },
   async ({ step, event }) => {
     const key = process.env.RESEND_API_KEY?.trim();
@@ -557,19 +561,38 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       return { skipped: true as const, reason: "RESEND_API_KEY missing" };
     }
 
-    const batch = Math.min(100, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH?.trim() || "30") || 30));
+    // Hard cap 100 — Resend free/daily reset friendly
+    const batch = Math.min(100, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH?.trim() || "100") || 100));
     const delaySec = Math.max(2, Number(process.env.OUTBOUND_SEND_DELAY_SEC?.trim() || "3") || 3);
+    const autoPromote = process.env.OUTBOUND_AUTO_PROMOTE?.trim() !== "0";
+
+    const fromEvent =
+      event && typeof event === "object" && "data" in event
+        ? (event as { data?: { restaurantId?: string } }).data?.restaurantId?.trim()
+        : undefined;
+    const workspaceId =
+      fromEvent || process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || "";
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID missing" };
+    }
+
+    const promoted = await step.run("promote-ready-pending", async () => {
+      if (!autoPromote) return { promoted: 0, ids: [] as string[] };
+      // Top up APPROVED pool so we can send a full batch of 100
+      const already = await prisma.outboundLead.count({
+        where: {
+          workspaceRestaurantId: workspaceId,
+          status: OutboundLeadStatus.APPROVED,
+          contactEmail: { not: null },
+          messageBody: { not: null },
+        },
+      });
+      const need = Math.max(0, batch - already);
+      if (need === 0) return { promoted: 0, ids: [] as string[] };
+      return promoteReadyOutboundBatch({ workspaceRestaurantId: workspaceId, limit: need });
+    });
 
     const leads = await step.run("list-approved-with-email", async () => {
-      const fromEvent =
-        event && typeof event === "object" && "data" in event
-          ? (event as { data?: { restaurantId?: string } }).data?.restaurantId?.trim()
-          : undefined;
-      const workspaceId =
-        fromEvent || process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || "";
-      if (!workspaceId) {
-        return [] as Awaited<ReturnType<typeof prisma.outboundLead.findMany>>;
-      }
       const rows = await prisma.outboundLead.findMany({
         where: {
           workspaceRestaurantId: workspaceId,
@@ -580,12 +603,16 @@ export const outboundSendApprovedDaily = inngest.createFunction(
         take: batch * 2,
         orderBy: { createdAt: "asc" },
       });
-      const withEmail = rows.filter((r) => r.contactEmail?.trim());
+      const withEmail = rows.filter((r) => r.contactEmail?.trim() && r.messageBody?.includes("/audit/"));
       return withEmail.slice(0, batch);
     });
 
     if (!leads.length) {
-      return { sent: 0 as const, message: "no_eligible_leads" as const };
+      return {
+        sent: 0 as const,
+        promoted: promoted.promoted,
+        message: "no_eligible_leads" as const,
+      };
     }
 
     let sent = 0;
@@ -610,8 +637,20 @@ export const outboundSendApprovedDaily = inngest.createFunction(
         }
         await prisma.outboundLead.update({
           where: { id: lead.id },
-          data: { status: OutboundLeadStatus.SENT },
+          data: {
+            status: OutboundLeadStatus.SENT,
+            insightSummary: `SENT daily-cron ${new Date().toISOString()} resend:${result.id ?? "ok"}`.slice(
+              0,
+              500,
+            ),
+          },
         });
+        try {
+          const { ensureOutboundSequenceForLead } = await import("@/lib/outbound/run-outbound-sequence");
+          await ensureOutboundSequenceForLead(lead.id);
+        } catch (seqErr) {
+          console.warn("[outbound/send] sequence create failed", lead.id, seqErr);
+        }
         return { ok: true as const };
       });
       sent++;
@@ -620,7 +659,7 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       }
     }
 
-    return { sent, processed: leads.length };
+    return { sent, processed: leads.length, promoted: promoted.promoted };
   },
 );
 
@@ -877,6 +916,45 @@ export const creativeAgentPackRequested = inngest.createFunction(
   },
 );
 
+export const outboundSequenceDaily = inngest.createFunction(
+  {
+    id: "outbound-sequence-daily",
+    name: "Outbound · multi-channel sequence",
+    // 08:00 BST = 07:00 UTC — after morning email send
+    triggers: [cron("0 7 * * *"), { event: "outbound/sequence.requested" }],
+  },
+  async ({ step, event }) => {
+    const fromEvent =
+      event && typeof event === "object" && "data" in event
+        ? (event as { data?: { restaurantId?: string } }).data?.restaurantId?.trim()
+        : undefined;
+    const workspaceId =
+      fromEvent || process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim() || "";
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID missing" };
+    }
+
+    const backfill = await step.run("backfill-sent-sequences", async () => {
+      const { backfillSequencesForSentLeads } = await import("@/lib/outbound/run-outbound-sequence");
+      return backfillSequencesForSentLeads(workspaceId);
+    });
+
+    const advance = await step.run("advance-sequences", async () => {
+      const { advanceOutboundSequences } = await import("@/lib/outbound/run-outbound-sequence");
+      const igAfterHours = Number(process.env.OUTBOUND_SEQUENCE_IG_AFTER_HOURS || "48") || 48;
+      const fbAfterHours = Number(process.env.OUTBOUND_SEQUENCE_FB_AFTER_HOURS || "48") || 48;
+      return advanceOutboundSequences({
+        workspaceRestaurantId: workspaceId,
+        igAfterHours,
+        fbAfterHours,
+        limit: 150,
+      });
+    });
+
+    return { backfill, advance };
+  },
+);
+
 export const functions = [
   ingestionHourly,
   normalizationRequested,
@@ -889,6 +967,7 @@ export const functions = [
   dailyDigestCron,
   outboundDraftDaily,
   outboundSendApprovedDaily,
+  outboundSequenceDaily,
   outboundUkColdDaily,
   outboundAuditImportDaily,
   leadFinderDaily,

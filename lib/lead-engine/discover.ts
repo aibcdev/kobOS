@@ -3,13 +3,15 @@ import { passesLeadIcpFilters } from "@/lib/lead-engine/icp-filters";
 import { placesPlaceAuditEnrichment } from "@/lib/places/google-places-server";
 import type { OutboundProspect } from "@/lib/outbound/prospect-types";
 import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
-import { placesPlaceDetailsNew } from "@/lib/places/google-places-server";
+import { placesPlaceClassifierFields, placesPlaceDetailsNew } from "@/lib/places/google-places-server";
 
 export type DiscoveredLead = OutboundProspect & {
   city: string;
   country: "GB" | "IE";
   businessType: LeadQueryType;
   lastReviewAt: Date | null;
+  googleCategories?: string[];
+  hasDineIn?: boolean | null;
 };
 
 function countryLabel(country: "GB" | "IE"): string {
@@ -89,6 +91,14 @@ export async function discoverLeadsInCity(
 
     const enrichment = await placesPlaceAuditEnrichment(placeId);
     const lastReviewAt = parseLastReviewAt(enrichment?.reviews ?? []);
+    const classifierFields = await placesPlaceClassifierFields(placeId);
+    const categories = classifierFields?.types?.length
+      ? classifierFields.types
+      : queryType === "restaurant"
+        ? ["restaurant"]
+        : queryType === "cafe"
+          ? ["cafe"]
+          : ["takeaway"];
 
     const icp = passesLeadIcpFilters({
       name,
@@ -96,6 +106,11 @@ export async function discoverLeadsInCity(
       rating: p.rating ?? enrichment?.rating ?? null,
       reviewCount: p.userRatingCount ?? enrichment?.reviewCount ?? null,
       platformRankPercentile: undefined,
+      categories,
+      description: classifierFields?.editorialSummary ?? null,
+      hasDineIn: classifierFields?.dineIn ?? null,
+      reviewTexts: (enrichment?.reviews ?? []).map((r) => r.text).filter(Boolean),
+      businessType: queryType === "restaurant" ? "RESTAURANT" : queryType.toUpperCase(),
     });
     if (!icp.ok) continue;
 
@@ -110,6 +125,8 @@ export async function discoverLeadsInCity(
       country,
       businessType: queryType,
       lastReviewAt,
+      googleCategories: categories,
+      hasDineIn: classifierFields?.dineIn ?? null,
     });
 
     if (out.length >= max) break;

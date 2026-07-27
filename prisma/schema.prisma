@@ -96,6 +96,14 @@ enum ServiceRequestType {
   OTHER
   /** Free trial / audit win — owner requests; KOB fulfills manually (0 credits). */
   AUDIT_FIX
+  MENU
+  LISTINGS
+  ORDERING
+  DELIVERY
+  CATERING
+  SOCIAL
+  REVIEWS
+  BRAND_PHOTOS
   @@schema("public")
 }
 
@@ -136,6 +144,7 @@ enum CampaignChannel {
   FACEBOOK
   GOOGLE_POST
   WEBSITE_BANNER
+  GOOGLE_ADS
   @@schema("public")
 }
 

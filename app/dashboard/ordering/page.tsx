@@ -4,11 +4,12 @@ import { DashboardProductSurface } from "@/components/dashboard/DashboardProduct
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { getServiceRequestSurfaceState } from "@/lib/dashboard/service-request-surface";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
   title: "Online Ordering · KOB",
-  description: "Online ordering and menu management.",
+  description: "Ordering setup for your restaurant.",
 };
 
 export default async function OrderingPage({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
@@ -20,18 +21,24 @@ export default async function OrderingPage({ searchParams }: { searchParams: Pro
   const { restaurantId, restaurant } = await getActiveRestaurantContext(userId, sp.r);
   if (!restaurantId || !restaurant) return <DashboardEmptyRestaurant />;
 
+  const surface = await getServiceRequestSurfaceState(restaurantId, restaurant.subscriptionPlan, "ORDERING");
+
   return (
     <DashboardProductSurface
-      eyebrow="Grow online sales"
+      eyebrow="Increase revenue"
       title="Online Ordering"
       restaurantName={restaurant.name}
       restaurantId={restaurantId}
       status="request"
-      description="Take orders on your site — not only on delivery apps — so you keep the guest and the margin."
+      serviceType="ORDERING"
+      creditCost={surface.creditCost}
+      isPaid={surface.isPaid}
+      openStatus={surface.openStatus}
+      description="Make it easy for guests to order direct — without losing the relationship to aggregators."
       bullets={[
-        "Clear order path above the fold",
-        "Toast, Square, or Shopify when you are ready",
-        "Request website ordering setup with credits",
+        "Ordering path configured for your brand",
+        "Menu and guest flow reviewed by our team",
+        "Request once — we pick it up as a ticket",
       ]}
       ctaLabel="Request ordering setup"
     />

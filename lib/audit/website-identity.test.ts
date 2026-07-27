@@ -45,4 +45,16 @@ describe("scoreWebsiteIdentity", () => {
     });
     expect(result.matched).toBe(false);
   });
+
+  it("hard-rejects web design agency pages even if host matches name", () => {
+    const html = `<html><head><title>Subraa — Freelance Web Designer Singapore</title></head><body>${"x".repeat(900)} Trusted Freelance Web Designer Singapore logo design SEO agency website design</body></html>`;
+    const result = scoreWebsiteIdentity({
+      restaurantName: "Subraa",
+      city: "Birkenhead",
+      url: "https://www.subraa.com/",
+      html,
+    });
+    expect(result.matched).toBe(false);
+    expect(result.reason).toMatch(/web design/i);
+  });
 });

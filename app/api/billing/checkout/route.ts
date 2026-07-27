@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     new URL(req.url).origin ||
     "http://localhost:3333";
 
-  const successPath = `/dashboard/billing?r=${encodeURIComponent(restaurant.id)}&checkout=success`;
+  const successPath = `/dashboard?r=${encodeURIComponent(restaurant.id)}&welcome=1&checkout=success`;
   const cancelPath = `/dashboard/billing?r=${encodeURIComponent(restaurant.id)}&checkout=cancel`;
 
   try {

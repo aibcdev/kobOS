@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { ContentGeneratePanel } from "@/components/dashboard/content/ContentGeneratePanel";
+import { RequestServiceButton } from "@/components/dashboard/RequestServiceButton";
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { getServiceRequestSurfaceState } from "@/lib/dashboard/service-request-surface";
 import { prisma } from "@/lib/db/prisma";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
@@ -28,12 +30,34 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
     take: 25,
   });
 
+  const socialSurface = await getServiceRequestSurfaceState(
+    restaurantId,
+    restaurant.subscriptionPlan,
+    "SOCIAL",
+  );
+
   return (
     <div className="mx-auto max-w-4xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Posts &amp; Email</h1>
       <p className="type-body-md mt-2 text-[var(--color-muted)]">
         Social posts, emails, and newsletters for {restaurant.name}. Nothing sends until you approve.
       </p>
+
+      <div className={`mt-6 ${appCardSurface}`}>
+        <p className="type-label-md text-[var(--color-ink)]">Want a social media pack produced for you?</p>
+        <div className="mt-3">
+          <RequestServiceButton
+            restaurantId={restaurantId}
+            type="SOCIAL"
+            title="Social media pack"
+            creditCost={socialSurface.creditCost}
+            isPaid={socialSurface.isPaid}
+            billingHref={`/dashboard/billing?r=${encodeURIComponent(restaurantId)}&tier=starter`}
+            openStatus={socialSurface.openStatus}
+            label="Request social pack"
+          />
+        </div>
+      </div>
 
       <ContentGeneratePanel restaurantId={restaurantId} />
 

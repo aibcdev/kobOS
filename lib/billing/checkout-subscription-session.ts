@@ -37,12 +37,13 @@ export async function createSubscriptionCheckoutSession(
         ? {
             trial_period_days: trialDays,
             trial_settings: {
-              end_behavior: { missing_payment_method: "pause" },
+              end_behavior: { missing_payment_method: "cancel" },
             },
           }
         : {}),
     },
-    ...(trialDays ? { payment_method_collection: "if_required" as const } : {}),
+    // Always collect a card for trial (user requirement: free trial with card).
+    payment_method_collection: "always",
     allow_promotion_codes: true,
   });
 }

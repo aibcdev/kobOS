@@ -44,11 +44,11 @@ function weighted(parts: { score: number; weight: number }[]): number {
   return clamp(raw);
 }
 
-function scoreReviews(payload: AuditResultPayload, gaps: string[]): number {
+function scoreReviews(payload: AuditResultPayload, gaps: string[]): number | null {
   const gp = payload.evidencePack?.googlePlace;
-  if (!gp) {
-    gaps.push("Google reviews unavailable");
-    return 42;
+  if (!gp?.placeId) {
+    gaps.push("Google reviews unavailable — listing not linked");
+    return null;
   }
 
   const rating = gp.rating ?? 0;
@@ -88,11 +88,11 @@ function scoreReviews(payload: AuditResultPayload, gaps: string[]): number {
   ]);
 }
 
-function scoreGbp(payload: AuditResultPayload, gaps: string[]): number {
+function scoreGbp(payload: AuditResultPayload, gaps: string[]): number | null {
   const gp = payload.evidencePack?.googlePlace;
-  if (!gp) {
-    gaps.push("Google Business Profile not resolved");
-    return 38;
+  if (!gp?.placeId) {
+    gaps.push("Google Business Profile not resolved — discovery not scored");
+    return null;
   }
 
   // Profile completeness (20%) — have placeId + rating + reviews
@@ -189,11 +189,15 @@ function scoreWebsite(payload: AuditResultPayload, gaps: string[]): number {
   ]);
 }
 
-function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number {
+function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number | null {
+  if (!payload.evidencePack?.googlePlace?.placeId) {
+    gaps.push("Nearby competitors not scored without a linked Google listing");
+    return null;
+  }
   const comps = payload.competitors.filter((c) => c.source === "places" || c.mockScore > 0);
   if (comps.length === 0) {
     gaps.push("Nearby competitors not resolved");
-    return 48;
+    return null;
   }
 
   const ours = (payload.restaurantScores?.overall ?? payload.scores.overall) || 50;
@@ -287,23 +291,23 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
   const reviews = scoreReviews(payload, gaps);
   const gbp = scoreGbp(payload, gaps);
   const website = scoreWebsite(payload, gaps);
-  // Competitors axis needs a provisional overall — use legacy overall as stand-in
+  const technical = scoreTechnical(payload, gaps);
+
   const provisional: AuditResultPayload = {
     ...payload,
     restaurantScores: undefined,
   };
   const competitors = scoreCompetitors(provisional, gaps);
-  const technical = scoreTechnical(payload, gaps);
 
-  const overall = clamp(
-    reviews * RESTAURANT_SCORE_WEIGHTS.reviews +
-      gbp * RESTAURANT_SCORE_WEIGHTS.gbp +
-      website * RESTAURANT_SCORE_WEIGHTS.website +
-      competitors * RESTAURANT_SCORE_WEIGHTS.competitors +
-      technical * RESTAURANT_SCORE_WEIGHTS.technical,
-  );
+  const axisParts: { score: number; weight: number }[] = [
+    ...(reviews != null ? [{ score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews }] : []),
+    ...(gbp != null ? [{ score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp }] : []),
+    { score: website, weight: RESTAURANT_SCORE_WEIGHTS.website },
+    ...(competitors != null ? [{ score: competitors, weight: RESTAURANT_SCORE_WEIGHTS.competitors }] : []),
+    { score: technical, weight: RESTAURANT_SCORE_WEIGHTS.technical },
+  ];
+  const overall = weighted(axisParts);
 
-  // Recompute competitive with restaurant overall for slightly better packing signal
   const withOverall: AuditResultPayload = {
     ...payload,
     restaurantScores: {
@@ -318,13 +322,16 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
     },
   };
   const competitorsFinal = scoreCompetitors(withOverall, gaps);
-  const overallFinal = clamp(
-    reviews * RESTAURANT_SCORE_WEIGHTS.reviews +
-      gbp * RESTAURANT_SCORE_WEIGHTS.gbp +
-      website * RESTAURANT_SCORE_WEIGHTS.website +
-      competitorsFinal * RESTAURANT_SCORE_WEIGHTS.competitors +
-      technical * RESTAURANT_SCORE_WEIGHTS.technical,
-  );
+  const finalParts: { score: number; weight: number }[] = [
+    ...(reviews != null ? [{ score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews }] : []),
+    ...(gbp != null ? [{ score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp }] : []),
+    { score: website, weight: RESTAURANT_SCORE_WEIGHTS.website },
+    ...(competitorsFinal != null
+      ? [{ score: competitorsFinal, weight: RESTAURANT_SCORE_WEIGHTS.competitors }]
+      : []),
+    { score: technical, weight: RESTAURANT_SCORE_WEIGHTS.technical },
+  ];
+  const overallFinal = weighted(finalParts);
 
   const uniqueGaps = [...new Set(gaps)].slice(0, 12);
   const hasPlace = Boolean(payload.evidencePack?.googlePlace?.placeId);

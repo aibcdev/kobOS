@@ -32,6 +32,10 @@ const STOP_WORDS = new Set([
 const NEGATIVE_INDUSTRY_RE =
   /\b(surface care|flooring|carpet|tile adhesive|chemical|industrial|wholesale|manufacturer|b2b|cleaning product|facade|sealant|resin floor|epoxy|janitorial|hygiene supply)\b/i;
 
+/** Design / marketing agencies wrongly attached via name collision (e.g. Subraa). Always reject. */
+const DESIGN_AGENCY_RE =
+  /\b(web\s*design|web\s*designer|web\s*developer|freelance\s+(web|logo|graphic)|logo\s*design|seo\s*agency|seo\s*company|digital\s*marketing\s*(agency|services?)|graphic\s*design|name\s*card\s*design|flyer\s*design|brochure\s*design|singapore\s*web\s*design|website\s*design\s*(company|singapore|sg))\b/i;
+
 const HOSPITALITY_CUE_RE =
   /\b(restaurant|takeaway|take-away|menu|reserv|book a table|table booking|opening hours|cuisine|indian|pakistani|chinese|thai|pizza|kebab|burger|sushi|delivery|order online|allergen|halal|byo|dine[- ]?in|our dishes|starters|mains)\b/i;
 
@@ -100,6 +104,17 @@ export function scoreWebsiteIdentity(input: {
   const nameCompact = compactSlug(restaurantName);
   const hasHospitalityCue = HOSPITALITY_CUE_RE.test(haystack);
   const hasNegativeIndustryCue = NEGATIVE_INDUSTRY_RE.test(haystack);
+  const hasDesignAgencyCue = DESIGN_AGENCY_RE.test(haystack);
+
+  if (hasDesignAgencyCue) {
+    return {
+      matched: false,
+      score: -1000,
+      reason: "Page is a web design / marketing agency — not a restaurant website",
+      hasHospitalityCue,
+      hasNegativeIndustryCue: true,
+    };
+  }
 
   let score = 0;
   const reasons: string[] = [];
@@ -224,7 +239,7 @@ export async function verifyWebsiteMatchesRestaurant(input: {
   websiteUrl: string;
   timeoutMs?: number;
 }): Promise<WebsiteIdentityResult & { finalUrl: string }> {
-  const timeoutMs = input.timeoutMs ?? 8000;
+  const timeoutMs = input.timeoutMs ?? 4_000;
   let finalUrl = input.websiteUrl;
   try {
     const res = await fetch(input.websiteUrl, {

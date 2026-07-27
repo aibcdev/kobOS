@@ -163,6 +163,38 @@ Enqueues:
 
 Schedule daily (e.g. Netlify scheduled function) at a time you will review within 1–2 hours.
 
+**Outbound send (100/day):** Inngest cron `0 6 * * *` (07:00 BST) auto-promotes PENDING leads with ready audits, then sends up to `OUTBOUND_SEND_BATCH` (default **100**) via Resend. Prep tomorrow’s batch with:
+
+```bash
+OUTBOUND_PREP_LIMIT=100 OUTBOUND_PREP_APPROVE=1 npm run outbound:prep-next-100
+```
+
+Call list of already-emailed leads: `npm run outbound:call-list` → `downloads/outbound/call-list.md`.
+
+### Multi-channel sequence (email → Instagram → Facebook)
+
+Phase 1 hybrid:
+
+1. On email SENT, create `OutboundSequence` with observation + angle + social URLs
+2. Daily Inngest cron `0 7 * * *` (08:00 BST) advances: after ~48h queue Instagram DM text; later Facebook fallback
+3. Export queue for human/VA send:
+
+```bash
+npm run outbound:sequence-sync
+# After Day 2–3, force advance (optional shorter wait for testing):
+OUTBOUND_SEQUENCE_ADVANCE=1 OUTBOUND_SEQUENCE_IG_AFTER_HOURS=48 npm run outbound:sequence-sync
+```
+
+Queues: `downloads/outbound/ig-dm-queue.md` (+ `.csv`), `fb-msg-queue.md`.
+
+Mark sent / stop on reply:
+
+```bash
+OUTBOUND_SEQUENCE_MARK_IG=<id> npm run outbound:sequence-mark
+OUTBOUND_SEQUENCE_REPLIED=<id> OUTBOUND_SEQUENCE_REPLY_CHANNEL=instagram npm run outbound:sequence-mark
+```
+
+
 ---
 
 ## Local dev

@@ -1,5 +1,9 @@
 import { getLeadEngineConfig } from "@/lib/lead-engine/config";
-import { passesHighStreetRestaurantIcp } from "@/lib/lead-engine/high-street-icp";
+import { isFastFoodOrPubFormat, passesHighStreetRestaurantIcp } from "@/lib/lead-engine/high-street-icp";
+import {
+  classifyRestaurant,
+  formatClassifierReject,
+} from "@/lib/lead-engine/restaurant-classifier";
 import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
 import { ensureOutboundAudit } from "@/lib/outbound/ensure-outbound-audit";
 import { generateOutboundAbEmail } from "@/lib/outbound/generate-uk-cold-draft";
@@ -63,19 +67,51 @@ export async function queueProspectOutreach(
   if (isExcludedFromOutboundIcp(prospect.name, prospect.websiteUrl)) return "chain_or_elite";
   if (!isValidProspectEmail(prospect.contactEmail, prospect.websiteUrl).ok) return "invalid_email";
 
-  const hs = passesHighStreetRestaurantIcp({
+  // Restaurant classifier (name / opportunities text as proxy for site language)
+  const classifier = classifyRestaurant({
     name: prospect.name,
-    websiteUrl: prospect.websiteUrl,
-    reviewCount: prospect.reviewCount,
-    googleReviewMin: config.googleReviewMin,
-    lastReviewAt: prospect.lastReviewAt,
-    instagramUrl: prospect.instagramUrl,
-    instagramPostGapDays: prospect.instagramPostGapDays,
-    businessType: prospect.businessType,
-    deliveryPlatforms: prospect.deliveryPlatforms,
-    hasOnlineOrdering: prospect.hasOnlineOrdering,
+    categories:
+      prospect.businessType === "RESTAURANT"
+        ? ["restaurant"]
+        : prospect.businessType === "CAFE"
+          ? ["cafe"]
+          : prospect.businessType === "TAKEAWAY"
+            ? ["takeaway"]
+            : null,
+    description: prospect.opportunities?.join(" ") ?? null,
+    websiteText: prospect.opportunities?.join(" ") ?? null,
+    hasDineIn: null,
   });
-  if (!hs.ok) return hs.reason;
+  if (!classifier.is_restaurant) {
+    console.warn(formatClassifierReject(prospect.name, classifier));
+    await prisma.leadProspect.update({
+      where: { id: prospect.id },
+      data: {
+        status: LeadProspectStatus.ARCHIVED,
+        disqualifiers: [...prospect.disqualifiers, `not_restaurant:${classifier.flags[0] ?? "rejected"}`],
+      },
+    });
+    return "not_restaurant";
+  }
+
+  // Already ICP-scored ≥70 — don't re-kill on café/takeaway labels; only hard format + dead venues
+  if ((prospect.kobOpportunityScore ?? 0) < config.minScoreForOutreach) {
+    const hs = passesHighStreetRestaurantIcp({
+      name: prospect.name,
+      websiteUrl: prospect.websiteUrl,
+      reviewCount: prospect.reviewCount,
+      googleReviewMin: config.googleReviewMin,
+      lastReviewAt: prospect.lastReviewAt,
+      instagramUrl: prospect.instagramUrl,
+      instagramPostGapDays: prospect.instagramPostGapDays,
+      businessType: prospect.businessType,
+      deliveryPlatforms: prospect.deliveryPlatforms,
+      hasOnlineOrdering: prospect.hasOnlineOrdering,
+    });
+    if (!hs.ok) return hs.reason;
+  } else if (isFastFoodOrPubFormat(prospect.name)) {
+    return "fast_food_or_pub";
+  }
 
   if ((prospect.kobOpportunityScore ?? 0) < config.minScoreForOutreach) return "score_too_low";
   if (prospect.disqualifiers.length > 0) return "disqualified";
@@ -93,6 +129,16 @@ export async function queueProspectOutreach(
     existingAuditId: prospect.visibilityAuditId,
   });
   if ("ok" in auditResult && auditResult.ok === false) {
+    // Don't leave ANALYZED rows stuck forever on bad websites
+    if (auditResult.error === "website_mismatch" || auditResult.error === "invalid_website") {
+      await prisma.leadProspect.update({
+        where: { id: prospect.id },
+        data: {
+          status: LeadProspectStatus.ARCHIVED,
+          disqualifiers: [...prospect.disqualifiers, auditResult.error],
+        },
+      });
+    }
     return auditResult.error;
   }
   if (!("auditId" in auditResult)) return "audit_failed";

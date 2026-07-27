@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { WebsiteRedesignPanel } from "@/components/dashboard/website/WebsiteRedesignPanel";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
+import { RequestServiceButton } from "@/components/dashboard/RequestServiceButton";
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { getServiceRequestSurfaceState } from "@/lib/dashboard/service-request-surface";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
@@ -21,6 +23,12 @@ export default async function WebsitePage({ searchParams }: { searchParams: Prom
   const { restaurantId, restaurant } = await getActiveRestaurantContext(userId, sp.r);
   if (!restaurantId || !restaurant) return <DashboardEmptyRestaurant />;
 
+  const websiteSurface = await getServiceRequestSurfaceState(
+    restaurantId,
+    restaurant.subscriptionPlan,
+    "WEBSITE",
+  );
+
   return (
     <div className="mx-auto max-w-4xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">Website</h1>
@@ -32,14 +40,21 @@ export default async function WebsitePage({ searchParams }: { searchParams: Prom
       <div className={`mt-6 ${appCardSurface} border border-emerald-100`}>
         <p className="type-label-md text-[var(--color-ink)]">Want a new website?</p>
         <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-          We don&apos;t auto-generate websites. Submit a request and we deliver as part of your paid plan.
+          We don&apos;t auto-generate websites. Click request — status becomes Requested and our team
+          picks it up.
         </p>
-        <a
-          href={`/dashboard/requests?r=${encodeURIComponent(restaurantId)}`}
-          className="mt-4 inline-flex rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
-        >
-          Request a website
-        </a>
+        <div className="mt-4">
+          <RequestServiceButton
+            restaurantId={restaurantId}
+            type="WEBSITE"
+            title="New website"
+            creditCost={websiteSurface.creditCost}
+            isPaid={websiteSurface.isPaid}
+            billingHref={`/dashboard/billing?r=${encodeURIComponent(restaurantId)}&tier=starter`}
+            openStatus={websiteSurface.openStatus}
+            label="Request a website"
+          />
+        </div>
       </div>
 
       <div className={`mt-8 ${appCardSurface}`}>

@@ -76,7 +76,7 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
     label: "Chief of Staff",
     items: [
       { href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
-      { href: "/dashboard/requests", label: "Create campaigns", icon: "requests" },
+      { href: "/dashboard/requests", label: "Requests", icon: "requests" },
       { href: "/dashboard/analytics", label: "Analyse performance", icon: "analytics" },
     ],
   },

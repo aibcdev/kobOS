@@ -1,6 +1,15 @@
 import { prisma } from "@/lib/db/prisma";
 import type { StructuredOffer } from "@/lib/demand-engine/types";
 import { discountLabelFromOffer } from "@/lib/demand-engine/types";
+import {
+  planLocalGoogleAdsCampaign,
+  type LocalAdsGoal,
+  type LocalAdsPlan,
+} from "@/lib/demand-engine/google-ads-local";
+import {
+  buildB2bAuditAdsPlan,
+  type B2bAuditAdsPlan,
+} from "@/lib/marketing/google-ads-b2b-audit";
 
 function daysFromNow(days: number) {
   const d = new Date();
@@ -205,4 +214,166 @@ export async function dismissDemandRecommendation(restaurantId: string, recommen
     data: { status: "DISMISSED" },
   });
   return { ok: true as const, recommendation: updated };
+}
+
+export async function createLocalGoogleAdsCampaign(
+  restaurantId: string,
+  input: {
+    area: string;
+    radiusKm?: number;
+    dailyBudgetGbp?: number;
+    goal?: LocalAdsGoal;
+    promoHeadline?: string;
+  },
+) {
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { id: true, name: true, cuisineType: true, city: true, website: true },
+  });
+  if (!restaurant) return { ok: false as const, error: "Restaurant not found" };
+
+  let plan: LocalAdsPlan;
+  try {
+    plan = await planLocalGoogleAdsCampaign({
+      restaurantName: restaurant.name,
+      cuisine: restaurant.cuisineType,
+      area: input.area.trim() || restaurant.city || "",
+      radiusKm: input.radiusKm,
+      dailyBudgetGbp: input.dailyBudgetGbp,
+      goal: input.goal,
+      website: restaurant.website,
+      promoHeadline: input.promoHeadline,
+    });
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not build campaign" };
+  }
+
+  const campaign = await prisma.campaign.create({
+    data: {
+      restaurantId,
+      type: "PROMOTIONAL",
+      title: plan.campaignName,
+      channel: "GOOGLE_ADS",
+      status: "DRAFT",
+      payload: plan as object,
+    },
+  });
+
+  const liveOffer = await prisma.liveOffer.create({
+    data: {
+      restaurantId,
+      campaignId: campaign.id,
+      status: "DRAFT",
+      title: plan.campaignName,
+      discountLabel: input.promoHeadline?.trim() || "Local Google Ads",
+      offer: {
+        headline: input.promoHeadline?.trim() || `${restaurant.name} · ${plan.areaLabel}`,
+        description: `Local Search campaign · ${plan.radiusKm} km · £${plan.dailyBudgetGbp}/day`,
+        discountType: "percent",
+        discountValue: 0,
+        discountLabel: "Local Ads",
+        validFrom: new Date().toISOString(),
+        validTo: daysFromNow(30).toISOString(),
+        templateKey: "google_ads_local",
+      },
+      validFrom: new Date(),
+      validTo: daysFromNow(30),
+      lat: plan.geo.lat,
+      lng: plan.geo.lng,
+    },
+  });
+
+  await prisma.channelPublish.create({
+    data: {
+      liveOfferId: liveOffer.id,
+      channel: "GOOGLE_ADS",
+      status: "QUEUED",
+      metadata: {
+        note: "Import Ads Editor CSV into Google Ads. API publish needs a linked Ads account.",
+        campaignId: campaign.id,
+        areaLabel: plan.areaLabel,
+        radiusKm: plan.radiusKm,
+        dailyBudgetGbp: plan.dailyBudgetGbp,
+      },
+    },
+  });
+
+  return { ok: true as const, campaign, liveOffer, plan };
+}
+
+export async function createB2bAuditGoogleAdsCampaign(
+  restaurantId: string,
+  input: {
+    dailyBudgetGbp?: number;
+    locations?: string[];
+  },
+) {
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { id: true },
+  });
+  if (!restaurant) return { ok: false as const, error: "Restaurant not found" };
+
+  const plan: B2bAuditAdsPlan = buildB2bAuditAdsPlan({
+    dailyBudgetGbp: input.dailyBudgetGbp,
+    locations: input.locations,
+  });
+
+  const campaign = await prisma.campaign.create({
+    data: {
+      restaurantId,
+      type: "PROMOTIONAL",
+      title: plan.campaignName,
+      channel: "GOOGLE_ADS",
+      status: "DRAFT",
+      payload: plan as object,
+    },
+  });
+
+  const liveOffer = await prisma.liveOffer.create({
+    data: {
+      restaurantId,
+      campaignId: campaign.id,
+      status: "DRAFT",
+      title: plan.campaignName,
+      discountLabel: "B2B Audit Ads",
+      offer: {
+        headline: "Free restaurant audit",
+        description: `B2B Search · ${plan.keywords.length} keywords · £${plan.dailyBudgetGbp}/day → trykob.com/audit`,
+        discountType: "percent",
+        discountValue: 0,
+        discountLabel: "Free audit",
+        validFrom: new Date().toISOString(),
+        validTo: daysFromNow(30).toISOString(),
+        templateKey: "google_ads_b2b_audit",
+      },
+      validFrom: new Date(),
+      validTo: daysFromNow(30),
+    },
+  });
+
+  await prisma.channelPublish.create({
+    data: {
+      liveOfferId: liveOffer.id,
+      channel: "GOOGLE_ADS",
+      status: "QUEUED",
+      metadata: {
+        note: "B2B audit Search — import Ads Editor CSV. Landing: trykob.com/audit",
+        campaignId: campaign.id,
+        mode: "b2b_audit",
+        dailyBudgetGbp: plan.dailyBudgetGbp,
+        keywordCount: plan.keywords.length,
+      },
+    },
+  });
+
+  return { ok: true as const, campaign, liveOffer, plan };
+}
+
+export async function listLocalGoogleAdsCampaigns(restaurantId: string) {
+  return prisma.campaign.findMany({
+    where: { restaurantId, channel: "GOOGLE_ADS" },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
 }

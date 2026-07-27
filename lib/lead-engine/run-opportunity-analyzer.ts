@@ -1,6 +1,7 @@
 import { analyzeProspectWebsite } from "@/lib/lead-engine/analyze-prospect";
 import { getLeadEngineAnalyzerConcurrency, getLeadEngineConfig } from "@/lib/lead-engine/config";
 import { mapProspectToIcpInput } from "@/lib/outbound/map-to-icp-input";
+import { scoreIcp } from "@/lib/outbound/score-icp";
 import { calculateOpportunityScore } from "@/lib/outbound/score-opportunity";
 import { LeadProspectStatus, type LeadProspect } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -82,7 +83,6 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
 
   const analysis = await analyzeProspectWebsite(prospect);
   if (!analysis) {
-    // Don't leave DISCOVERED+email rows in a retry loop forever
     await withDbRetry(
       () =>
         prisma.leadProspect.update({
@@ -132,6 +132,8 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
     platformRankPercentile: prospect.platformRankPercentile,
   });
 
+  // Canonical gate: ICP Fit Score ≥70 (kob-audit-engine). Opportunity metrics are enrichment only.
+  const icp = scoreIcp(mapped);
   const opp = calculateOpportunityScore({
     ...mapped,
     avg_ticket: 32,
@@ -156,35 +158,31 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
     locationCount: analysis.locationCount,
     websiteStale: analysis.websiteStale,
     websiteCopyrightYear: analysis.websiteCopyrightYear,
-    kobOpportunityScore: opp.fit_proxy ?? 0,
+    kobOpportunityScore: icp.fit_score,
     scoreBreakdown: {
-      version: opp.version,
-      status: opp.status,
+      version: icp.version,
+      status: icp.status,
+      fit_score: icp.fit_score,
       fit_proxy: opp.fit_proxy,
       opportunity_score: metrics,
-      recommended_email_angle: opp.recommended_email_angle,
-      reasons: opp.reasons,
+      matched_factors: icp.matched_factors,
+      recommended_email_angle: icp.recommended_email_angle ?? opp.recommended_email_angle,
+      personalization_hooks: icp.personalization_hooks,
+      opportunity_reasons: opp.reasons,
     },
-    opportunities: opp.personalization_hooks.length
-      ? [
-          ...opp.personalization_hooks,
-          ...(metrics
-            ? [
-                `Est. ${metrics.est_monthly_lost_customers} lost customers/mo (~${metrics.currency}${metrics.est_lost_revenue})`,
-              ]
-            : []),
-        ]
-      : opp.reasons,
-    disqualifiers:
-      opp.disqualifiers.length > 0
-        ? opp.disqualifiers
-        : opp.status !== "qualified"
-          ? [`opportunity_${opp.status}_fit${opp.fit_proxy ?? 0}`]
-          : [],
+    opportunities: [
+      ...icp.personalization_hooks,
+      ...(metrics
+        ? [
+            `Est. ${metrics.est_monthly_lost_customers} lost customers/mo (~${metrics.currency}${metrics.est_lost_revenue})`,
+          ]
+        : []),
+    ].filter(Boolean),
+    disqualifiers: icp.disqualifiers,
     analyzedAt: new Date(),
   };
 
-  if (opp.status !== "qualified") {
+  if (icp.status !== "qualified") {
     await withDbRetry(
       () =>
         prisma.leadProspect.update({
@@ -192,11 +190,15 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
           data: {
             status: LeadProspectStatus.ARCHIVED,
             ...shared,
+            disqualifiers:
+              icp.disqualifiers.length > 0
+                ? icp.disqualifiers
+                : [`icp_${icp.status}_fit${icp.fit_score}`],
           },
         }),
-      "leadProspect.update(opportunity_not_qualified)",
+      "leadProspect.update(icp_not_qualified)",
     );
-    return opp.status === "park" ? "opportunity_park" : "disqualified";
+    return icp.status === "park" ? "icp_park" : "disqualified";
   }
 
   await withDbRetry(

@@ -35,17 +35,29 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (path.startsWith("/dashboard") || path.startsWith("/app")) {
+  if (path.startsWith("/dashboard") || path.startsWith("/app") || path.startsWith("/ops")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      url.searchParams.set("next", path);
+      url.searchParams.set("next", `${path}${request.nextUrl.search}`);
       return NextResponse.redirect(url);
     }
   }
 
   if (user && (path === "/login" || path === "/signup")) {
     const url = request.nextUrl.clone();
+    const audit = request.nextUrl.searchParams.get("audit");
+    const next = request.nextUrl.searchParams.get("next");
+    if (next?.startsWith("/") && !next.startsWith("//")) {
+      // Allow relative next (e.g. /audit/slug)
+      const dest = new URL(next, request.nextUrl.origin);
+      return NextResponse.redirect(dest);
+    }
+    if (audit) {
+      url.pathname = `/audit/${audit}`;
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }

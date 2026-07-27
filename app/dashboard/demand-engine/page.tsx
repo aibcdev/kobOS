@@ -77,14 +77,23 @@ export default async function DemandEngineOverviewPage({
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[var(--color-muted)]">
           <li>Review AI recommendations for quiet dayparts</li>
           <li>Approve offers you want live</li>
+          <li>Launch a B2B Google Ads campaign to the free audit</li>
           <li>Track footfall and estimated revenue on Performance</li>
         </ol>
-        <Link
-          href={`/dashboard/demand-engine/recommended?r=${encodeURIComponent(restaurantId)}`}
-          className={`${appBtnPrimary} mt-5 inline-flex`}
-        >
-          Review recommended →
-        </Link>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href={`/dashboard/demand-engine/recommended?r=${encodeURIComponent(restaurantId)}`}
+            className={`${appBtnPrimary} inline-flex`}
+          >
+            Review recommended →
+          </Link>
+          <Link
+            href={`/dashboard/demand-engine/google-ads?r=${encodeURIComponent(restaurantId)}`}
+            className={`${appBtnPrimary} inline-flex`}
+          >
+            Google Ads · B2B Audit →
+          </Link>
+        </div>
       </div>
     </div>
   );

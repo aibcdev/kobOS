@@ -29,8 +29,8 @@ function pickEmailFromHtml(html: string, websiteUrl: string | null): string | nu
   return null;
 }
 
-async function scrapeEmailFromSite(websiteUrl: string): Promise<string | null> {
-  const fromStatic = await scrapeWebsiteEmail(websiteUrl);
+async function scrapeEmailFromSite(websiteUrl: string, businessName?: string): Promise<string | null> {
+  const fromStatic = await scrapeWebsiteEmail(websiteUrl, { businessName });
   if (fromStatic) return fromStatic;
 
   if (process.env.LEAD_ENGINE_USE_BROWSER?.trim() !== "1") return null;
@@ -169,12 +169,12 @@ export async function scanLeadContacts(lead: MergedPlatformLead): Promise<Contac
 
   if (websiteUrl?.trim()) {
     if (!contactEmail) {
-      contactEmail = await scrapeEmailFromSite(websiteUrl);
+      contactEmail = await scrapeEmailFromSite(websiteUrl, prepared.name);
     }
     if (!contactEmail) {
       const alt = alternateWebsiteTld(websiteUrl);
       if (alt) {
-        const altEmail = await scrapeEmailFromSite(alt);
+        const altEmail = await scrapeEmailFromSite(alt, prepared.name);
         if (altEmail) {
           contactEmail = altEmail;
           websiteUrl = alt;

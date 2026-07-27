@@ -76,7 +76,7 @@ export function BillingActions({
           onClick={() => void checkout("starter")}
           className={appBtnSecondary}
         >
-          {busy === "starter" ? "Redirecting…" : "Subscribe · Starter"}
+          {busy === "starter" ? "Redirecting…" : "Start free trial · Starter"}
         </button>
         <button
           type="button"
@@ -84,7 +84,7 @@ export function BillingActions({
           onClick={() => void checkout("pro")}
           className={appBtnPrimary}
         >
-          {busy === "pro" ? "Redirecting…" : "Subscribe · Pro"}
+          {busy === "pro" ? "Redirecting…" : "Start free trial · Pro"}
         </button>
         {hasStripeCustomer ? (
           <button

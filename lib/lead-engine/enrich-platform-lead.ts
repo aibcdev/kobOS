@@ -5,6 +5,7 @@ import { effectiveReviewCount, passesLeadIcpFilters } from "@/lib/lead-engine/ic
 import type { MergedPlatformLead } from "@/lib/lead-engine/merge-platform-listings";
 import { quickWebsiteScan } from "@/lib/lead-engine/quick-website-scan";
 import { scrapeWebsiteEmail } from "@/lib/outbound/scrape-website-email";
+import { placesPlaceClassifierFields } from "@/lib/places/google-places-server";
 
 export type PlatformLeadEnrichment = {
   google: GoogleEnrichedLead;
@@ -65,7 +66,7 @@ export async function enrichPlatformLead(
   let contactPhone = google.phoneNumber?.trim() || null;
 
   if (google.websiteUrl?.trim()) {
-    const scraped = await scrapeWebsiteEmail(google.websiteUrl);
+    const scraped = await scrapeWebsiteEmail(google.websiteUrl, { businessName: google.name });
     if (scraped) {
       contactEmail = scraped;
       emailSource = "scrape";
@@ -82,6 +83,7 @@ export async function enrichPlatformLead(
   let hasContactForm = false;
   let instagramUrl: string | null = null;
   let instagramFollowers: number | null = null;
+  let websiteText: string | null = null;
 
   if (google.websiteUrl?.trim() && (!fast || isFullScan())) {
     const scan = await quickWebsiteScan(google.websiteUrl);
@@ -101,6 +103,16 @@ export async function enrichPlatformLead(
     );
   }
 
+  let categories: string[] | null = null;
+  let hasDineIn: boolean | null = null;
+  let description: string | null = null;
+  if (google.placeId) {
+    const clf = await placesPlaceClassifierFields(google.placeId);
+    if (clf?.types?.length) categories = clf.types;
+    hasDineIn = clf?.dineIn ?? null;
+    description = clf?.editorialSummary ?? null;
+  }
+
   const icp = passesLeadIcpFilters({
     name: google.name,
     websiteUrl: google.websiteUrl,
@@ -111,6 +123,10 @@ export async function enrichPlatformLead(
     platformReviewCount: lead.platformReviewCount,
     platformRankPercentile: lead.platformRankPercentile,
     locationCount,
+    categories,
+    description,
+    websiteText,
+    hasDineIn,
   });
 
   const base = {

@@ -13,13 +13,15 @@ export type EnrichEmailResult =
   | { ok: false; reason: string };
 
 export type EnrichEmailOptions = {
-  /** Scrape homepage first — reduces Hunter quota use. */
+  /** Scrape contact pages first — reduces Hunter quota use. */
   preferScrape?: boolean;
   /** Never call Hunter — lead engine uses free scrape only. */
   scrapeOnly?: boolean;
+  businessName?: string | null;
+  facebookUrl?: string | null;
 };
 
-const BLOCKED_LOCAL = new Set(["noreply", "no-reply", "donotreply", "support", "help", "privacy", "abuse"]);
+const BLOCKED_LOCAL = new Set(["noreply", "no-reply", "donotreply", "privacy", "abuse"]);
 
 function pickBestEmail(candidates: string[], websiteUrl: string | null): string | null {
   const scored = candidates
@@ -73,8 +75,37 @@ async function enrichViaHunter(domain: string, websiteUrl: string | null): Promi
   return null;
 }
 
-async function enrichViaScrape(websiteUrl: string): Promise<string | null> {
-  return scrapeWebsiteEmail(websiteUrl);
+/** Guess common inbox patterns and verify with Hunter (raises find-rate for UK SMBs). */
+async function enrichViaHunterPatterns(domain: string, websiteUrl: string | null): Promise<string | null> {
+  const key = process.env.HUNTER_API_KEY?.trim();
+  if (!key || !domain) return null;
+
+  const locals = ["info", "hello", "contact", "enquiries", "enquiry", "bookings", "reservations", "office"];
+  for (const local of locals) {
+    const email = `${local}@${domain}`;
+    const url = new URL("https://api.hunter.io/v2/email-verifier");
+    url.searchParams.set("email", email);
+    url.searchParams.set("api_key", key);
+    try {
+      const res = await fetch(url.toString(), { method: "GET" });
+      if (res.status === 429) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      if (!res.ok) continue;
+      const json = (await res.json()) as {
+        data?: { status?: string; result?: string; score?: number };
+      };
+      const status = (json.data?.status || json.data?.result || "").toLowerCase();
+      if (status === "valid" || status === "accept_all" || (json.data?.score ?? 0) >= 70) {
+        const valid = isValidProspectEmail(email, websiteUrl);
+        if (valid.ok) return email;
+      }
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
 }
 
 export async function enrichProspectEmail(
@@ -88,7 +119,10 @@ export async function enrichProspectEmail(
 
   const tryScrape = async (): Promise<EnrichEmailResult | null> => {
     if (!websiteUrl) return null;
-    const scraped = await enrichViaScrape(websiteUrl);
+    const scraped = await scrapeWebsiteEmail(websiteUrl, {
+      businessName: options?.businessName,
+      facebookUrl: options?.facebookUrl,
+    });
     if (!scraped) return null;
     const valid = isValidProspectEmail(scraped, websiteUrl);
     if (!valid.ok) return { ok: false, reason: valid.reason };
@@ -115,6 +149,13 @@ export async function enrichProspectEmail(
 
   const hunted = await tryHunter();
   if (hunted?.ok) return hunted;
+
+  const patterned = await enrichViaHunterPatterns(host, websiteUrl);
+  if (patterned) {
+    const valid = isValidProspectEmail(patterned, websiteUrl);
+    if (valid.ok) return { ok: true, email: patterned, source: "hunter" };
+  }
+
   const scraped = await tryScrape();
   if (scraped?.ok) return scraped;
   return hunted ?? scraped ?? { ok: false, reason: "no_email_found" };

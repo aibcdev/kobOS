@@ -607,6 +607,8 @@ export async function buildAuditResult(input: {
   siteScope: "one" | "multiple";
   userSocial?: AuditUserSocialInput | null;
   userImageUrls?: string[] | null;
+  /** Real city from outbound lead / prior audit — beats "Your area" bootstrap. */
+  fallbackCity?: string | null;
   place?: {
     name?: string;
     placeId?: string;
@@ -624,7 +626,9 @@ export async function buildAuditResult(input: {
     throw new Error("buildAuditResult: websiteUrl required");
   }
 
-  const city = auditCityLabel(input.siteScope);
+  const cityHint = input.fallbackCity?.trim();
+  const city =
+    cityHint && cityHint !== "Your area" ? cityHint : auditCityLabel(input.siteScope);
 
   if (input.siteScope === "multiple") {
     let pipelineInput: WebsiteAnalysis;

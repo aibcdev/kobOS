@@ -5,6 +5,7 @@ import { isDashboardNavActive, withRestaurantQuery } from "@/lib/dashboard/nav";
 const TABS = [
   { href: "/dashboard/demand-engine", label: "Overview" },
   { href: "/dashboard/demand-engine/recommended", label: "Recommended" },
+  { href: "/dashboard/demand-engine/google-ads", label: "Google Ads" },
   { href: "/dashboard/demand-engine/live", label: "Live" },
   { href: "/dashboard/demand-engine/performance", label: "Performance" },
 ] as const;
@@ -19,7 +20,10 @@ export function DemandEngineSubnav({
   return (
     <nav className="mt-6 flex flex-wrap gap-2 border-b border-[var(--color-hairline)] pb-3">
       {TABS.map((tab) => {
-        const active = isDashboardNavActive(pathname, tab.href);
+        const active =
+          tab.href === "/dashboard/demand-engine"
+            ? pathname === tab.href || pathname === `${tab.href}/`
+            : isDashboardNavActive(pathname, tab.href);
         return (
           <Link
             key={tab.href}

@@ -4,6 +4,7 @@ import { DashboardProductSurface } from "@/components/dashboard/DashboardProduct
 import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { getServiceRequestSurfaceState } from "@/lib/dashboard/service-request-surface";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
@@ -20,6 +21,8 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
   const { restaurantId, restaurant } = await getActiveRestaurantContext(userId, sp.r);
   if (!restaurantId || !restaurant) return <DashboardEmptyRestaurant />;
 
+  const surface = await getServiceRequestSurfaceState(restaurantId, restaurant.subscriptionPlan, "MENU");
+
   return (
     <DashboardProductSurface
       eyebrow="Grow online discovery"
@@ -27,11 +30,15 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
       restaurantName={restaurant.name}
       restaurantId={restaurantId}
       status="request"
+      serviceType="MENU"
+      creditCost={surface.creditCost}
+      isPaid={surface.isPaid}
+      openStatus={surface.openStatus}
       description="Guests search for dishes before they search for you. Keep a clear, searchable menu on your site."
       bullets={[
         "Dish names, prices, and dietary tags guests expect",
-        "Tied to your website request so fulfillment stays in one place",
         "SEO-friendly structure for Google dish queries",
+        "Our team publishes after you request",
       ]}
       ctaLabel="Request menu updates"
     />

@@ -60,6 +60,24 @@ export function ServiceRequestsPanel({
     setError(null);
     setMsg(null);
     try {
+      if (!isPaid) {
+        const checkout = await fetch("/api/billing/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId, tier: "starter" }),
+        });
+        const checkoutData = (await checkout.json().catch(() => ({}))) as {
+          url?: string;
+          error?: string;
+        };
+        if (!checkout.ok || !checkoutData.url) {
+          setError(checkoutData.error ?? "Could not start trial checkout.");
+          return;
+        }
+        window.location.href = checkoutData.url;
+        return;
+      }
+
       const res = await fetch("/api/service-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,6 +96,10 @@ export function ServiceRequestsPanel({
         upgradeRequired?: boolean;
       };
       if (!res.ok) {
+        if (data.upgradeRequired) {
+          window.location.href = billingHref;
+          return;
+        }
         if (res.status === 402) {
           setError(
             `Not enough credits for ${title} (${cost} needed${data.creditBalance != null ? `, ${data.creditBalance} available` : ""}).`,
@@ -120,7 +142,7 @@ export function ServiceRequestsPanel({
         </p>
         {!isPaid ? (
           <a href={billingHref} className={`${appBtnPrimary} mt-4 inline-flex rounded-full bg-emerald-700`}>
-            Upgrade to unlock credits
+            Start 7-day free trial (card) →
           </a>
         ) : null}
       </section>
@@ -136,6 +158,9 @@ export function ServiceRequestsPanel({
         <ul className="mt-5 grid gap-4 sm:grid-cols-2">
           {catalog.map((item) => {
             const canAfford = balance >= item.creditCost;
+            const open = requests.find(
+              (r) => r.type === item.type && (r.status === "REQUESTED" || r.status === "IN_PROGRESS"),
+            );
             return (
               <li key={item.type} className={appCardSurface}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -145,6 +170,12 @@ export function ServiceRequestsPanel({
                   </span>
                 </div>
                 <p className="type-body-sm mt-2 text-[var(--color-muted)]">{item.description}</p>
+                {open ? (
+                  <p className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-900">
+                    {statusLabel(open.status)}
+                  </p>
+                ) : (
+                  <>
                 <label className="mt-3 block">
                   <span className="type-caption text-[var(--color-muted-medium)]">Notes (optional)</span>
                   <textarea
@@ -159,18 +190,20 @@ export function ServiceRequestsPanel({
                 </label>
                 <button
                   type="button"
-                  disabled={!isPaid || busyType !== null || !canAfford}
+                  disabled={busyType !== null || (isPaid && !canAfford)}
                   className={`${appBtnPrimary} mt-4 rounded-full bg-emerald-700 disabled:opacity-50`}
                   onClick={() => void requestService(item.type, item.title, item.creditCost)}
                 >
                   {busyType === item.type
                     ? "Submitting…"
                     : !isPaid
-                      ? "Upgrade to request"
+                      ? "Start 7-day free trial (card)"
                       : !canAfford
                         ? "Need more credits"
                         : `Request · ${item.creditCost} credits`}
                 </button>
+                  </>
+                )}
               </li>
             );
           })}

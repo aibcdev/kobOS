@@ -1,0 +1,204 @@
+import { ServiceRequestStatus, ServiceRequestType, SubscriptionPlan } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import {
+  computeAuditOpportunityReport,
+  ensureMoneyFirstOpportunityReport,
+} from "@/lib/audit/audit-opportunity-from-payload";
+import { parseAuditPayload } from "@/lib/audit/types";
+import { requireApiUser } from "@/lib/auth/api-session";
+import { planMeetsMinimum } from "@/lib/billing/plan-access";
+import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
+import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
+import { prisma } from "@/lib/db/prisma";
+import { notifyOperatorFixRequested } from "@/lib/operator/notify-fix-request";
+
+const postSchema = z.object({
+  restaurantId: z.string().min(12),
+  fixKey: z.string().min(1).max(120),
+  title: z.string().min(1).max(200),
+  detail: z.string().max(1000).optional(),
+  auditId: z.string().min(8).max(64).optional(),
+});
+
+function fixKeyFromTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+}
+
+/** Wins from the linked audit + any open AUDIT_FIX requests. */
+export async function GET(req: Request) {
+  const session = await requireApiUser();
+  if (!session.ok) {
+    return NextResponse.json({ error: session.message }, { status: session.status });
+  }
+
+  const restaurantId = new URL(req.url).searchParams.get("restaurantId")?.trim();
+  if (!restaurantId) {
+    return NextResponse.json({ error: "restaurantId required" }, { status: 422 });
+  }
+
+  const restaurant = await getRestaurantForMember(session.userId, restaurantId);
+  if (!restaurant) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const audit = await prisma.visibilityAudit.findFirst({
+    where: { restaurantId },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      slug: true,
+      restaurantName: true,
+      city: true,
+      websiteUrl: true,
+      resultPayload: true,
+    },
+  });
+
+  const requests = await prisma.serviceRequest.findMany({
+    where: { restaurantId, type: ServiceRequestType.AUDIT_FIX },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
+  let wins: Array<{ key: string; title: string; detail: string; customersPerMonth: number }> = [];
+  if (audit) {
+    const payload = parseAuditPayload(audit.resultPayload);
+    if (payload) {
+      const opportunity = ensureMoneyFirstOpportunityReport(
+        payload.opportunityReport ??
+          computeAuditOpportunityReport(payload, {
+            name: audit.restaurantName,
+            city: audit.city,
+            websiteUrl: audit.websiteUrl,
+          }),
+        payload,
+      );
+      wins = opportunity.topFixes.slice(0, 3).map((f) => ({
+        key: fixKeyFromTitle(f.title),
+        title: f.title,
+        detail: f.detail,
+        customersPerMonth: f.customersPerMonth,
+      }));
+    }
+  }
+
+  return NextResponse.json({
+    auditId: audit?.id ?? null,
+    auditSlug: audit?.slug ?? null,
+    wins,
+    requests: requests.map((r) => ({
+      id: r.id,
+      title: r.title,
+      notes: r.notes,
+      status: r.status,
+      createdAt: r.createdAt.toISOString(),
+    })),
+  });
+}
+
+/** Owner clicks a win → Pending request + email to KOB operator for manual fulfillment. */
+export async function POST(req: Request) {
+  const session = await requireApiUser();
+  if (!session.ok) {
+    return NextResponse.json({ error: session.message }, { status: session.status });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 422 });
+  }
+
+  const parsed = postSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
+  }
+
+  const { restaurantId, fixKey, title, detail, auditId } = parsed.data;
+  const restaurant = await getRestaurantForMember(session.userId, restaurantId);
+  if (!restaurant) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!planMeetsMinimum(restaurant.subscriptionPlan, SubscriptionPlan.STARTER)) {
+    return jsonUpgradeRequired(SubscriptionPlan.STARTER, restaurant.subscriptionPlan);
+  }
+
+  const open = await prisma.serviceRequest.findFirst({
+    where: {
+      restaurantId,
+      type: ServiceRequestType.AUDIT_FIX,
+      status: { in: [ServiceRequestStatus.REQUESTED, ServiceRequestStatus.IN_PROGRESS] },
+      OR: [{ title }, { notes: { contains: `fixKey=${fixKey}` } }],
+    },
+    select: { id: true, status: true, title: true },
+  });
+  if (open) {
+    return NextResponse.json(
+      {
+        ok: true,
+        alreadyPending: true,
+        request: open,
+        message: "Already pending — our team has this one.",
+      },
+      { status: 200 },
+    );
+  }
+
+  const notes = [
+    `fixKey=${fixKey}`,
+    auditId ? `auditId=${auditId}` : null,
+    detail?.trim() || null,
+    "Fulfill manually. Mark Delivered when done.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const created = await prisma.serviceRequest.create({
+    data: {
+      restaurantId,
+      type: ServiceRequestType.AUDIT_FIX,
+      status: ServiceRequestStatus.REQUESTED,
+      title,
+      notes,
+      creditCost: 0,
+    },
+  });
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { email: true },
+  });
+
+  const notify = await notifyOperatorFixRequested({
+    restaurantName: restaurant.name,
+    restaurantId,
+    ownerEmail: user?.email ?? null,
+    fixTitle: title,
+    fixDetail: detail,
+    auditId: auditId ?? null,
+    requestId: created.id,
+  });
+
+  return NextResponse.json(
+    {
+      ok: true,
+      request: {
+        id: created.id,
+        title: created.title,
+        notes: created.notes,
+        status: created.status,
+        createdAt: created.createdAt.toISOString(),
+      },
+      notified: notify.ok,
+      message: "Pending — we'll handle this for you. You'll see it marked delivered when it's done.",
+    },
+    { status: 201 },
+  );
+}
