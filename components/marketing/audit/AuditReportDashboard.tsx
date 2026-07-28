@@ -464,7 +464,8 @@ export function AuditReportDashboard({
       <AuditFunnelHeader
         showTrialCta
         ctaHref={trialCheckoutHref}
-        ctaLabel={unlocked ? "Open dashboard" : "Sign up with email"}
+        ctaLabel={unlocked ? "Open dashboard" : "Enter email to unlock"}
+        onCtaClick={unlocked ? undefined : onRequestUnlock}
       />
 
       <div className="mx-auto flex max-w-[90rem] gap-0">
@@ -520,12 +521,13 @@ export function AuditReportDashboard({
                 Open dashboard
               </Link>
             ) : (
-              <Link
-                href={trialCheckoutHref}
-                className="mt-4 flex w-full items-center justify-center rounded-xl bg-white/10 py-2 text-xs font-semibold text-white no-underline hover:bg-white/20"
+              <button
+                type="button"
+                onClick={() => onRequestUnlock?.()}
+                className="mt-4 flex w-full items-center justify-center rounded-xl bg-white/10 py-2 text-xs font-semibold text-white hover:bg-white/20"
               >
-                Sign up with email
-              </Link>
+                Enter email to unlock
+              </button>
             )}
           </div>
         </aside>
@@ -554,12 +556,13 @@ export function AuditReportDashboard({
                   Open dashboard →
                 </Link>
               ) : (
-                <Link
-                  href={trialCheckoutHref}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--color-primary)] px-5 text-sm font-semibold text-white no-underline shadow-[0_4px_14px_-2px_rgba(9,68,19,0.35)]"
+                <button
+                  type="button"
+                  onClick={() => onRequestUnlock?.()}
+                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--color-primary)] px-5 text-sm font-semibold text-white shadow-[0_4px_14px_-2px_rgba(9,68,19,0.35)]"
                 >
-                  Sign up with email →
-                </Link>
+                  Enter email to unlock →
+                </button>
               )}
             </div>
           </div>

@@ -113,9 +113,9 @@ export const marketingCopy = {
   },
 
   auditUnlock: {
-    modalTitle: "Unlock your free audit",
+    modalTitle: "See your free audit",
     modalBody:
-      "See your score, where guests drop off, and the highest-impact fixes—Google, menu, reviews, homepage. Then get a clear list to fill more tables.",
+      "Enter your email to unlock your score, where guests drop off, and the highest-impact fixes.",
     modalSubtitleCompetitors:
       "See why {competitorA} and {competitorB} are winning more of your local customers.",
     emailLabel: "Work email",
@@ -123,7 +123,7 @@ export const marketingCopy = {
     submit: "Unlock full audit",
     submitting: "Unlocking…",
     legal:
-      "By continuing you agree to our Terms of Service and Privacy Policy. We use your details to save your report. Your account is created when you start a paid plan or free trial.",
+      "By continuing you agree to our Terms of Service and Privacy Policy. We use your email to save your report. Your account is created when you start a paid plan or free trial.",
   },
 
   auditInsights: [

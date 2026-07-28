@@ -40,6 +40,8 @@ export function AuditUnlockModal({
   open,
   onClose,
   initialEmail = null,
+  /** When true, user must enter email — no dismiss via Escape / backdrop. */
+  required = false,
 }: {
   auditId: string;
   restaurantName: string;
@@ -48,6 +50,7 @@ export function AuditUnlockModal({
   open: boolean;
   onClose?: () => void;
   initialEmail?: string | null;
+  required?: boolean;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -70,7 +73,7 @@ export function AuditUnlockModal({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose?.();
+        if (!required) onClose?.();
       }
     }
     document.addEventListener("keydown", onKeyDown);
@@ -79,7 +82,7 @@ export function AuditUnlockModal({
       document.body.style.overflow = prev;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onClose]);
+  }, [open, onClose, required]);
 
   if (!open) return null;
 
@@ -91,7 +94,7 @@ export function AuditUnlockModal({
       aria-labelledby="audit-unlock-title"
       id="audit-unlock"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
+        if (e.target === e.currentTarget && !required) onClose?.();
       }}
     >
       <div ref={dialogRef} className={`relative w-full max-w-md ${auditModalPanel}`}>
@@ -123,7 +126,7 @@ export function AuditUnlockModal({
         </h2>
         <p className="mt-2 text-center text-sm leading-relaxed text-[var(--color-muted)]">
           {teaser?.lostRevenueGbp
-            ? `We estimate ~£${teaser.lostRevenueGbp.toLocaleString("en-GB")}/mo in lost revenue from online gaps.`
+            ? `We estimate ~£${teaser.lostRevenueGbp.toLocaleString("en-GB")}/mo in lost revenue from online gaps at ${displayName}.`
             : competitorSubtitle(competitorNames)}
         </p>
 
@@ -155,6 +158,7 @@ export function AuditUnlockModal({
             auditId={auditId}
             formId="audit-unlock-modal"
             hideLegal
+            emailOnly
             initialEmail={initialEmail}
             onSuccess={() => router.refresh()}
           />

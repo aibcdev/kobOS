@@ -12,12 +12,15 @@ export function AuditLeadFormFields({
   onSuccess,
   hideLegal,
   initialEmail = null,
+  emailOnly = false,
 }: {
   auditId: string;
   formId?: string;
   onSuccess?: () => void;
   hideLegal?: boolean;
   initialEmail?: string | null;
+  /** When true, phone is optional (email unlocks the report). */
+  emailOnly?: boolean;
 }) {
   const [email, setEmail] = useState(initialEmail?.trim() ?? "");
   const [phone, setPhone] = useState("");
@@ -27,21 +30,34 @@ export function AuditLeadFormFields({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const phoneErr = auditPhoneValidationMessage(phone);
-    if (phoneErr) {
-      setError(phoneErr);
+    if (!email.trim()) {
+      setError("Please enter your email.");
       return;
+    }
+    if (!emailOnly || phone.trim()) {
+      const phoneErr = auditPhoneValidationMessage(phone);
+      if (!emailOnly && phoneErr) {
+        setError(phoneErr);
+        return;
+      }
+      if (emailOnly && phone.trim() && phoneErr) {
+        setError(phoneErr);
+        return;
+      }
     }
     setLoading(true);
     try {
       const res = await fetch(`/api/audit/${auditId}/lead`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), phone: phone.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+        }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Could not save. Check your email and mobile number.");
+        setError(data.error ?? "Could not save. Check your email.");
         setLoading(false);
         return;
       }
@@ -67,22 +83,27 @@ export function AuditLeadFormFields({
           onChange={(e) => setEmail(e.target.value)}
           className={appInput}
           autoComplete="email"
+          placeholder="you@restaurant.com"
         />
       </div>
       <div>
         <label htmlFor={`${formId}-phone`} className="block text-sm font-medium text-[var(--color-ink)]">
           {marketingCopy.auditUnlock.phoneLabel}
+          {emailOnly ? (
+            <span className="ml-1 font-normal text-[var(--color-muted-medium)]">(optional)</span>
+          ) : null}
         </label>
         <input
           id={`${formId}-phone`}
           name="phone"
           type="tel"
-          required
+          required={!emailOnly}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className={appInput}
           autoComplete="tel"
           inputMode="tel"
+          placeholder="07…"
         />
       </div>
       {error ? <p className="text-sm text-[var(--color-error)]">{error}</p> : null}

@@ -11,12 +11,14 @@ import {
 
 const bodySchema = z.object({
   email: z.string().trim().email().max(254),
+  /** Optional — email alone unlocks the report. */
   phone: z
     .string()
     .trim()
-    .min(1, "Phone is required")
     .max(40)
-    .refine((v) => isValidAuditPhone(v), "Enter a valid mobile number (at least 10 digits)."),
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isValidAuditPhone(v), "Enter a valid mobile number (at least 10 digits)."),
 });
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -63,7 +65,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       where: { id: existing.id },
       data: {
         leadEmail: parsed.data.email,
-        leadPhone: normalizeAuditPhone(parsed.data.phone),
+        leadPhone: parsed.data.phone?.trim()
+          ? normalizeAuditPhone(parsed.data.phone)
+          : existing.leadPhone,
         leadCapturedAt: new Date(),
       },
     });

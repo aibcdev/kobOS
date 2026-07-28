@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { ownerContainer, ownerNavHeight } from "@/lib/marketing/owner-ui-classes";
 
-/** grader.owner.com — logo + Log in only (optional trial pill when report unlocked). */
+/** grader.owner.com — logo + Log in only (optional trial / unlock CTA). */
 export function AuditGraderHeader({
   showTrialCta = false,
   trialHref = "/pricing",
   trialLabel = "Start 7-day free trial",
+  onTrialClick,
 }: {
   showTrialCta?: boolean;
   trialHref?: string;
   trialLabel?: string;
+  /** When set, CTA is a button (e.g. open email unlock modal) instead of a link. */
+  onTrialClick?: () => void;
 }) {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--color-border-soft)] bg-[var(--color-surface-soft)]">
@@ -19,12 +22,22 @@ export function AuditGraderHeader({
         </Link>
         <div className="flex items-center gap-3">
           {showTrialCta ? (
-            <Link
-              href={trialHref}
-              className="type-button hidden rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 py-2.5 text-[var(--color-on-primary)] no-underline sm:inline-flex"
-            >
-              {trialLabel}
-            </Link>
+            onTrialClick ? (
+              <button
+                type="button"
+                onClick={onTrialClick}
+                className="type-button hidden rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 py-2.5 text-[var(--color-on-primary)] sm:inline-flex"
+              >
+                {trialLabel}
+              </button>
+            ) : (
+              <Link
+                href={trialHref}
+                className="type-button hidden rounded-[var(--radius-pill)] bg-[var(--color-primary)] px-5 py-2.5 text-[var(--color-on-primary)] no-underline sm:inline-flex"
+              >
+                {trialLabel}
+              </Link>
+            )
           ) : null}
           <Link
             href="/login"

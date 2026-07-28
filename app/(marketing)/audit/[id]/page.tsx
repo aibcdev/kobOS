@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavailable";
 import { AuditResultsContent } from "@/components/marketing/audit/AuditResultsContent";
 import { findVisibilityAuditByIdOrSlug } from "@/lib/audit/find-audit-by-id-or-slug";
+import { stripAuditPayloadForPublic } from "@/lib/audit/public-audit-payload";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { getOptionalAppUser } from "@/lib/auth/optional-user";
 import { isPrismaDbUnreachableError } from "@/lib/db/prisma-errors";
@@ -21,11 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const url = `https://trykob.com/audit/${pathKey}`;
     return {
       title: `${audit.restaurantName} · Visibility ${audit.overallScore} · KOB`,
-      description: `Visibility audit for ${audit.restaurantName} in ${audit.city}. Sign up with email to see your core results.`,
+      description: `Visibility audit for ${audit.restaurantName} in ${audit.city}. Enter your email to see your core results.`,
       robots: { index: true, follow: true },
       openGraph: {
         title: `${audit.restaurantName} · KOB audit`,
-        description: `Growth score for ${audit.restaurantName}. Sign up with email to unlock.`,
+        description: `Growth score for ${audit.restaurantName}. Enter your email to unlock.`,
         url,
         siteName: "KOB",
         type: "article",
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       twitter: {
         card: "summary_large_image",
         title: `${audit.restaurantName} · KOB audit`,
-        description: `Sign up with email to see your core results.`,
+        description: `Enter your email to see your core results.`,
       },
       alternates: {
         canonical: url,
@@ -76,7 +77,8 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   }
 
   const user = await getOptionalAppUser();
-  const unlocked = Boolean(user);
+  const unlocked = Boolean(user) || Boolean(audit.leadCapturedAt);
+  const viewPayload = unlocked ? payload : stripAuditPayloadForPublic(payload);
 
   return (
     <>
@@ -100,7 +102,7 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
           conversionScore: audit.conversionScore,
           updatedAt: audit.updatedAt,
         }}
-        payload={payload}
+        payload={viewPayload}
       />
     </>
   );
