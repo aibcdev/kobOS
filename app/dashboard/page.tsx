@@ -10,7 +10,6 @@ import {
 } from "@/lib/chief-of-staff/ensure-today-brief";
 import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
 import { getPreviewRestaurant, isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
-import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
 import { prisma } from "@/lib/db/prisma";
 import { ensureDemoDemandRecommendations } from "@/lib/demand-engine/actions";
 import { discountLabelFromOffer, parseStructuredOffer } from "@/lib/demand-engine/types";
@@ -49,7 +48,7 @@ export default async function DashboardPage({
   }
 
   const user = await getDashboardPageUser();
-  await ensureSalesWorkspaceMembership(user.id, user.email);
+  // Sales membership is already attempted in the layout with a soft timeout.
   const sp = await searchParams;
   const { memberships, restaurantId, restaurant } = await getActiveRestaurantContext(user.id, sp.r);
 

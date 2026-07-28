@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
+import { withTimeout } from "@/lib/auth/with-timeout";
 import { getPreviewUser, isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -16,6 +17,10 @@ export async function getDashboardPageUser() {
   if (!user) {
     redirect("/login");
   }
-  await ensureAppUser(user);
+  try {
+    await withTimeout(ensureAppUser(user), 5_000, "ensure_user_timeout");
+  } catch (err) {
+    console.error("[getDashboardPageUser] ensureAppUser", err);
+  }
   return user;
 }

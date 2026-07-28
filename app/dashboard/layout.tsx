@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
+import { withTimeout } from "@/lib/auth/with-timeout";
 import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
 import { isOutboundSalesMode } from "@/lib/outbound/sales-access";
 import { prisma } from "@/lib/db/prisma";
@@ -10,6 +11,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /** Avoid build-time prerender: dashboard uses cookies, Supabase, and Prisma. */
 export const dynamic = "force-dynamic";
+
+const PROFILE_BUDGET_MS = 6_000;
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (isUiPreviewEnabled()) {
@@ -38,32 +41,66 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login");
   }
 
-  await ensureAppUser(user);
-  await ensureSalesWorkspaceMembership(user.id, user.email);
+  // Soft-timeout profile setup so a cold DB cannot freeze the post-login paint.
+  try {
+    await withTimeout(
+      Promise.all([
+        ensureAppUser(user),
+        ensureSalesWorkspaceMembership(user.id, user.email),
+      ]),
+      PROFILE_BUDGET_MS,
+      "dashboard_layout_profile_timeout",
+    );
+  } catch (err) {
+    console.error("[dashboard/layout] profile setup", err);
+  }
 
-  const memberships = await prisma.teamMember.findMany({
-    where: { userId: user.id },
-    include: { restaurant: true },
-    orderBy: { createdAt: "asc" },
-  });
+  let restaurants: {
+    id: string;
+    name: string;
+    city: string | null;
+    logo: string | null;
+    openRequests: number;
+  }[] = [];
 
-  const restaurantIds = memberships.map((m) => m.restaurant.id);
-  const openRequests = restaurantIds.length
-    ? await prisma.serviceRequest.groupBy({
-        by: ["restaurantId"],
-        where: { restaurantId: { in: restaurantIds }, status: { in: ["REQUESTED", "IN_PROGRESS"] } },
-        _count: { id: true },
-      })
-    : [];
-  const openByRestaurant = new Map(openRequests.map((row) => [row.restaurantId, row._count.id]));
+  try {
+    const memberships = await withTimeout(
+      prisma.teamMember.findMany({
+        where: { userId: user.id },
+        include: { restaurant: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      PROFILE_BUDGET_MS,
+      "dashboard_layout_memberships_timeout",
+    );
 
-  const restaurants = memberships.map((m) => ({
-    id: m.restaurant.id,
-    name: m.restaurant.name,
-    city: m.restaurant.city,
-    logo: m.restaurant.logo,
-    openRequests: openByRestaurant.get(m.restaurant.id) ?? 0,
-  }));
+    const restaurantIds = memberships.map((m) => m.restaurant.id);
+    const openRequests = restaurantIds.length
+      ? await withTimeout(
+          prisma.serviceRequest.groupBy({
+            by: ["restaurantId"],
+            where: {
+              restaurantId: { in: restaurantIds },
+              status: { in: ["REQUESTED", "IN_PROGRESS"] },
+            },
+            _count: { id: true },
+          }),
+          PROFILE_BUDGET_MS,
+          "dashboard_layout_requests_timeout",
+        )
+      : [];
+    const openByRestaurant = new Map(openRequests.map((row) => [row.restaurantId, row._count.id]));
+
+    restaurants = memberships.map((m) => ({
+      id: m.restaurant.id,
+      name: m.restaurant.name,
+      city: m.restaurant.city,
+      logo: m.restaurant.logo,
+      openRequests: openByRestaurant.get(m.restaurant.id) ?? 0,
+    }));
+  } catch (err) {
+    console.error("[dashboard/layout] memberships", err);
+  }
 
   return (
     <Suspense>

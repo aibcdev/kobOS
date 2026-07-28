@@ -3,15 +3,17 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AUTH_NEXT_COOKIE, AUTH_NEXT_MAX_AGE_SEC } from "@/lib/auth/auth-next-cookie";
-import { useRouter } from "next/navigation";
+import { withTimeout } from "@/lib/auth/with-timeout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { createMagicLinkAuthClient } from "@/lib/supabase/magic-link-auth";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 type Mode = "signin" | "signup";
 
+const LOGIN_EMAIL_KEY = "kob_login_email";
+const VERIFY_OTP_TIMEOUT_MS = 15_000;
+
 export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode }) {
-  const router = useRouter();
   const params = useSearchParams();
   const modeParam = params.get("mode");
   const initialMode: Mode = modeParam === "signup" ? "signup" : defaultMode;
@@ -35,7 +37,16 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
   );
 
   useEffect(() => {
-    if (emailFromQuery) setEmail(emailFromQuery);
+    if (emailFromQuery) {
+      setEmail(emailFromQuery);
+      return;
+    }
+    try {
+      const saved = sessionStorage.getItem(LOGIN_EMAIL_KEY)?.trim();
+      if (saved) setEmail(saved);
+    } catch {
+      /* ignore */
+    }
   }, [emailFromQuery]);
 
   useEffect(() => {
@@ -51,7 +62,18 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
       setErrorMessage("Supabase keys missing. Add them to .env.local and restart npm run dev:public.");
       return;
     }
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setStatus("error");
+      setErrorMessage("Enter your email address.");
+      return;
+    }
     setStatus("idle");
+    try {
+      sessionStorage.setItem(LOGIN_EMAIL_KEY, trimmedEmail);
+    } catch {
+      /* ignore */
+    }
     if (typeof window !== "undefined") {
       document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(nextPath)};path=/;max-age=${AUTH_NEXT_MAX_AGE_SEC};SameSite=Lax`;
     }
@@ -59,7 +81,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
     const resendRoute = await fetch("/api/auth/send-magic-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
+      body: JSON.stringify({ email: trimmedEmail }),
     });
     if (resendRoute.ok) {
       setStatus("sent");
@@ -87,7 +109,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
         ? `${window.location.origin}/auth/confirm`
         : undefined;
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+      email: trimmedEmail,
       options: {
         emailRedirectTo: redirectTo,
         shouldCreateUser: true,
@@ -112,6 +134,12 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
     e.preventDefault();
     setErrorMessage(null);
     const trimmed = otpCode.replace(/\s/g, "");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setStatus("idle");
+      setErrorMessage("Enter the email you used to request the code, then try again.");
+      return;
+    }
     if (!trimmed || trimmed.length < 6 || trimmed.length > 10) {
       setErrorMessage("Enter the full sign-in code from your email (usually 6–8 digits).");
       return;
@@ -123,26 +151,87 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
     }
     setStatus("verifying");
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: trimmed,
-      type: "email",
-    });
-    if (error) {
-      setStatus("sent");
-      setErrorMessage(error.message);
-      return;
-    }
+
     try {
-      await fetch("/api/auth/complete", {
-        method: "POST",
-        credentials: "include",
-        signal: AbortSignal.timeout(10_000),
-      });
-    } catch {
-      /* layout will ensure profile */
+      let verifyError: { message: string } | null = null;
+      try {
+        const first = await withTimeout(
+          supabase.auth.verifyOtp({
+            email: trimmedEmail,
+            token: trimmed,
+            type: "email",
+          }),
+          VERIFY_OTP_TIMEOUT_MS,
+          "verify_timeout",
+        );
+        verifyError = first.error;
+      } catch (err) {
+        if (err instanceof Error && err.message === "verify_timeout") {
+          setStatus("sent");
+          setErrorMessage("Sign-in timed out. Check your connection and try the code again.");
+          return;
+        }
+        throw err;
+      }
+
+      // Resend path generates a magiclink OTP — retry with that type if email fails.
+      if (verifyError) {
+        const msg = verifyError.message.toLowerCase();
+        const maybeWrongType =
+          msg.includes("otp") || msg.includes("token") || msg.includes("invalid") || msg.includes("expired");
+        if (maybeWrongType) {
+          try {
+            const second = await withTimeout(
+              supabase.auth.verifyOtp({
+                email: trimmedEmail,
+                token: trimmed,
+                type: "magiclink",
+              }),
+              VERIFY_OTP_TIMEOUT_MS,
+              "verify_timeout",
+            );
+            if (!second.error) verifyError = null;
+            else verifyError = second.error;
+          } catch (err) {
+            if (err instanceof Error && err.message === "verify_timeout") {
+              setStatus("sent");
+              setErrorMessage("Sign-in timed out. Check your connection and try the code again.");
+              return;
+            }
+            throw err;
+          }
+        }
+      }
+
+      if (verifyError) {
+        setStatus("sent");
+        setErrorMessage(verifyError.message);
+        return;
+      }
+
+      try {
+        await fetch("/api/auth/complete", {
+          method: "POST",
+          credentials: "include",
+          signal: AbortSignal.timeout(8_000),
+        });
+      } catch {
+        /* layout will ensure profile */
+      }
+
+      try {
+        sessionStorage.removeItem(LOGIN_EMAIL_KEY);
+      } catch {
+        /* ignore */
+      }
+
+      // Hard navigation so soft-nav cannot leave this form stuck on "Signing in…"
+      // while a cold dashboard layout waits on the database.
+      window.location.assign(nextPath);
+    } catch (err) {
+      setStatus("sent");
+      setErrorMessage(err instanceof Error ? err.message : "Could not sign in. Try again.");
     }
-    router.replace(nextPath);
   }
 
   const missingEnv = err === "missing_env" || !supabaseConfigured;
@@ -230,11 +319,28 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
         <div className="mt-6 space-y-4">
           <div className="rounded-xl bg-[#f9f3ed] p-4 text-sm text-[#2c2c2c]/80">
             <p>{marketingCopy.auth.sent}</p>
+            {email.trim() ? (
+              <p className="mt-1 text-[#2c2c2c]/65">
+                Sent to <strong>{email.trim()}</strong>
+              </p>
+            ) : null}
             <p className="mt-2 text-[#2c2c2c]/65">
               Easiest: enter the <strong>sign-in code</strong> from the email below (works in any browser).
             </p>
           </div>
           <form className="flex flex-col gap-3" onSubmit={verifyOtpCode}>
+            {!email.trim() ? (
+              <label className="text-sm font-medium text-[#2c2c2c]">
+                Email
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-[#2c2c2c]/15 bg-[#fbf8f5] px-4 py-3 text-sm outline-none focus:border-[#088924] focus:ring-2 focus:ring-[#088924]/20"
+                />
+              </label>
+            ) : null}
             <label className="text-sm font-medium text-[#2c2c2c]">
               Sign-in code
               <input
@@ -259,7 +365,8 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
             </button>
             <button
               type="button"
-              className="text-sm text-[#2c2c2c]/60 underline-offset-2 hover:underline"
+              disabled={status === "verifying"}
+              className="text-sm text-[#2c2c2c]/60 underline-offset-2 hover:underline disabled:opacity-50"
               onClick={() => {
                 setStatus("idle");
                 setOtpCode("");

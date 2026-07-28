@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AUTH_NEXT_COOKIE, AUTH_NEXT_MAX_AGE_SEC } from "@/lib/auth/auth-next-cookie";
+import { withTimeout } from "@/lib/auth/with-timeout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { createMagicLinkAuthClient } from "@/lib/supabase/magic-link-auth";
 import { marketingCopy } from "@/lib/marketing/copy";
@@ -31,7 +32,6 @@ const ROLE_OPTIONS = [
 export const SIGNUP_INTENT_KEY = "kob_signup_intent";
 
 export function SaasSignupTrialForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const plan = params.get("plan");
   const planTier = plan === "flat" ? "pro" : plan === "flex" ? "starter" : null;
@@ -142,32 +142,83 @@ export function SaasSignupTrialForm() {
     e.preventDefault();
     setErrorMessage(null);
     const trimmed = otpCode.replace(/\s/g, "");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setStatus("error");
+      setErrorMessage("Enter the email you used to request the code.");
+      return;
+    }
     if (!trimmed || trimmed.length < 6) {
       setErrorMessage("Enter the full sign-in code from your email.");
       return;
     }
     setStatus("verifying");
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: trimmed,
-      type: "email",
-    });
-    if (error) {
-      setStatus("sent");
-      setErrorMessage(error.message);
-      return;
-    }
     try {
-      await fetch("/api/auth/complete", {
-        method: "POST",
-        credentials: "include",
-        signal: AbortSignal.timeout(10_000),
-      });
-    } catch {
-      /* layout will ensure profile */
+      let verifyError: { message: string } | null = null;
+      try {
+        const first = await withTimeout(
+          supabase.auth.verifyOtp({
+            email: trimmedEmail,
+            token: trimmed,
+            type: "email",
+          }),
+          15_000,
+          "verify_timeout",
+        );
+        verifyError = first.error;
+      } catch (err) {
+        if (err instanceof Error && err.message === "verify_timeout") {
+          setStatus("sent");
+          setErrorMessage("Sign-in timed out. Try the code again.");
+          return;
+        }
+        throw err;
+      }
+
+      if (verifyError) {
+        try {
+          const second = await withTimeout(
+            supabase.auth.verifyOtp({
+              email: trimmedEmail,
+              token: trimmed,
+              type: "magiclink",
+            }),
+            15_000,
+            "verify_timeout",
+          );
+          if (!second.error) verifyError = null;
+          else verifyError = second.error;
+        } catch (err) {
+          if (err instanceof Error && err.message === "verify_timeout") {
+            setStatus("sent");
+            setErrorMessage("Sign-in timed out. Try the code again.");
+            return;
+          }
+          throw err;
+        }
+      }
+
+      if (verifyError) {
+        setStatus("sent");
+        setErrorMessage(verifyError.message);
+        return;
+      }
+
+      try {
+        await fetch("/api/auth/complete", {
+          method: "POST",
+          credentials: "include",
+          signal: AbortSignal.timeout(8_000),
+        });
+      } catch {
+        /* layout will ensure profile */
+      }
+      window.location.assign(nextPath);
+    } catch (err) {
+      setStatus("sent");
+      setErrorMessage(err instanceof Error ? err.message : "Could not sign in. Try again.");
     }
-    router.replace(nextPath);
   }
 
   return (
