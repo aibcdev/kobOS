@@ -35,7 +35,7 @@ export type B2bAuditAdsPlan = {
   notes: string[];
 };
 
-const FINAL_URL = "https://trykob.com/audit";
+const FINAL_URL = "https://trykob.com/go/audit";
 
 /** Seed + Keyword Planner terms the user asked to include. */
 export const B2B_AUDIT_SEED_KEYWORDS = [
@@ -297,7 +297,7 @@ export function buildB2bAuditAdsPlan(input?: {
   locations?: string[];
   finalUrl?: string;
 }): B2bAuditAdsPlan {
-  const dailyBudgetGbp = Math.min(500, Math.max(10, input?.dailyBudgetGbp ?? 30));
+  const dailyBudgetGbp = Math.min(500, Math.max(10, input?.dailyBudgetGbp ?? 10));
   const locations = input?.locations?.length
     ? input.locations
     : ["United Kingdom", "Ireland", "Australia"];
@@ -357,7 +357,7 @@ export function buildB2bAuditAdsPlan(input?: {
       "We claim: free audit, website+Google+reviews, daily approve list, credits for site/SEO, from $49 vs Owner ~$249.",
       "We do NOT claim: ordering, delivery, loyalty, AI full-site redesign, or #1 ratings.",
       "Comparative ads: factual price/positioning. If Owner trademark ads disapprove, keep price claims without brand in headlines.",
-      "Campaign CSV starts Paused. Track: audit started + lead captured.",
+      "Campaign CSV starts Enabled. Track: audit started + lead captured.",
     ],
   };
 }
@@ -397,7 +397,7 @@ export function b2bAuditPlanToEditorCsv(plan: B2bAuditAdsPlan): string {
     rows.push([
       plan.campaignName,
       "Search",
-      "Paused",
+      "Enabled",
       String(plan.dailyBudgetGbp),
       "Daily",
       "Maximize conversions",
@@ -507,7 +507,7 @@ export function b2bAuditPlanToEditorCsv(plan: B2bAuditAdsPlan): string {
       g.path1,
       g.path2,
       "Responsive search ad",
-      "Paused",
+      "Enabled",
     ]);
   }
 
@@ -571,7 +571,7 @@ export function b2bAuditPlanToMarkdown(plan: B2bAuditAdsPlan): string {
     "",
     "1. Import the CSV in Google Ads Editor.",
     "2. Confirm location, landing = audit, conversions = audit start + lead.",
-    "3. Review RSA assets, then upload (starts Paused).",
+    "3. Review RSA assets, then upload (campaign exports Enabled).",
     "",
     "Owner references: [Google Ads Transparency](https://adstransparency.google.com/advertiser/AR11510457661166452737?region=anywhere), [Meta Ad Library](https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&is_targeted_country=false&media_type=all&search_type=page&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id=583616842053401).",
     "",

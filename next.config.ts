@@ -4,6 +4,21 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  async redirects() {
+    return [
+      // Aliases → dedicated Google Ads audit landing
+      {
+        source: "/ads/audit",
+        destination: "/go/audit",
+        permanent: false,
+      },
+      {
+        source: "/google/audit",
+        destination: "/go/audit",
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
