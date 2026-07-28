@@ -4,7 +4,10 @@ import { RestaurantPlacesOnboarding } from "@/components/dashboard/RestaurantPla
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { loadTodayJourneySnapshot } from "@/lib/dashboard/load-today-journey";
-import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
+import {
+  getCachedTodayBrief,
+  shellTodayBrief,
+} from "@/lib/chief-of-staff/ensure-today-brief";
 import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
 import { getPreviewRestaurant, isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
 import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
@@ -54,13 +57,10 @@ export default async function DashboardPage({
     return <RestaurantPlacesOnboarding variant="empty" />;
   }
 
-  let brief;
-  try {
-    brief = await ensureTodayBrief(restaurantId);
-  } catch (e) {
-    console.error("[dashboard] chief-of-staff brief", e);
-    brief = await ensureTodayBrief(restaurantId, true);
-  }
+  // Never await Gemini on the login path — cached/shell only, refresh in the client.
+  const cached = await getCachedTodayBrief(restaurantId);
+  const brief = cached ?? shellTodayBrief(restaurant.name, restaurant.aiPersonality);
+  const briefNeedsRefresh = !cached || cached.tasks.length === 0;
 
   const journey = await loadTodayJourneySnapshot(
     restaurantId,
@@ -109,6 +109,7 @@ export default async function DashboardPage({
       city={restaurant.city}
       cuisineType={restaurant.cuisineType}
       brief={brief}
+      briefNeedsRefresh={briefNeedsRefresh}
       journey={journey}
       website={restaurant.website}
       demandHints={demandHints}

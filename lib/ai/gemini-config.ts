@@ -56,7 +56,12 @@ export async function geminiJsonCompletion(args: {
     });
 
     const prompt = `${args.system}\n\n${args.user}`;
-    const res = await model.generateContent(prompt);
+    const res = await Promise.race([
+      model.generateContent(prompt),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Gemini request timed out")), 18_000);
+      }),
+    ]);
     const raw = res.response.text()?.trim();
     if (!raw) {
       return { ok: false, error: "Empty Gemini response" };

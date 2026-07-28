@@ -86,15 +86,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    await ensureAppUser(verify.data.user);
-    await ensureSalesWorkspaceMembership(
-      verify.data.user.id,
-      verify.data.user.email,
-    );
-  } catch {
-    return loginErrorRedirect(origin, "profile");
-  }
+  // Session cookies are already on `response`. Do not await Prisma here —
+  // cold DB / outbound membership used to freeze the magic-link landing page.
+  // Dashboard layout + /api/auth/complete still call ensureAppUser.
+  const user = verify.data.user;
+  void Promise.all([
+    ensureAppUser(user),
+    ensureSalesWorkspaceMembership(user.id, user.email),
+  ]).catch((err) => {
+    console.error("[auth/confirm] profile setup", err);
+  });
 
   return response;
 }

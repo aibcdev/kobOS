@@ -1,4 +1,4 @@
-import type { ChiefOfStaffTask, DailyBriefSnapshot } from "@prisma/client";
+import type { AiPersonality, ChiefOfStaffTask, DailyBriefSnapshot } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { generateMorningBrief } from "@/lib/chief-of-staff/generate-morning-brief";
 import type { ChiefOfStaffTaskDto, TodayBriefPayload } from "@/lib/chief-of-staff/types";
@@ -57,6 +57,59 @@ function snapshotToPayload(
   };
 }
 
+/** Instant placeholder so dashboard SSR never waits on Gemini after login. */
+export function shellTodayBrief(
+  restaurantName: string,
+  aiPersonality: AiPersonality = "BALANCED",
+): TodayBriefPayload {
+  const hour = new Date().getHours();
+  const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const short = restaurantName.split(/\s+/)[0] || restaurantName;
+  return {
+    greeting: `${part}, ${short}.`,
+    aiPersonality,
+    generatedAt: "",
+    summary: {
+      revenueHealthLine: "Preparing your priorities…",
+      revenueHeadline: null,
+      taskCount: 0,
+      totalMinutes: 0,
+      revenueOpportunityLow: null,
+      revenueOpportunityHigh: null,
+      needToKnow: [],
+      suggestions: [],
+      holidayBlock: null,
+    },
+    tasks: [],
+  };
+}
+
+/** DB-only read — never calls Gemini. Used for fast post-login dashboard paint. */
+export async function getCachedTodayBrief(restaurantId: string): Promise<TodayBriefPayload | null> {
+  const briefDate = todayUtcDate();
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { aiPersonality: true },
+  });
+  if (!restaurant) return null;
+
+  const existing = await prisma.dailyBriefSnapshot.findUnique({
+    where: { restaurantId_briefDate: { restaurantId, briefDate } },
+  });
+  if (!existing) return null;
+
+  const tasks = await prisma.chiefOfStaffTask.findMany({
+    where: {
+      restaurantId,
+      createdAt: { gte: existing.createdAt },
+      status: { in: ["PENDING", "APPROVED"] },
+    },
+    orderBy: [{ status: "asc" }, { confidenceScore: "desc" }],
+    take: 20,
+  });
+  return snapshotToPayload(existing, tasks, restaurant.aiPersonality);
+}
+
 export async function ensureTodayBrief(restaurantId: string, force = false): Promise<TodayBriefPayload> {
   const briefDate = todayUtcDate();
   const restaurant = await prisma.restaurant.findUnique({
@@ -67,23 +120,9 @@ export async function ensureTodayBrief(restaurantId: string, force = false): Pro
     throw new Error("restaurant_not_found");
   }
 
-  const existing = await prisma.dailyBriefSnapshot.findUnique({
-    where: { restaurantId_briefDate: { restaurantId, briefDate } },
-  });
-
-  if (existing && !force) {
-    const tasks = await prisma.chiefOfStaffTask.findMany({
-      where: {
-        restaurantId,
-        createdAt: { gte: existing.createdAt },
-        status: { in: ["PENDING", "APPROVED"] },
-      },
-      orderBy: [{ status: "asc" }, { confidenceScore: "desc" }],
-      take: 20,
-    });
-    if (tasks.length) {
-      return snapshotToPayload(existing, tasks, restaurant.aiPersonality);
-    }
+  if (!force) {
+    const cached = await getCachedTodayBrief(restaurantId);
+    if (cached?.tasks.length) return cached;
   }
 
   const generated = await generateMorningBrief(restaurantId);

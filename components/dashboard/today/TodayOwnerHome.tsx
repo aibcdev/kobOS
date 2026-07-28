@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DashboardNavIconGlyph } from "@/components/dashboard/DashboardNavIcon";
 import type { TodayBriefPayload } from "@/lib/chief-of-staff/types";
@@ -435,6 +435,7 @@ export function TodayOwnerHome({
   city,
   cuisineType,
   brief: initialBrief,
+  briefNeedsRefresh = false,
   journey,
   website = null,
   demandHints = [],
@@ -448,6 +449,8 @@ export function TodayOwnerHome({
   city: string | null;
   cuisineType: string | null;
   brief: TodayBriefPayload;
+  /** When true, load priorities in the background so login never waits on Gemini. */
+  briefNeedsRefresh?: boolean;
   journey: TodayJourneySnapshot | null;
   website?: string | null;
   demandHints?: TodayDemandHint[];
@@ -482,6 +485,11 @@ export function TodayOwnerHome({
       setRefreshing(false);
     }
   }, [previewMode, restaurantId]);
+
+  useEffect(() => {
+    if (!briefNeedsRefresh || previewMode) return;
+    void refreshBrief();
+  }, [briefNeedsRefresh, previewMode, refreshBrief]);
 
   const openTasks = useMemo(() => {
     const fromBrief = brief.tasks

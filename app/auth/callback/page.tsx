@@ -54,13 +54,14 @@ function AuthCallbackInner() {
       try {
         await completeMagicLinkSignIn(supabase, params);
 
-        const profileRes = await fetch("/api/auth/complete", {
-          method: "POST",
-          credentials: "include",
-        });
-        if (!profileRes.ok) {
-          router.replace("/login?error=profile");
-          return;
+        try {
+          await fetch("/api/auth/complete", {
+            method: "POST",
+            credentials: "include",
+            signal: AbortSignal.timeout(10_000),
+          });
+        } catch {
+          /* dashboard layout retries profile upsert */
         }
 
         clearAuthNextCookie();

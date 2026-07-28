@@ -158,14 +158,14 @@ export function SaasSignupTrialForm() {
       setErrorMessage(error.message);
       return;
     }
-    const profileRes = await fetch("/api/auth/complete", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!profileRes.ok) {
-      setStatus("error");
-      setErrorMessage("Account setup failed. Check DATABASE_URL.");
-      return;
+    try {
+      await fetch("/api/auth/complete", {
+        method: "POST",
+        credentials: "include",
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch {
+      /* layout will ensure profile */
     }
     router.replace(nextPath);
   }

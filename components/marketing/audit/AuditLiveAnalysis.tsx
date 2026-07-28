@@ -262,7 +262,12 @@ export function AuditLiveAnalysis({
         </aside>
       </div>
 
-      {showLogoWall ? <SaasLogoWall className="mt-10 md:mt-14" /> : null}
+      {showLogoWall ? (
+        <SaasLogoWall
+          className="mt-10 md:mt-14"
+          label="Trusted by over 300 restaurants and counting"
+        />
+      ) : null}
     </div>
   );
 
