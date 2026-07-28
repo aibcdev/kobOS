@@ -118,8 +118,8 @@ function growthOpportunityLabel(overall: number): "Significant" | "High" | "Mode
   return "Limited";
 }
 
-function blendScores(...parts: number[]): number {
-  const valid = parts.filter((n) => Number.isFinite(n));
+function blendScores(...parts: Array<number | null | undefined>): number {
+  const valid = parts.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
   if (!valid.length) return 50;
   return Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
 }
@@ -134,7 +134,10 @@ type OwnerPillar = {
 
 function ownerPillarsFromScores(scores: RestaurantScoresV1): OwnerPillar[] {
   const find = blendScores(scores.gbp, scores.technical);
-  const trust = blendScores(scores.reviews, Math.round(scores.website * 0.35 + scores.reviews * 0.65));
+  const trust =
+    scores.reviews == null
+      ? blendScores(scores.website)
+      : blendScores(scores.reviews, Math.round(scores.website * 0.35 + scores.reviews * 0.65));
   const choose = blendScores(scores.competitors, scores.website);
 
   return [
