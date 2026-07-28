@@ -38,7 +38,9 @@ export default async function DashboardPage({
         cuisineType={preview.cuisineType}
         brief={getPreviewChiefOfStaffBrief()}
         journey={null}
+        website={preview.website ?? null}
         welcome={false}
+        previewMode
       />
     );
   }
@@ -108,6 +110,7 @@ export default async function DashboardPage({
       cuisineType={restaurant.cuisineType}
       brief={brief}
       journey={journey}
+      website={restaurant.website}
       demandHints={demandHints}
       openRequests={serviceRequests}
       auditId={journey?.auditId ?? null}

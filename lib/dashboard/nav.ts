@@ -1,6 +1,7 @@
 /**
- * Owner-facing dashboard nav — max 5 primary items + More.
- * Everything else is progressive disclosure under More / Account.
+ * Owner-facing dashboard nav — grouped by the outcome the owner wants
+ * (more customers, more revenue, run it, understand it) rather than by feature.
+ * Settings / Billing live in the account menu, not the sidebar.
  */
 
 export type DashboardNavIcon =
@@ -29,6 +30,8 @@ export type DashboardNavIcon =
   | "more";
 
 export type DashboardNavItem = {
+  /** Stable identity — two entries may legitimately share an href. */
+  id: string;
   href: string;
   label: string;
   icon: DashboardNavIcon;
@@ -40,53 +43,64 @@ export type DashboardNavGroup = {
   id: string;
   label: string | null;
   items: DashboardNavItem[];
-  /** Collapsible “More” group — secondary tools */
-  collapsible?: boolean;
 };
 
-/** Primary owner navigation (≤5) + More + Account. */
 export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
   {
-    id: "primary",
+    id: "today",
     label: null,
+    items: [{ id: "today", href: "/dashboard", label: "Today", icon: "home" }],
+  },
+  {
+    id: "acquire",
+    label: "Get more customers",
     items: [
-      { href: "/dashboard", label: "Today", icon: "home" },
-      { href: "/dashboard/demand-engine", label: "Demand", icon: "demand" },
-      { href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
-      { href: "/dashboard/listings", label: "Google", icon: "listings" },
-      { href: "/dashboard/website", label: "Website", icon: "website" },
+      { id: "demand", href: "/dashboard/demand-engine", label: "Demand Engine", icon: "demand" },
+      { id: "listings", href: "/dashboard/listings", label: "Google Presence", icon: "listings" },
+      { id: "website", href: "/dashboard/website", label: "Website", icon: "website" },
+      { id: "reviews", href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
+      { id: "seo", href: "/dashboard/seo", label: "Local SEO", icon: "seo" },
+      { id: "social", href: "/dashboard/content", label: "Social Media", icon: "content" },
     ],
   },
   {
-    id: "more",
-    label: "More",
-    collapsible: true,
+    id: "revenue",
+    label: "Increase revenue",
     items: [
-      { href: "/dashboard/content", label: "Social", icon: "content" },
-      { href: "/dashboard/ordering", label: "Ordering", icon: "ordering" },
-      { href: "/dashboard/customers", label: "Loyalty", icon: "customers" },
-      { href: "/dashboard/seo", label: "Local SEO", icon: "seo" },
-      { href: "/dashboard/menu", label: "Menu", icon: "menu" },
-      { href: "/dashboard/brand", label: "Brand & photos", icon: "brand" },
-      { href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
-      { href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
-      { href: "/dashboard/analytics", label: "Insights", icon: "analytics" },
-      { href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
-      { href: "/dashboard/requests", label: "Requests", icon: "requests" },
+      { id: "ordering", href: "/dashboard/ordering", label: "Online Ordering", icon: "ordering" },
+      { id: "upsells", href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
+      { id: "loyalty", href: "/dashboard/marketing", label: "Loyalty & recovery", icon: "customers" },
+      { id: "email-sms", href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
     ],
   },
   {
-    id: "account",
-    label: null,
+    id: "manage",
+    label: "Manage & grow",
     items: [
-      { href: "/dashboard/settings", label: "Settings", icon: "settings" },
-      { href: "/dashboard/billing", label: "Billing", icon: "billing" },
+      { id: "chat", href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
+      { id: "requests", href: "/dashboard/requests", label: "Requests", icon: "requests" },
+      { id: "performance", href: "/dashboard/analytics", label: "Analyse performance", icon: "analytics" },
+    ],
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    items: [
+      { id: "customer-trends", href: "/dashboard/customers", label: "Customer trends", icon: "customers" },
+      { id: "menu", href: "/dashboard/menu", label: "Online menu", icon: "menu" },
+      { id: "brand", href: "/dashboard/brand", label: "Brand & photos", icon: "brand" },
     ],
   },
 ];
 
+/** Shown in the account menu, not the sidebar. */
+export const DASHBOARD_NAV_ACCOUNT: DashboardNavItem[] = [
+  { id: "settings", href: "/dashboard/settings", label: "Settings", icon: "settings" },
+  { id: "billing", href: "/dashboard/billing", label: "Billing", icon: "billing" },
+];
+
 export const DASHBOARD_NAV_INTERNAL: DashboardNavItem[] = [
-  { href: "/dashboard/outbound", label: "Sales pipeline", icon: "outbound" },
+  { id: "outbound", href: "/dashboard/outbound", label: "Sales pipeline", icon: "outbound" },
 ];
 
 export function flattenDashboardNav(groups: DashboardNavGroup[]): DashboardNavItem[] {
@@ -104,6 +118,16 @@ export function isDashboardNavActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function isPathInNavGroup(pathname: string, group: DashboardNavGroup) {
-  return group.items.some((item) => isDashboardNavActive(pathname, item.href));
+/**
+ * Which single nav entry should read as active. Hrefs can repeat across groups,
+ * so we pick the deepest match and break ties on document order.
+ */
+export function resolveActiveNavId(groups: DashboardNavGroup[], pathname: string): string | null {
+  let best: { id: string; depth: number } | null = null;
+  for (const item of flattenDashboardNav(groups)) {
+    if (!isDashboardNavActive(pathname, item.href)) continue;
+    const depth = item.href.length;
+    if (!best || depth > best.depth) best = { id: item.id, depth };
+  }
+  return best?.id ?? null;
 }

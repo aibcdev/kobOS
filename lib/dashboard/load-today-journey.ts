@@ -9,6 +9,8 @@ export type TodayJourneySnapshot = {
   auditId: string;
   auditSlug: string | null;
   overallScore: number | null;
+  designScore: number | null;
+  websiteUrl: string | null;
   report: DecisionJourneyReport;
 };
 
@@ -28,6 +30,7 @@ export async function loadTodayJourneySnapshot(
       city: true,
       websiteUrl: true,
       overallScore: true,
+      designScore: true,
       resultPayload: true,
     },
   });
@@ -46,6 +49,8 @@ export async function loadTodayJourneySnapshot(
     auditId: audit.id,
     auditSlug: audit.slug,
     overallScore: audit.overallScore,
+    designScore: audit.designScore,
+    websiteUrl: audit.websiteUrl || website,
     report,
   };
 }

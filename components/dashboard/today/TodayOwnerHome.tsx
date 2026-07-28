@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
+import { DashboardNavIconGlyph } from "@/components/dashboard/DashboardNavIcon";
 import type { TodayBriefPayload } from "@/lib/chief-of-staff/types";
 import type { TodayJourneySnapshot } from "@/lib/dashboard/load-today-journey";
+import type { DashboardNavIcon } from "@/lib/dashboard/nav";
 import {
+  ctaHrefForOperatorTask,
   toOperatorTask,
   type OperatorTaskView,
 } from "@/lib/dashboard/operator-task";
@@ -25,6 +28,11 @@ export type TodayOpenRequest = {
   status: string;
 };
 
+const cardClass =
+  "rounded-2xl border border-[var(--color-hairline)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]";
+const eyebrowClass =
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted-medium)]";
+
 function greetingLine(name: string) {
   const hour = new Date().getHours();
   const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -34,6 +42,26 @@ function greetingLine(name: string) {
 
 function fixKeyForTask(task: OperatorTaskView): string {
   return `today-${task.kind}-${task.id}`.slice(0, 120);
+}
+
+function iconForTask(task: OperatorTaskView): DashboardNavIcon {
+  switch (task.kind) {
+    case "reply_reviews":
+      return "reviews";
+    case "add_photos":
+      return "brand";
+    case "fix_cta":
+      return "website";
+    case "gbp_basics":
+      return "listings";
+    case "website":
+      return "website";
+    case "demand":
+    case "demand_offer":
+      return "demand";
+    default:
+      return "requests";
+  }
 }
 
 function requestStatusForTask(
@@ -218,10 +246,15 @@ function PriorityRow({
           ? "Update photos"
           : "Fix this";
 
+  const surfaceHref = ctaHrefForOperatorTask(task, restaurantId, withRestaurantQuery);
+
   return (
-    <li className="flex flex-wrap items-center gap-4 border-t border-[var(--color-hairline)] py-4 first:border-t-0 first:pt-0 last:pb-0">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-sm font-semibold text-[var(--color-primary)]">
+    <li className="flex flex-wrap items-center gap-3 border-t border-[var(--color-hairline)] py-4 first:border-t-0 first:pt-0 last:pb-0 sm:gap-4">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-xs font-semibold text-[var(--color-primary)]">
         {index}
+      </span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-surface-warm)] text-[var(--color-muted)]">
+        <DashboardNavIconGlyph icon={iconForTask(task)} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-medium leading-snug text-[var(--color-ink)]">{task.title}</p>
@@ -240,7 +273,8 @@ function PriorityRow({
       </div>
       {task.customersDelta != null ? (
         <p className="shrink-0 text-sm font-semibold tabular-nums text-[var(--color-primary)]">
-          +{task.customersDelta} customers / month
+          +{task.customersDelta}
+          <span className="ml-1 font-normal text-[var(--color-muted-medium)]">/ month</span>
         </p>
       ) : null}
       {status ? (
@@ -255,6 +289,13 @@ function PriorityRow({
           {busy ? (isDemand ? "Approving…" : "Requesting…") : cta}
         </button>
       )}
+      <Link
+        href={surfaceHref}
+        aria-label={`Open ${task.title}`}
+        className="shrink-0 text-[var(--color-muted-medium)] no-underline hover:text-[var(--color-ink)]"
+      >
+        ›
+      </Link>
     </li>
   );
 }
@@ -262,10 +303,8 @@ function PriorityRow({
 function DoneThisWeek({ done }: { done: { id: string; title: string }[] }) {
   if (done.length === 0) return null;
   return (
-    <section className="rounded-2xl border border-[var(--color-hairline)] bg-white/70 px-5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] sm:px-6">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted-medium)]">
-        Delivered this week
-      </p>
+    <section className={`${cardClass} px-5 py-4 sm:px-6`}>
+      <p className={eyebrowClass}>Delivered this week</p>
       <ul className="mt-2 space-y-1.5">
         {done.map((d) => (
           <li key={d.id} className="text-sm text-[var(--color-muted)]">
@@ -278,17 +317,131 @@ function DoneThisWeek({ done }: { done: { id: string; title: string }[] }) {
   );
 }
 
+function ProgressStat({
+  icon,
+  children,
+}: {
+  icon: DashboardNavIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-center gap-2.5">
+      <span className="shrink-0 text-[var(--color-muted-medium)]">
+        <DashboardNavIconGlyph icon={icon} className="h-4 w-4" />
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
+
+function HolidayChecklistRow({
+  label,
+  href,
+  cta,
+  done,
+}: {
+  label: string;
+  href: string;
+  cta: string;
+  done: boolean;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-3">
+      <span className="flex min-w-0 items-center gap-2.5">
+        <span
+          aria-hidden
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] ${
+            done
+              ? "bg-[var(--color-primary)] text-white"
+              : "border border-[var(--color-hairline)] text-transparent"
+          }`}
+        >
+          ✓
+        </span>
+        <span className="min-w-0 truncate text-[var(--color-ink)]">{label}</span>
+      </span>
+      <Link
+        href={href}
+        className="shrink-0 rounded-lg bg-[var(--color-surface-warm)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)] no-underline hover:bg-[var(--color-muted-faint)]"
+      >
+        {cta}
+      </Link>
+    </li>
+  );
+}
+
+/** Suggestions arrive as plain sentences — route them to the surface that resolves them. */
+function suggestionTarget(suggestion: string, restaurantId: string) {
+  const s = suggestion.toLowerCase();
+  if (s.includes("review")) {
+    return {
+      cta: "See reviews",
+      href: withRestaurantQuery("/dashboard/reviews", restaurantId),
+      detail: "Show customers you care and build trust.",
+    };
+  }
+  if (s.includes("photo") || s.includes("image")) {
+    return {
+      cta: "Update photos",
+      href: withRestaurantQuery("/dashboard/listings", restaurantId),
+      detail: "Fresh photos help guests pick you over nearby places.",
+    };
+  }
+  if (s.includes("post") || s.includes("social") || s.includes("instagram")) {
+    return {
+      cta: "Open social",
+      href: withRestaurantQuery("/dashboard/content", restaurantId),
+      detail: "Stay visible between visits so guests remember you.",
+    };
+  }
+  if (s.includes("offer") || s.includes("quiet") || s.includes("demand")) {
+    return {
+      cta: "Open Demand",
+      href: withRestaurantQuery("/dashboard/demand-engine", restaurantId),
+      detail: "Fill your softest hours without discounting everything.",
+    };
+  }
+  return {
+    cta: "Ask our team",
+    href: withRestaurantQuery("/dashboard/requests", restaurantId),
+    detail: "We can take this on for you — request it and we deliver.",
+  };
+}
+
+function TeamAvatars() {
+  return (
+    <span aria-hidden className="flex shrink-0 -space-x-2">
+      {["A", "M", "J"].map((initial, i) => (
+        <span
+          key={initial}
+          className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-white text-[11px] font-semibold text-white ${
+            i === 0
+              ? "bg-[var(--color-primary)]"
+              : i === 1
+                ? "bg-[var(--color-forest-mid)]"
+                : "bg-[var(--color-ink)]"
+          }`}
+        >
+          {initial}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function TodayOwnerHome({
   restaurantId,
   restaurantName,
   city,
   cuisineType,
-  brief,
+  brief: initialBrief,
   journey,
+  website = null,
   demandHints = [],
   openRequests: initialOpenRequests = [],
   auditId = null,
   welcome,
+  previewMode,
 }: {
   restaurantId: string;
   restaurantName: string;
@@ -296,12 +449,39 @@ export function TodayOwnerHome({
   cuisineType: string | null;
   brief: TodayBriefPayload;
   journey: TodayJourneySnapshot | null;
+  website?: string | null;
   demandHints?: TodayDemandHint[];
   openRequests?: TodayOpenRequest[];
   auditId?: string | null;
   welcome?: boolean;
+  previewMode?: boolean;
 }) {
+  const [brief, setBrief] = useState(initialBrief);
   const [openRequests, setOpenRequests] = useState(initialOpenRequests);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const refreshBrief = useCallback(async () => {
+    if (previewMode) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      const res = await fetch("/api/chief-of-staff/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId }),
+      });
+      if (!res.ok) {
+        setRefreshError("Could not refresh — try again.");
+        return;
+      }
+      setBrief((await res.json()) as TodayBriefPayload);
+    } catch {
+      setRefreshError("Could not refresh — try again.");
+    } finally {
+      setRefreshing(false);
+    }
+  }, [previewMode, restaurantId]);
 
   const openTasks = useMemo(() => {
     const fromBrief = brief.tasks
@@ -350,6 +530,12 @@ export function TodayOwnerHome({
     [openRequests],
   );
 
+  const completed = useMemo(
+    () => brief.tasks.filter((t) => t.status === "APPROVED" || t.status === "DONE"),
+    [brief.tasks],
+  );
+  const minutesSaved = completed.reduce((s, t) => s + (t.estimatedMinutes ?? 0), 0);
+
   const report = journey?.report ?? null;
   const overall =
     journey?.overallScore ?? report?.stages.find((s) => s.id === "outcome")?.score ?? null;
@@ -372,6 +558,88 @@ export function TodayOwnerHome({
     (r) => r.status === "REQUESTED" || r.status === "IN_PROGRESS",
   ).length;
 
+  const progressMessage =
+    overall == null
+      ? "Your first snapshot is still running."
+      : overall >= 70
+        ? "Great progress! Keep it up."
+        : overall >= 40
+          ? "Good start — the big wins are still open."
+          : "Plenty to win back — start with priority one.";
+
+  const siteUrl = journey?.websiteUrl ?? website;
+  const needToKnow: { key: string; node: React.ReactNode }[] = [];
+  if (holiday) {
+    needToKnow.push({
+      key: "event",
+      node: `Next UK event: ${holiday.eventName} in ${holiday.daysAway} days.`,
+    });
+  }
+  if (overall != null) {
+    needToKnow.push({
+      key: "overall",
+      node: (
+        <>
+          Linked audit overall score:{" "}
+          <span className="font-semibold tabular-nums text-[var(--color-ink)]">{overall}/100</span>
+        </>
+      ),
+    });
+  }
+  if (journey?.designScore != null) {
+    needToKnow.push({
+      key: "design",
+      node: (
+        <>
+          Linked audit design score:{" "}
+          <span className="font-semibold tabular-nums text-[var(--color-ink)]">
+            {journey.designScore}/100
+          </span>
+        </>
+      ),
+    });
+  }
+  if (siteUrl) {
+    needToKnow.push({
+      key: "site",
+      node: (
+        <>
+          Website:{" "}
+          <a
+            href={siteUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[var(--color-primary)] underline-offset-2"
+          >
+            {siteUrl.replace(/^https?:\/\//, "")}
+          </a>
+        </>
+      ),
+    });
+  }
+  for (const line of brief.summary.needToKnow) {
+    if (needToKnow.length >= 4) break;
+    // The event and the site already have their own rows above.
+    if (holiday && line.toLowerCase().includes(holiday.eventName.toLowerCase())) continue;
+    if (siteUrl && line.includes(siteUrl)) continue;
+    needToKnow.push({ key: line, node: line });
+  }
+  if (needToKnow.length === 0) {
+    needToKnow.push({ key: "health", node: brief.summary.revenueHealthLine });
+  }
+
+  const suggestionText = brief.summary.suggestions[0] ?? null;
+  const suggestion = suggestionText
+    ? { text: suggestionText, ...suggestionTarget(suggestionText, restaurantId) }
+    : openTasks[0]
+      ? {
+          text: openTasks[0].title,
+          detail: openTasks[0].why,
+          cta: "Open priorities",
+          href: withRestaurantQuery("/dashboard/requests", restaurantId),
+        }
+      : null;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       {welcome ? (
@@ -383,19 +651,23 @@ export function TodayOwnerHome({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-head text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
-            <span className="text-[var(--color-muted)]">Dashboard</span>
-            <span className="mx-2 text-[var(--color-muted-medium)]">/</span>
-            {greet}!
+            Dashboard
           </h1>
-          {(city || cuisineType) && (
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            {greet}! <span aria-hidden>👋</span>
+          </p>
+          {city || cuisineType ? (
+            <p className="mt-0.5 text-xs text-[var(--color-muted-medium)]">
               {[restaurantName, city, cuisineType].filter(Boolean).join(" · ")}
             </p>
-          )}
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {fullReportHref.startsWith("/audit") ? (
-            <Link href={fullReportHref} className={`${appBtnSecondary} !min-h-10 !px-4 !py-2 text-sm no-underline`}>
+            <Link
+              href={fullReportHref}
+              className={`${appBtnSecondary} !min-h-10 !px-4 !py-2 text-sm no-underline`}
+            >
               See your public view
             </Link>
           ) : null}
@@ -410,28 +682,37 @@ export function TodayOwnerHome({
 
       <div className="mt-6 grid gap-5 lg:grid-cols-12">
         <div className="flex flex-col gap-5 lg:col-span-8">
-          <section className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted-medium)]">
-              Top priorities for you
-            </p>
+          <section className={`${cardClass} p-5 sm:p-6`}>
+            <p className={eyebrowClass}>Top priorities for you</p>
             <h2 className="mt-2 font-head text-xl font-semibold leading-snug text-[var(--color-ink)] sm:text-2xl">
               You could get{" "}
               <span className="text-[var(--color-primary)]">+{headlineCustomers} more customers</span>{" "}
               every month
             </h2>
-            {customersLow > 0 && customersHigh > 0 ? (
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                Est. ~{customersLow}–{customersHigh} fewer guests / month than you could be getting.
+            <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
+              <p className="max-w-md text-sm text-[var(--color-muted)]">
+                {openTasks.length > 0
+                  ? `Fix ${openTasks.length === 1 ? "this" : `these ${openTasks.length}`} high-impact ${
+                      openTasks.length === 1 ? "issue" : "issues"
+                    } to start winning back lost customers.`
+                  : "Priorities appear once your journey snapshot finishes."}
+                {customersLow > 0 && customersHigh > 0 ? (
+                  <>
+                    {" "}
+                    Est. ~{customersLow}–{customersHigh} fewer guests / month than you could be getting.
+                  </>
+                ) : null}
               </p>
-            ) : null}
-            <p className="mt-2 text-sm text-[var(--color-muted)]">
-              Tap a green button to request help — it stays Requested until our team delivers. Nothing
-              is marked done just because you clicked.
-            </p>
+              {openTasks.length > 0 ? (
+                <p className="text-xs text-[var(--color-muted-medium)]">
+                  Estimated additional customers / month
+                </p>
+              ) : null}
+            </div>
             <ol className="mt-5">
               {openTasks.length === 0 ? (
                 <li className="py-3 text-sm text-[var(--color-muted)]">
-                  Priorities appear once your journey snapshot finishes.
+                  Nothing needs you right now — we&apos;ll surface the next fix as soon as we spot it.
                 </li>
               ) : (
                 openTasks.map((task, i) => (
@@ -452,26 +733,61 @@ export function TodayOwnerHome({
                 ))
               )}
             </ol>
+            <p className="mt-4 border-t border-[var(--color-hairline)] pt-3 text-xs text-[var(--color-muted-medium)]">
+              Tap a green button to request help — it stays Requested until our team delivers. Nothing is
+              marked done just because you clicked.
+            </p>
           </section>
 
           <DoneThisWeek done={doneTasks} />
 
-          {holiday ? (
-            <section className="overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-hairline)] px-5 py-3 sm:px-6">
-                <p className="font-medium text-[var(--color-ink)]">{greet}.</p>
-                <span className="text-xs text-[var(--color-muted)]">Holiday engine</span>
+          <section className={`${cardClass} overflow-hidden`}>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 sm:px-6">
+              <div>
+                <p className="font-head text-lg font-semibold text-[var(--color-ink)]">{greet}.</p>
+                <p className="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
+                  {brief.summary.revenueHealthLine}
+                </p>
+                <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+                  You have{" "}
+                  <strong className="font-semibold text-[var(--color-ink)]">
+                    {brief.summary.taskCount}
+                  </strong>{" "}
+                  high-impact tasks today.
+                  {brief.summary.totalMinutes > 0 ? (
+                    <>
+                      {" "}
+                      Estimated completion time:{" "}
+                      <strong className="font-semibold text-[var(--color-ink)]">
+                        {brief.summary.totalMinutes} minutes
+                      </strong>
+                      .
+                    </>
+                  ) : null}
+                </p>
+                {refreshError ? <p className="mt-1 text-xs text-red-700">{refreshError}</p> : null}
               </div>
-              <div className="grid sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={refreshing || previewMode}
+                onClick={() => void refreshBrief()}
+                className={`${appBtnSecondary} !min-h-9 shrink-0 !rounded-xl !px-3 !py-1.5 text-xs disabled:opacity-50`}
+              >
+                {refreshing ? "Refreshing…" : "Refresh brief"}
+              </button>
+            </div>
+
+            {holiday ? (
+              <div className="grid border-t border-[var(--color-hairline)] sm:grid-cols-2">
                 <div className="bg-[var(--color-primary)] px-5 py-6 text-white sm:px-6">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
-                    Capture more bookings
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
+                    Holiday engine
                   </p>
-                  <p className="mt-2 font-head text-xl font-semibold">
+                  <p className="mt-3 font-head text-xl font-semibold">
                     {holiday.eventName} is {holiday.daysAway} days away
                   </p>
                   <p className="mt-2 text-sm text-white/80">
-                    Get ahead with drafts ready to approve — nothing goes live without you.
+                    Drafts are ready to approve — nothing goes live without you.
                   </p>
                   <Link
                     href={withRestaurantQuery("/dashboard/creative", restaurantId)}
@@ -481,70 +797,74 @@ export function TodayOwnerHome({
                   </Link>
                 </div>
                 <div className="px-5 py-6 sm:px-6">
-                  <p className="text-sm font-medium text-[var(--color-ink)]">Get ahead</p>
-                  <ul className="mt-3 space-y-3 text-sm text-[var(--color-muted)]">
-                    <li className="flex justify-between gap-2">
-                      <span>{holiday.emailPrepared ? "✓ Email draft ready" : "Email draft on approve"}</span>
-                      <Link
-                        href={withRestaurantQuery("/dashboard/creative", restaurantId)}
-                        className="shrink-0 font-medium text-[var(--color-primary)] no-underline"
-                      >
-                        Open
-                      </Link>
-                    </li>
-                    <li className="flex justify-between gap-2">
-                      <span>
-                        {holiday.instagramPrepared ? "✓ Social draft ready" : "Social draft on approve"}
-                      </span>
-                      <Link
-                        href={withRestaurantQuery("/dashboard/content", restaurantId)}
-                        className="shrink-0 font-medium text-[var(--color-primary)] no-underline"
-                      >
-                        Open
-                      </Link>
-                    </li>
-                    <li className="flex justify-between gap-2">
-                      <span>
-                        {holiday.bannerPrepared ? "✓ Banner ready" : "Banner draft on approve"}
-                      </span>
-                      <Link
-                        href={withRestaurantQuery("/dashboard/website", restaurantId)}
-                        className="shrink-0 font-medium text-[var(--color-primary)] no-underline"
-                      >
-                        Open
-                      </Link>
-                    </li>
+                  <p className="text-sm font-medium text-[var(--color-ink)]">
+                    Get ahead &amp; capture more bookings
+                  </p>
+                  <ul className="mt-3 space-y-3 text-sm">
+                    <HolidayChecklistRow
+                      label={holiday.emailPrepared ? "Email draft ready" : "Email draft on approve"}
+                      href={withRestaurantQuery("/dashboard/creative", restaurantId)}
+                      cta="Review"
+                      done={holiday.emailPrepared}
+                    />
+                    <HolidayChecklistRow
+                      label={
+                        holiday.instagramPrepared ? "Social post ideas ready" : "Social posts on approve"
+                      }
+                      href={withRestaurantQuery("/dashboard/content", restaurantId)}
+                      cta="View"
+                      done={holiday.instagramPrepared}
+                    />
+                    <HolidayChecklistRow
+                      label="Special menu idea"
+                      href={withRestaurantQuery("/dashboard/menu", restaurantId)}
+                      cta="View"
+                      done={holiday.bannerPrepared}
+                    />
+                    <HolidayChecklistRow
+                      label="Paid ad audience"
+                      href={withRestaurantQuery("/dashboard/demand-engine", restaurantId)}
+                      cta="View"
+                      done={false}
+                    />
                   </ul>
+                  <Link
+                    href={withRestaurantQuery("/dashboard/creative", restaurantId)}
+                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)] no-underline"
+                  >
+                    See full holiday planner <span aria-hidden>›</span>
+                  </Link>
                 </div>
               </div>
-            </section>
-          ) : null}
+            ) : null}
+          </section>
         </div>
 
         <aside className="flex flex-col gap-5 lg:col-span-4">
-          <section className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted-medium)]">
-              Your progress
-            </p>
+          <section className={`${cardClass} p-5 text-center sm:p-6`}>
+            <p className={eyebrowClass}>Your progress</p>
             <div className="mt-4">
               <ProgressRing score={overall ?? 0} />
             </div>
-            <ul className="mt-4 space-y-2 text-left text-sm text-[var(--color-muted)]">
-              <li className="flex justify-between gap-2">
-                <span>Requested with us</span>
-                <span className="font-medium tabular-nums text-[var(--color-ink)]">{requestedCount}</span>
-              </li>
-              <li className="flex justify-between gap-2">
-                <span>Open this week</span>
-                <span className="font-medium tabular-nums text-[var(--color-ink)]">{openTasks.length}</span>
-              </li>
-              <li className="flex justify-between gap-2">
-                <span>Est. time left</span>
+            <p className="mt-3 text-sm text-[var(--color-muted)]">{progressMessage}</p>
+            <ul className="mt-4 space-y-2.5 text-left text-sm text-[var(--color-muted)]">
+              <ProgressStat icon="reviews">
                 <span className="font-medium tabular-nums text-[var(--color-ink)]">
-                  ~{openTasks.reduce((s, t) => s + t.minutes, 0) || brief.summary.totalMinutes || 0}{" "}
-                  min
-                </span>
-              </li>
+                  {completed.length}
+                </span>{" "}
+                {completed.length === 1 ? "task" : "tasks"} completed
+              </ProgressStat>
+              <ProgressStat icon="analytics">
+                <span className="font-medium tabular-nums text-[var(--color-ink)]">{minutesSaved}</span>{" "}
+                minutes saved
+              </ProgressStat>
+              <ProgressStat icon="customers">
+                {requestedCount > 0
+                  ? `${requestedCount} with our team right now`
+                  : doneTasks.length > 0
+                    ? "Customers can see improvements"
+                    : "Request a fix and we take it from there"}
+              </ProgressStat>
             </ul>
             <Link
               href={fullReportHref}
@@ -554,57 +874,60 @@ export function TodayOwnerHome({
             </Link>
           </section>
 
-          <section className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted-medium)]">
-              Need to know
-            </p>
+          <section className={`${cardClass} p-5 sm:p-6`}>
+            <p className={eyebrowClass}>Need to know</p>
             <ul className="mt-3 space-y-2.5 text-sm text-[var(--color-muted)]">
-              {overall != null ? (
-                <li>
-                  Journey score{" "}
-                  <span className="font-semibold tabular-nums text-[var(--color-ink)]">{overall}/100</span>
-                </li>
-              ) : (
-                <li>Journey snapshot still running</li>
-              )}
-              {brief.summary.needToKnow.slice(0, 3).map((line) => (
-                <li key={line}>{line}</li>
+              {needToKnow.map((line) => (
+                <li key={line.key}>{line.node}</li>
               ))}
-              {brief.summary.needToKnow.length === 0 ? (
-                <li>{brief.summary.revenueHealthLine}</li>
-              ) : null}
             </ul>
           </section>
 
-          <section className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted-medium)]">
-              Suggestions for you
-            </p>
-            {openTasks[0] ? (
+          <section className={`${cardClass} p-5 sm:p-6`}>
+            <p className={eyebrowClass}>Suggestions for you</p>
+            {suggestion ? (
               <>
-                <p className="mt-3 text-sm font-medium text-[var(--color-ink)]">{openTasks[0].title}</p>
-                <p className="mt-1 text-sm text-[var(--color-muted)]">{openTasks[0].why}</p>
-                <p className="mt-4 text-sm text-[var(--color-muted-medium)]">
-                  Use the green button in Top priorities — we&apos;ll mark it Requested for the team.
-                </p>
+                <p className="mt-3 text-sm font-medium text-[var(--color-ink)]">{suggestion.text}</p>
+                <p className="mt-1 text-sm text-[var(--color-muted)]">{suggestion.detail}</p>
+                <Link
+                  href={suggestion.href}
+                  className={`${appBtnSecondary} mt-4 !min-h-10 w-full !px-4 !py-2 text-sm no-underline`}
+                >
+                  {suggestion.cta}
+                </Link>
               </>
-            ) : brief.summary.suggestions[0] ? (
-              <p className="mt-3 text-sm text-[var(--color-muted)]">{brief.summary.suggestions[0]}</p>
             ) : (
-              <p className="mt-3 text-sm text-[var(--color-muted)]">Check Demand for quiet-period offers.</p>
+              <p className="mt-3 text-sm text-[var(--color-muted)]">
+                Check Demand for quiet-period offers.
+              </p>
             )}
           </section>
         </aside>
       </div>
 
-      <section className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--color-hairline)] bg-white px-5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:px-6">
-        <div>
+      <section className={`${cardClass} mt-6 flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6`}>
+        <span
+          aria-hidden
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-warm)] text-[var(--color-primary)]"
+        >
+          ♥
+        </span>
+        <div className="min-w-0 flex-1">
           <p className="font-medium text-[var(--color-ink)]">We&apos;re here to help you grow</p>
-          <p className="mt-0.5 text-sm text-[var(--color-muted)]">Chat with your growth coach</p>
+          <p className="mt-0.5 text-sm text-[var(--color-muted)]">
+            Have a question or need help prioritising?
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <TeamAvatars />
+          <div className="hidden sm:block">
+            <p className="text-sm font-medium text-[var(--color-ink)]">Chat with your growth coach</p>
+            <p className="text-xs text-[var(--color-muted)]">Real people. Real answers.</p>
+          </div>
         </div>
         <Link
           href={withRestaurantQuery("/dashboard/chat", restaurantId)}
-          className={`${appBtnPrimary} !min-h-10 !px-4 !py-2 text-sm no-underline`}
+          className={`${appBtnPrimary} !min-h-10 shrink-0 !px-4 !py-2 text-sm no-underline`}
         >
           Start a chat
         </Link>
