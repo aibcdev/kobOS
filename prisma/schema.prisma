@@ -367,6 +367,8 @@ model Restaurant {
   subscriptionPlan   SubscriptionPlan  @default(FREE)
   stripeCustomerId   String?
   stripeSubscriptionId String?
+  /** When Stripe trial / paid plan first activated for this venue. */
+  trialStartedAt     DateTime?
   /** Credits available for human-fulfilled service requests (website, logo, SEO, etc.). */
   creditBalance      Int               @default(0)
   creditsRefreshedAt DateTime?
@@ -935,12 +937,20 @@ model VisibilityAudit {
   leadEmail         String?
   leadPhone         String?
   leadCapturedAt    DateTime?
+  /** Paid / campaign attribution (Google Ads UTMs + gclid). */
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  gclid             String?
+  landingPath       String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   siteScan          SiteScan?
 
   @@index([createdAt])
   @@index([restaurantId])
+  @@index([utmCampaign, createdAt])
+  @@index([gclid])
   @@schema("public")
 }
 
@@ -1164,5 +1174,33 @@ model AutomationRule {
   restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
+  @@schema("public")
+}
+
+/** Acquisition funnel: ad snapshots, audits, trials. */
+enum MarketingFunnelKind {
+  AD_METRICS_SNAPSHOT
+  AUDIT_STARTED
+  TRIAL_STARTED
+  @@schema("public")
+}
+
+model MarketingFunnelEvent {
+  id           String              @id @default(cuid())
+  kind         MarketingFunnelKind
+  source       String              @default("")
+  medium       String              @default("")
+  campaign     String              @default("")
+  gclid        String?
+  auditId      String?
+  restaurantId String?
+  /** Snapshot metrics or extra context JSON. */
+  metrics      Json                @default("{}")
+  createdAt    DateTime            @default(now())
+
+  @@index([kind, createdAt])
+  @@index([campaign, createdAt])
+  @@index([restaurantId, kind])
+  @@index([auditId])
   @@schema("public")
 }

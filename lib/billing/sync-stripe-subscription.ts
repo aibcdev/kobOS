@@ -17,12 +17,52 @@ export async function syncRestaurantFromStripeSubscription(sub: Stripe.Subscript
     plan = mapped ?? SubscriptionPlan.STARTER;
   }
 
+  const existing = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { trialStartedAt: true, subscriptionPlan: true },
+  });
+
+  const activatingPaid =
+    plan !== SubscriptionPlan.FREE &&
+    (existing?.subscriptionPlan === SubscriptionPlan.FREE || !existing?.trialStartedAt);
+
   await prisma.restaurant.update({
     where: { id: restaurantId },
     data: {
       stripeSubscriptionId: sub.id,
       ...(customerId ? { stripeCustomerId: customerId } : {}),
       subscriptionPlan: plan,
+      ...(activatingPaid && !existing?.trialStartedAt
+        ? { trialStartedAt: new Date() }
+        : {}),
     },
   });
+
+  if (activatingPaid) {
+    const linkedAudit = await prisma.visibilityAudit.findFirst({
+      where: { restaurantId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        utmSource: true,
+        utmMedium: true,
+        utmCampaign: true,
+        gclid: true,
+      },
+    });
+    void prisma.marketingFunnelEvent
+      .create({
+        data: {
+          kind: "TRIAL_STARTED",
+          source: linkedAudit?.utmSource || "",
+          medium: linkedAudit?.utmMedium || "",
+          campaign: linkedAudit?.utmCampaign || "",
+          gclid: linkedAudit?.gclid || null,
+          auditId: linkedAudit?.id || null,
+          restaurantId,
+          metrics: { stripeSubscriptionId: sub.id, plan, stripeStatus: sub.status },
+        },
+      })
+      .catch((e) => console.warn("[stripe sync] funnel trial event", e));
+  }
 }

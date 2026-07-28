@@ -74,6 +74,9 @@ export default async function OpsHomePage() {
       <section className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-[var(--color-ink)]">Open queue</h2>
+          <Link href="/ops/funnel" className={`${appBtnPrimary} !min-h-10 !px-4 !py-2 text-sm no-underline`}>
+            Acquisition funnel
+          </Link>
           <Link href="/ops/requests" className={`${appBtnPrimary} !min-h-10 !px-4 !py-2 text-sm no-underline`}>
             Open ticket rail
           </Link>

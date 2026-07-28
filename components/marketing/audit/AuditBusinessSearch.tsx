@@ -10,6 +10,7 @@ import {
 } from "@/lib/audit/audit-start-errors";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { looksLikeWebsiteInput, normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
+import { readBrowserAttribution } from "@/lib/marketing/attribution";
 
 type Suggestion = { placeId: string; mainText: string; secondaryText: string };
 
@@ -298,6 +299,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
             websiteUrl: submitUrl,
             siteScope,
             userSocial,
+            attribution: readBrowserAttribution(),
             ...(placePayload ? { place: placePayload } : {}),
             ...(sampleUrls.length ? { userImageUrls: sampleUrls.slice(0, 3) } : {}),
           }),

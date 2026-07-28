@@ -9,6 +9,7 @@ import { checkAuditRunRateLimit, clientIpFromHeaders } from "@/lib/audit/rate-li
 import { validateAuditRuntimeEnv } from "@/lib/audit/validate-audit-runtime";
 import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
+import { isPaidGoogleAttribution } from "@/lib/marketing/attribution";
 
 export const auditStartBodySchema = z.object({
   websiteUrl: z.string().trim().min(1).max(2048),
@@ -29,6 +30,15 @@ export const auditStartBodySchema = z.object({
       formattedAddress: z.string().trim().max(500).optional(),
       lat: z.number().nullable().optional(),
       lng: z.number().nullable().optional(),
+    })
+    .optional(),
+  attribution: z
+    .object({
+      utmSource: z.string().trim().max(120).optional(),
+      utmMedium: z.string().trim().max(120).optional(),
+      utmCampaign: z.string().trim().max(200).optional(),
+      gclid: z.string().trim().max(200).optional(),
+      landingPath: z.string().trim().max(500).optional(),
     })
     .optional(),
 });
@@ -108,8 +118,33 @@ export async function handleAuditStart(req: Request) {
 
   try {
     const { row } = createPendingAuditSeed({ restaurantName, city, websiteUrl });
+    const attr = parsed.data.attribution;
+    const created = await prisma.visibilityAudit.create({
+      data: {
+        ...row,
+        utmSource: attr?.utmSource || null,
+        utmMedium: attr?.utmMedium || null,
+        utmCampaign: attr?.utmCampaign || null,
+        gclid: attr?.gclid || null,
+        landingPath: attr?.landingPath || null,
+      },
+    });
 
-    const created = await prisma.visibilityAudit.create({ data: row });
+    if (isPaidGoogleAttribution(attr)) {
+      void prisma.marketingFunnelEvent
+        .create({
+          data: {
+            kind: "AUDIT_STARTED",
+            source: attr?.utmSource || "google",
+            medium: attr?.utmMedium || "cpc",
+            campaign: attr?.utmCampaign || "kob_b2b_audit",
+            gclid: attr?.gclid || null,
+            auditId: created.id,
+            metrics: { landingPath: attr?.landingPath || null },
+          },
+        })
+        .catch((e) => console.warn("[audit/start] funnel event", e));
+    }
 
     let queued = true;
     try {

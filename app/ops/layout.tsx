@@ -36,6 +36,12 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
               >
                 Tickets
               </Link>
+              <Link
+                href="/ops/funnel"
+                className="rounded-lg px-3 py-1.5 text-[var(--color-ink)] no-underline hover:bg-[var(--color-muted-faint)]"
+              >
+                Funnel
+              </Link>
             </nav>
           </div>
           <Link href="/dashboard" className="text-sm text-[var(--color-muted)] no-underline hover:text-[var(--color-ink)]">
