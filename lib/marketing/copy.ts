@@ -21,8 +21,8 @@ export const marketingCopy = {
   ] as const,
   heroTrustBadge: "Trusted by 500+ restaurants & cafés",
   heroSubline:
-    "KOB watches your website, Google listing, and reviews—then gives you a short daily list. Approve in one tap. Nothing goes live without you.",
-  heroSublineSecondary: "Start with a free scan. See what guests see before they book.",
+    "We show where guests leave you — and fill quiet periods with offers you only approve.",
+  heroSublineSecondary: "Start with a free scan. See the decision journey before you book a platform.",
   heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
   heroSocialProof: "Built for busy independent restaurants",
   heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
@@ -190,8 +190,19 @@ export const marketingCopy = {
   },
 
   dashboardOnboarding: {
-    body: "Add your restaurant—we'll show where you're losing customers online and what to fix first.",
+    /** One-line product promise — match empty Today / signup UI */
+    promise: "Add your restaurant once. We show where guests drop off — and what to do next.",
+    body: "Add your restaurant once. We show where guests drop off — and what to do next.",
     websiteHint: `${industryStats.websiteBeforeVisit.value} of guests check this before they visit. We'll score it in your first audit.`,
+  },
+
+  /** Competitive / product positioning — not a cheaper Owner, not a discount app */
+  positioning: {
+    restaurant:
+      "We show where guests leave you — and fill quiet periods with offers you only approve.",
+    vsOwner: "They rebuild your whole stack. We fix the decision journey and quiet times first.",
+    demandPurpose:
+      "KOB suggests offers when they're most likely to bring extra customers. You approve — we publish.",
   },
 
   marqueeQuotes: [

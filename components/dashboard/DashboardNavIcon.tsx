@@ -174,6 +174,14 @@ export function DashboardNavIconGlyph({
           <circle cx="12" cy="12" r="3.5" />
         </svg>
       );
+    case "more":
+      return (
+        <svg viewBox="0 0 24 24" {...common}>
+          <circle cx="6.5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+          <circle cx="17.5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+        </svg>
+      );
     default:
       return (
         <svg viewBox="0 0 24 24" {...common}>

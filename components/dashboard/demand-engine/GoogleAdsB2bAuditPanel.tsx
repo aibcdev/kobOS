@@ -23,7 +23,7 @@ export function GoogleAdsB2bAuditPanel({
   initialCampaigns: SavedCampaign[];
 }) {
   const router = useRouter();
-  const [dailyBudgetGbp, setDailyBudgetGbp] = useState(30);
+  const [dailyBudgetGbp, setDailyBudgetGbp] = useState(10);
   const [locations, setLocations] = useState("United Kingdom, Ireland, Australia");
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<B2bAuditAdsPlan | null>(null);

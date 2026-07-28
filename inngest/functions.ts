@@ -15,6 +15,7 @@ import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 import type { StagehandRenderedPage } from "@/lib/browserbase/stagehand-scan";
 import { saveDigestRun } from "@/lib/digest/build-snapshot";
 import { prisma } from "@/lib/db/prisma";
+import { generateDailyRecommendationsForAllRestaurants } from "@/lib/demand-engine/generate-daily-recommendations";
 import { generateOutboundDraft } from "@/lib/growth-agent/generate-outbound-draft";
 import { persistOutboundDraftLeads } from "@/lib/growth-agent/persist-outbound-leads";
 import { importAuditLeadsToOutbound } from "@/lib/outbound/import-audit-leads";
@@ -480,6 +481,21 @@ export const dailyDigestCron = inngest.createFunction(
     }
 
     return { count: restaurants.length };
+  },
+);
+
+/** Demand Engine Phase 2 — quiet-period recommendations (max 3 pending per venue). */
+export const demandRecommendationsDaily = inngest.createFunction(
+  {
+    id: "demand-recommendations-daily",
+    name: "Demand · daily recommendations",
+    triggers: [cron("30 8 * * *"), { event: "demand/recommendations.requested" }],
+  },
+  async ({ step }) => {
+    const result = await step.run("generate-demand-recs", () =>
+      generateDailyRecommendationsForAllRestaurants(),
+    );
+    return result;
   },
 );
 
@@ -965,6 +981,7 @@ export const functions = [
   auditEnrichment,
   auditGeminiBenchmark,
   dailyDigestCron,
+  demandRecommendationsDaily,
   outboundDraftDaily,
   outboundSendApprovedDaily,
   outboundSequenceDaily,

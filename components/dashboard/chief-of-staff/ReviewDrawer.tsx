@@ -26,7 +26,9 @@ export function ReviewDrawer({
   onDismiss: (id: string) => void;
   onClose: () => void;
 }) {
-  const done = task.status === "APPROVED" || task.status === "DONE";
+  const requested = task.status === "APPROVED";
+  const completed = task.status === "DONE";
+  const locked = requested || completed;
   const chatHref = task.conversationId
     ? `/dashboard/chat?r=${encodeURIComponent(restaurantId)}&c=${encodeURIComponent(task.conversationId)}`
     : `/dashboard/chat?r=${encodeURIComponent(restaurantId)}`;
@@ -66,7 +68,7 @@ export function ReviewDrawer({
             </div>
           ) : (
             <p className="mt-4 text-sm text-[#888]">
-              No draft yet — approving prepares one for you to review on the Content page.
+              No draft yet — requesting prepares one for you to review on the Content page.
             </p>
           )}
 
@@ -77,11 +79,11 @@ export function ReviewDrawer({
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              disabled={done || busy}
+              disabled={locked || busy}
               onClick={() => onApprove(task.id)}
               className="rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {done ? "Approved" : busy ? "Approving…" : "Approve"}
+              {completed ? "Delivered" : requested ? "Requested" : busy ? "Requesting…" : "Approve"}
             </button>
             <Link
               href={chatHref}
@@ -89,7 +91,7 @@ export function ReviewDrawer({
             >
               Ask to change
             </Link>
-            {!done ? (
+            {!locked ? (
               <button
                 type="button"
                 disabled={busy}

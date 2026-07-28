@@ -30,8 +30,9 @@ export async function notifyOperatorFixRequested(input: {
     : "Audit: (none linked)";
   const detail = input.fixDetail?.trim() || "(no detail)";
 
+  const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://trykob.com";
   const text = [
-    "New manual fix request (PENDING)",
+    "New manual fix request (REQUESTED)",
     "",
     `Restaurant: ${input.restaurantName}`,
     `Restaurant ID: ${input.restaurantId}`,
@@ -41,8 +42,9 @@ export async function notifyOperatorFixRequested(input: {
     auditLine,
     `Request ID: ${input.requestId}`,
     "",
-    "Do this manually, then mark Delivered in the ops queue:",
-    "https://trykob.com/ops/requests",
+    "Owner clicked a green action — this is Requested, not done.",
+    "Pick up → fulfill → mark Delivered in the ops queue:",
+    `${origin}/ops/requests`,
   ].join("\n");
 
   try {

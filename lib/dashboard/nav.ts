@@ -1,7 +1,6 @@
 /**
- * Dashboard navigation — organised around outcomes (customers / revenue),
- * not a flat list of tools. Delivery, catering, and phone ordering are omitted
- * from the primary IA to keep the growth story clear.
+ * Owner-facing dashboard nav — max 5 primary items + More.
+ * Everything else is progressive disclosure under More / Account.
  */
 
 export type DashboardNavIcon =
@@ -26,7 +25,8 @@ export type DashboardNavIcon =
   | "settings"
   | "billing"
   | "outbound"
-  | "demand";
+  | "demand"
+  | "more";
 
 export type DashboardNavItem = {
   href: string;
@@ -40,59 +40,44 @@ export type DashboardNavGroup = {
   id: string;
   label: string | null;
   items: DashboardNavItem[];
+  /** Collapsible “More” group — secondary tools */
+  collapsible?: boolean;
 };
 
-/** Outcome-led owner navigation. */
+/** Primary owner navigation (≤5) + More + Account. */
 export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
   {
-    id: "home",
+    id: "primary",
     label: null,
-    items: [{ href: "/dashboard", label: "Today", icon: "home" }],
-  },
-  {
-    id: "customers",
-    label: "Get more customers",
     items: [
-      { href: "/dashboard/demand-engine", label: "Demand Engine", icon: "demand" },
-      { href: "/dashboard/listings", label: "Google Presence", icon: "listings" },
-      { href: "/dashboard/website", label: "Website", icon: "website" },
+      { href: "/dashboard", label: "Today", icon: "home" },
+      { href: "/dashboard/demand-engine", label: "Demand", icon: "demand" },
       { href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
+      { href: "/dashboard/listings", label: "Google", icon: "listings" },
+      { href: "/dashboard/website", label: "Website", icon: "website" },
+    ],
+  },
+  {
+    id: "more",
+    label: "More",
+    collapsible: true,
+    items: [
+      { href: "/dashboard/content", label: "Social", icon: "content" },
+      { href: "/dashboard/ordering", label: "Ordering", icon: "ordering" },
+      { href: "/dashboard/customers", label: "Loyalty", icon: "customers" },
       { href: "/dashboard/seo", label: "Local SEO", icon: "seo" },
-      { href: "/dashboard/content", label: "Social Media", icon: "content" },
-    ],
-  },
-  {
-    id: "revenue",
-    label: "Increase revenue",
-    items: [
-      { href: "/dashboard/ordering", label: "Online Ordering", icon: "ordering" },
-      { href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
-      { href: "/dashboard/customers", label: "Loyalty & recovery", icon: "customers" },
-      { href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
-    ],
-  },
-  {
-    id: "chief",
-    label: "Chief of Staff",
-    items: [
-      { href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
-      { href: "/dashboard/requests", label: "Requests", icon: "requests" },
-      { href: "/dashboard/analytics", label: "Analyse performance", icon: "analytics" },
-    ],
-  },
-  {
-    id: "insights",
-    label: "Insights",
-    items: [
-      { href: "/dashboard/customers", label: "Customer trends", icon: "customers" },
-      { href: "/dashboard/analytics", label: "Revenue & traffic", icon: "analytics" },
       { href: "/dashboard/menu", label: "Menu", icon: "menu" },
       { href: "/dashboard/brand", label: "Brand & photos", icon: "brand" },
+      { href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
+      { href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
+      { href: "/dashboard/analytics", label: "Insights", icon: "analytics" },
+      { href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
+      { href: "/dashboard/requests", label: "Requests", icon: "requests" },
     ],
   },
   {
     id: "account",
-    label: "Account",
+    label: null,
     items: [
       { href: "/dashboard/settings", label: "Settings", icon: "settings" },
       { href: "/dashboard/billing", label: "Billing", icon: "billing" },
@@ -117,4 +102,8 @@ export function withRestaurantQuery(path: string, restaurantId: string | null) {
 export function isDashboardNavActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/dashboard/";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function isPathInNavGroup(pathname: string, group: DashboardNavGroup) {
+  return group.items.some((item) => isDashboardNavActive(pathname, item.href));
 }

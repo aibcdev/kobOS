@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 import type { StructuredOffer } from "@/lib/demand-engine/types";
 import { discountLabelFromOffer } from "@/lib/demand-engine/types";
+import { generateDailyRecommendationsForRestaurant } from "@/lib/demand-engine/generate-daily-recommendations";
+import { publishLiveOfferChannels } from "@/lib/demand-engine/publish-live-offer";
 import {
   planLocalGoogleAdsCampaign,
   type LocalAdsGoal,
@@ -17,115 +19,10 @@ function daysFromNow(days: number) {
   return d;
 }
 
-/** Seed a few demo recommendations so Phase 1 UI always has cards to approve. */
+/** Ensure the Demand inbox has up to 3 recommendations (Phase 2 generator). */
 export async function ensureDemoDemandRecommendations(restaurantId: string) {
-  const pending = await prisma.demandRecommendation.count({
-    where: { restaurantId, status: "PENDING" },
-  });
-  if (pending > 0) return { seeded: 0 };
-
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: restaurantId },
-    select: { name: true, cuisineType: true, city: true },
-  });
-  if (!restaurant) return { seeded: 0 };
-
-  const cuisine = restaurant.cuisineType?.trim() || "restaurant";
-  const city = restaurant.city?.trim() || "your area";
-  const now = new Date();
-  const validFrom = now.toISOString();
-  const validTo = daysFromNow(3).toISOString();
-
-  const demos: Array<{
-    title: string;
-    reason: string;
-    confidence: number;
-    impactScore: number;
-    estimatedExtraCustomers: number;
-    estimatedExtraRevenue: number;
-    templateKey: string;
-    offer: StructuredOffer;
-  }> = [
-    {
-      title: "Quiet midweek boost",
-      reason: `Tue–Wed evenings are typically quiet for ${cuisine} spots in ${city}. A limited midweek offer can fill empty covers.`,
-      confidence: 78,
-      impactScore: 72,
-      estimatedExtraCustomers: 18,
-      estimatedExtraRevenue: 540,
-      templateKey: "slow_weekday",
-      offer: {
-        headline: "Midweek 20% off mains",
-        description: `Bring guests back Tue–Wed with 20% off mains at ${restaurant.name}.`,
-        discountType: "percent",
-        discountValue: 20,
-        daypart: "dinner",
-        conditions: "Dine-in only · Tue–Wed · Ends Sunday",
-        validFrom,
-        validTo,
-        templateKey: "slow_weekday",
-      },
-    },
-    {
-      title: "Lunch special for nearby workers",
-      reason: "Lunch dayparts convert well with a clear price-led special and a short window.",
-      confidence: 74,
-      impactScore: 65,
-      estimatedExtraCustomers: 22,
-      estimatedExtraRevenue: 440,
-      templateKey: "lunch_special",
-      offer: {
-        headline: "£12 lunch deal",
-        description: "Main + soft drink for £12, Mon–Fri 12–3pm.",
-        discountType: "fixed_menu",
-        discountValue: 12,
-        discountLabel: "£12 lunch",
-        daypart: "lunch",
-        conditions: "Mon–Fri · 12–3pm · While stocks last",
-        validFrom,
-        validTo: daysFromNow(5).toISOString(),
-        templateKey: "lunch_special",
-      },
-    },
-    {
-      title: "Rainy-day comfort offer",
-      reason: "Wet weather usually lifts takeaway and early dinner interest — reward guests who still come out.",
-      confidence: 70,
-      impactScore: 60,
-      estimatedExtraCustomers: 14,
-      estimatedExtraRevenue: 380,
-      templateKey: "rainy_day",
-      offer: {
-        headline: "Rainy day: free side",
-        description: "Free side with any main when it rains — show this offer at the till.",
-        discountType: "bogo",
-        discountLabel: "Free side",
-        daypart: "all_day",
-        conditions: "Valid on rainy days this week · One per table",
-        validFrom,
-        validTo: daysFromNow(4).toISOString(),
-        templateKey: "rainy_day",
-      },
-    },
-  ];
-
-  await prisma.demandRecommendation.createMany({
-    data: demos.map((d) => ({
-      restaurantId,
-      title: d.title,
-      reason: d.reason,
-      confidence: d.confidence,
-      impactScore: d.impactScore,
-      estimatedExtraCustomers: d.estimatedExtraCustomers,
-      estimatedExtraRevenue: d.estimatedExtraRevenue,
-      templateKey: d.templateKey,
-      offer: d.offer,
-      expiresAt: daysFromNow(7),
-      status: "PENDING",
-    })),
-  });
-
-  return { seeded: demos.length };
+  const result = await generateDailyRecommendationsForRestaurant(restaurantId);
+  return { seeded: result.created };
 }
 
 export async function approveDemandRecommendation(restaurantId: string, recommendationId: string) {
@@ -184,7 +81,16 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
         liveOfferId: liveOffer.id,
         channel: "WEBSITE_BANNER",
         status: "QUEUED",
-        metadata: { note: "Website banner queued — publish wiring in Phase 3" },
+        metadata: { note: "Website banner queued" },
+      },
+    });
+
+    await tx.channelPublish.create({
+      data: {
+        liveOfferId: liveOffer.id,
+        channel: "GOOGLE_POST",
+        status: "QUEUED",
+        metadata: { note: "Google Business post queued" },
       },
     });
 
@@ -200,6 +106,8 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
     return { campaign, liveOffer, recommendation: updated };
   });
 
+  await publishLiveOfferChannels(result.liveOffer.id);
+
   return { ok: true as const, ...result };
 }
 
@@ -214,6 +122,101 @@ export async function dismissDemandRecommendation(restaurantId: string, recommen
     data: { status: "DISMISSED" },
   });
   return { ok: true as const, recommendation: updated };
+}
+
+export async function pauseLiveOffer(restaurantId: string, liveOfferId: string) {
+  const offer = await prisma.liveOffer.findFirst({
+    where: { id: liveOfferId, restaurantId, status: "LIVE" },
+  });
+  if (!offer) return { ok: false as const, error: "Live offer not found" };
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const live = await tx.liveOffer.update({
+      where: { id: offer.id },
+      data: { status: "PAUSED" },
+    });
+    if (offer.campaignId) {
+      await tx.campaign.update({
+        where: { id: offer.campaignId },
+        data: { status: "PAUSED" },
+      });
+    }
+    return live;
+  });
+
+  return { ok: true as const, liveOffer: updated };
+}
+
+export type DemandPerformanceSummary = {
+  extraCustomers: number;
+  estimatedRevenue: number;
+  offersRun: number;
+  bestOfferTitle: string | null;
+};
+
+/** Lightweight last-30-days proof — extra customers, not clicks. */
+export async function getDemandPerformanceLast30Days(
+  restaurantId: string,
+): Promise<DemandPerformanceSummary> {
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const rows = await prisma.campaignPerformance.findMany({
+    where: {
+      periodEnd: { gte: since },
+      OR: [
+        { liveOffer: { restaurantId } },
+        { campaign: { restaurantId } },
+      ],
+    },
+    include: {
+      liveOffer: { select: { title: true } },
+      campaign: { select: { title: true } },
+    },
+  });
+
+  if (rows.length === 0) {
+    const offersRun = await prisma.liveOffer.count({
+      where: {
+        restaurantId,
+        status: { in: ["LIVE", "PAUSED", "COMPLETED"] },
+        createdAt: { gte: since },
+      },
+    });
+    return {
+      extraCustomers: 0,
+      estimatedRevenue: 0,
+      offersRun,
+      bestOfferTitle: null,
+    };
+  }
+
+  let extraCustomers = 0;
+  let estimatedRevenue = 0;
+  let best: { title: string; customers: number } | null = null;
+  for (const row of rows) {
+    extraCustomers += row.extraCustomers;
+    estimatedRevenue += row.estimatedRevenue;
+    const title = row.liveOffer?.title ?? row.campaign?.title ?? null;
+    if (title && (!best || row.extraCustomers > best.customers)) {
+      best = { title, customers: row.extraCustomers };
+    }
+  }
+
+  const offersRun = await prisma.liveOffer.count({
+    where: {
+      restaurantId,
+      status: { in: ["LIVE", "PAUSED", "COMPLETED"] },
+      createdAt: { gte: since },
+    },
+  });
+
+  return {
+    extraCustomers,
+    estimatedRevenue,
+    offersRun,
+    bestOfferTitle: best?.title ?? null,
+  };
 }
 
 export async function createLocalGoogleAdsCampaign(

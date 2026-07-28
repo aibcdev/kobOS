@@ -71,7 +71,10 @@ export function RestaurantOnboardingForm() {
       } catch {
         /* ignore */
       }
-      // FREE browse first — card paywall only when they Request a service.
+      const id = data.restaurant?.id;
+      if (id) {
+        router.push(`/dashboard?r=${encodeURIComponent(id)}&welcome=1`);
+      }
       router.refresh();
     } catch {
       setError("Network error — check your connection and try again.");

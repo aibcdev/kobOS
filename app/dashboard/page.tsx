@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ChiefOfStaffHome } from "@/components/dashboard/chief-of-staff/ChiefOfStaffHome";
-import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
-import { RestaurantOnboardingForm } from "@/components/dashboard/RestaurantOnboardingForm";
-import { appCodeInline, appLinkMuted } from "@/lib/app-ui-classes";
+import { TodayOwnerHome } from "@/components/dashboard/today/TodayOwnerHome";
+import { RestaurantPlacesOnboarding } from "@/components/dashboard/RestaurantPlacesOnboarding";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
+import { loadTodayJourneySnapshot } from "@/lib/dashboard/load-today-journey";
 import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
-import { marketingCopy } from "@/lib/marketing/copy";
 import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
 import { getPreviewRestaurant, isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
 import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
+import { prisma } from "@/lib/db/prisma";
+import { ensureDemoDemandRecommendations } from "@/lib/demand-engine/actions";
+import { discountLabelFromOffer, parseStructuredOffer } from "@/lib/demand-engine/types";
 
 export const metadata: Metadata = {
   title: "Today · KOB",
-  description: "What needs your OK today — plain English tasks from your online presence.",
+  description: "Where guests drop off — and the three fixes to do this week.",
   openGraph: {
     title: "Today · KOB",
-    description: "Daily tasks for reviews, holidays, hours, and posts—approve in one tap.",
+    description: "Where guests drop off — and the three fixes to do this week.",
   },
 };
 
@@ -31,11 +31,14 @@ export default async function DashboardPage({
   if (isUiPreviewEnabled()) {
     const preview = getPreviewRestaurant();
     return (
-      <ChiefOfStaffHome
+      <TodayOwnerHome
         restaurantId={PREVIEW_RESTAURANT_ID}
         restaurantName={preview.name}
-        initial={getPreviewChiefOfStaffBrief()}
-        previewMode
+        city={preview.city}
+        cuisineType={preview.cuisineType}
+        brief={getPreviewChiefOfStaffBrief()}
+        journey={null}
+        welcome={false}
       />
     );
   }
@@ -45,23 +48,8 @@ export default async function DashboardPage({
   const sp = await searchParams;
   const { memberships, restaurantId, restaurant } = await getActiveRestaurantContext(user.id, sp.r);
 
-  if (!memberships.length) {
-    return (
-      <div className="mx-auto max-w-2xl px-[var(--spacing-md)] py-24">
-        <h1 className="type-title-md">Your workspace</h1>
-        <p className="type-body-md mt-3 text-pretty leading-snug text-[var(--color-muted)]">
-          {marketingCopy.dashboardOnboarding.body}
-        </p>
-        <RestaurantOnboardingForm />
-        <Link href="/" className={`${appLinkMuted} mt-8 inline-block`}>
-          Back home
-        </Link>
-      </div>
-    );
-  }
-
-  if (!restaurantId || !restaurant) {
-    return <DashboardEmptyRestaurant />;
+  if (!memberships.length || !restaurantId || !restaurant) {
+    return <RestaurantPlacesOnboarding variant="empty" />;
   }
 
   let brief;
@@ -72,11 +60,57 @@ export default async function DashboardPage({
     brief = await ensureTodayBrief(restaurantId, true);
   }
 
+  const journey = await loadTodayJourneySnapshot(
+    restaurantId,
+    restaurant.name,
+    restaurant.city,
+    restaurant.website,
+  );
+
+  await ensureDemoDemandRecommendations(restaurantId);
+  const topDemand = await prisma.demandRecommendation.findFirst({
+    where: { restaurantId, status: "PENDING" },
+    orderBy: [{ impactScore: "desc" }, { createdAt: "desc" }],
+  });
+  const demandHints = topDemand
+    ? [
+        {
+          id: topDemand.id,
+          title: (() => {
+            const offer = parseStructuredOffer(topDemand.offer);
+            if (offer) return discountLabelFromOffer(offer);
+            return topDemand.title;
+          })(),
+          impactLabel: "Quiet window · highest ROI",
+        },
+      ]
+    : [];
+
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const serviceRequests = await prisma.serviceRequest.findMany({
+    where: {
+      restaurantId,
+      OR: [
+        { status: { in: ["REQUESTED", "IN_PROGRESS"] } },
+        { status: "DELIVERED", deliveredAt: { gte: weekAgo } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 40,
+    select: { id: true, title: true, notes: true, status: true },
+  });
+
   return (
-    <ChiefOfStaffHome
+    <TodayOwnerHome
       restaurantId={restaurantId}
       restaurantName={restaurant.name}
-      initial={brief}
+      city={restaurant.city}
+      cuisineType={restaurant.cuisineType}
+      brief={brief}
+      journey={journey}
+      demandHints={demandHints}
+      openRequests={serviceRequests}
+      auditId={journey?.auditId ?? null}
       welcome={sp.welcome === "1"}
     />
   );

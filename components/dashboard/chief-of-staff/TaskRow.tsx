@@ -36,21 +36,28 @@ export function TaskRow({
   onReview?: (id: string) => void;
   busy?: boolean;
 }) {
-  const done = task.status === "APPROVED" || task.status === "DONE";
-  const showReview = !done && !task.requiresIntegration && Boolean(onReview);
+  // APPROVED = owner queued work with KOB (not done). DONE = system finished.
+  const completed = task.status === "DONE";
+  const requested = task.status === "APPROVED";
+  const locked = completed || requested;
+  const showReview = !locked && !task.requiresIntegration && Boolean(onReview);
 
   return (
     <article className="flex gap-3 border-b border-[#eee] py-4 last:border-0">
       <button
         type="button"
-        disabled={done}
+        disabled={locked}
         onClick={() => onApprove(task.id)}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-          done ? "border-[var(--color-primary)] bg-[var(--color-primary)]" : "border-[#ccc] bg-white hover:border-[var(--color-primary)]"
+          completed
+            ? "border-[var(--color-primary)] bg-[var(--color-primary)]"
+            : requested
+              ? "border-amber-500 bg-amber-50"
+              : "border-[#ccc] bg-white hover:border-[var(--color-primary)]"
         }`}
-        aria-label={done ? "Approved" : "Approve task"}
+        aria-label={completed ? "Delivered" : requested ? "Requested" : "Request task"}
       >
-        {done ? (
+        {completed ? (
           <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -58,7 +65,19 @@ export function TaskRow({
       </button>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm font-medium ${done ? "text-[#999] line-through" : "text-[#1a1a1a]"}`}>{task.title}</p>
+          <p className={`text-sm font-medium ${completed ? "text-[#999]" : "text-[#1a1a1a]"}`}>
+            {task.title}
+            {requested ? (
+              <span className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                Requested
+              </span>
+            ) : null}
+            {completed ? (
+              <span className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">
+                Delivered
+              </span>
+            ) : null}
+          </p>
           {showReview ? (
             <button
               type="button"

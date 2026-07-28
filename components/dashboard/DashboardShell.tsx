@@ -10,6 +10,7 @@ import {
   DASHBOARD_NAV_GROUPS,
   DASHBOARD_NAV_INTERNAL,
   isDashboardNavActive,
+  isPathInNavGroup,
   withRestaurantQuery,
   type DashboardNavGroup,
   type DashboardNavItem,
@@ -55,6 +56,56 @@ function NavLink({
   );
 }
 
+function CollapsibleMore({
+  group,
+  restaurantId,
+  pathname,
+  onNavigate,
+}: {
+  group: DashboardNavGroup;
+  restaurantId: string | null;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const pathInMore = isPathInNavGroup(pathname, group);
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const open = userOpen ?? pathInMore;
+
+  return (
+    <div className="mt-5">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setUserOpen(!(userOpen ?? pathInMore))}
+        className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors ${
+          pathInMore
+            ? "font-medium text-[var(--color-primary)]"
+            : "text-[var(--color-ink)]/80 hover:bg-[var(--color-surface-warm)]"
+        }`}
+      >
+        <span className="shrink-0 text-[var(--color-muted)]">
+          <DashboardNavIconGlyph icon="more" />
+        </span>
+        <span className="min-w-0 flex-1 truncate">{group.label ?? "More"}</span>
+        <span className="text-[10px] text-[var(--color-muted-medium)]">{open ? "−" : "+"}</span>
+      </button>
+      {open ? (
+        <div className="mt-0.5 ml-4 flex flex-col gap-0.5 border-l border-[var(--color-hairline)] pl-1">
+          {group.items.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              restaurantId={restaurantId}
+              pathname={pathname}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function NavGroups({
   groups,
   restaurantId,
@@ -68,26 +119,39 @@ function NavGroups({
 }) {
   return (
     <>
-      {groups.map((group) => (
-        <div key={group.id} className={group.label ? "mt-5" : ""}>
-          {group.label ? (
-            <p className="mb-1.5 px-2.5 text-[11px] font-medium tracking-wide text-[var(--color-muted-medium)]">
-              {group.label}
-            </p>
-          ) : null}
-          <div className="flex flex-col gap-0.5">
-            {group.items.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                restaurantId={restaurantId}
-                pathname={pathname}
-                onNavigate={onNavigate}
-              />
-            ))}
+      {groups.map((group) => {
+        if (group.collapsible) {
+          return (
+            <CollapsibleMore
+              key={group.id}
+              group={group}
+              restaurantId={restaurantId}
+              pathname={pathname}
+              onNavigate={onNavigate}
+            />
+          );
+        }
+        return (
+          <div key={group.id} className={group.label ? "mt-5" : ""}>
+            {group.label ? (
+              <p className="mb-1.5 px-2.5 text-[11px] font-medium tracking-wide text-[var(--color-muted-medium)]">
+                {group.label}
+              </p>
+            ) : null}
+            <div className="flex flex-col gap-0.5">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  restaurantId={restaurantId}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -108,6 +172,7 @@ export function DashboardShell({
   const activeR = searchParams.get("r");
   const restaurantId =
     activeR && restaurants.some((x) => x.id === activeR) ? activeR : restaurants[0]?.id ?? null;
+  const activeRestaurant = restaurants.find((r) => r.id === restaurantId) ?? restaurants[0] ?? null;
 
   const [mobileNav, setMobileNav] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,11 +200,22 @@ export function DashboardShell({
         <div className="px-4 pb-3 pt-5">
           <Link
             href={withRestaurantQuery("/dashboard", restaurantId)}
-            className="type-label-md font-semibold text-[var(--color-ink)] no-underline"
+            className="font-head text-xl font-semibold tracking-tight text-[var(--color-primary)] no-underline"
           >
             KOB
           </Link>
-          <p className="type-caption mt-1 text-[var(--color-muted-medium)]">Your restaurant</p>
+          {activeRestaurant ? (
+            <div className="mt-3 rounded-xl border border-[var(--color-hairline)] bg-[var(--color-surface-cream)]/80 px-3 py-2.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+                Your restaurant
+              </p>
+              <p className="mt-0.5 truncate text-sm font-medium text-[var(--color-ink)]">
+                {activeRestaurant.name}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-[var(--color-muted-medium)]">Add a restaurant to get started</p>
+          )}
           <div className="mt-3">
             <input
               ref={searchRef}
@@ -155,9 +231,21 @@ export function DashboardShell({
             />
           </div>
         </div>
-        <nav className="flex flex-1 flex-col overflow-y-auto px-2 pb-8">
+        <nav className="flex flex-1 flex-col overflow-y-auto px-2 pb-4">
           <NavGroups groups={groups} restaurantId={restaurantId} pathname={pathname} />
         </nav>
+        <div className="mt-auto border-t border-[var(--color-hairline)] p-4">
+          <div className="rounded-xl bg-[#f7f5f2] px-3 py-3">
+            <p className="text-sm font-medium text-[var(--color-ink)]">Invite team</p>
+            <p className="mt-0.5 text-xs text-[var(--color-muted)]">Share access with managers</p>
+            <Link
+              href={withRestaurantQuery("/dashboard/settings", restaurantId)}
+              className="mt-2.5 inline-flex min-h-9 items-center rounded-lg bg-white px-3 text-xs font-semibold text-[var(--color-ink)] no-underline ring-1 ring-[var(--color-hairline)]"
+            >
+              Invite
+            </Link>
+          </div>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -183,7 +271,7 @@ export function DashboardShell({
             <div className="hidden min-w-0 flex-1 lg:block" />
             <DashboardAccountMenu email={userEmail} />
           </div>
-          {restaurants.length > 0 ? (
+          {restaurants.length > 1 ? (
             <div className="flex flex-wrap gap-2">
               {restaurants.map((m) => (
                 <Link
@@ -195,9 +283,7 @@ export function DashboardShell({
                 </Link>
               ))}
             </div>
-          ) : (
-            <p className="type-caption text-[var(--color-muted-medium)]">Add a restaurant to get started.</p>
-          )}
+          ) : null}
         </header>
 
         {mobileNav ? (

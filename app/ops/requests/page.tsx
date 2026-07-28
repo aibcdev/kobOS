@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { ServiceRequestStatus } from "@prisma/client";
 
 import { OpsRequestsPanel } from "@/components/ops/OpsRequestsPanel";
 import { catalogTitle } from "@/lib/credits/catalog";
-import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { prisma } from "@/lib/db/prisma";
-import { isOperatorEmail } from "@/lib/ops/is-operator";
 
 export const metadata: Metadata = {
   title: "Ops · Service tickets · KOB",
@@ -15,15 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function OpsRequestsPage() {
-  const user = await getDashboardPageUser();
-  const row = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { email: true },
-  });
-  if (!isOperatorEmail(row?.email)) {
-    redirect("/dashboard?error=ops_forbidden");
-  }
-
+  // Auth gated by app/ops/layout.tsx
   const [open, delivered] = await Promise.all([
     prisma.serviceRequest.findMany({
       where: {
@@ -56,12 +45,16 @@ export default async function OpsRequestsPage() {
   ]);
 
   return (
-    <div className="mx-auto min-h-screen max-w-4xl bg-[#f9f6f1] px-5 py-10">
-      <p className="text-xs font-semibold tracking-wide text-[#5c5c5c] uppercase">KOB · Internal ops</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#1a1a1a]">Service tickets</h1>
-      <p className="mt-2 max-w-xl text-sm text-[#5c5c5c]">
-        Owner requests land here. Pick up → do the brand work → mark delivered. Same idea as a food
-        order rail.
+    <div className="mx-auto max-w-4xl px-5 py-10">
+      <p className="text-xs font-semibold tracking-wide text-[var(--color-muted-medium)] uppercase">
+        Ticket rail
+      </p>
+      <h1 className="mt-2 font-head text-3xl font-semibold tracking-tight text-[var(--color-ink)]">
+        Service tickets
+      </h1>
+      <p className="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
+        Owner green buttons land here as Requested. Pick up → do the work → mark delivered. A click is
+        never “done” until you ship it.
       </p>
       <div className="mt-8">
         <OpsRequestsPanel

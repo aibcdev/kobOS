@@ -39,7 +39,7 @@ export async function GET(req: Request) {
       ...(status === "all" ? {} : { status }),
     },
     orderBy: [{ impactScore: "desc" }, { createdAt: "desc" }],
-    take: 40,
+    take: status === "PENDING" ? 3 : 40,
   });
 
   return NextResponse.json({ recommendations });

@@ -26,10 +26,10 @@ function statusForWin(win: Win, requests: FixRequest[]): string | null {
       r.notes.toLowerCase().includes(win.title.toLowerCase()),
   );
   if (!match) return null;
-  if (match.status === "DELIVERED") return "Done";
+  if (match.status === "DELIVERED") return "Delivered";
   if (match.status === "IN_PROGRESS") return "In progress";
   if (match.status === "CANCELLED") return null;
-  return "Pending";
+  return "Requested";
 }
 
 /**
@@ -146,15 +146,15 @@ export function AuditRecoveryWins({ restaurantId }: { restaurantId: string }) {
       </p>
       <h2 className="type-title-sm mt-1">Start recovering customers</h2>
       <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-        Tap a fix and we&apos;ll mark it Pending — KOB will handle it for you (manually at first, so it
-        gets done right).
+        Tap a fix and we&apos;ll mark it Requested — KOB handles it for you. A click is never marked
+        done until we deliver.
       </p>
 
       <ol className="mt-6 space-y-4">
         {wins.map((win, i) => {
           const status = statusForWin(win, requests);
-          const pending = status === "Pending" || status === "In progress";
-          const done = status === "Done";
+          const requested = status === "Requested" || status === "In progress";
+          const delivered = status === "Delivered";
           return (
             <li
               key={win.key}
@@ -174,13 +174,13 @@ export function AuditRecoveryWins({ restaurantId }: { restaurantId: string }) {
                   ) : null}
                 </div>
               </div>
-              {done ? (
+              {delivered ? (
                 <span className="shrink-0 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800">
-                  Done
+                  Delivered
                 </span>
-              ) : pending ? (
+              ) : requested ? (
                 <span className="shrink-0 rounded-full bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900">
-                  Pending
+                  {status}
                 </span>
               ) : (
                 <button
