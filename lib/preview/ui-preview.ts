@@ -46,6 +46,7 @@ export function getPreviewRestaurant(): Restaurant {
     subscriptionPlan: "PRO",
     stripeCustomerId: null,
     stripeSubscriptionId: null,
+    trialStartedAt: null,
     vibe: null,
     googleBusinessUrl: null,
     aiPersonality: "BALANCED",
