@@ -78,8 +78,8 @@ export function buildOwnerHeroFallback(
   return {
     revenueHeadline:
       gap >= 20
-        ? "You are likely losing high-intent guests to sharper local rivals online"
-        : "There is measurable booking and discovery leakage versus local peers",
+        ? "Local rivals look sharper online — tighten the highest-impact fixes below"
+        : "There is room to improve booking and discovery versus local peers",
     bookingLeakPercentLow: leak.low,
     bookingLeakPercentHigh: leak.high,
     monthlyRevenueBandLowGbp: revenueBand?.low,

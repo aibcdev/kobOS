@@ -60,7 +60,7 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
       { id: "website", href: "/dashboard/website", label: "Website", icon: "website" },
       { id: "reviews", href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
       { id: "seo", href: "/dashboard/seo", label: "Local SEO", icon: "seo" },
-      { id: "social", href: "/dashboard/content", label: "Social Media", icon: "content" },
+      { id: "social", href: "/dashboard/content", label: "Social", icon: "content" },
     ],
   },
   {
@@ -69,7 +69,7 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
     items: [
       { id: "ordering", href: "/dashboard/ordering", label: "Online Ordering", icon: "ordering" },
       { id: "upsells", href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
-      { id: "loyalty", href: "/dashboard/marketing", label: "Loyalty & recovery", icon: "customers" },
+      { id: "loyalty", href: "/dashboard/marketing", label: "Loyalty", icon: "customers" },
       { id: "email-sms", href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
     ],
   },

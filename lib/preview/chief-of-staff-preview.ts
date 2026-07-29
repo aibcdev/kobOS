@@ -9,7 +9,7 @@ export function getPreviewChiefOfStaffBrief(): TodayBriefPayload {
     generatedAt: new Date().toISOString(),
     summary: {
       revenueHealthLine: "Revenue appears healthy this week.",
-      revenueHeadline: "Guests may be slipping away before they book — your audit flagged perception gaps.",
+      revenueHeadline: "Your audit flagged perception gaps worth fixing before guests book.",
       taskCount: 6,
       totalMinutes: 11,
       revenueOpportunityLow: 320,

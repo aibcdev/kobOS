@@ -115,8 +115,6 @@ export function AuditResultsContent({
     .slice(0, 2);
 
   const oppScore = opportunity.opportunity_score;
-  const lostRevenue = oppScore?.est_lost_revenue ?? null;
-  const customersLost = oppScore?.est_monthly_lost_customers ?? null;
   const maturityScore =
     audit.overallScore > 0
       ? audit.overallScore
@@ -133,9 +131,7 @@ export function AuditResultsContent({
         initialEmail={initialEmail || audit.leadEmail}
         teaser={{
           score: maturityScore ?? undefined,
-          revenueLeakCount: customersLost ?? undefined,
           screenshotUrl: payload.browserbaseScan?.screenshotPublicUrl ?? null,
-          lostRevenueGbp: lostRevenue ?? undefined,
         }}
         onClose={() => {
           if (unlocked) setUnlockOpen(false);

@@ -205,7 +205,8 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
       if (apiKeyTasks.length) aiTasks = apiKeyTasks;
 
       const metaRes = await geminiJsonCompletion({
-        system: "Return JSON only.",
+        system:
+          "Return JSON only. Never invent lost-revenue or lost-customer £ amounts. Prefer actionable fixes over loss framing.",
         user: `For ${ctx.name}: ${holidayLine} Audit: ${ctx.latestLinkedAuditSnapshot.slice(0, 800)}. Return {"revenueHealthLine","needToKnow":[],"suggestions":[]}`,
         temperature: 0.5,
       });
@@ -250,7 +251,9 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
   }
 
   if (ctx.visibilityScore != null && ctx.visibilityScore < 50) {
-    aiMeta.needToKnow.push(`Digital positioning score is ${ctx.visibilityScore}/100 — guests may be choosing competitors online.`);
+    aiMeta.needToKnow.push(
+      `Digital positioning score is ${ctx.visibilityScore}/100 — tighten the highest-impact fixes below.`,
+    );
   }
 
   const merged = mergeTasks(auditTasks, aiTasks);

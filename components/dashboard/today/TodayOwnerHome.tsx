@@ -566,7 +566,6 @@ export function TodayOwnerHome({
   const overall =
     journey?.overallScore ?? report?.stages.find((s) => s.id === "outcome")?.score ?? null;
   const customersHigh = report?.evidence.customersHigh ?? 0;
-  const customersLow = report?.evidence.customersLow ?? 0;
   const headlineCustomers =
     customersHigh > 0
       ? customersHigh
@@ -720,14 +719,8 @@ export function TodayOwnerHome({
                 {openTasks.length > 0
                   ? `Fix ${openTasks.length === 1 ? "this" : `these ${openTasks.length}`} high-impact ${
                       openTasks.length === 1 ? "issue" : "issues"
-                    } to start winning back lost customers.`
+                    } to start winning more local customers.`
                   : "Priorities appear once your journey snapshot finishes."}
-                {customersLow > 0 && customersHigh > 0 ? (
-                  <>
-                    {" "}
-                    Est. ~{customersLow}–{customersHigh} fewer guests / month than you could be getting.
-                  </>
-                ) : null}
               </p>
               {openTasks.length > 0 ? (
                 <p className="text-xs text-[var(--color-muted-medium)]">

@@ -7,15 +7,10 @@ import { AuditLeadFormFields } from "@/components/marketing/audit/AuditLeadFormF
 import { auditModalPanel } from "@/lib/marketing/audit-theme";
 import { onlineHealthLabel } from "@/lib/marketing/audit-grader-phases";
 import { marketingCopy } from "@/lib/marketing/copy";
-import { decodeHtmlEntities } from "@/lib/marketing/decode-html-entities";
 
 export type AuditUnlockTeaser = {
   score?: number | null;
-  leakPercentLow?: number;
-  leakPercentHigh?: number;
-  revenueLeakCount?: number;
   screenshotUrl?: string | null;
-  lostRevenueGbp?: number | null;
 };
 
 function competitorSubtitle(names: string[]) {
@@ -34,7 +29,6 @@ function scoreTeaserLabel(score: number): string {
 
 export function AuditUnlockModal({
   auditId,
-  restaurantName,
   competitorNames = [],
   teaser,
   open,
@@ -54,12 +48,7 @@ export function AuditUnlockModal({
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const displayName = decodeHtmlEntities(restaurantName);
   const score = teaser?.score;
-  const hasLeak =
-    teaser?.leakPercentLow != null &&
-    teaser?.leakPercentHigh != null &&
-    teaser.leakPercentHigh > teaser.leakPercentLow;
 
   useEffect(() => {
     if (!open) return;
@@ -125,9 +114,9 @@ export function AuditUnlockModal({
           {marketingCopy.auditUnlock.modalTitle}
         </h2>
         <p className="mt-2 text-center text-sm leading-relaxed text-[var(--color-muted)]">
-          {teaser?.lostRevenueGbp
-            ? `We estimate ~£${teaser.lostRevenueGbp.toLocaleString("en-GB")}/mo in lost revenue from online gaps at ${displayName}.`
-            : competitorSubtitle(competitorNames)}
+          {competitorNames.length
+            ? competitorSubtitle(competitorNames)
+            : "Enter your email to unlock the full report."}
         </p>
 
         {score != null && Number.isFinite(score) ? (
@@ -136,20 +125,6 @@ export function AuditUnlockModal({
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
               Marketing maturity · {scoreTeaserLabel(score)}
             </p>
-            {teaser?.lostRevenueGbp ? (
-              <p className="mt-2 text-sm font-medium text-[#dc2626]">
-                Est. £{teaser.lostRevenueGbp.toLocaleString("en-GB")}/mo lost
-              </p>
-            ) : hasLeak ? (
-              <p className="mt-2 text-sm font-medium text-[#ea580c]">
-                {teaser!.leakPercentLow}–{teaser!.leakPercentHigh}% booking leak estimated
-              </p>
-            ) : null}
-            {teaser?.revenueLeakCount ? (
-              <p className="mt-1 text-xs text-[var(--color-muted)]">
-                ~{teaser.revenueLeakCount} customers/mo may be choosing competitors
-              </p>
-            ) : null}
           </div>
         ) : null}
 
