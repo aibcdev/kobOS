@@ -6,13 +6,14 @@ import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { loadTodayJourneySnapshot } from "@/lib/dashboard/load-today-journey";
 import {
   getCachedTodayBrief,
-  shellTodayBrief,
 } from "@/lib/chief-of-staff/ensure-today-brief";
+import { shellTodayBriefWithJourney } from "@/lib/dashboard/journey-priorities";
 import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
 import { getPreviewRestaurant, isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
 import { prisma } from "@/lib/db/prisma";
 import { ensureDemoDemandRecommendations } from "@/lib/demand-engine/actions";
 import { discountLabelFromOffer, parseStructuredOffer } from "@/lib/demand-engine/types";
+import { withTimeout } from "@/lib/auth/with-timeout";
 
 export const metadata: Metadata = {
   title: "Today · KOB",
@@ -56,11 +57,7 @@ export default async function DashboardPage({
     return <RestaurantPlacesOnboarding variant="empty" />;
   }
 
-  // Never await Gemini on the login path — cached/shell only, refresh in the client.
-  const cached = await getCachedTodayBrief(restaurantId);
-  const brief = cached ?? shellTodayBrief(restaurant.name, restaurant.aiPersonality);
-  const briefNeedsRefresh = !cached || cached.tasks.length === 0;
-
+  // Journey first — powers priorities without Gemini.
   const journey = await loadTodayJourneySnapshot(
     restaurantId,
     restaurant.name,
@@ -68,7 +65,20 @@ export default async function DashboardPage({
     restaurant.website,
   );
 
-  await ensureDemoDemandRecommendations(restaurantId);
+  // Prefer a cached AI brief; otherwise paint instantly from the linked audit.
+  const cached = await getCachedTodayBrief(restaurantId);
+  const brief =
+    cached && cached.tasks.length > 0
+      ? cached
+      : shellTodayBriefWithJourney(restaurant.name, restaurant.aiPersonality, journey);
+  // Refresh in the client only when we still have no real AI snapshot.
+  const briefNeedsRefresh = !cached || cached.tasks.length === 0;
+
+  try {
+    await withTimeout(ensureDemoDemandRecommendations(restaurantId), 4_000, "demand_demo_timeout");
+  } catch {
+    /* non-blocking */
+  }
   const topDemand = await prisma.demandRecommendation.findFirst({
     where: { restaurantId, status: "PENDING" },
     orderBy: [{ impactScore: "desc" }, { createdAt: "desc" }],

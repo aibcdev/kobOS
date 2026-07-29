@@ -473,14 +473,31 @@ export function TodayOwnerHome({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ restaurantId }),
+        signal: AbortSignal.timeout(25_000),
       });
       if (!res.ok) {
-        setRefreshError("Could not refresh — try again.");
+        setRefreshError("Could not refresh AI brief — showing audit priorities.");
         return;
       }
-      setBrief((await res.json()) as TodayBriefPayload);
+      const next = (await res.json()) as TodayBriefPayload;
+      // Never wipe audit-backed priorities with an empty AI response.
+      if (next.tasks?.length) {
+        setBrief(next);
+      } else if (next.summary) {
+        setBrief((prev) => ({
+          ...prev,
+          summary: {
+            ...prev.summary,
+            ...next.summary,
+            // Keep holiday/tasks if AI omitted them
+            holidayBlock: next.summary.holidayBlock ?? prev.summary.holidayBlock,
+            taskCount: Math.max(next.summary.taskCount, prev.summary.taskCount),
+          },
+          greeting: next.greeting || prev.greeting,
+        }));
+      }
     } catch {
-      setRefreshError("Could not refresh — try again.");
+      setRefreshError("Brief refresh timed out — your audit priorities stay below.");
     } finally {
       setRefreshing(false);
     }
@@ -515,12 +532,13 @@ export function TodayOwnerHome({
         kind: "demand",
       }),
     );
-    const merged = [...demand.slice(0, 1), ...fromBrief];
+    // Audit/journey fixes first (the hardline Today experience), then demand.
+    const merged = [...fromBrief, ...demand.slice(0, 1)];
     const seen = new Set<string>();
     const out: OperatorTaskView[] = [];
     for (const t of merged) {
-      const key = t.kind;
-      if (seen.has(key) && key !== "generic") continue;
+      const key = `${t.kind}:${t.title.slice(0, 40).toLowerCase()}`;
+      if (seen.has(key)) continue;
       seen.add(key);
       out.push(t);
       if (out.length >= 3) break;
@@ -781,7 +799,11 @@ export function TodayOwnerHome({
                 onClick={() => void refreshBrief()}
                 className={`${appBtnSecondary} !min-h-9 shrink-0 !rounded-xl !px-3 !py-1.5 text-xs disabled:opacity-50`}
               >
-                {refreshing ? "Refreshing…" : "Refresh brief"}
+                {refreshing
+                  ? brief.tasks.length > 0
+                    ? "Updating…"
+                    : "Refreshing…"
+                  : "Refresh brief"}
               </button>
             </div>
 

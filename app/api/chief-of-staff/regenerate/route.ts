@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { withTimeout } from "@/lib/auth/with-timeout";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
-import { prisma } from "@/lib/db/prisma";
 
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
 });
+
+/** Cap AI brief generation so the dashboard Refresh button never hangs forever. */
+const REGENERATE_BUDGET_MS = 22_000;
 
 export async function POST(req: Request) {
   const session = await requireApiUser();
@@ -33,10 +36,18 @@ export async function POST(req: Request) {
 
   const { ensureTodayBrief } = await import("@/lib/chief-of-staff/ensure-today-brief");
   try {
-    const payload = await ensureTodayBrief(parsed.data.restaurantId, true);
+    const payload = await withTimeout(
+      ensureTodayBrief(parsed.data.restaurantId, true),
+      REGENERATE_BUDGET_MS,
+      "regenerate_timeout",
+    );
     return NextResponse.json(payload);
   } catch (e) {
     console.error("[chief-of-staff/regenerate]", e);
-    return NextResponse.json({ error: "Regenerate failed" }, { status: 500 });
+    const timedOut = e instanceof Error && e.message === "regenerate_timeout";
+    return NextResponse.json(
+      { error: timedOut ? "Brief refresh timed out" : "Regenerate failed" },
+      { status: timedOut ? 504 : 500 },
+    );
   }
 }

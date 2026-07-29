@@ -2,6 +2,7 @@ import type { AiPersonality, ChiefOfStaffTask, DailyBriefSnapshot } from "@prism
 import type { Prisma } from "@prisma/client";
 import { generateMorningBrief } from "@/lib/chief-of-staff/generate-morning-brief";
 import type { ChiefOfStaffTaskDto, TodayBriefPayload } from "@/lib/chief-of-staff/types";
+import { shellTodayBriefWithJourney } from "@/lib/dashboard/journey-priorities";
 import { prisma } from "@/lib/db/prisma";
 
 function todayUtcDate(): Date {
@@ -62,26 +63,7 @@ export function shellTodayBrief(
   restaurantName: string,
   aiPersonality: AiPersonality = "BALANCED",
 ): TodayBriefPayload {
-  const hour = new Date().getHours();
-  const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const short = restaurantName.split(/\s+/)[0] || restaurantName;
-  return {
-    greeting: `${part}, ${short}.`,
-    aiPersonality,
-    generatedAt: "",
-    summary: {
-      revenueHealthLine: "Preparing your priorities…",
-      revenueHeadline: null,
-      taskCount: 0,
-      totalMinutes: 0,
-      revenueOpportunityLow: null,
-      revenueOpportunityHigh: null,
-      needToKnow: [],
-      suggestions: [],
-      holidayBlock: null,
-    },
-    tasks: [],
-  };
+  return shellTodayBriefWithJourney(restaurantName, aiPersonality, null);
 }
 
 /** DB-only read — never calls Gemini. Used for fast post-login dashboard paint. */
