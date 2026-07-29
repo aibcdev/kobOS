@@ -23,7 +23,7 @@ async function main() {
   const budgetRaw = arg("budget");
   const locationsRaw = arg("locations");
   const plan = buildB2bAuditAdsPlan({
-    dailyBudgetGbp: budgetRaw ? Number(budgetRaw) : 30,
+    dailyBudgetGbp: budgetRaw ? Number(budgetRaw) : 10,
     locations: locationsRaw
       ? locationsRaw.split(",").map((s) => s.trim()).filter(Boolean)
       : ["United Kingdom", "Ireland", "Australia"],

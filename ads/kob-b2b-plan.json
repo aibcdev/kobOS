@@ -1,11 +1,21 @@
 {
-  "campaign": "KOB \u2014 B2B Audit Search",
+  "campaign": "KOB \u2014 B2B Audit Search (2026-07-29b)",
   "landing": "https://trykob.com/go/audit?utm_source=google&utm_medium=cpc&utm_campaign=kob_b2b_audit",
-  "budget_usd": 20,
+  "budget_usd": 15,
   "geos": {
     "United Kingdom": 2826,
     "Ireland": 2372,
-    "Australia": 2036
+    "Australia": 2036,
+    "United States": 2840,
+    "Canada": 2124,
+    "New Zealand": 2554,
+    "South Africa": 2710,
+    "Singapore": 2702,
+    "India": 2356,
+    "Nigeria": 2566,
+    "Kenya": 2404,
+    "Ghana": 2288,
+    "Philippines": 2608
   },
   "negatives": [
     "jobs",
@@ -118,126 +128,6 @@
       ]
     },
     {
-      "name": "Tips & advice",
-      "path1": "audit",
-      "path2": "tips",
-      "headlines": [
-        "How to Grow Your Restaurant",
-        "Restaurant Owner Tips",
-        "Fix Online Presence First",
-        "What Guests Notice First",
-        "Free Tips From Your Audit",
-        "Grow Without an Agency",
-        "1-Minute Visibility Scan",
-        "No Card \u00b7 Free Report",
-        "Practical Owner Advice",
-        "Clear Daily Next Steps",
-        "Website & Google Tips",
-        "Built for Busy Owners",
-        "KOB Free Restaurant Audit",
-        "Skip Generic Marketing Tips",
-        "See Your Real Online Gaps"
-      ],
-      "descriptions": [
-        "Before trying new marketing ideas, see what your restaurant website needs to fix first \u2014 f",
-        "Owner tips that matter: what guests see before they visit. Free scan, no card required.",
-        "Skip generic advice. Get a free audit of your site, Google profile, and reviews in ~1 minu",
-        "Practical growth tips for independents \u2014 start with a free visibility audit on trykob.com."
-      ],
-      "keywords": [
-        {
-          "text": "restaurant tips",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant business tips",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "tips for restaurant owners",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant owner tips",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "how to grow a restaurant",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant growth tips",
-          "matchType": "PHRASE"
-        }
-      ]
-    },
-    {
-      "name": "Restaurant software",
-      "path1": "audit",
-      "path2": "software",
-      "headlines": [
-        "Restaurant Marketing Software",
-        "AI Tools for Restaurants",
-        "Not Another Bloated Stack",
-        "Free Audit Before You Buy",
-        "Growth Software From $49",
-        "Simpler Than Full Platforms",
-        "Website + Google Software",
-        "Daily Owner Co-Pilot",
-        "1-Minute Free Restaurant Scan",
-        "No Card Required",
-        "Approve Changes Yourself",
-        "KOB Growth Software",
-        "Built for Independents",
-        "Credits for Site & SEO",
-        "Cancel Anytime"
-      ],
-      "descriptions": [
-        "Restaurant marketing software designed to grow covers \u2014 start with a free online presence ",
-        "AI-assisted restaurant growth report. See what\u2019s hurting your online presence \u2014 free, no c",
-        "Looking at restaurant software? First see what guests see online. Free website & Google au",
-        "From $49/mo after a free scan. Daily list you approve \u2014 not a week of demos to get started"
-      ],
-      "keywords": [
-        {
-          "text": "restaurant software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant management software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant accounting software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant pos software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant inventory software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "best restaurant software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant software for small business",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant business software",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "ai tools for restaurants",
-          "matchType": "PHRASE"
-        }
-      ]
-    },
-    {
       "name": "Free audit",
       "path1": "free",
       "path2": "audit",
@@ -267,43 +157,43 @@
       "keywords": [
         {
           "text": "restaurant website audit",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "restaurant google business audit",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "restaurant online presence check",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "restaurant seo audit",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "free restaurant seo report",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "free restaurant marketing audit",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "restaurant visibility report",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "audit my restaurant website",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "free restaurant site check",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "restaurant online health score",
-          "matchType": "PHRASE"
+          "matchType": "BROAD"
         },
         {
           "text": "improve google maps restaurant",
@@ -311,100 +201,6 @@
         },
         {
           "text": "local restaurant seo",
-          "matchType": "PHRASE"
-        }
-      ]
-    },
-    {
-      "name": "Owner.com alternative",
-      "path1": "audit",
-      "path2": "vs-owner",
-      "headlines": [
-        "Owner.com Alternative",
-        "Lower Price Than Owner.com",
-        "From $49 \u2014 Not $249",
-        "Skip Owner.com Pricing",
-        "Better Price. Clearer Job.",
-        "Free Scan \u2014 No Demo Wait",
-        "Simpler Than Owner.com",
-        "Owner.com vs KOB",
-        "Daily List Owner.com Lacks",
-        "Cancel Anytime \u00b7 No Lock-In",
-        "Free Audit Before You Pay",
-        "KOB vs Owner.com",
-        "Same Job. Lower Price.",
-        "Approve-Only Growth Tool",
-        "Try Free \u2014 Then Compare"
-      ],
-      "descriptions": [
-        "Owner.com starts ~$249/mo. KOB Flex from $49/mo after a free audit \u2014 same growth job, lowe",
-        "Looking for an Owner.com alternative? Free scan in ~1 min. Daily list you approve. Cancel ",
-        "Better priced than Owner.com for busy independents. Free online health scan \u2014 no card, no ",
-        "Compare after you scan: KOB shows website, Google & review gaps, then a daily list you con"
-      ],
-      "keywords": [
-        {
-          "text": "owner.com",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "owner.com",
-          "matchType": "EXACT"
-        },
-        {
-          "text": "owner com",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "owner com",
-          "matchType": "EXACT"
-        },
-        {
-          "text": "owner restaurant",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "owner restaurant",
-          "matchType": "EXACT"
-        },
-        {
-          "text": "owner app",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "owner app",
-          "matchType": "EXACT"
-        },
-        {
-          "text": "owner.com alternative",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "owner.com alternative",
-          "matchType": "EXACT"
-        },
-        {
-          "text": "owner.com vs",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "cheaper than owner.com",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "owner.com pricing",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "toast website alternative",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "restaurant marketing agency",
-          "matchType": "PHRASE"
-        },
-        {
-          "text": "better than seo agency restaurant",
           "matchType": "PHRASE"
         }
       ]

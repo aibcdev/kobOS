@@ -18,9 +18,9 @@ const LIMIT = Math.max(0, Number(process.env.LIMIT?.trim() || "0") || 0);
 const CONCURRENCY = Math.max(1, Math.min(4, Number(process.env.CONCURRENCY?.trim() || "2") || 2));
 const DRY_RUN = process.env.DRY_RUN?.trim() === "1" || process.env.WRITE?.trim() !== "1";
 const OUT_DIR = "downloads/outbound";
-const JSONL = `${OUT_DIR}/ig-verify-results.jsonl`;
-const REPORT = `${OUT_DIR}/ig-food-audit-report.json`;
-const CLEARED_LOG = `${OUT_DIR}/ig-food-audit-cleared.jsonl`;
+const JSONL = `${OUT_DIR}/${process.env.RESULTS_NAME?.trim() || "ig-verify-results.jsonl"}`;
+const REPORT = `${OUT_DIR}/${process.env.REPORT_NAME?.trim() || "ig-food-audit-report.json"}`;
+const CLEARED_LOG = `${OUT_DIR}/${process.env.CLEARED_NAME?.trim() || "ig-food-audit-cleared.jsonl"}`;
 
 type Target = {
   id: string;
