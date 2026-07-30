@@ -92,6 +92,44 @@ function ActionStatusBadge({ status }: { status: "REQUESTED" | "IN_PROGRESS" | "
   );
 }
 
+function RequestedConfirmModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="fix-requested-title"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-[var(--color-hairline)] bg-white p-6 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p id="fix-requested-title" className="font-head text-xl font-semibold text-[var(--color-ink)]">
+          Request received
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+          Our team has this. You&apos;ll get an update on your dashboard within 48 hours.
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className={`${appBtnPrimary} mt-5 !min-h-11 w-full !rounded-xl text-sm`}
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PriorityRow({
   task,
   restaurantId,
@@ -108,6 +146,7 @@ function PriorityRow({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState(initialStatus);
+  const [showConfirm, setShowConfirm] = useState(false);
   const isDemand = task.kind === "demand" || task.kind === "demand_offer";
 
   async function runAction() {
@@ -147,32 +186,14 @@ function PriorityRow({
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         request?: TodayOpenRequest;
-        upgradeRequired?: boolean;
+        alreadyPending?: boolean;
       };
       if (!res.ok) {
-        if (data.upgradeRequired) {
-          try {
-            const checkout = await fetch("/api/billing/checkout", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ restaurantId, tier: "starter" }),
-            });
-            const checkoutData = (await checkout.json().catch(() => ({}))) as {
-              url?: string;
-              error?: string;
-            };
-            if (checkout.ok && checkoutData.url) {
-              window.location.href = checkoutData.url;
-              return;
-            }
-            setError(checkoutData.error ?? "Start a free trial to request this.");
-            return;
-          } catch {
-            setError("Could not start trial checkout.");
-            return;
-          }
-        }
-        setError(data.error ?? "Could not submit request.");
+        setError(
+          data.error === "upgrade_required"
+            ? "Could not submit request. Try again in a moment."
+            : (data.error ?? "Could not submit request."),
+        );
         return;
       }
       const nextStatus =
@@ -189,6 +210,9 @@ function PriorityRow({
           notes: data.request.notes ?? `fixKey=${fixKey}`,
           status: data.request.status ?? "REQUESTED",
         });
+      }
+      if (nextStatus === "REQUESTED" || data.alreadyPending) {
+        setShowConfirm(true);
       }
     } catch {
       setError("Network error — try again.");
@@ -210,6 +234,7 @@ function PriorityRow({
 
   return (
     <li className="border-t border-[var(--color-hairline)] py-6 first:border-t-0 first:pt-0">
+      <RequestedConfirmModal open={showConfirm} onClose={() => setShowConfirm(false)} />
       <div className="flex flex-wrap items-start gap-3 sm:gap-4">
         <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-surface-warm)] text-[var(--color-muted)]">
           <DashboardNavIconGlyph icon={iconForTask(task)} />

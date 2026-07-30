@@ -1,4 +1,4 @@
-import { ServiceRequestStatus, ServiceRequestType, SubscriptionPlan } from "@prisma/client";
+import { ServiceRequestStatus, ServiceRequestType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -7,9 +7,7 @@ import {
 } from "@/lib/audit/audit-opportunity-from-payload";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { requireApiUser } from "@/lib/auth/api-session";
-import { planMeetsMinimum } from "@/lib/billing/plan-access";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
-import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
 import { prisma } from "@/lib/db/prisma";
 import { notifyOperatorFixRequested } from "@/lib/operator/notify-fix-request";
 
@@ -126,10 +124,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (!planMeetsMinimum(restaurant.subscriptionPlan, SubscriptionPlan.STARTER)) {
-    return jsonUpgradeRequired(SubscriptionPlan.STARTER, restaurant.subscriptionPlan);
-  }
-
+  // Free owners can queue fixes — ops fulfills and marks Delivered (no upgrade gate).
   const open = await prisma.serviceRequest.findFirst({
     where: {
       restaurantId,
@@ -145,7 +140,7 @@ export async function POST(req: Request) {
         ok: true,
         alreadyPending: true,
         request: open,
-        message: "Already pending — our team has this one.",
+        message: "Already requested — our team has this one. You'll get an update within 48 hours.",
       },
       { status: 200 },
     );
@@ -197,7 +192,8 @@ export async function POST(req: Request) {
         createdAt: created.createdAt.toISOString(),
       },
       notified: notify.ok,
-      message: "Pending — we'll handle this for you. You'll see it marked delivered when it's done.",
+      message:
+        "Requested — our team has this. You'll get an update on your dashboard within 48 hours.",
     },
     { status: 201 },
   );
