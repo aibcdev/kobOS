@@ -7,7 +7,8 @@ type Win = {
   key: string;
   title: string;
   detail: string;
-  customersPerMonth: number;
+  /** Null when the audit produced no lost-customer estimate. */
+  customersPerMonth: number | null;
 };
 
 type FixRequest = {
@@ -167,7 +168,7 @@ export function AuditRecoveryWins({ restaurantId }: { restaurantId: string }) {
                 <div className="min-w-0">
                   <p className="font-medium text-[var(--color-ink)]">{win.title}</p>
                   <p className="mt-0.5 text-sm text-[var(--color-muted)]">{win.detail}</p>
-                  {win.customersPerMonth > 0 ? (
+                  {win.customersPerMonth != null && win.customersPerMonth > 0 ? (
                     <p className="mt-1 text-sm font-semibold text-[var(--color-primary)]">
                       +{win.customersPerMonth.toLocaleString("en-GB")} customers / month
                     </p>

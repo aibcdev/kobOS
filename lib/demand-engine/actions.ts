@@ -12,7 +12,7 @@ import {
   buildB2bAuditAdsPlan,
   type B2bAuditAdsPlan,
 } from "@/lib/marketing/google-ads-b2b-audit";
-import { notifyOperatorServiceRequest } from "@/lib/ops/notify-service-request";
+import { notifyOpsAboutServiceRequest } from "@/lib/ops/notify-service-request";
 
 function daysFromNow(days: number) {
   const d = new Date();
@@ -21,7 +21,7 @@ function daysFromNow(days: number) {
 }
 
 /** Ensure the Demand inbox has up to 3 recommendations (Phase 2 generator). */
-export async function ensureDemoDemandRecommendations(restaurantId: string) {
+export async function ensureDemandRecommendations(restaurantId: string) {
   const result = await generateDailyRecommendationsForRestaurant(restaurantId);
   return { seeded: result.created };
 }
@@ -158,15 +158,9 @@ export async function approveDemandRecommendation(
     return { campaign, liveOffer, recommendation: updated, request };
   });
 
-  const notify = await notifyOperatorServiceRequest({
-    restaurantName: restaurant.name,
-    restaurantId,
-    ownerEmail: ownerEmail ?? null,
-    title: result.request.title,
-    type: ServiceRequestType.OTHER,
-    notes: result.request.notes,
-    creditCost: 0,
-    requestId: result.request.id,
+  const notify = await notifyOpsAboutServiceRequest(result.request.id, {
+    requestedByEmail: ownerEmail ?? null,
+    source: "Demand offer approval",
   });
 
   return { ok: true as const, alreadyPending: false as const, notified: notify.ok, ...result };

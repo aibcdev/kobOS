@@ -8,7 +8,8 @@ export type BrandAssetWire = {
   id: string;
   type: string;
   url: string | null;
-  qualityScore: number;
+  /** Null unless a scan actually scored this asset. */
+  qualityScore: number | null;
 };
 
 export type BrandBreakdown = {
@@ -230,11 +231,13 @@ export function BrandVisualsWireframe({
                     Thumbnail
                   </div>
                 )}
-                <span
-                  className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreColor(a.qualityScore)} bg-white/90`}
-                >
-                  {a.qualityScore}
-                </span>
+                {a.qualityScore != null ? (
+                  <span
+                    className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreColor(a.qualityScore)} bg-white/90`}
+                  >
+                    {a.qualityScore}
+                  </span>
+                ) : null}
               </div>
               <div className="p-4">
                 <p className="type-caption text-[var(--color-muted-medium)]">{a.type.replace(/_/g, " ")}</p>
@@ -386,7 +389,7 @@ export function BrandVisualsWireframe({
 }
 
 const PLACEHOLDER_ASSETS: BrandAssetWire[] = [
-  { id: "p1", type: "FOOD_PHOTO", url: null, qualityScore: 58 },
-  { id: "p2", type: "FOOD_PHOTO", url: null, qualityScore: 64 },
-  { id: "p3", type: "BRANDING", url: null, qualityScore: 52 },
+  { id: "p1", type: "FOOD_PHOTO", url: null, qualityScore: null },
+  { id: "p2", type: "FOOD_PHOTO", url: null, qualityScore: null },
+  { id: "p3", type: "BRANDING", url: null, qualityScore: null },
 ];

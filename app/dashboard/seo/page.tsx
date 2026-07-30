@@ -7,8 +7,6 @@ import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { AiEraContentBriefPanel } from "@/components/dashboard/seo/AiEraContentBriefPanel";
 import { SeoKeywordTools } from "@/components/dashboard/seo/SeoKeywordTools";
 import { prisma } from "@/lib/db/prisma";
-import { SubscriptionPlan } from "@prisma/client";
-import { planMeetsMinimum } from "@/lib/billing/plan-access";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
@@ -31,8 +29,6 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
     take: 40,
   });
 
-  const canRefresh = planMeetsMinimum(restaurant.subscriptionPlan, SubscriptionPlan.STARTER);
-
   return (
     <div className="mx-auto max-w-4xl px-[var(--spacing-md)] py-10">
       <h1 className="type-title-md">SEO &amp; visibility</h1>
@@ -43,21 +39,22 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
           No keywords yet. Add your first keyword below (free tier: up to 3).
         </p>
       ) : (
-        <ul className="mt-8 divide-y divide-[var(--color-hairline)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)]">
-          {keywords.map((k) => (
-            <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-              <span className="font-medium text-[var(--color-ink)]">{k.keyword}</span>
-              <span className="type-caption text-[var(--color-muted-medium)]">
-                {k.ranking != null ? `Rank ~${k.ranking}` : "Rank —"}
-                {k.searchVolume != null ? ` · vol ${k.searchVolume}` : ""}
-                {k.opportunityScore != null ? ` · opp ${Math.round(k.opportunityScore)}` : ""}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="mt-8 divide-y divide-[var(--color-hairline)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-soft)]">
+            {keywords.map((k) => (
+              <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <span className="font-medium text-[var(--color-ink)]">{k.keyword}</span>
+                <span className="type-caption text-[var(--color-muted-medium)]">Rank —</span>
+              </li>
+            ))}
+          </ul>
+          <p className="type-caption mt-3 text-[var(--color-muted-medium)]">
+            Positions stay blank until live rank tracking is connected.
+          </p>
+        </>
       )}
 
-      <SeoKeywordTools restaurantId={restaurantId} canRefresh={canRefresh} />
+      <SeoKeywordTools restaurantId={restaurantId} />
       <AiEraContentBriefPanel restaurantId={restaurantId} />
     </div>
   );

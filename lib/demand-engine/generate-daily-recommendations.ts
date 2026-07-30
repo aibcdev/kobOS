@@ -17,10 +17,8 @@ function daysFromNow(days: number) {
 type Candidate = {
   title: string;
   reason: string;
-  confidence: number;
+  /** Internal ordering weight only — never shown to owners as a measured figure. */
   impactScore: number;
-  estimatedExtraCustomers: number;
-  estimatedExtraRevenue: number;
   templateKey: string;
   offer: StructuredOffer;
 };
@@ -42,11 +40,8 @@ function buildCandidates(input: {
   if (weekday === 2 || weekday === 3) {
     out.push({
       title: "Free dessert with any main · Tue–Wed 5–7pm",
-      reason: `Tuesdays and Wednesdays 5–7pm are typically your quietest window in ${city}. A simple sweetener usually lifts covers without training the brand.`,
-      confidence: 82,
+      reason: `A midweek early-evening idea for ${name} — a sweetener that lifts covers without discounting the main. Change the window if yours is different.`,
       impactScore: 80,
-      estimatedExtraCustomers: 12,
-      estimatedExtraRevenue: 180,
       templateKey: "quiet_midweek",
       offer: {
         headline: "Free dessert with any main",
@@ -65,11 +60,8 @@ function buildCandidates(input: {
   if (weekday >= 1 && weekday <= 5) {
     out.push({
       title: "£12 lunch deal · Mon–Fri 12–3pm",
-      reason: `Nearby workers need a clear weekday lunch. A fixed deal fills the quiet midday window for ${cuisine} spots in ${city}.`,
-      confidence: 74,
+      reason: `A fixed weekday lunch price gives nearby workers an easy reason to pick a ${cuisine} spot in ${city}. Adjust the price before you approve.`,
       impactScore: 68,
-      estimatedExtraCustomers: 16,
-      estimatedExtraRevenue: 200,
       templateKey: "lunch_special",
       offer: {
         headline: "£12 lunch deal",
@@ -89,11 +81,8 @@ function buildCandidates(input: {
   if (rainyHint || weekday === 0 || weekday === 6) {
     out.push({
       title: "Rainy-day free side",
-      reason: "Wet weather and weekends often lift early dinner interest — reward guests who still come out.",
-      confidence: 70,
+      reason: "A weather-led idea: reward guests who still come out when it's wet. We don't read live weather yet — you choose the days.",
       impactScore: 62,
-      estimatedExtraCustomers: 10,
-      estimatedExtraRevenue: 140,
       templateKey: "rainy_day",
       offer: {
         headline: "Rainy day: free side",
@@ -113,11 +102,8 @@ function buildCandidates(input: {
   if (out.length === 0) {
     out.push({
       title: "Quiet evening boost · 5–7pm",
-      reason: `Early evenings are often soft for ${cuisine} spots in ${city}. A short, clear offer fills empty covers before the late rush.`,
-      confidence: 72,
+      reason: `A short, clear offer for the pre-rush hour at ${name} — one of the softer windows for most ${cuisine} spots in ${city}.`,
       impactScore: 70,
-      estimatedExtraCustomers: 11,
-      estimatedExtraRevenue: 160,
       templateKey: "quiet_evening",
       offer: {
         headline: "Early bird: free soft drink",
@@ -194,10 +180,7 @@ export async function generateDailyRecommendationsForRestaurant(restaurantId: st
       restaurantId,
       title: d.title,
       reason: d.reason,
-      confidence: d.confidence,
       impactScore: d.impactScore,
-      estimatedExtraCustomers: d.estimatedExtraCustomers,
-      estimatedExtraRevenue: d.estimatedExtraRevenue,
       templateKey: d.templateKey,
       offer: d.offer,
       expiresAt: daysFromNow(7),

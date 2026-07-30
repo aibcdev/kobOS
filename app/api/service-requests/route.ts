@@ -8,7 +8,7 @@ import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
 import { ensureMonthlyCredits, spendCredits } from "@/lib/credits/balance";
 import { catalogItem, SERVICE_CATALOG } from "@/lib/credits/catalog";
 import { prisma } from "@/lib/db/prisma";
-import { notifyOperatorServiceRequest } from "@/lib/ops/notify-service-request";
+import { notifyOpsAboutServiceRequest } from "@/lib/ops/notify-service-request";
 
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
@@ -133,28 +133,17 @@ export async function POST(req: Request) {
     where: { id: session.userId },
     select: { email: true },
   });
-  const linkedAudit = await prisma.visibilityAudit.findFirst({
-    where: { restaurantId: parsed.data.restaurantId },
-    select: { id: true, slug: true },
-    orderBy: { createdAt: "desc" },
-  });
 
-  void notifyOperatorServiceRequest({
-    restaurantName: restaurant.name,
-    restaurantId: restaurant.id,
-    ownerEmail: owner?.email ?? null,
-    title: item.title,
-    type: item.type,
-    notes: parsed.data.notes,
-    creditCost: item.creditCost,
-    requestId: created.id,
-    auditId: linkedAudit?.slug || linkedAudit?.id || null,
-  }).catch((e) => console.error("[service-requests] notify", e));
+  const notified = await notifyOpsAboutServiceRequest(created.id, {
+    requestedByEmail: owner?.email ?? null,
+    source: "Service catalog",
+  });
 
   return NextResponse.json(
     {
       ok: true,
       request: created,
+      notified: notified.ok,
       creditBalance: spent.balanceAfter,
       message: "Requested. Our team will pick this up — you'll see status update when work starts or ships.",
     },

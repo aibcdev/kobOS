@@ -10,7 +10,7 @@ export type OverviewMetrics = {
   conversionsThisWeek: number;
   visibilityScore: number | null;
   visibilityHint: string;
-  /** Latest DailyScan or heuristic from food photo count. */
+  /** Latest DailyScan only — null when nothing has actually been scanned. */
   visualHealthScore: number | null;
   visualHealthHint: string;
   reviewsThisWeek: number;
@@ -27,7 +27,7 @@ export async function getOverviewMetrics(restaurantId: string): Promise<Overview
   const prevPeriodStart = new Date(thisPeriodStart);
   prevPeriodStart.setUTCDate(prevPeriodStart.getUTCDate() - 7);
 
-  const [thisWeek, prevWeek, conversions, kw, latestScan, reviewAgg, foodPhotoCount] = await Promise.all([
+  const [thisWeek, prevWeek, conversions, latestAudit, latestScan, reviewAgg, foodPhotoCount] = await Promise.all([
     prisma.websiteEvent.count({
       where: { restaurantId, createdAt: { gte: thisPeriodStart } },
     }),
@@ -44,10 +44,10 @@ export async function getOverviewMetrics(restaurantId: string): Promise<Overview
         createdAt: { gte: thisPeriodStart },
       },
     }),
-    prisma.keyword.aggregate({
+    prisma.visibilityAudit.findFirst({
       where: { restaurantId },
-      _avg: { opportunityScore: true, ranking: true },
-      _count: { id: true },
+      orderBy: { updatedAt: "desc" },
+      select: { overallScore: true },
     }),
     prisma.dailyScan.findFirst({
       where: { restaurantId },
@@ -64,33 +64,21 @@ export async function getOverviewMetrics(restaurantId: string): Promise<Overview
     }),
   ]);
 
-  let trafficChangePct: number | null = null;
-  if (prevWeek === 0 && thisWeek === 0) trafficChangePct = null;
-  else if (prevWeek === 0) trafficChangePct = thisWeek > 0 ? 100 : 0;
-  else trafficChangePct = Math.round(((thisWeek - prevWeek) / prevWeek) * 100);
+  // A jump from a zero baseline isn't a percentage change — show the raw counts instead.
+  const trafficChangePct =
+    prevWeek === 0 ? null : Math.round(((thisWeek - prevWeek) / prevWeek) * 100);
 
-  let visibilityScore: number | null = null;
-  let visibilityHint = "Add keywords or run the public audit.";
-  if (kw._count.id > 0 && kw._avg.opportunityScore != null) {
-    const raw = kw._avg.opportunityScore;
-    visibilityScore = Math.min(100, Math.max(0, Math.round(raw <= 1 ? raw * 100 : raw)));
-    visibilityHint = `${kw._count.id} tracked keywords`;
-  } else if (kw._count.id > 0) {
-    const r = kw._avg.ranking;
-    if (r != null) {
-      visibilityScore = Math.min(100, Math.max(20, 100 - Math.min(80, Math.round(r / 2))));
-      visibilityHint = "Estimated from average rank";
-    }
-  }
+  const visibilityScore = latestAudit?.overallScore ?? null;
+  const visibilityHint =
+    visibilityScore != null ? "From your latest audit" : "Run an audit to score your visibility.";
 
-  let visualHealthScore: number | null = latestScan?.visualHealthScore ?? null;
-  let visualHealthHint = latestScan?.visualHealthScore != null ? "From last Daily Scan" : "Heuristic from food assets on file";
-  if (visualHealthScore == null) {
-    visualHealthScore = Math.min(100, 48 + Math.min(40, foodPhotoCount * 6));
-    if (foodPhotoCount === 0) {
-      visualHealthHint = "Add food photos in Brand — stronger visual signal for guests";
-    }
-  }
+  const visualHealthScore = latestScan?.visualHealthScore ?? null;
+  const visualHealthHint =
+    visualHealthScore != null
+      ? "From last Daily Scan"
+      : foodPhotoCount === 0
+        ? "Add food photos in Brand — stronger visual signal for guests"
+        : "Not scanned yet";
 
   const reviewsThisWeek = reviewAgg._count.id;
   const reviewsAvgThisWeek =

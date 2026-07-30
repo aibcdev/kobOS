@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { prisma } from "@/lib/db/prisma";
-import { ensureDemoDemandRecommendations } from "@/lib/demand-engine/actions";
+import { ensureDemandRecommendations } from "@/lib/demand-engine/actions";
 
 const querySchema = z.object({
   restaurantId: z.string().min(12),
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await ensureDemoDemandRecommendations(parsed.data.restaurantId);
+  await ensureDemandRecommendations(parsed.data.restaurantId);
 
   const status = parsed.data.status ?? "PENDING";
   const recommendations = await prisma.demandRecommendation.findMany({

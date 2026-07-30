@@ -113,26 +113,18 @@ export function DemandRecommendedPanel({
                 <h2 className="mt-1 text-lg font-semibold text-[var(--color-ink)]">{rec.title}</h2>
                 <p className="mt-1 text-sm font-medium text-[var(--color-forest-mid)]">{label}</p>
               </div>
-              <div className="text-right text-xs text-[var(--color-muted)]">
-                <p>Confidence {rec.confidence}%</p>
-                <p>Impact {rec.impactScore}</p>
-              </div>
             </div>
 
             <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">{rec.reason}</p>
 
-            <div className="mt-4 flex flex-wrap gap-4 text-sm">
-              <div>
-                <p className="text-xs text-[var(--color-muted-medium)]">Est. extra customers</p>
-                <p className="font-semibold text-[var(--color-ink)]">+{rec.estimatedExtraCustomers}</p>
-              </div>
-              <div>
-                <p className="text-xs text-[var(--color-muted-medium)]">Est. extra revenue</p>
-                <p className="font-semibold text-[var(--color-ink)]">
-                  £{rec.estimatedExtraRevenue.toLocaleString()}
-                </p>
-              </div>
-            </div>
+            {offer?.conditions ? (
+              <p className="mt-4 text-sm text-[var(--color-muted)]">
+                <span className="text-xs text-[var(--color-muted-medium)]">When it runs · </span>
+                <span className="font-semibold text-[var(--color-ink)]">
+                  {String(offer.conditions)}
+                </span>
+              </p>
+            ) : null}
 
             <div className="mt-5 flex flex-wrap gap-2">
               {requested ? (

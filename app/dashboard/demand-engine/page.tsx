@@ -10,7 +10,7 @@ import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { prisma } from "@/lib/db/prisma";
 import {
-  ensureDemoDemandRecommendations,
+  ensureDemandRecommendations,
   getDemandPerformanceLast30Days,
 } from "@/lib/demand-engine/actions";
 import { parseStructuredOffer } from "@/lib/demand-engine/types";
@@ -54,7 +54,7 @@ export default async function DemandPage({
   const { restaurantId, restaurant } = await getActiveRestaurantContext(userId, sp.r);
   if (!restaurantId || !restaurant) return <DashboardEmptyRestaurant />;
 
-  await ensureDemoDemandRecommendations(restaurantId);
+  await ensureDemandRecommendations(restaurantId);
 
   const [recs, live, performance] = await Promise.all([
     prisma.demandRecommendation.findMany({

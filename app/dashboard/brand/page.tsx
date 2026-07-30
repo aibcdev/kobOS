@@ -13,12 +13,13 @@ export const metadata: Metadata = {
   description: "Branding scanner, food photography briefs, and video concepts.",
 };
 
-function qualityFromMetadata(metadata: Prisma.JsonValue): number {
+/** Only a recorded quality score — an unscored asset shows no badge. */
+function qualityFromMetadata(metadata: Prisma.JsonValue): number | null {
   if (metadata && typeof metadata === "object" && !Array.isArray(metadata) && "quality" in metadata) {
     const q = (metadata as { quality: unknown }).quality;
     if (typeof q === "number" && Number.isFinite(q)) return Math.min(100, Math.max(0, Math.round(q)));
   }
-  return 62;
+  return null;
 }
 
 function clampScore(n: number) {

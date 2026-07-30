@@ -32,22 +32,13 @@ export type DemandInboxLive = {
   channels: string[];
 };
 
-function confidenceLabel(n: number): "High" | "Medium" | "Low" {
-  if (n >= 75) return "High";
-  if (n >= 55) return "Medium";
-  return "Low";
-}
-
-function customerRange(n: number): string {
-  if (n <= 0) return "—";
-  const low = Math.max(1, Math.round(n * 0.65));
-  return `~${low}–${n}`;
-}
-
-function revenueRange(n: number): string {
-  if (n <= 0) return "—";
-  const low = Math.max(10, Math.round(n * 0.65));
-  return `£${low.toLocaleString()}–${n.toLocaleString()}`;
+/** What the offer actually is, straight from the offer itself — no projections. */
+function offerDetail(rec: DemandInboxRec): { what: string; when: string } {
+  const offer = (rec.offer ?? {}) as StructuredOffer;
+  return {
+    what: String(offer.discountLabel || offer.headline || rec.title),
+    when: String(offer.conditions || "You set the timing before we publish"),
+  };
 }
 
 function offerLabel(rec: DemandInboxRec): string {
@@ -181,8 +172,8 @@ export function DemandInbox({
 
         {recs.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-[var(--color-hairline)] bg-white px-4 py-5 text-sm text-[var(--color-muted)]">
-            Nothing to approve right now. KOB checks quiet times, weather, and what&apos;s worked
-            before. New ideas show up here when they&apos;re worth your time.
+            Nothing to approve right now. New offer ideas appear here — you approve before anything
+            is published.
           </p>
         ) : (
           <div className="mt-3 space-y-4">
@@ -196,39 +187,34 @@ export function DemandInbox({
                   className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 sm:p-6"
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
-                    Quiet window
+                    Suggested offer
                   </p>
                   <h3 className="mt-1 font-head text-xl font-semibold text-[var(--color-ink)]">
                     {label}
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-                    <span className="font-medium text-[var(--color-ink)]">Why now · </span>
+                    <span className="font-medium text-[var(--color-ink)]">The idea · </span>
                     {rec.reason}
                   </p>
 
-                  <dl className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                  <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                     <div>
-                      <dt className="text-[11px] text-[var(--color-muted-medium)]">Extra customers</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-[var(--color-ink)]">
-                        {customerRange(rec.estimatedExtraCustomers)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[11px] text-[var(--color-muted-medium)]">Extra revenue</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-[var(--color-ink)]">
-                        {revenueRange(rec.estimatedExtraRevenue)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[11px] text-[var(--color-muted-medium)]">Confidence</dt>
+                      <dt className="text-[11px] text-[var(--color-muted-medium)]">Guests get</dt>
                       <dd className="mt-0.5 font-semibold text-[var(--color-ink)]">
-                        {confidenceLabel(rec.confidence)}
+                        {offerDetail(rec).what}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] text-[var(--color-muted-medium)]">When it runs</dt>
+                      <dd className="mt-0.5 font-semibold text-[var(--color-ink)]">
+                        {offerDetail(rec).when}
                       </dd>
                     </div>
                   </dl>
 
                   <p className="mt-3 text-xs text-[var(--color-muted-medium)]">
-                    We&apos;ll publish · Website · Google post
+                    Approve and our team publishes it to your website and Google profile. We&apos;ll
+                    report what it actually brought in — we don&apos;t forecast it up front.
                   </p>
 
                   <div className="mt-5 flex flex-wrap items-center gap-4">
@@ -261,8 +247,7 @@ export function DemandInbox({
               );
             })}
             <p className="text-sm text-[var(--color-muted-medium)]">
-              No more recommendations right now. We&apos;ll add new ones when quiet periods or weather
-              shift.
+              Ideas to start from — edit the timing or the offer with us before we publish.
             </p>
           </div>
         )}

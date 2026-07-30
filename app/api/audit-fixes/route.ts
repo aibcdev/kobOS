@@ -9,7 +9,7 @@ import { parseAuditPayload } from "@/lib/audit/types";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { prisma } from "@/lib/db/prisma";
-import { notifyOperatorFixRequested } from "@/lib/operator/notify-fix-request";
+import { notifyOpsAboutServiceRequest } from "@/lib/ops/notify-service-request";
 
 const postSchema = z.object({
   restaurantId: z.string().min(12),
@@ -63,7 +63,12 @@ export async function GET(req: Request) {
     take: 20,
   });
 
-  let wins: Array<{ key: string; title: string; detail: string; customersPerMonth: number }> = [];
+  let wins: Array<{
+    key: string;
+    title: string;
+    detail: string;
+    customersPerMonth: number | null;
+  }> = [];
   if (audit) {
     const payload = parseAuditPayload(audit.resultPayload);
     if (payload) {
@@ -76,11 +81,13 @@ export async function GET(req: Request) {
           }),
         payload,
       );
+      // Per-fix impact is a share of the modelled lost customers — no estimate, no number.
+      const lost = opportunity.opportunity_score?.est_monthly_lost_customers ?? 0;
       wins = opportunity.topFixes.slice(0, 3).map((f) => ({
         key: fixKeyFromTitle(f.title),
         title: f.title,
         detail: f.detail,
-        customersPerMonth: f.customersPerMonth,
+        customersPerMonth: lost > 0 ? f.customersPerMonth : null,
       }));
     }
   }
@@ -171,14 +178,9 @@ export async function POST(req: Request) {
     select: { email: true },
   });
 
-  const notify = await notifyOperatorFixRequested({
-    restaurantName: restaurant.name,
-    restaurantId,
-    ownerEmail: user?.email ?? null,
-    fixTitle: title,
-    fixDetail: detail,
-    auditId: auditId ?? null,
-    requestId: created.id,
+  const notify = await notifyOpsAboutServiceRequest(created.id, {
+    requestedByEmail: user?.email ?? null,
+    source: "Today priorities",
   });
 
   return NextResponse.json(

@@ -11,7 +11,7 @@ import { shellTodayBriefWithJourney } from "@/lib/dashboard/journey-priorities";
 import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
 import { getPreviewRestaurant, isUiPreviewEnabled, PREVIEW_RESTAURANT_ID } from "@/lib/preview/ui-preview";
 import { prisma } from "@/lib/db/prisma";
-import { ensureDemoDemandRecommendations } from "@/lib/demand-engine/actions";
+import { ensureDemandRecommendations } from "@/lib/demand-engine/actions";
 import { discountLabelFromOffer, parseStructuredOffer } from "@/lib/demand-engine/types";
 import { withTimeout } from "@/lib/auth/with-timeout";
 
@@ -71,11 +71,12 @@ export default async function DashboardPage({
     cached && cached.tasks.length > 0
       ? cached
       : shellTodayBriefWithJourney(restaurant.name, restaurant.aiPersonality, journey);
-  // Refresh in the client only when we still have no real AI snapshot.
-  const briefNeedsRefresh = !cached || cached.tasks.length === 0;
+  // Refresh in the client only when we have neither an AI snapshot nor audit fixes to show.
+  const briefNeedsRefresh =
+    (!cached || cached.tasks.length === 0) && (journey?.topFixes.length ?? 0) === 0;
 
   try {
-    await withTimeout(ensureDemoDemandRecommendations(restaurantId), 4_000, "demand_demo_timeout");
+    await withTimeout(ensureDemandRecommendations(restaurantId), 4_000, "demand_recs_timeout");
   } catch {
     /* non-blocking */
   }
@@ -92,7 +93,7 @@ export default async function DashboardPage({
             if (offer) return discountLabelFromOffer(offer);
             return topDemand.title;
           })(),
-          impactLabel: "Quiet window · highest ROI",
+          impactLabel: "Suggested offer · you approve before anything runs",
         },
       ]
     : [];

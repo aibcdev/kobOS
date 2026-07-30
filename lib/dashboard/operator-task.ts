@@ -104,7 +104,12 @@ const TEMPLATES: Record<
   },
 };
 
-/** Turn analytical / vague task titles into operator actions. */
+/**
+ * Turn analytical / vague task titles into operator actions.
+ *
+ * `customersPerMonth` is only ever what the audit itself estimated — pass null and
+ * the row shows no number rather than an invented one.
+ */
 export function toOperatorTask(input: {
   id: string;
   title: string;
@@ -112,7 +117,9 @@ export function toOperatorTask(input: {
   impactLabel?: string | null;
   category: string;
   estimatedMinutes?: number;
-  revenueHighGbp?: number | null;
+  customersPerMonth?: number | null;
+  /** Keep the audit's own wording instead of the plain-English template. */
+  verbatim?: boolean;
   kind?: "task" | "demand";
 }): OperatorTaskView {
   const kind = classify(input.title, input.category, input.kind);
@@ -131,6 +138,14 @@ export function toOperatorTask(input: {
         }
       : { ...TEMPLATES[kind] };
 
+  if (input.verbatim) {
+    base.title = input.title.trim() || base.title;
+  }
+  // The audit's own explanation beats generic template copy.
+  if (input.detail?.trim()) {
+    base.why = input.detail.trim();
+  }
+
   // Prefer a concrete demand title when we have one.
   if ((kind === "demand" || kind === "demand_offer") && input.title.trim()) {
     const cleaned = input.title.replace(/^Demand\s*[—–-]\s*/i, "").trim();
@@ -140,19 +155,7 @@ export function toOperatorTask(input: {
   }
 
   const customersDelta =
-    input.revenueHighGbp != null && input.revenueHighGbp > 0
-      ? Math.max(3, Math.round(input.revenueHighGbp / 18))
-      : kind === "fix_cta"
-        ? 29
-        : kind === "reply_reviews"
-          ? 18
-          : kind === "add_photos"
-            ? 12
-            : kind === "gbp_basics" || kind === "website"
-              ? 15
-              : kind === "demand" || kind === "demand_offer"
-                ? 10
-                : null;
+    input.customersPerMonth != null && input.customersPerMonth > 0 ? input.customersPerMonth : null;
 
   return {
     id: input.id,

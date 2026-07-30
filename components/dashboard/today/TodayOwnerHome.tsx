@@ -253,22 +253,33 @@ function PriorityRow({
   );
 }
 
-function PotentialRecoveredBar({ recovered, total }: { recovered: number; total: number }) {
+function ProgressBar({
+  label,
+  value,
+  total,
+  valueLabel,
+  hint,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  valueLabel: React.ReactNode;
+  hint: string;
+}) {
   const safeTotal = Math.max(total, 1);
-  const pct = Math.max(0, Math.min(100, Math.round((recovered / safeTotal) * 100)));
+  const pct = Math.max(0, Math.min(100, Math.round((value / safeTotal) * 100)));
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted-medium)]">
-            Potential recovered
+            {label}
           </p>
           <p className="mt-1 font-head text-xl font-semibold tabular-nums text-[var(--color-ink)]">
-            +{recovered}{" "}
-            <span className="font-medium text-[var(--color-muted)]">/ +{total} customers</span>
+            {valueLabel}
           </p>
         </div>
-        <p className="text-sm text-[var(--color-muted)]">Complete today&apos;s fixes.</p>
+        <p className="text-sm text-[var(--color-muted)]">{hint}</p>
       </div>
       <div
         className="mt-3 h-2.5 overflow-hidden rounded-full bg-[var(--color-muted-faint)]"
@@ -276,7 +287,7 @@ function PotentialRecoveredBar({ recovered, total }: { recovered: number; total:
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="Potential customers recovered"
+        aria-label={label}
       >
         <div
           className="h-full rounded-full bg-[var(--color-primary)] transition-[width] duration-500"
@@ -353,6 +364,19 @@ export function TodayOwnerHome({
   }, [briefNeedsRefresh, previewMode, refreshBrief]);
 
   const openTasks = useMemo(() => {
+    // The audit's own fixes come first: same wording and same customer numbers the
+    // owner already saw in their report.
+    const fromAudit = (journey?.topFixes ?? []).map((f, i) =>
+      toOperatorTask({
+        id: `audit-fix-${i + 1}`,
+        title: f.title,
+        detail: f.detail,
+        category: "",
+        customersPerMonth: f.customersPerMonth,
+        verbatim: true,
+        kind: "task",
+      }),
+    );
     const fromBrief = brief.tasks
       .filter((t) => t.status === "PENDING")
       .map((t) =>
@@ -363,7 +387,6 @@ export function TodayOwnerHome({
           impactLabel: t.impactLabel,
           category: t.category,
           estimatedMinutes: t.estimatedMinutes,
-          revenueHighGbp: t.revenueHighGbp,
           kind: "task",
         }),
       );
@@ -376,7 +399,7 @@ export function TodayOwnerHome({
         kind: "demand",
       }),
     );
-    const merged = [...fromBrief, ...demand.slice(0, 1)];
+    const merged = [...fromAudit, ...fromBrief, ...demand.slice(0, 1)];
     const seen = new Set<string>();
     const out: OperatorTaskView[] = [];
     for (const t of merged) {
@@ -387,16 +410,19 @@ export function TodayOwnerHome({
       if (out.length >= 3) break;
     }
     return out;
-  }, [brief.tasks, demandHints]);
+  }, [brief.tasks, demandHints, journey?.topFixes]);
 
   const report = journey?.report ?? null;
   const overall =
     journey?.overallScore ?? report?.stages.find((s) => s.id === "outcome")?.score ?? null;
-  const customersHigh = report?.evidence.customersHigh ?? 0;
-  const headlineCustomers =
-    customersHigh > 0
-      ? customersHigh
-      : openTasks.reduce((s, t) => s + (t.customersDelta ?? 0), 0) || 69;
+  // Only the audit's modelled figure — never a stand-in when it wasn't estimated.
+  const headlineCustomers = journey?.estMonthlyLostCustomers ?? null;
+
+  const requestedCount = useMemo(
+    () =>
+      openTasks.filter((task) => requestStatusForTask(task, openRequests) !== null).length,
+    [openTasks, openRequests],
+  );
 
   const recovered = useMemo(() => {
     let sum = 0;
@@ -433,15 +459,35 @@ export function TodayOwnerHome({
           {greet}
         </p>
         <h1 className="mt-6 font-head text-3xl font-semibold leading-[1.15] tracking-tight text-[var(--color-ink)] sm:text-4xl">
-          You could recover
-          <br />
-          <span className="text-[var(--color-primary)]">+{headlineCustomers} customers</span> every
-          month
+          {headlineCustomers != null ? (
+            <>
+              You could recover
+              <br />
+              <span className="text-[var(--color-primary)]">
+                +{headlineCustomers} customers
+              </span>{" "}
+              every month
+            </>
+          ) : openTasks.length > 0 ? (
+            <>
+              Here&apos;s what&apos;s
+              <br />
+              <span className="text-[var(--color-primary)]">costing you guests</span>
+            </>
+          ) : (
+            <>
+              Your dashboard is
+              <br />
+              <span className="text-[var(--color-primary)]">getting set up</span>
+            </>
+          )}
         </h1>
         <p className="mt-4 text-base text-[var(--color-muted)]">
-          {openTasks.length > 0
-            ? "We've found the 3 biggest things holding you back."
-            : "Priorities appear once your journey snapshot finishes."}
+          {openTasks.length === 0
+            ? "Priorities appear once your audit finishes."
+            : headlineCustomers != null
+              ? `Estimated from your audit. Here ${openTasks.length === 1 ? "is the biggest thing" : `are the ${openTasks.length} biggest things`} holding you back.`
+              : `The ${openTasks.length === 1 ? "fix" : `${openTasks.length} fixes`} from your audit, biggest first.`}
         </p>
       </header>
 
@@ -480,9 +526,41 @@ export function TodayOwnerHome({
           Also useful
         </p>
 
-        <div className="mt-6">
-          <PotentialRecoveredBar recovered={recovered} total={headlineCustomers} />
-        </div>
+        {openTasks.length > 0 ? (
+          <div className="mt-6">
+            {headlineCustomers != null ? (
+              <ProgressBar
+                label="Potential recovered"
+                value={recovered}
+                total={headlineCustomers}
+                valueLabel={
+                  <>
+                    +{recovered}{" "}
+                    <span className="font-medium text-[var(--color-muted)]">
+                      / +{headlineCustomers} customers
+                    </span>
+                  </>
+                }
+                hint="Counts fixes you've handed to us."
+              />
+            ) : (
+              <ProgressBar
+                label="Fixes with our team"
+                value={requestedCount}
+                total={openTasks.length}
+                valueLabel={
+                  <>
+                    {requestedCount}{" "}
+                    <span className="font-medium text-[var(--color-muted)]">
+                      / {openTasks.length} requested
+                    </span>
+                  </>
+                }
+                hint="Complete today's fixes."
+              />
+            )}
+          </div>
+        ) : null}
 
         <ul className="mt-8 space-y-3 text-sm">
           {overall != null ? (
