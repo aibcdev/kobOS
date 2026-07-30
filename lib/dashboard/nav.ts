@@ -1,7 +1,7 @@
 /**
- * Owner-facing dashboard nav — grouped by the outcome the owner wants
- * (more customers, more revenue, run it, understand it) rather than by feature.
+ * Owner-facing dashboard nav — six primary destinations.
  * Settings / Billing live in the account menu, not the sidebar.
+ * Deep routes stay reachable via Marketing / Reports hubs (and direct URLs).
  */
 
 export type DashboardNavIcon =
@@ -37,6 +37,11 @@ export type DashboardNavItem = {
   icon: DashboardNavIcon;
   /** Soft badge e.g. Waitlist */
   badge?: string;
+  /**
+   * Extra path prefixes that should highlight this item when the current
+   * pathname isn't under `href` (e.g. Marketing covers demand-engine).
+   */
+  activePrefixes?: string[];
 };
 
 export type DashboardNavGroup = {
@@ -47,48 +52,35 @@ export type DashboardNavGroup = {
 
 export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
   {
-    id: "today",
+    id: "primary",
     label: null,
-    items: [{ id: "today", href: "/dashboard", label: "Today", icon: "home" }],
-  },
-  {
-    id: "acquire",
-    label: "Get more customers",
     items: [
-      { id: "demand", href: "/dashboard/demand-engine", label: "Demand Engine", icon: "demand" },
-      { id: "listings", href: "/dashboard/listings", label: "Google Presence", icon: "listings" },
+      { id: "today", href: "/dashboard", label: "Today", icon: "home" },
+      { id: "customers", href: "/dashboard/customers", label: "Customers", icon: "customers" },
       { id: "website", href: "/dashboard/website", label: "Website", icon: "website" },
       { id: "reviews", href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
-      { id: "seo", href: "/dashboard/seo", label: "Local SEO", icon: "seo" },
-      { id: "social", href: "/dashboard/content", label: "Social", icon: "content" },
-    ],
-  },
-  {
-    id: "revenue",
-    label: "Increase revenue",
-    items: [
-      { id: "ordering", href: "/dashboard/ordering", label: "Online Ordering", icon: "ordering" },
-      { id: "upsells", href: "/dashboard/upsells", label: "Upsells", icon: "upsells" },
-      { id: "loyalty", href: "/dashboard/marketing", label: "Loyalty", icon: "customers" },
-      { id: "email-sms", href: "/dashboard/creative", label: "Email & SMS", icon: "creative" },
-    ],
-  },
-  {
-    id: "manage",
-    label: "Manage & grow",
-    items: [
-      { id: "chat", href: "/dashboard/chat", label: "Ask anything", icon: "chat" },
-      { id: "requests", href: "/dashboard/requests", label: "Requests", icon: "requests" },
-      { id: "performance", href: "/dashboard/analytics", label: "Analyse performance", icon: "analytics" },
-    ],
-  },
-  {
-    id: "insights",
-    label: "Insights",
-    items: [
-      { id: "customer-trends", href: "/dashboard/customers", label: "Customer trends", icon: "customers" },
-      { id: "menu", href: "/dashboard/menu", label: "Online menu", icon: "menu" },
-      { id: "brand", href: "/dashboard/brand", label: "Brand & photos", icon: "brand" },
+      {
+        id: "marketing",
+        href: "/dashboard/marketing",
+        label: "Marketing",
+        icon: "demand",
+        activePrefixes: [
+          "/dashboard/demand-engine",
+          "/dashboard/listings",
+          "/dashboard/seo",
+          "/dashboard/content",
+          "/dashboard/creative",
+          "/dashboard/ordering",
+          "/dashboard/upsells",
+        ],
+      },
+      {
+        id: "reports",
+        href: "/dashboard/analytics",
+        label: "Reports",
+        icon: "analytics",
+        activePrefixes: ["/dashboard/brand", "/dashboard/menu", "/dashboard/requests"],
+      },
     ],
   },
 ];
@@ -118,15 +110,27 @@ export function isDashboardNavActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function matchesActivePrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 /**
- * Which single nav entry should read as active. Hrefs can repeat across groups,
- * so we pick the deepest match and break ties on document order.
+ * Which single nav entry should read as active. Prefers exact/href matches,
+ * then activePrefixes; deepest match wins, ties break on document order.
  */
 export function resolveActiveNavId(groups: DashboardNavGroup[], pathname: string): string | null {
   let best: { id: string; depth: number } | null = null;
   for (const item of flattenDashboardNav(groups)) {
-    if (!isDashboardNavActive(pathname, item.href)) continue;
-    const depth = item.href.length;
+    let depth = 0;
+    if (isDashboardNavActive(pathname, item.href)) {
+      depth = item.href.length;
+    } else if (item.activePrefixes?.some((p) => matchesActivePrefix(pathname, p))) {
+      const matched = item.activePrefixes
+        .filter((p) => matchesActivePrefix(pathname, p))
+        .sort((a, b) => b.length - a.length)[0];
+      depth = matched?.length ?? 0;
+    }
+    if (depth === 0) continue;
     if (!best || depth > best.depth) best = { id: item.id, depth };
   }
   return best?.id ?? null;
