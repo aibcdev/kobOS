@@ -62,6 +62,8 @@
     "outbound:ensure-100-audits": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-ensure-100-audits.ts",
     "outbound:ab-split-100": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-ab-split-100.ts",
     "outbound:schedule-100": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-schedule-100.ts",
+    "outbound:send-now": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-send-approved-now.ts",
+    "outbound:refill-ready": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-refill-ready.ts",
     "outbound:prep-next-100": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-prep-next-100.ts",
     "outbound:call-list": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-call-list.ts",
     "outbound:sequence-sync": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-sequence-sync.ts",
@@ -72,7 +74,8 @@
     "outbound:reddit-intent": "dotenv -e .env -e .env.local -- npx tsx scripts/reddit-intent-scan.ts",
     "outbound:ig-search-setup": "python3 -m venv .venv-ig && .venv-ig/bin/pip install -U ddgs",
     "ads:b2b-audit": "npx tsx scripts/google-ads-b2b-audit-campaign.ts",
-    "ads:b2b-publish": "python3 ads/create_kob_b2b_campaign.py"
+    "ads:b2b-publish": "python3 ads/create_kob_b2b_campaign.py",
+    "ads:cheap-clicks": "python3 ads/create_kob_b2b_campaign.py --plan ads/kob-cheap-clicks-plan.json --customer-id 2075308048 --budget 10 --cpc 0.25 --enable"
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.74",

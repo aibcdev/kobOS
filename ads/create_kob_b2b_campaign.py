@@ -247,20 +247,38 @@ def create_rsa(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--budget", type=float, default=20.0)
-    parser.add_argument("--cpc", type=float, default=1.50, help="Starting max CPC USD")
+    parser.add_argument("--budget", type=float, default=None)
+    parser.add_argument("--cpc", type=float, default=None, help="Starting max CPC USD")
+    parser.add_argument(
+        "--plan",
+        type=Path,
+        default=PLAN_PATH,
+        help="Path to campaign plan JSON",
+    )
+    parser.add_argument(
+        "--customer-id",
+        default=None,
+        help="Override Ads customer ID (default: from ~/google-ads.yaml or ~/.gads)",
+    )
+    parser.add_argument(
+        "--login-customer-id",
+        default=None,
+        help="MCC login customer ID when targeting a client account",
+    )
     parser.add_argument(
         "--enable",
         action="store_true",
         help="Create campaign ENABLED (default: PAUSED)",
     )
     args = parser.parse_args()
-    plan = json.loads(PLAN_PATH.read_text())
+    plan = json.loads(args.plan.read_text())
+    budget = float(args.budget if args.budget is not None else plan.get("budget_usd", 20))
+    cpc = float(args.cpc if args.cpc is not None else plan.get("cpc_usd", 1.5))
 
     print(f"Campaign: {plan['campaign']}")
     print(f"Ad groups: {len(plan['ad_groups'])}")
     print(f"Keywords: {sum(len(g['keywords']) for g in plan['ad_groups'])}")
-    print(f"Budget: ${args.budget}/day")
+    print(f"Budget: ${budget}/day  Max CPC: ${cpc:.2f}")
     print(f"Geos: {', '.join(plan['geos'])}")
     print(f"Landing: {plan['landing']}")
     print(f"Status: {'ENABLED' if args.enable else 'PAUSED'}")
@@ -271,11 +289,32 @@ def main() -> None:
         print("Dry run only — no API calls.")
         return
 
-    client, customer_id = build_client()
-    print(f"Customer: {customer_id} (shared with Woods / Agentwood / Shortwood)")
+    if args.login_customer_id or args.customer_id:
+        # Rebuild client with optional MCC login, then force target customer.
+        import yaml
+
+        cfg = yaml.safe_load((Path.home() / ".gads" / "config.yaml").read_text())
+        refresh = json.loads((Path.home() / ".gads" / "credentials.json").read_text()).get(
+            "refresh_token", ""
+        )
+        config = {
+            "developer_token": cfg["developer_token"],
+            "client_id": cfg["client_id"],
+            "client_secret": cfg["client_secret"],
+            "refresh_token": refresh,
+            "use_proto_plus": True,
+        }
+        login = args.login_customer_id or cfg.get("login_customer_id")
+        if login:
+            config["login_customer_id"] = str(login).replace("-", "")
+        client = GoogleAdsClient.load_from_dict(config)
+        customer_id = str(args.customer_id or cfg["customer_id"]).replace("-", "")
+    else:
+        client, customer_id = build_client()
+    print(f"Customer: {customer_id}")
 
     try:
-        budget_rn = create_budget(client, customer_id, args.budget, plan["campaign"])
+        budget_rn = create_budget(client, customer_id, budget, plan["campaign"])
         print(f"Budget: {budget_rn}")
         campaign_rn = create_campaign(
             client, customer_id, budget_rn, plan["campaign"], enabled=args.enable
@@ -286,7 +325,7 @@ def main() -> None:
         print(f"  + {n_neg} negatives")
 
         for group in plan["ad_groups"]:
-            ag_rn = create_ad_group(client, customer_id, campaign_rn, group["name"], args.cpc)
+            ag_rn = create_ad_group(client, customer_id, campaign_rn, group["name"], cpc)
             n = add_keywords(client, customer_id, ag_rn, group["keywords"])
             create_rsa(
                 client,
@@ -303,7 +342,7 @@ def main() -> None:
         cid = campaign_rn.split("/")[-1]
         print("\nDone.")
         if args.enable:
-            print(f"LIVE: campaign {cid} at ${args.budget}/day")
+            print(f"LIVE: campaign {cid} at ${budget}/day (max CPC ${cpc:.2f})")
         else:
             print("Campaign is PAUSED. Enable with:")
             print(f"  gads campaigns enable {cid}")

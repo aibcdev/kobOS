@@ -1,0 +1,222 @@
+{
+  "campaign": "KOB \u2014 Cheap Clicks Intl Assist (2026-07-30)",
+  "landing": "https://trykob.com/go/audit?utm_source=google&utm_medium=cpc&utm_campaign=kob_cheap_intl_assist",
+  "budget_usd": 10,
+  "cpc_usd": 0.25,
+  "geos": {
+    "India": 2356,
+    "Nigeria": 2566,
+    "Philippines": 2608,
+    "Kenya": 2404,
+    "Ghana": 2288,
+    "Pakistan": 2586,
+    "Bangladesh": 2050,
+    "Indonesia": 2360,
+    "Vietnam": 2704,
+    "Egypt": 2818,
+    "South Africa": 2710,
+    "Sri Lanka": 2144,
+    "Nepal": 2524,
+    "Uganda": 2800,
+    "Tanzania": 2834,
+    "Ethiopia": 2231,
+    "Morocco": 2504,
+    "Mexico": 2484,
+    "Colombia": 2170,
+    "Brazil": 2076,
+    "Argentina": 2032,
+    "Romania": 2642,
+    "Poland": 2616,
+    "Portugal": 2620,
+    "Turkiye": 2792
+  },
+  "negatives": [
+    "jobs",
+    "salary",
+    "hiring",
+    "career",
+    "recipe",
+    "recipes",
+    "diy",
+    "wholesale",
+    "equipment",
+    "franchise cost",
+    "near me",
+    "delivery near me",
+    "menu pdf",
+    "open now",
+    "reservations near me",
+    "uber eats",
+    "doordash",
+    "student",
+    "course",
+    "degree",
+    "internship",
+    "pos hardware",
+    "cash register",
+    "printer",
+    "table cloth"
+  ],
+  "ad_groups": [
+    {
+      "name": "Free help & audit",
+      "path1": "free",
+      "path2": "audit",
+      "headlines": [
+        "Free Restaurant Help Online",
+        "Free Restaurant Site Audit",
+        "Need Help Growing Online?",
+        "Scan Your Restaurant Free",
+        "Free Google Listing Check",
+        "What Guests See Online",
+        "Fix Gaps Costing Orders",
+        "No Card \u00b7 Free Scan",
+        "Website + Google + Reviews",
+        "Built for Busy Owners",
+        "Get Clear Next Steps",
+        "KOB Free Growth Audit",
+        "Restaurant Marketing Help",
+        "1-Minute Free Online Scan",
+        "See What To Fix First"
+      ],
+      "descriptions": [
+        "Free restaurant audit for owners who need help online \u2014 website, Google & reviews. No card.",
+        "Not sure what to fix first? Free scan shows gaps costing customers. Works worldwide.",
+        "Get a clear score and next steps for your restaurant online. Free, about one minute.",
+        "Independent restaurants: free marketing check, then a daily list you approve. Nothing auto-live."
+      ],
+      "keywords": [
+        {
+          "text": "free restaurant audit",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "free restaurant marketing audit",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant website audit free",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "help for restaurant owners",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant marketing help",
+          "matchType": "PHRASE"
+        },
+        {
+          "text": "how to get more restaurant customers",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant google business help",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "improve restaurant online presence",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant seo help",
+          "matchType": "PHRASE"
+        },
+        {
+          "text": "free restaurant seo audit",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant visibility check",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "how to promote restaurant online",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant owner marketing tips",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "small restaurant marketing ideas",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant google maps tips",
+          "matchType": "BROAD"
+        }
+      ]
+    },
+    {
+      "name": "Cheap intent software",
+      "path1": "tools",
+      "path2": "free",
+      "headlines": [
+        "Restaurant Growth Software",
+        "Free Scan Before You Pay",
+        "Tools for Restaurant Owners",
+        "Simple Restaurant Marketing",
+        "Online Presence Software",
+        "Start With a Free Audit",
+        "Affordable Restaurant Help",
+        "KOB for Independents",
+        "Daily Fixes You Approve",
+        "No Guesswork Marketing",
+        "Check Your Site Free",
+        "Restaurant Software Help",
+        "Grow Local Customers",
+        "Marketing Without Agency",
+        "Try Free \u00b7 Then Decide"
+      ],
+      "descriptions": [
+        "Restaurant growth tools start with a free audit. See website, Google & review gaps first.",
+        "Skip expensive agencies \u2014 free scan, then a daily list for busy restaurant owners.",
+        "Affordable help for restaurant owners worldwide. Free online check in about a minute.",
+        "Restaurant software that starts free: audit your presence, then approve fixes one by one."
+      ],
+      "keywords": [
+        {
+          "text": "restaurant marketing software",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant software free trial",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant management tips",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "best free restaurant tools",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant digital marketing",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant online marketing",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "local restaurant advertising tips",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "how to market small restaurant",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant business help",
+          "matchType": "BROAD"
+        },
+        {
+          "text": "restaurant owner tools",
+          "matchType": "BROAD"
+        }
+      ]
+    }
+  ]
+}
