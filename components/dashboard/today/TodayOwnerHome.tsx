@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DashboardNavIconGlyph } from "@/components/dashboard/DashboardNavIcon";
+import { RequestedConfirmModal } from "@/components/dashboard/RequestedConfirmModal";
 import type { TodayBriefPayload } from "@/lib/chief-of-staff/types";
 import type { TodayJourneySnapshot } from "@/lib/dashboard/load-today-journey";
 import type { DashboardNavIcon } from "@/lib/dashboard/nav";
@@ -92,44 +93,6 @@ function ActionStatusBadge({ status }: { status: "REQUESTED" | "IN_PROGRESS" | "
   );
 }
 
-function RequestedConfirmModal({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  if (!open) return null;
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="fix-requested-title"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border border-[var(--color-hairline)] bg-white p-6 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p id="fix-requested-title" className="font-head text-xl font-semibold text-[var(--color-ink)]">
-          Request received
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-          Our team has this. You&apos;ll get an update on your dashboard within 48 hours.
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className={`${appBtnPrimary} mt-5 !min-h-11 w-full !rounded-xl text-sm`}
-        >
-          Got it
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function PriorityRow({
   task,
   restaurantId,
@@ -162,12 +125,24 @@ function PriorityRow({
             body: JSON.stringify({ restaurantId }),
           },
         );
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          request?: TodayOpenRequest;
+        };
         if (!res.ok) {
-          setError(data.error ?? "Could not approve offer.");
+          setError(data.error ?? "Could not submit request.");
           return;
         }
-        setStatus("DELIVERED");
+        setStatus("REQUESTED");
+        if (data.request) {
+          onRequested({
+            id: data.request.id,
+            title: data.request.title ?? task.title,
+            notes: data.request.notes ?? "",
+            status: data.request.status ?? "REQUESTED",
+          });
+        }
+        setShowConfirm(true);
         return;
       }
 

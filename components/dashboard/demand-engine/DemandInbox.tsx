@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { RequestedConfirmModal } from "@/components/dashboard/RequestedConfirmModal";
 import { appBtnPrimary, appBtnSecondary, appLinkMuted } from "@/lib/app-ui-classes";
 import type { DemandPerformanceSummary } from "@/lib/demand-engine/actions";
 import type { StructuredOffer } from "@/lib/demand-engine/types";
@@ -84,12 +85,13 @@ export function DemandInbox({
   const [perf] = useState(performance);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [requestedIds, setRequestedIds] = useState<Set<string>>(() => new Set());
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   async function actRec(id: string, action: "approve" | "dismiss") {
     setError(null);
     setBusyId(id);
-    const removed = recs.find((r) => r.id === id);
     try {
       const res = await fetch(`/api/demand-engine/recommendations/${id}/${action}`, {
         method: "POST",
@@ -97,27 +99,21 @@ export function DemandInbox({
         body: JSON.stringify({ restaurantId }),
       });
       const json = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        liveOfferId?: string;
+        error?: string | { formErrors?: string[] };
       };
       if (!res.ok) {
-        setError(json.error || `Could not ${action}`);
+        const msg =
+          typeof json.error === "string"
+            ? json.error
+            : json.error?.formErrors?.[0] || `Could not ${action}`;
+        setError(msg);
         return;
       }
-      setRecs((prev) => prev.filter((r) => r.id !== id));
-      if (action === "approve" && removed) {
-        setLive((prev) => [
-          {
-            id: json.liveOfferId ?? `temp-${id}`,
-            title: offerLabel(removed),
-            discountLabel: offerLabel(removed),
-            status: "LIVE",
-            validFrom: new Date().toISOString(),
-            validTo: new Date().toISOString(),
-            channels: ["Website", "Google post"],
-          },
-          ...prev,
-        ]);
+      if (action === "dismiss") {
+        setRecs((prev) => prev.filter((r) => r.id !== id));
+      } else {
+        setRequestedIds((prev) => new Set(prev).add(id));
+        setShowConfirm(true);
       }
       startTransition(() => router.refresh());
     } catch {
@@ -154,6 +150,7 @@ export function DemandInbox({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      <RequestedConfirmModal open={showConfirm} onClose={() => setShowConfirm(false)} />
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-head text-3xl font-semibold tracking-tight text-[var(--color-ink)]">Demand</h1>
@@ -192,6 +189,7 @@ export function DemandInbox({
             {recs.map((rec) => {
               const busy = isPending || busyId === rec.id;
               const label = offerLabel(rec);
+              const requested = requestedIds.has(rec.id);
               return (
                 <article
                   key={rec.id}
@@ -234,22 +232,30 @@ export function DemandInbox({
                   </p>
 
                   <div className="mt-5 flex flex-wrap items-center gap-4">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void actRec(rec.id, "approve")}
-                      className={`${appBtnPrimary} disabled:opacity-50`}
-                    >
-                      {busyId === rec.id ? "Approving…" : "Approve"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void actRec(rec.id, "dismiss")}
-                      className="text-sm text-[var(--color-muted)] underline-offset-2 hover:underline disabled:opacity-50"
-                    >
-                      Dismiss
-                    </button>
+                    {requested ? (
+                      <span className="inline-flex min-h-10 items-center rounded-xl bg-amber-50 px-4 text-sm font-semibold text-amber-950">
+                        Requested
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void actRec(rec.id, "approve")}
+                          className={`${appBtnPrimary} disabled:opacity-50`}
+                        >
+                          {busyId === rec.id ? "Requesting…" : "Approve"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void actRec(rec.id, "dismiss")}
+                          className="text-sm text-[var(--color-muted)] underline-offset-2 hover:underline disabled:opacity-50"
+                        >
+                          Dismiss
+                        </button>
+                      </>
+                    )}
                   </div>
                 </article>
               );
@@ -268,8 +274,8 @@ export function DemandInbox({
         </h2>
         {live.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-[var(--color-hairline)] bg-white px-4 py-5 text-sm text-[var(--color-muted)]">
-            No live offers. Approve something above — guests can then see it on your site and in nearby
-            deals.
+            No live offers yet. Approve above — we&apos;ll publish and update your dashboard within 48
+            hours.
           </p>
         ) : (
           <ul className="mt-3 space-y-3">

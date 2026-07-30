@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { RequestedConfirmModal } from "@/components/dashboard/RequestedConfirmModal";
 import { appBtnPrimary, appCardSurface } from "@/lib/app-ui-classes";
 import type { StructuredOffer } from "@/lib/demand-engine/types";
 import { discountLabelFromOffer } from "@/lib/demand-engine/types";
@@ -32,6 +33,8 @@ export function DemandRecommendedPanel({
   const [items, setItems] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [requestedIds, setRequestedIds] = useState<Set<string>>(() => new Set());
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   async function act(id: string, action: "approve" | "dismiss") {
@@ -48,7 +51,12 @@ export function DemandRecommendedPanel({
         setError(json.error || `Could not ${action}`);
         return;
       }
-      setItems((prev) => prev.filter((r) => r.id !== id));
+      if (action === "dismiss") {
+        setItems((prev) => prev.filter((r) => r.id !== id));
+      } else {
+        setRequestedIds((prev) => new Set(prev).add(id));
+        setShowConfirm(true);
+      }
       startTransition(() => router.refresh());
     } catch {
       setError(`Network error — could not ${action}`);
@@ -74,6 +82,7 @@ export function DemandRecommendedPanel({
 
   return (
     <div className="space-y-4">
+      <RequestedConfirmModal open={showConfirm} onClose={() => setShowConfirm(false)} />
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       ) : null}
@@ -92,6 +101,7 @@ export function DemandRecommendedPanel({
               })
             : rec.title;
         const busy = isPending || pendingId === rec.id;
+        const requested = requestedIds.has(rec.id);
 
         return (
           <article key={rec.id} className={appCardSurface}>
@@ -125,22 +135,30 @@ export function DemandRecommendedPanel({
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void act(rec.id, "approve")}
-                className={`${appBtnPrimary} disabled:opacity-50`}
-              >
-                {pendingId === rec.id ? "Approving…" : "Approve"}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void act(rec.id, "dismiss")}
-                className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--color-hairline)] bg-white px-5 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-warm)] disabled:opacity-50"
-              >
-                Dismiss
-              </button>
+              {requested ? (
+                <span className="inline-flex min-h-10 items-center rounded-xl bg-amber-50 px-4 text-sm font-semibold text-amber-950">
+                  Requested
+                </span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void act(rec.id, "approve")}
+                    className={`${appBtnPrimary} disabled:opacity-50`}
+                  >
+                    {pendingId === rec.id ? "Requesting…" : "Approve"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void act(rec.id, "dismiss")}
+                    className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--color-hairline)] bg-white px-5 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-warm)] disabled:opacity-50"
+                  >
+                    Dismiss
+                  </button>
+                </>
+              )}
             </div>
           </article>
         );

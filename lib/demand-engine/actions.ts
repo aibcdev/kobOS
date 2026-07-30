@@ -1,8 +1,8 @@
+import { ServiceRequestStatus, ServiceRequestType } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import type { StructuredOffer } from "@/lib/demand-engine/types";
 import { discountLabelFromOffer } from "@/lib/demand-engine/types";
 import { generateDailyRecommendationsForRestaurant } from "@/lib/demand-engine/generate-daily-recommendations";
-import { publishLiveOfferChannels } from "@/lib/demand-engine/publish-live-offer";
 import {
   planLocalGoogleAdsCampaign,
   type LocalAdsGoal,
@@ -12,6 +12,7 @@ import {
   buildB2bAuditAdsPlan,
   type B2bAuditAdsPlan,
 } from "@/lib/marketing/google-ads-b2b-audit";
+import { notifyOperatorServiceRequest } from "@/lib/ops/notify-service-request";
 
 function daysFromNow(days: number) {
   const d = new Date();
@@ -25,11 +26,44 @@ export async function ensureDemoDemandRecommendations(restaurantId: string) {
   return { seeded: result.created };
 }
 
-export async function approveDemandRecommendation(restaurantId: string, recommendationId: string) {
+/**
+ * Owner Approve → Requested ticket for ops (publish within ~48h).
+ * Does not go live automatically — ops fulfills and marks Delivered.
+ */
+export async function approveDemandRecommendation(
+  restaurantId: string,
+  recommendationId: string,
+  ownerEmail?: string | null,
+) {
   const rec = await prisma.demandRecommendation.findFirst({
     where: { id: recommendationId, restaurantId, status: "PENDING" },
   });
   if (!rec) return { ok: false as const, error: "Recommendation not found or not pending" };
+
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { name: true },
+  });
+  if (!restaurant) return { ok: false as const, error: "Restaurant not found" };
+
+  const existing = await prisma.serviceRequest.findFirst({
+    where: {
+      restaurantId,
+      status: { in: [ServiceRequestStatus.REQUESTED, ServiceRequestStatus.IN_PROGRESS] },
+      notes: { contains: `recommendationId=${rec.id}` },
+    },
+    select: { id: true, title: true, notes: true, status: true },
+  });
+  if (existing) {
+    return {
+      ok: true as const,
+      alreadyPending: true as const,
+      request: existing,
+      campaign: null,
+      liveOffer: null,
+      recommendation: rec,
+    };
+  }
 
   const offer = (rec.offer ?? {}) as StructuredOffer;
   const headline = offer.headline || rec.title;
@@ -52,7 +86,7 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
         type: "PROMOTIONAL",
         title: headline,
         channel: "WEBSITE_BANNER",
-        status: "ACTIVE",
+        status: "DRAFT",
         payload: {
           source: "demand_engine",
           recommendationId: rec.id,
@@ -67,7 +101,7 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
       data: {
         restaurantId,
         campaignId: campaign.id,
-        status: "LIVE",
+        status: "DRAFT",
         title: headline,
         discountLabel: label,
         offer: offer as object,
@@ -81,7 +115,7 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
         liveOfferId: liveOffer.id,
         channel: "WEBSITE_BANNER",
         status: "QUEUED",
-        metadata: { note: "Website banner queued" },
+        metadata: { note: "Awaiting ops — publish after Requested ticket is fulfilled" },
       },
     });
 
@@ -90,7 +124,7 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
         liveOfferId: liveOffer.id,
         channel: "GOOGLE_POST",
         status: "QUEUED",
-        metadata: { note: "Google Business post queued" },
+        metadata: { note: "Awaiting ops — Google Business post after ticket fulfilled" },
       },
     });
 
@@ -103,12 +137,39 @@ export async function approveDemandRecommendation(restaurantId: string, recommen
       },
     });
 
-    return { campaign, liveOffer, recommendation: updated };
+    const request = await tx.serviceRequest.create({
+      data: {
+        restaurantId,
+        type: ServiceRequestType.OTHER,
+        status: ServiceRequestStatus.REQUESTED,
+        title: `Publish offer: ${label}`,
+        notes: [
+          `recommendationId=${rec.id}`,
+          `liveOfferId=${liveOffer.id}`,
+          `campaignId=${campaign.id}`,
+          `reason=${rec.reason}`,
+          "Owner approved Demand offer — publish Website + Google post, then mark Delivered.",
+        ].join("\n"),
+        creditCost: 0,
+      },
+      select: { id: true, title: true, notes: true, status: true },
+    });
+
+    return { campaign, liveOffer, recommendation: updated, request };
   });
 
-  await publishLiveOfferChannels(result.liveOffer.id);
+  const notify = await notifyOperatorServiceRequest({
+    restaurantName: restaurant.name,
+    restaurantId,
+    ownerEmail: ownerEmail ?? null,
+    title: result.request.title,
+    type: ServiceRequestType.OTHER,
+    notes: result.request.notes,
+    creditCost: 0,
+    requestId: result.request.id,
+  });
 
-  return { ok: true as const, ...result };
+  return { ok: true as const, alreadyPending: false as const, notified: notify.ok, ...result };
 }
 
 export async function dismissDemandRecommendation(restaurantId: string, recommendationId: string) {
