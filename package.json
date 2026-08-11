@@ -75,7 +75,9 @@
     "outbound:ig-search-setup": "python3 -m venv .venv-ig && .venv-ig/bin/pip install -U ddgs",
     "ads:b2b-audit": "npx tsx scripts/google-ads-b2b-audit-campaign.ts",
     "ads:b2b-publish": "python3 ads/create_kob_b2b_campaign.py",
-    "ads:cheap-clicks": "python3 ads/create_kob_b2b_campaign.py --plan ads/kob-cheap-clicks-plan.json --customer-id 2075308048 --budget 10 --cpc 0.25 --enable"
+    "ads:cheap-clicks": "python3 ads/create_kob_b2b_campaign.py --plan ads/kob-cheap-clicks-plan.json --customer-id 2075308048 --budget 10 --cpc 0.25 --enable",
+    "ads:free-audit-csv": "python3 ads/apply_free_audit_gtm_v1.py --export-csv",
+    "ads:free-audit-apply": "python3 ads/apply_free_audit_gtm_v1.py"
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.74",
@@ -108,6 +110,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@netlify/functions": "^5.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/google.maps": "^3.64.1",
     "@types/node": "^20",
