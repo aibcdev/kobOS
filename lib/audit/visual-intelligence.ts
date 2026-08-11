@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { loadSharp } from "@/lib/audit/sharp-safe";
 
 /**
  * No-reference heuristics from a single screenshot (usually viewport PNG).
@@ -19,12 +19,18 @@ export type AuditVisualIntelligenceResult = {
   notes: string;
 };
 
+type SharpStats = {
+  channels: Array<{ mean?: number; stdev?: number; min?: number; max?: number } | undefined>;
+};
+
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
 /** Unit-testable helpers when `stats` comes from sharp. */
-export function heuristicFromSharpStats(stats: sharp.Stats): Omit<AuditVisualIntelligenceResult, "version" | "computedAt" | "notes"> & { notes?: string } {
+export function heuristicFromSharpStats(
+  stats: SharpStats,
+): Omit<AuditVisualIntelligenceResult, "version" | "computedAt" | "notes"> & { notes?: string } {
   const r = stats.channels[0];
   const g = stats.channels[1];
   const b = stats.channels[2];
@@ -55,21 +61,44 @@ export function heuristicFromSharpStats(stats: sharp.Stats): Omit<AuditVisualInt
   };
 }
 
-export async function analyzeScreenshotBuffer(buf: Buffer): Promise<AuditVisualIntelligenceResult> {
-  const pipeline = sharp(buf).resize({ width: 512, height: 512, fit: "inside", withoutEnlargement: true });
-  const stats = await pipeline.stats();
-  const h = heuristicFromSharpStats(stats);
+function skippedVisual(notes: string): AuditVisualIntelligenceResult {
   return {
     version: 1,
     computedAt: new Date().toISOString(),
-    brisqueApprox: h.brisqueApprox,
-    sharpnessScore: h.sharpnessScore,
-    vibrancyScore: h.vibrancyScore,
-    contrastScore: h.contrastScore,
-    foodWarmthHeuristic: h.foodWarmthHeuristic,
-    overallHeuristic: h.overallHeuristic,
-    notes: "Heuristic no-reference scores from viewport screenshot; not a substitute for human art direction.",
+    brisqueApprox: 40,
+    sharpnessScore: 50,
+    vibrancyScore: 50,
+    contrastScore: 50,
+    foodWarmthHeuristic: 50,
+    overallHeuristic: 50,
+    notes,
   };
+}
+
+export async function analyzeScreenshotBuffer(buf: Buffer): Promise<AuditVisualIntelligenceResult> {
+  try {
+    const sharp = await loadSharp();
+    if (!sharp) {
+      return skippedVisual("Screenshot heuristics skipped — image engine unavailable on this runtime.");
+    }
+    const pipeline = sharp(buf).resize({ width: 512, height: 512, fit: "inside", withoutEnlargement: true });
+    const stats = await pipeline.stats();
+    const h = heuristicFromSharpStats(stats);
+    return {
+      version: 1,
+      computedAt: new Date().toISOString(),
+      brisqueApprox: h.brisqueApprox,
+      sharpnessScore: h.sharpnessScore,
+      vibrancyScore: h.vibrancyScore,
+      contrastScore: h.contrastScore,
+      foodWarmthHeuristic: h.foodWarmthHeuristic,
+      overallHeuristic: h.overallHeuristic,
+      notes: "Heuristic no-reference scores from viewport screenshot; not a substitute for human art direction.",
+    };
+  } catch (err) {
+    console.warn("[visual-intelligence] screenshot analysis skipped", err instanceof Error ? err.message : err);
+    return skippedVisual("Screenshot heuristics skipped — image engine failed on this runtime.");
+  }
 }
 
 export function designScoreNudgeFromVisual(metrics: AuditVisualIntelligenceResult): number {

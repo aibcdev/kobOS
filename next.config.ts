@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Ensure sharp resolves as a real Node package (linux binary installed at build).
+  serverExternalPackages: ["sharp"],
   turbopack: {
     root: process.cwd(),
   },
