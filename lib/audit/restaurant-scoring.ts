@@ -38,17 +38,20 @@ function clamp(n: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, Math.round(n)));
 }
 
+/** Stable placeholder when Google listing data is missing — keeps overall score consistent. */
+const MISSING_AXIS_SCORE = 58;
+
 function weighted(parts: { score: number; weight: number }[]): number {
   const sumW = parts.reduce((a, p) => a + p.weight, 0) || 1;
   const raw = parts.reduce((a, p) => a + p.score * p.weight, 0) / sumW;
   return clamp(raw);
 }
 
-function scoreReviews(payload: AuditResultPayload, gaps: string[]): number | null {
+function scoreReviews(payload: AuditResultPayload, gaps: string[]): number {
   const gp = payload.evidencePack?.googlePlace;
   if (!gp?.placeId) {
     gaps.push("Google reviews unavailable — listing not linked");
-    return null;
+    return MISSING_AXIS_SCORE;
   }
 
   const rating = gp.rating ?? 0;
@@ -88,11 +91,11 @@ function scoreReviews(payload: AuditResultPayload, gaps: string[]): number | nul
   ]);
 }
 
-function scoreGbp(payload: AuditResultPayload, gaps: string[]): number | null {
+function scoreGbp(payload: AuditResultPayload, gaps: string[]): number {
   const gp = payload.evidencePack?.googlePlace;
   if (!gp?.placeId) {
     gaps.push("Google Business Profile not resolved — discovery not scored");
-    return null;
+    return MISSING_AXIS_SCORE;
   }
 
   // Profile completeness (20%) — have placeId + rating + reviews
@@ -189,15 +192,15 @@ function scoreWebsite(payload: AuditResultPayload, gaps: string[]): number {
   ]);
 }
 
-function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number | null {
+function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number {
   if (!payload.evidencePack?.googlePlace?.placeId) {
     gaps.push("Nearby competitors not scored without a linked Google listing");
-    return null;
+    return MISSING_AXIS_SCORE;
   }
   const comps = payload.competitors.filter((c) => c.source === "places" || c.mockScore > 0);
   if (comps.length === 0) {
     gaps.push("Nearby competitors not resolved");
-    return null;
+    return MISSING_AXIS_SCORE;
   }
 
   const ours = (payload.restaurantScores?.overall ?? payload.scores.overall) || 50;
@@ -300,10 +303,10 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
   const competitors = scoreCompetitors(provisional, gaps);
 
   const axisParts: { score: number; weight: number }[] = [
-    ...(reviews != null ? [{ score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews }] : []),
-    ...(gbp != null ? [{ score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp }] : []),
+    { score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews },
+    { score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp },
     { score: website, weight: RESTAURANT_SCORE_WEIGHTS.website },
-    ...(competitors != null ? [{ score: competitors, weight: RESTAURANT_SCORE_WEIGHTS.competitors }] : []),
+    { score: competitors, weight: RESTAURANT_SCORE_WEIGHTS.competitors },
     { score: technical, weight: RESTAURANT_SCORE_WEIGHTS.technical },
   ];
   const overall = weighted(axisParts);
@@ -323,12 +326,10 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
   };
   const competitorsFinal = scoreCompetitors(withOverall, gaps);
   const finalParts: { score: number; weight: number }[] = [
-    ...(reviews != null ? [{ score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews }] : []),
-    ...(gbp != null ? [{ score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp }] : []),
+    { score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews },
+    { score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp },
     { score: website, weight: RESTAURANT_SCORE_WEIGHTS.website },
-    ...(competitorsFinal != null
-      ? [{ score: competitorsFinal, weight: RESTAURANT_SCORE_WEIGHTS.competitors }]
-      : []),
+    { score: competitorsFinal, weight: RESTAURANT_SCORE_WEIGHTS.competitors },
     { score: technical, weight: RESTAURANT_SCORE_WEIGHTS.technical },
   ];
   const overallFinal = weighted(finalParts);

@@ -137,7 +137,14 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       fallbackCity: cityHint,
     });
 
-    const placesCompetitors = payload.competitors.filter((c) => c.source === "places").length;
+    const { applyRestaurantScoresToPayload } = await import("@/lib/audit/restaurant-scoring");
+    const scoredPayload = applyRestaurantScoresToPayload(payload);
+    const scoredRow = {
+      ...row,
+      overallScore: scoredPayload.scores.overall,
+    };
+
+    const placesCompetitors = scoredPayload.competitors.filter((c) => c.source === "places").length;
     const pipelineStage = [
       `geo:${payload.geoLocation?.source ?? "none"}`,
       `competitors:places=${placesCompetitors}/${payload.competitors.length}`,
@@ -145,31 +152,31 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
     ].join(";");
 
     const payloadWithStage: AuditResultPayload = {
-      ...payload,
+      ...scoredPayload,
       browserbaseScan: {
-        capturedAt: payload.browserbaseScan?.capturedAt ?? new Date().toISOString(),
-        mode: payload.browserbaseScan?.mode ?? "sync",
-        ...payload.browserbaseScan,
+        capturedAt: scoredPayload.browserbaseScan?.capturedAt ?? new Date().toISOString(),
+        mode: scoredPayload.browserbaseScan?.mode ?? "sync",
+        ...scoredPayload.browserbaseScan,
         pipelineStage,
       },
     };
 
     const resolvedCity =
-      row.city?.trim() && row.city.trim() !== "Your area"
-        ? row.city.trim()
+      scoredRow.city?.trim() && scoredRow.city.trim() !== "Your area"
+        ? scoredRow.city.trim()
         : cityHint || existing.city;
 
     await prisma.visibilityAudit.update({
       where: { id: auditId },
       data: {
-        restaurantName: row.restaurantName,
+        restaurantName: scoredRow.restaurantName,
         city: resolvedCity,
-        websiteUrl: row.websiteUrl,
-        overallScore: row.overallScore,
-        seoScore: row.seoScore,
-        designScore: row.designScore,
-        mobileScore: row.mobileScore,
-        conversionScore: row.conversionScore,
+        websiteUrl: scoredRow.websiteUrl,
+        overallScore: scoredRow.overallScore,
+        seoScore: scoredRow.seoScore,
+        designScore: scoredRow.designScore,
+        mobileScore: scoredRow.mobileScore,
+        conversionScore: scoredRow.conversionScore,
         resultPayload: payloadWithStage as Prisma.InputJsonValue,
       },
     });
@@ -187,9 +194,9 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       );
       const synced = syncAnalysisProgressFromPayload(payloadWithStage);
       const withOpp = await applyOpportunityReportToPayload(synced, {
-        name: row.restaurantName,
+        name: scoredRow.restaurantName,
         city: resolvedCity,
-        websiteUrl: row.websiteUrl,
+        websiteUrl: scoredRow.websiteUrl,
       });
       await persistAnalysisPayload(auditId, withOpp);
     } catch (progressErr) {
