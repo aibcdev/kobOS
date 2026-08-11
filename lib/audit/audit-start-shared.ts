@@ -256,13 +256,32 @@ export async function handleAuditStart(req: Request) {
         : null,
     };
     const auditId = created.id;
+    const appUrl =
+      process.env.NETLIFY_PRODUCTION_URL?.replace(/\/$/, "") ||
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+      "https://trykob.com";
+    const cronSecret = process.env.CRON_SECRET?.trim() || process.env.OPS_STATUS_SECRET?.trim() || "";
+
     after(async () => {
       try {
-        // Give Inngest a head start; skip if scores already landed.
-        await new Promise((r) => setTimeout(r, 8_000));
+        // Prefer a dedicated process request (survives better than inline work on some hosts).
+        if (cronSecret) {
+          const res = await fetch(`${appUrl}/api/audit/${auditId}/process`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${cronSecret}`,
+            },
+            body: JSON.stringify(pipelineInput),
+          });
+          if (res.ok) return;
+          console.warn("[audit/start] process route failed", res.status, await res.text().catch(() => ""));
+        }
+
+        await new Promise((r) => setTimeout(r, 3_000));
         const row = await prisma.visibilityAudit.findUnique({
           where: { id: auditId },
-          select: { overallScore: true, resultPayload: true },
+          select: { overallScore: true },
         });
         if (row && (row.overallScore ?? 0) > 0) return;
         const { executeAuditPipeline } = await import("@/lib/audit/execute-audit-pipeline");
@@ -271,6 +290,24 @@ export async function handleAuditStart(req: Request) {
         console.error("[audit/start] after() pipeline failed", inlineErr);
       }
     });
+
+    // Netlify often drops after() — also fire an internal process request.
+    const cron = process.env.CRON_SECRET?.trim();
+    const base =
+      process.env.NETLIFY_PRODUCTION_URL?.trim() ||
+      process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+      process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+      "https://trykob.com";
+    if (cron) {
+      const url = `${base.replace(/\/$/, "")}/api/audit/${auditId}/process`;
+      void fetch(url, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${cron}`,
+          "x-cron-secret": cron,
+        },
+      }).catch((e) => console.warn("[audit/start] process kick failed", e));
+    }
 
     return NextResponse.json({ id: created.id, scanStatus: "pending" }, { status: 201 });
   } catch (e) {
