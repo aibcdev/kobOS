@@ -1,7 +1,6 @@
 "use client";
 
 import { SaasIcon } from "@/components/marketing/saas/SaasIcon";
-import { SaasLogoWall } from "@/components/marketing/saas/SaasLogoWall";
 import { ANALYSIS_STEP_LABELS } from "@/lib/audit/analysis-progress";
 import type { AnalysisProgressV1, AnalysisStepId, AnalysisStepStatus } from "@/lib/audit/types";
 import type { AuditScanPreview } from "@/lib/marketing/audit-scan-preview";
@@ -110,7 +109,6 @@ export function AuditLiveAnalysis({
   preview,
   previewImageUrl,
   showChrome = true,
-  showLogoWall = false,
 }: {
   mode?: "demo" | "live";
   restaurantName?: string;
@@ -120,7 +118,6 @@ export function AuditLiveAnalysis({
   preview?: AuditScanPreview | null;
   previewImageUrl?: string | null;
   showChrome?: boolean;
-  showLogoWall?: boolean;
 }) {
   const isDemo = mode === "demo";
   const active = isDemo ? DEMO_PROGRESS : (progress ?? DEMO_PROGRESS);
@@ -261,13 +258,6 @@ export function AuditLiveAnalysis({
           </ul>
         </aside>
       </div>
-
-      {showLogoWall ? (
-        <SaasLogoWall
-          className="mt-10 md:mt-14"
-          label="Trusted by over 300 restaurants and counting"
-        />
-      ) : null}
     </div>
   );
 

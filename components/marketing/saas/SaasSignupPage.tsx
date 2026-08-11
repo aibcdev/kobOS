@@ -5,7 +5,6 @@ import { MARKETING_HERO } from "@/lib/marketing/assets";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 import { SaasIcon } from "./SaasIcon";
-import { SaasLogoWall } from "./SaasLogoWall";
 import { SaasSignupTestimonials } from "./SaasSignupTestimonials";
 import { SaasSignupTrialForm } from "./SaasSignupTrialForm";
 import { SaasSocialProof } from "./SaasSocialProof";
@@ -50,12 +49,6 @@ export function SaasSignupPage() {
               <SaasSignupTrialForm />
             </div>
           </Suspense>
-        </div>
-      </section>
-
-      <section className="border-t border-[#2c2c2c]/5 px-6 py-10 md:py-12">
-        <div className="mx-auto max-w-[83rem]">
-          <SaasLogoWall label="Trusted by restaurants like yours" />
         </div>
       </section>
 

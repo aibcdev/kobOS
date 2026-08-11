@@ -259,20 +259,6 @@ export function HomePage({ content }: { content: HomepageContent }) {
         statsCtaLabel={p.statsCtaLabel}
       />
 
-      <section
-        id="logos"
-        className="scroll-mt-[72px] border-t border-[var(--color-hairline)] bg-[var(--color-surface-warm)] px-[var(--spacing-md)] py-10 sm:py-12"
-      >
-        <div className="mx-auto max-w-[1440px] text-center">
-          <p className="type-caption text-[var(--color-muted)]">{c.socialProof.label}</p>
-          <div className="type-label-md mt-6 grid grid-cols-2 gap-x-6 gap-y-5 text-[var(--color-muted-medium)] sm:mt-8 sm:grid-cols-4 lg:grid-cols-8">
-            {c.socialProof.logos.map((name) => (
-              <div key={name}>{name}</div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <HomeStoryCarousel stories={c.carouselStories} />
 
       <HomeValueTabs tabs={[...c.valueTabs]} />
