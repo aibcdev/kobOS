@@ -3,7 +3,9 @@
 # Clear “Publish directory” in Netlify UI if build fails (this file sets publish = ".next").
 
 [build]
-  command = "npm run build"
+  # Remote builds use Netlify UI env vars (no .env.local).
+  # Skip migrate on build — schema is applied separately; migrate can exit 2 and block deploys.
+  command = "npx prisma generate && npx next build"
   publish = ".next"
 
 # Netlify secrets scanner flags env values that also appear in docs/code (e.g. uk_cold, trykob.com).
