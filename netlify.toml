@@ -1,14 +1,10 @@
-# Netlify: Import from Git (repo root). Do NOT use drag-and-drop.
-# Env vars + checklist: docs/DEPLOYMENT.md
+# Netlify: Import from Git (repo root).
 # Do NOT set publish to ".next" — @netlify/plugin-nextjs owns the output.
 
 [build]
-  # Install linux sharp so image helpers work on Netlify (darwin binaries break process route).
-  # Skip migrate on build — schema is applied separately.
-  command = "npx prisma generate && npm install --no-save --os=linux --cpu=x64 sharp@0.34.5 && npx next build"
+  command = "npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build"
 
 [build.environment]
-  # Secrets scanner false-positives block deploys (trykob.com, uk_cold, etc.).
   SECRETS_SCAN_ENABLED = "false"
   SECRETS_SCAN_OMIT_KEYS = "NETLIFY_PRODUCTION_URL,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SITE_URL,OUTBOUND_MODE,GEMINI_MODEL,AUDIT_RATE_LIMIT_WINDOW_SEC,AUDIT_RATE_LIMIT_MAX_REQUESTS,RESEND_AUTH_FROM_EMAIL,RESEND_FROM_EMAIL,OUTBOUND_UK_CITIES,OUTBOUND_SALES_MODE,PLACES_AUTOCOMPLETE_REGIONS,OUTBOUND_REVIEW_MIN,OUTBOUND_REVIEW_MAX,OUTBOUND_MAX_QUALIFY_SCORE,OUTBOUND_UK_DAILY_CAP,AUDIT_BROWSERBASE_ASYNC,CRON_SECRET"
   NODE_OPTIONS = "--max-old-space-size=4096"
@@ -16,6 +12,5 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Drain stuck pending audits every 2 minutes (backup if Inngest/after() drops work).
 [functions."audit-drain"]
   schedule = "*/2 * * * *"
