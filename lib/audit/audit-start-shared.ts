@@ -218,7 +218,6 @@ export async function handleAuditStart(req: Request) {
         .catch((e) => console.warn("[audit/start] funnel event", e));
     }
 
-    let queued = true;
     try {
       await inngest.send({
         name: "audit/run.requested",
@@ -236,38 +235,42 @@ export async function handleAuditStart(req: Request) {
         },
       });
     } catch (inngestErr) {
-      queued = false;
-      console.warn("[audit/start] Inngest send skipped — scheduling after() fallback", inngestErr);
+      console.warn("[audit/start] Inngest send failed — after() will run the scan", inngestErr);
     }
 
-    if (!queued) {
-      // Never block the request on a full pipeline (Netlify function timeouts → 503).
-      // Run in the background and let the client poll /api/audit/:id.
-      const pipelineInput = {
-        websiteUrl,
-        siteScope: parsed.data.siteScope,
-        userSocial: userSocial ?? null,
-        userImageUrls: userImageUrls ?? null,
-        place: place
-          ? {
-              name: place.name,
-              placeId: place.placeId,
-              formattedAddress: place.formattedAddress,
-              lat: place.lat ?? null,
-              lng: place.lng ?? null,
-            }
-          : null,
-      };
-      const auditId = created.id;
-      after(async () => {
-        try {
-          const { executeAuditPipeline } = await import("@/lib/audit/execute-audit-pipeline");
-          await executeAuditPipeline(auditId, pipelineInput);
-        } catch (inlineErr) {
-          console.error("[audit/start] after() pipeline failed", inlineErr);
-        }
-      });
-    }
+    // Always schedule after() as a safety net. Inngest may accept events without
+    // invoking (key/app drift). Skip if the scan already finished.
+    const pipelineInput = {
+      websiteUrl,
+      siteScope: parsed.data.siteScope,
+      userSocial: userSocial ?? null,
+      userImageUrls: userImageUrls ?? null,
+      place: place
+        ? {
+            name: place.name,
+            placeId: place.placeId,
+            formattedAddress: place.formattedAddress,
+            lat: place.lat ?? null,
+            lng: place.lng ?? null,
+          }
+        : null,
+    };
+    const auditId = created.id;
+    after(async () => {
+      try {
+        // Give Inngest a head start; skip if scores already landed.
+        await new Promise((r) => setTimeout(r, 8_000));
+        const row = await prisma.visibilityAudit.findUnique({
+          where: { id: auditId },
+          select: { overallScore: true, resultPayload: true },
+        });
+        if (row && (row.overallScore ?? 0) > 0) return;
+        const { executeAuditPipeline } = await import("@/lib/audit/execute-audit-pipeline");
+        await executeAuditPipeline(auditId, pipelineInput);
+      } catch (inlineErr) {
+        console.error("[audit/start] after() pipeline failed", inlineErr);
+      }
+    });
 
     return NextResponse.json({ id: created.id, scanStatus: "pending" }, { status: 201 });
   } catch (e) {
