@@ -1,5 +1,5 @@
 # Netlify: Import from Git (repo root).
-# Do NOT set publish to ".next" — @netlify/plugin-nextjs owns the output.
+# Netlify's built-in Next.js runtime owns the output directory.
 
 [build]
   command = "npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build"
@@ -8,9 +8,6 @@
   SECRETS_SCAN_ENABLED = "false"
   SECRETS_SCAN_OMIT_KEYS = "NETLIFY_PRODUCTION_URL,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SITE_URL,OUTBOUND_MODE,GEMINI_MODEL,AUDIT_RATE_LIMIT_WINDOW_SEC,AUDIT_RATE_LIMIT_MAX_REQUESTS,RESEND_AUTH_FROM_EMAIL,RESEND_FROM_EMAIL,OUTBOUND_UK_CITIES,OUTBOUND_SALES_MODE,PLACES_AUTOCOMPLETE_REGIONS,OUTBOUND_REVIEW_MIN,OUTBOUND_REVIEW_MAX,OUTBOUND_MAX_QUALIFY_SCORE,OUTBOUND_UK_DAILY_CAP,AUDIT_BROWSERBASE_ASYNC,CRON_SECRET"
   NODE_OPTIONS = "--max-old-space-size=4096"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
 
 [functions."audit-drain"]
   schedule = "*/2 * * * *"
