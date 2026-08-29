@@ -1,4 +1,6 @@
 # Netlify: Import from Git (repo root).
+# Production publish is Git-only (aibcdev/kobOS main). Never `netlify deploy --prod`
+# to site kobkob / trykob.com — that is how BELLY overwrote the live domain.
 # Netlify's built-in Next.js runtime owns the output directory.
 
 [build]
@@ -11,3 +13,9 @@
 
 [functions."audit-drain"]
   schedule = "*/2 * * * *"
+
+[functions."outbound-daily"]
+  schedule = "0 7 * * *"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
