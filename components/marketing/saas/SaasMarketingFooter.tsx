@@ -37,8 +37,13 @@ export function SaasMarketingFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/audit" className="transition-colors hover:text-white">
+                  Free audit
+                </Link>
+              </li>
+              <li>
                 <Link href="/features/online-ordering" className="transition-colors hover:text-white">
-                  Online ordering
+                  Booking paths
                 </Link>
               </li>
               <li>
@@ -104,19 +109,38 @@ export function SaasMarketingFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/for-ai" className="transition-colors hover:text-white">
+                  For AI assistants
+                </Link>
+              </li>
+              <li>
+                <a href="/llms.txt" className="transition-colors hover:text-white">
+                  llms.txt
+                </a>
+              </li>
+              <li>
                 <Link href="/features/delivery" className="transition-colors hover:text-white">
-                  Delivery
+                  Hours &amp; listings
                 </Link>
               </li>
               <li>
                 <Link href="/features/ai-menu" className="transition-colors hover:text-white">
-                  AI menu
+                  Menu pages
                 </Link>
               </li>
               <li>
-                <Link href="/demo" className="transition-colors hover:text-white">
-                  Book a demo
+                <Link href="/resources/kob-vs-owner-com-which-is-better" className="transition-colors hover:text-white">
+                  KOB vs Owner.com
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://www.g2.com/search?query=KOB+restaurant"
+                  className="transition-colors hover:text-white"
+                  rel="noopener noreferrer"
+                >
+                  Review KOB on G2
+                </a>
               </li>
             </ul>
           </div>

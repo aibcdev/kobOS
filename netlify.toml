@@ -4,6 +4,7 @@
 # Netlify's built-in Next.js runtime owns the output directory.
 
 [build]
+  publish = ".next"
   command = "npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build"
 
 [build.environment]

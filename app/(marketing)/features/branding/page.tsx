@@ -10,9 +10,9 @@ import {
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
 export const metadata: Metadata = {
-  title: "Brand & guest experience | KOB",
+  title: "Photos and brand on your listing | KOB",
   description:
-    "Brand, food photography, and guest experience online—so your website sells as hard as your dining room.",
+    "KOB scores photos, pages, and reviews so your Google listing and site match the room. We do not launch a guest mobile app.",
 };
 
 export default function BrandingFeaturePage() {
@@ -21,7 +21,7 @@ export default function BrandingFeaturePage() {
       <SaasPageHero
         eyebrow="Brand & experience"
         title="Your brand should sell online—not just in the room."
-        description="Guests decide before they walk in. KOB scores photos, pages, and reviews—then shows what to fix so online sales match the experience inside."
+        description="Guests decide before they walk in. KOB scores photos, pages, and reviews—then shows what to fix. This is listing and site hygiene, not a branded guest app."
         variant="warm"
       >
         <SaasPrimaryCta href="/demo">Get started</SaasPrimaryCta>

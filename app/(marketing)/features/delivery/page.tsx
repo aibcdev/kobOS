@@ -5,8 +5,9 @@ import { ownerProductPillars } from "@/lib/marketing/owner-pillars";
 const pillar = ownerProductPillars.find((p) => p.slug === "delivery")!;
 
 export const metadata: Metadata = {
-  title: "Direct delivery for restaurants | KOB",
-  description: pillar.description,
+  title: "Google hours and listings | KOB",
+  description:
+    "KOB reminds you to fix hours, holidays, and listing details guests use before they visit. Not a delivery marketplace.",
 };
 
 export default function DeliveryFeaturePage() {

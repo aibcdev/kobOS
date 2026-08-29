@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
+import { SaasAuditWhatWeCheck } from "@/components/marketing/saas/SaasAuditWhatWeCheck";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { marketingCopy } from "@/lib/marketing/copy";
@@ -40,6 +41,8 @@ export default function GoAuditAdsLandingPage() {
           <AuditBusinessSearch />
         </div>
       </SaasSection>
+
+      <SaasAuditWhatWeCheck />
 
       <SaasSection className="bg-[#fbf8f5]">
         <p className="font-heading text-center text-xl font-semibold text-[#2c2c2c] md:text-2xl">

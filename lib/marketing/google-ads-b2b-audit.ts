@@ -164,7 +164,7 @@ const AD_GROUPS: B2bAuditAdsPlan["adGroups"] = [
       "KOB Free Marketing Audit",
       "Stop Guessing What to Fix",
       "Daily List You Control",
-      "Trusted by 500+ Venues",
+      "Built for busy independent restaurants",
     ],
     descriptions: [
       "Free restaurant marketing scan — website, Google listing & reviews. See what’s holding you back.",

@@ -9,20 +9,20 @@ import { marketingCopy } from "@/lib/marketing/copy";
 
 const DEMO_FEATURES = [
   {
-    title: "Free AI report",
-    desc: "Website, Google, photos, and reviews—scored in about a minute.",
+    title: "Free scan",
+    desc: "Website, Google listing, photos, and reviews — about a minute. No card.",
   },
   {
-    title: "Website & SEO",
-    desc: "What to fix on pages, menus, and local search so sales show up online.",
+    title: "Daily approve list",
+    desc: "Hours, holidays, review replies, posts — nothing publishes without you.",
   },
   {
-    title: "Direct ordering paths",
-    desc: marketingCopy.demo.photosFeatureDesc,
+    title: "We do not replace your POS",
+    desc: "No kitchen tablet, branded guest app, or marketplace. Owner.com does that stack; we don’t.",
   },
   {
-    title: "Reviews & reputation",
-    desc: "Gaps competitors exploit—and how to close them.",
+    title: "UK independents",
+    desc: "Built for single-site owners who want tables from Google and reviews, not a US-only suite.",
   },
 ] as const;
 
@@ -34,8 +34,7 @@ export function DemoPage() {
         variant="inset"
         title={`${marketingCopy.losingSalesOnline} ${marketingCopy.useAiToFix}`}
         description={
-          "Book a walkthrough of KOB—websites, SEO, and direct ordering for restaurants. Start with a free AI report, " +
-          "then see the fixes your team can ship this week."
+          "Talk through your Google listing, reviews, and daily approve list. We do not replace your POS or launch a branded app. Self-serve scan stays on /audit — this call is for Owner.com-comparison shoppers and multi-site questions."
         }
       >
         <SaasPrimaryCta href="#demo-form">Get started</SaasPrimaryCta>

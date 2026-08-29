@@ -1,5 +1,7 @@
 # KOB production deployment
 
+**trykob.com / kobkob is Git-only.** Push `aibcdev/kobOS` `main`. Never `netlify deploy --prod` (that is how BELLY overwrote the domain). Keep **Enforce Git-based production deploys**, publish **`.next`**, empty `package_path`. Restore only a KOB Next.js deploy.
+
 **Launch checklist (trykob.com):** [docs/LAUNCH.md](LAUNCH.md)
 
 Run before go-live:
@@ -41,8 +43,8 @@ Run `npm run setup:auth-urls` to print the full list for your Netlify URL.
 
 1. **Add new site → Import from Git** pointing at this repo.
 2. **Base directory:** empty if repo root is KOB.
-3. **Publish directory:** leave **blank** in UI (`netlify.toml` sets `publish = ".next"`).
-4. **Build command:** `npm run build` (from `netlify.toml`).
+3. **Publish directory:** `.next` (must match `netlify.toml`; do not set it to the site root).
+4. **Build command:** from `netlify.toml` (`prisma generate` + `next build`). Enable **Enforce Git-based production deploys**.
 
 ### Environment variables (Netlify UI)
 
@@ -68,13 +70,15 @@ After first deploy:
 npm run db:migrate
 ```
 
-### CLI (optional)
+### CLI (optional, never `--prod`)
 
 ```bash
 npm run netlify:login
-npx netlify link
+npx netlify link --id 6348ca5b-9101-4ad6-bb07-f4ec29dda60c
 npm run netlify:deploy
 ```
+
+`npm run netlify:deploy` is blocked if you pass `--prod`. Production is Git only.
 
 ## 3. Inngest — local
 

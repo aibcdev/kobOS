@@ -60,7 +60,7 @@ export function SaasOwnerComparison() {
             >
               {marketingCopy.cta.startTrial} →
             </Link>
-            <SaasSocialProof className="mt-5" label="Trusted by 500+ restaurant owners" />
+            <SaasSocialProof className="mt-5" label={marketingCopy.heroSocialProof} />
           </div>
 
           <div>

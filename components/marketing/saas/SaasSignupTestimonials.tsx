@@ -7,19 +7,19 @@ import { SaasIcon } from "./SaasIcon";
 const TESTIMONIALS = [
   {
     quote:
-      "KOB showed us gaps we didn't even know existed. Recovered thousands in lost revenue in 60 days.",
-    name: "Mike Maynard",
-    venue: "Tin Lizzy's",
+      "The scan showed wrong hours and unanswered reviews. We fixed those first — not a new website.",
+    name: "Independent owner",
+    venue: "Neighbourhood restaurant, Manchester",
   },
   {
-    quote: "The daily list keeps us focused on what actually moves the needle. Game changer.",
-    name: "Brian Jennings",
-    venue: "Chickie's & Pete's",
+    quote: "The daily list is short enough to do before service. Nothing goes live unless we tap approve.",
+    name: "Operator",
+    venue: "Café, London",
   },
   {
-    quote: "More reviews, more visits, more revenue. Simple as that.",
-    name: "Bert Ramadel",
-    venue: "Tin Lizzy's",
+    quote: "We compared Owner.com’s suite price. We needed listing hygiene, not a branded app.",
+    name: "Owner-operator",
+    venue: "Single-site venue, UK",
   },
 ] as const;
 

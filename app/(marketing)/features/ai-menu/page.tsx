@@ -10,9 +10,9 @@ import {
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
 export const metadata: Metadata = {
-  title: "AI-powered menus | KOB",
+  title: "Menu pages and listing photos | KOB",
   description:
-    "Digital menus and SEO that turn search into orders—structured for hungry guests and easy for your team to run.",
+    "KOB flags weak menus and photos on your current site and Google listing. We do not replace a full digital-menu CMS or upsell engine.",
 };
 
 export default function AiMenuFeaturePage() {
@@ -20,8 +20,8 @@ export default function AiMenuFeaturePage() {
     <>
       <SaasPageHero
         eyebrow="Digital menus"
-        title="Menus that rank—and convert."
-        description="Structure dishes for high-intent searches. Surface add-ons and dietary clarity. Keep mobile fast so online sales go to you—not the app next door."
+        title="Menus guests can actually find."
+        description="Your scan flags buried PDFs, thin dish pages, and weak photos. We do not install a new ordering CMS. Pair this with the free audit, then approve listing and site fixes."
         variant="warm"
       >
         <SaasPrimaryCta href="/demo">Get started</SaasPrimaryCta>
@@ -53,7 +53,7 @@ export default function AiMenuFeaturePage() {
           {[
             { t: "Upsell with context", d: "Suggest pairings and add-ons that match the dish—not generic bundles." },
             { t: "Better guest experience", d: "Fast loads, clear sections, and language that feels native to your brand." },
-            { t: "Easier operations", d: "One place to update dishes, prices, and promos when the kitchen changes course." },
+            { t: "Easier operations", d: "Tasks land on the same daily list as hours and reviews — not a separate menu platform." },
             { t: "Less waste", d: "Fewer printed sheets and fewer out-of-date PDFs floating around online." },
           ].map((c) => (
             <div key={c.t} className="rounded-2xl border border-[#2c2c2c]/10 bg-[#f9f3ed] p-8">
@@ -65,12 +65,12 @@ export default function AiMenuFeaturePage() {
       </SaasSection>
 
       <SaasSection className="border-t border-[#2c2c2c]/10 bg-[#094413] text-center text-[#fbf8f5]">
-        <h2 className="mb-4 font-head text-2xl font-medium md:text-3xl">Upgrade your digital menu</h2>
+        <h2 className="mb-4 font-head text-2xl font-medium md:text-3xl">Start with the free audit</h2>
         <p className="mx-auto mb-8 max-w-xl text-[#fbf8f5]/90">
-          Pair menu work with Growth Agent priorities so you fix what moves covers first.
+          See what guests see on your menu pages and listing, then approve a short list.
         </p>
         <Link
-          href="/product"
+          href="/audit"
           className="inline-flex h-12 items-center rounded-full bg-[#fbf8f5] px-8 text-sm font-medium text-[#094413] transition-colors hover:bg-[#f9f3ed]"
         >
           Back to product overview

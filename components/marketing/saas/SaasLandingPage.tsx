@@ -1,5 +1,4 @@
-import { AuditLiveAnalysis } from "@/components/marketing/audit/AuditLiveAnalysis";
-
+import { SaasAuditWhatWeCheck } from "./SaasAuditWhatWeCheck";
 import { SaasFinalCta } from "./SaasFinalCta";
 import { SaasHeroSection } from "./SaasHeroSection";
 import { SaasHowItWorks } from "./SaasHowItWorks";
@@ -9,7 +8,7 @@ export function SaasLandingPage() {
   return (
     <>
       <SaasHeroSection />
-      <AuditLiveAnalysis mode="demo" showChrome={false} />
+      <SaasAuditWhatWeCheck />
       <SaasHowItWorks />
       <SaasOwnerComparison />
       <SaasFinalCta />

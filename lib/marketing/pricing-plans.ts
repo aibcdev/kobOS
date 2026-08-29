@@ -60,13 +60,13 @@ export type ComparisonRow = {
 /** Structured KOB vs Owner.com — homepage + pricing reference */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
-  eyebrow: "Same kind of help.",
-  headline: "Lower price. Built for busy owners.",
+  eyebrow: "UK independents first.",
+  headline: "Lower price. No POS swap.",
   subline:
     "Owner.com sells a full stack at premium rates. KOB starts with a free scan, a daily list you approve, and credits for website, SEO, and brand requests.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
-  footnote: "*Owner.com pricing verified 2023-06-19. Competitor names used for comparison only.",
+  footnote: "*Owner.com public pricing as of 2026-06-20 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Guest support fees may apply. Competitor names used for comparison only.",
   rows: [
     {
       label: "Monthly (flex-style plan)",

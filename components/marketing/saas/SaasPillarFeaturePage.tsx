@@ -104,6 +104,10 @@ export function SaasPillarFeaturePage({ pillar }: { pillar: OwnerProductPillar }
         <SaasSecondaryCta href="/demo">{marketingCopy.cta.freeDemo}</SaasSecondaryCta>
       </SaasSplitHero>
 
+      {pillar.honesty ? (
+        <p className="mx-auto max-w-[90rem] px-6 pb-2 text-sm text-[#2c2c2c]/65 md:px-12">{pillar.honesty}</p>
+      ) : null}
+
       <SaasSection className="bg-[#fbf8f5]">
         <SaasCardGrid items={bullets} />
       </SaasSection>

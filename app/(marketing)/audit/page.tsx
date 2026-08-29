@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
+import { SaasAuditWhatWeCheck } from "@/components/marketing/saas/SaasAuditWhatWeCheck";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const metadata: Metadata = {
-  title: "Free hospitality perception report · KOB",
+  title: "Free restaurant audit · KOB",
   description:
-    "See the gap between how good your restaurant is and how you look online. Perception report for UK restaurants and cafés.",
+    "Free scan of your restaurant website, Google listing, and reviews for UK independents. See where guests drop off. No card.",
 };
 
 const INSIGHTS = marketingCopy.auditInsights;
@@ -27,9 +28,11 @@ export default function AuditPage() {
         </div>
       </SaasSection>
 
+      <SaasAuditWhatWeCheck />
+
       <SaasSection className="bg-[#fbf8f5]">
         <p className="font-heading text-center text-xl font-semibold text-[#2c2c2c] md:text-2xl">
-          What the AI report surfaces for restaurants like yours
+          What the free scan surfaces for restaurants like yours
         </p>
         <ul className="mt-8 grid gap-4 md:gap-5">
           {INSIGHTS.map((item) => (

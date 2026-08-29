@@ -54,15 +54,15 @@ export const suiteFourthPillar = {
 export const homepageQuotesExtra = [
   {
     quote:
-      "We stopped debating what was wrong. The list was short, we fixed it, covers followed.",
-    name: "Marcus Bell",
-    role: "Owner, Fired Pizza",
+      "We stopped debating what was wrong. The list was short, we fixed hours and reviews first.",
+    name: "Independent owner",
+    role: "Neighbourhood restaurant, UK",
   },
   {
     quote:
-      "Search and the menu finally say the same thing. Phones ring before we spend another pound on ads.",
-    name: "Sofia Reid",
-    role: "Director, Folk Coffee",
+      "Search and the listing finally match the room. We did not need a new app to start.",
+    name: "Operator",
+    role: "Café, UK",
   },
 ] as const;
 
@@ -241,37 +241,37 @@ export const homepageDefaults = {
     afterAlt: "After website design",
   },
   testimonial: {
-    quote: "We finally saw what was costing covers. Fixed it in weeks—not another strategy deck.",
-    name: "Amelia Hart",
-    role: "Founder, Bao London",
+    quote: "We finally saw what was costing covers. Fixed hours and reviews first—not another strategy deck.",
+    name: "Independent owner",
+    role: "Single-site restaurant, UK",
   },
   caseStudies: [
     {
-      name: "Bao London",
-      type: "Asian fusion",
-      result: "+62% direct orders",
-      metricLabel: "Direct orders",
+      name: "Neighbourhood restaurant",
+      type: "Independent",
+      result: "Hours and reviews first",
+      metricLabel: "What we fixed",
       imageUrl:
         "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80",
-      imageAlt: "Bao London case study",
+      imageAlt: "Independent restaurant dining room",
     },
     {
-      name: "Folk Coffee",
-      type: "Neighbourhood cafe",
-      result: "+47% returning customers",
-      metricLabel: "Repeat visits",
+      name: "Neighbourhood café",
+      type: "Café",
+      result: "Listing matched the room",
+      metricLabel: "What we fixed",
       imageUrl:
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80",
-      imageAlt: "Folk Coffee case study",
+      imageAlt: "Independent café",
     },
     {
-      name: "Fired Pizza",
-      type: "Casual dining",
-      result: "-23% delivery app reliance",
-      metricLabel: "App reliance",
+      name: "Casual dining",
+      type: "Independent",
+      result: "Approve-only daily list",
+      metricLabel: "How we work",
       imageUrl:
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
-      imageAlt: "Fired Pizza case study",
+      imageAlt: "Casual dining room",
     },
   ],
   closing: {

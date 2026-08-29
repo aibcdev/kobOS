@@ -19,7 +19,7 @@ export function SaasSignupPage() {
           <div className="max-w-xl pt-2">
             <p className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-[#2c2c2c]/55 uppercase">
               <SaasIcon icon="solar:shield-check-bold" className="text-[var(--color-forest-mid)]" />
-              Trusted by 500+ restaurants &amp; cafés
+              For UK independents — free scan, no card
             </p>
 
             <h1 className="font-heading mt-4 text-[2.75rem] leading-[1.08] tracking-tight text-[#1a1a1a] sm:text-[3.15rem] md:text-[3.5rem]">
@@ -41,7 +41,7 @@ export function SaasSignupPage() {
               ))}
             </ul>
 
-            <SaasSocialProof className="mt-7" label="Trusted by 500+ restaurant owners" />
+            <SaasSocialProof className="mt-7" label={marketingCopy.heroSocialProof} />
           </div>
 
           <Suspense fallback={<div className="h-[32rem] animate-pulse rounded-[1.5rem] bg-white/70" />}>

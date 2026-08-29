@@ -9,20 +9,21 @@ export const marketingCopy = {
   trustLine: "Built for busy independent restaurants",
   trustLineShort: "For busy owners who want a clear next step",
 
-  /** Primary promise — homepage hero (mock: italic “ultimate” in forest) */
-  heroHeadline: "Your restaurant’s ultimate employee.",
-  heroHeadlineLead: "Your restaurant’s",
-  heroHeadlineAccent: "ultimate",
-  heroHeadlineTail: "employee.",
+  /** Primary promise — homepage hero */
+  heroHeadline: "Get more guests from Google and reviews.",
+  heroHeadlineLead: "Get more guests from",
+  heroHeadlineAccent: "Google",
+  heroHeadlineTail: "and reviews.",
   heroPromiseLines: [
     "Get more customers.",
     "Keep more customers.",
     "Ask KOB to do everything else.",
   ] as const,
-  heroTrustBadge: "Trusted by 500+ restaurants & cafés",
+  heroTrustBadge: "For UK independents — no card, no replatform",
   heroSubline:
-    "We show where guests leave you — and fill quiet periods with offers you only approve.",
-  heroSublineSecondary: "Start with a free scan. See the decision journey before you book a platform.",
+    "We show where guests leave you — Google listing, reviews, hours — then a short list you only approve.",
+  heroSublineSecondary:
+    "Start with a free scan. See the leaks before you book Owner.com, an agency, or any platform.",
   heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
   heroSocialProof: "Built for busy independent restaurants",
   heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
