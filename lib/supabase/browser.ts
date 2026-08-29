@@ -1,8 +1,10 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
 export function createSupabaseBrowserClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  );
+  const pub = readSupabasePublicEnv();
+  if (!pub) {
+    throw new Error("Supabase public env is missing or not a valid HTTP URL");
+  }
+  return createBrowserClient(pub.url, pub.anonKey);
 }

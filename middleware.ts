@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 import { updateSession } from "@/lib/supabase/middleware";
+import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -30,8 +31,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasSupabase =
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const hasSupabase = Boolean(readSupabasePublicEnv());
 
   if (!hasSupabase) {
     if (path.startsWith("/dashboard") || path.startsWith("/app") || path.startsWith("/ops")) {

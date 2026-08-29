@@ -1,12 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
+  const pub = readSupabasePublicEnv();
+  if (!pub) {
+    throw new Error("Supabase public env is missing or not a valid HTTP URL");
+  }
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    pub.url,
+    pub.anonKey,
     {
       cookies: {
         getAll() {

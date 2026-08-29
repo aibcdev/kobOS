@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
 /** PKCE verifier in localStorage — same client must send OTP and exchange code. */
 let magicLinkClient: SupabaseClient | null = null;
@@ -8,20 +9,20 @@ export function createMagicLinkAuthClient(): SupabaseClient {
   if (typeof window === "undefined") {
     throw new Error("Magic link auth is browser-only");
   }
+  const pub = readSupabasePublicEnv();
+  if (!pub) {
+    throw new Error("Supabase public env is missing or not a valid HTTP URL");
+  }
   if (!magicLinkClient) {
-    magicLinkClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-      {
-        auth: {
-          flowType: "pkce",
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: false,
-          storage: window.localStorage,
-        },
+    magicLinkClient = createClient(pub.url, pub.anonKey, {
+      auth: {
+        flowType: "pkce",
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        storage: window.localStorage,
       },
-    );
+    });
   }
   return magicLinkClient;
 }
