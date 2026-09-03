@@ -1,12 +1,28 @@
 import type { AuditResultPayload, RestaurantGrade, RestaurantScoresV1 } from "@/lib/audit/types";
+import {
+  clampScore,
+  evidenceOverallFromAxes,
+  scoreBrandSocialForPayload,
+  scoreWebsiteFromEvidence,
+  type EvidenceAxis,
+} from "@/lib/audit/evidence-score";
 
-/** Restaurant-only score weights (sum = 1). */
-export const RESTAURANT_SCORE_WEIGHTS = {
-  reviews: 0.28,
-  gbp: 0.22,
-  website: 0.2,
-  competitors: 0.18,
+/** Restaurant-only score weights when Google listing is linked (sum = 1). */
+export const RESTAURANT_SCORE_WEIGHTS_WITH_PLACE = {
+  reviews: 0.24,
+  gbp: 0.18,
+  website: 0.22,
+  competitors: 0.14,
   technical: 0.12,
+  brandSocial: 0.1,
+} as const;
+
+/** Weights for URL-only audits (no linked listing) — lean on measurable site + brand evidence. */
+export const RESTAURANT_SCORE_WEIGHTS_URL_ONLY = {
+  website: 0.32,
+  technical: 0.26,
+  brandSocial: 0.22,
+  seo: 0.2,
 } as const;
 
 export const RESTAURANT_GRADE_BOUNDARIES: {
@@ -38,43 +54,32 @@ function clamp(n: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, Math.round(n)));
 }
 
-/** Stable placeholder when Google listing data is missing — keeps overall score consistent. */
-const MISSING_AXIS_SCORE = 58;
-
 function weighted(parts: { score: number; weight: number }[]): number {
-  const sumW = parts.reduce((a, p) => a + p.weight, 0) || 1;
-  const raw = parts.reduce((a, p) => a + p.score * p.weight, 0) / sumW;
+  const usable = parts.filter((p) => p.weight > 0 && Number.isFinite(p.score));
+  const sumW = usable.reduce((a, p) => a + p.weight, 0) || 1;
+  const raw = usable.reduce((a, p) => a + p.score * p.weight, 0) / sumW;
   return clamp(raw);
 }
 
-function scoreReviews(payload: AuditResultPayload, gaps: string[]): number {
+function scoreReviews(payload: AuditResultPayload, gaps: string[]): number | null {
   const gp = payload.evidencePack?.googlePlace;
   if (!gp?.placeId) {
     gaps.push("Google reviews unavailable — listing not linked");
-    return MISSING_AXIS_SCORE;
+    return null;
   }
 
   const rating = gp.rating ?? 0;
   const volume = gp.reviewCount ?? 0;
   const sample = gp.reviews?.length ?? 0;
 
-  // Overall rating (25% of axis) — benchmark ≥ 4.5
   const ratingScore = rating <= 0 ? 25 : clamp(((rating - 3) / 2) * 100, 15, 100);
-
-  // Review volume last-12 proxy (20%) — use total count as proxy
   const volumeScore =
     volume >= 200 ? 95 : volume >= 100 ? 85 : volume >= 50 ? 72 : volume >= 20 ? 55 : volume >= 5 ? 40 : 22;
 
-  // Response rate (25%) — no Places API field; mark gap, mild mid score
   gaps.push("Owner review response rate not available from Places API");
-  const responseScore = 55;
-
-  // Response time (15%)
   gaps.push("Average review response time not available from Places API");
-  const responseTimeScore = 50;
 
-  // Sentiment proxy (15%) from sample review ratings
-  let sentimentScore = 55;
+  let sentimentScore: number | null = null;
   if (sample > 0 && gp.reviews) {
     const avg = gp.reviews.reduce((a, r) => a + (r.rating || 0), 0) / sample;
     sentimentScore = clamp(((avg - 2.5) / 2.5) * 100, 20, 95);
@@ -83,148 +88,62 @@ function scoreReviews(payload: AuditResultPayload, gaps: string[]): number {
   }
 
   return weighted([
-    { score: ratingScore, weight: 0.25 },
-    { score: volumeScore, weight: 0.2 },
-    { score: responseScore, weight: 0.25 },
-    { score: responseTimeScore, weight: 0.15 },
-    { score: sentimentScore, weight: 0.15 },
+    { score: ratingScore, weight: 0.45 },
+    { score: volumeScore, weight: 0.35 },
+    ...(sentimentScore != null ? [{ score: sentimentScore, weight: 0.2 }] : []),
   ]);
 }
 
-function scoreGbp(payload: AuditResultPayload, gaps: string[]): number {
+function scoreGbp(payload: AuditResultPayload, gaps: string[]): number | null {
   const gp = payload.evidencePack?.googlePlace;
   if (!gp?.placeId) {
     gaps.push("Google Business Profile not resolved — discovery not scored");
-    return MISSING_AXIS_SCORE;
+    return null;
   }
 
-  // Profile completeness (20%) — have placeId + rating + reviews
   let completeness = 40;
   if (gp.placeId) completeness += 20;
   if (gp.rating != null) completeness += 20;
   if ((gp.reviewCount ?? 0) > 0) completeness += 20;
 
-  // Photo quantity (20%)
   const photos = gp.photoCount ?? 0;
   const photoScore = photos >= 80 ? 95 : photos >= 40 ? 80 : photos >= 15 ? 65 : photos >= 5 ? 45 : 25;
   if (photos < 15) gaps.push("Few Google listing photos");
 
-  // Categories & attributes (15%) — not in evidence; mild gap
-  gaps.push("GBP categories/attributes not fully exposed via Places fields used");
-  const categoriesScore = 55;
-
-  // Hours (15%) — not stored; gap
-  gaps.push("Opening hours accuracy not verified in this scan");
-  const hoursScore = 50;
-
-  // Posts (15%)
-  gaps.push("GBP posts frequency not available from Places API");
-  const postsScore = 45;
-
-  // Q&A (15%)
-  gaps.push("GBP Q&A activity not available from Places API");
-  const qaScore = 45;
+  gaps.push("GBP categories, hours, posts, and Q&A not fully available from this scan");
 
   return weighted([
-    { score: clamp(completeness), weight: 0.2 },
-    { score: photoScore, weight: 0.2 },
-    { score: categoriesScore, weight: 0.15 },
-    { score: hoursScore, weight: 0.15 },
-    { score: postsScore, weight: 0.15 },
-    { score: qaScore, weight: 0.15 },
+    { score: clamp(completeness), weight: 0.5 },
+    { score: photoScore, weight: 0.5 },
   ]);
 }
 
-function scoreWebsite(payload: AuditResultPayload, gaps: string[]): number {
-  const pack = payload.evidencePack;
-  const signals = pack?.urlSignals;
-  const eng = pack?.engagementSignals;
-  const design = pack?.designQualityAnalysis;
-  const food = pack?.foodImageAnalysis?.aggregate;
-
-  if (!signals?.fetched) {
-    gaps.push("Website could not be fetched");
-    return clamp(payload.scores.design * 0.5 + payload.scores.conversion * 0.5, 25, 55);
-  }
-
-  // Hero / first impression (25%)
-  let hero = 40;
-  if (signals.hasOgImage || (pack?.imageCandidates?.length ?? 0) > 0) hero += 25;
-  if (food?.foodPhotographyScore != null) {
-    hero = clamp(hero * 0.4 + food.foodPhotographyScore * 0.6);
-  } else if (design?.designQualityScore != null) {
-    hero = clamp(hero * 0.5 + design.designQualityScore * 0.5);
-  }
-  if (design?.tier === "amateur") hero = Math.min(hero, 45);
-
-  // Menu accessibility (25%)
-  const menuScore = eng?.contentDepth.hasMenuContent
-    ? 82
-    : signals.h2Count > 2
-      ? 55
-      : 35;
-  if (!eng?.contentDepth.hasMenuContent) gaps.push("Menu not clearly visible on site");
-
-  // Primary CTA (20%)
-  const cta = eng?.ctaAudit;
-  let ctaScore = 30;
-  if (cta?.bookReserve || signals.hasBookOrReserveKeyword || signals.hasOpenTableOrResy) ctaScore += 35;
-  if (cta?.orderOnline) ctaScore += 25;
-  if (cta?.phone || signals.hasTelLink) ctaScore += 15;
-  ctaScore = clamp(ctaScore);
-  if (ctaScore < 50) gaps.push("Weak order/reserve CTAs above the fold");
-
-  // Mobile (20%)
-  const mobileScore = clamp(payload.scores.mobile);
-
-  // Visual modernity (10%)
-  const visual =
-    design?.designQualityScore != null
-      ? design.designQualityScore
-      : clamp(payload.scores.design);
-
-  return weighted([
-    { score: clamp(hero), weight: 0.25 },
-    { score: menuScore, weight: 0.25 },
-    { score: ctaScore, weight: 0.2 },
-    { score: mobileScore, weight: 0.2 },
-    { score: visual, weight: 0.1 },
-  ]);
-}
-
-function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number {
+function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number | null {
   if (!payload.evidencePack?.googlePlace?.placeId) {
     gaps.push("Nearby competitors not scored without a linked Google listing");
-    return MISSING_AXIS_SCORE;
+    return null;
   }
   const comps = payload.competitors.filter((c) => c.source === "places" || c.mockScore > 0);
   if (comps.length === 0) {
     gaps.push("Nearby competitors not resolved");
-    return MISSING_AXIS_SCORE;
+    return null;
   }
 
-  const ours = (payload.restaurantScores?.overall ?? payload.scores.overall) || 50;
-  const peerAvg =
-    comps.reduce((a, c) => a + (c.mockScore || 0), 0) / Math.max(1, comps.length);
+  const ours = payload.restaurantScores?.overall ?? payload.scores.overall ?? payload.rubricV2?.overall ?? 50;
+  const peerAvg = comps.reduce((a, c) => a + (c.mockScore || 0), 0) / Math.max(1, comps.length);
 
-  // Local pack ranking proxy (40%) — relative to peer mock scores
   const gap = peerAvg - ours;
-  const packScore =
-    gap <= -10 ? 90 : gap <= 0 ? 75 : gap <= 10 ? 55 : gap <= 20 ? 40 : 28;
+  const packScore = gap <= -10 ? 90 : gap <= 0 ? 75 : gap <= 10 ? 55 : gap <= 20 ? 40 : 28;
 
-  // Review volume vs peers (25%) — use our review count vs assume peers mid
   const ourReviews = payload.evidencePack?.googlePlace?.reviewCount ?? 0;
   const volumeVsPeers =
     ourReviews >= 150 ? 88 : ourReviews >= 60 ? 72 : ourReviews >= 20 ? 55 : ourReviews > 0 ? 40 : 28;
 
-  // GBP strength vs comps (20%) — photo count proxy
   const photos = payload.evidencePack?.googlePlace?.photoCount ?? 0;
   const gbpVs = photos >= 50 ? 80 : photos >= 20 ? 65 : photos >= 5 ? 48 : 32;
 
-  // Website conversion signals (15%)
   const eng = payload.evidencePack?.engagementSignals?.ctaAudit;
-  const convSignals =
-    (eng?.bookReserve || eng?.orderOnline ? 70 : 40) + (eng?.phone ? 15 : 0);
+  const convSignals = (eng?.bookReserve || eng?.orderOnline ? 70 : 40) + (eng?.phone ? 15 : 0);
 
   return weighted([
     { score: packScore, weight: 0.4 },
@@ -237,8 +156,8 @@ function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number {
 function scoreTechnical(payload: AuditResultPayload, gaps: string[]): number {
   const signals = payload.evidencePack?.urlSignals;
   const psi = payload.evidencePack?.pageSpeed;
+  const rubricSeo = payload.rubricV2?.seo;
 
-  // Mobile CWV / speed (40%)
   let speed = 50;
   if (psi?.performanceScore != null) {
     speed = psi.performanceScore;
@@ -249,9 +168,9 @@ function scoreTechnical(payload: AuditResultPayload, gaps: string[]): number {
   if (psi?.lcpMs != null && psi.lcpMs > 4000) speed = Math.min(speed, 45);
   if (psi?.cls != null && psi.cls > 0.25) speed = Math.min(speed, 50);
 
-  // SEO hygiene (30%)
-  let seo = 40;
-  if (signals) {
+  let seo = rubricSeo ?? 40;
+  if (rubricSeo == null && signals) {
+    seo = 40;
     if (signals.titleLen >= 10 && signals.titleLen <= 65) seo += 15;
     if (signals.hasMetaDescription) seo += 15;
     if (signals.h1Count === 1) seo += 10;
@@ -259,19 +178,23 @@ function scoreTechnical(payload: AuditResultPayload, gaps: string[]): number {
       seo += Math.min(15, Math.round((signals.imgWithAltCount / Math.max(1, signals.imgCount)) * 15));
     }
     if (signals.hasCanonical) seo += 5;
-  } else {
+    if (signals.hasJsonLd) seo += 8;
+    if (signals.robotsTxtFound) seo += 4;
+    if (signals.sitemapFound) seo += 4;
+    seo = clamp(seo);
+  } else if (!signals) {
     seo = clamp(payload.scores.seo);
   }
 
-  // Security (15%)
   const security = signals?.isHttps ? 90 : 25;
   if (signals && !signals.isHttps) gaps.push("Site is not on HTTPS");
 
-  // Structured data (15%)
   let schema = 35;
   if (signals?.hasJsonLd) schema += 30;
   if (signals?.hasRestaurantSchema) schema += 30;
-  if (!signals?.hasRestaurantSchema) gaps.push("Restaurant/LocalBusiness schema missing or weak");
+  if (signals && !signals.hasRestaurantSchema && !signals.hasJsonLd) {
+    gaps.push("Restaurant/LocalBusiness schema missing or weak");
+  }
 
   return weighted([
     { score: clamp(speed), weight: 0.4 },
@@ -291,60 +214,55 @@ function confidenceFromGaps(gaps: string[], hasPlace: boolean, fetched: boolean)
 /** Compute restaurant-calibrated multi-axis scores from available audit signals. */
 export function computeRestaurantScores(payload: AuditResultPayload): RestaurantScoresV1 {
   const gaps: string[] = [];
-  const reviews = scoreReviews(payload, gaps);
-  const gbp = scoreGbp(payload, gaps);
-  const website = scoreWebsite(payload, gaps);
+  const hasPlace = Boolean(payload.evidencePack?.googlePlace?.placeId);
+  const fetched = Boolean(payload.evidencePack?.urlSignals?.fetched);
+
+  const reviewsMeasured = scoreReviews(payload, gaps);
+  const gbpMeasured = scoreGbp(payload, gaps);
+  const website = scoreWebsiteFromEvidence(payload, gaps);
   const technical = scoreTechnical(payload, gaps);
+  const brandSocial = scoreBrandSocialForPayload(payload);
 
   const provisional: AuditResultPayload = {
     ...payload,
     restaurantScores: undefined,
   };
-  const competitors = scoreCompetitors(provisional, gaps);
+  const competitorsMeasured = scoreCompetitors(provisional, gaps);
 
-  const axisParts: { score: number; weight: number }[] = [
-    { score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews },
-    { score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp },
-    { score: website, weight: RESTAURANT_SCORE_WEIGHTS.website },
-    { score: competitors, weight: RESTAURANT_SCORE_WEIGHTS.competitors },
-    { score: technical, weight: RESTAURANT_SCORE_WEIGHTS.technical },
-  ];
-  const overall = weighted(axisParts);
+  const axes: EvidenceAxis[] = [];
 
-  const withOverall: AuditResultPayload = {
-    ...payload,
-    restaurantScores: {
-      overall,
-      grade: gradeFromScore(overall),
-      reviews,
-      gbp,
-      website,
-      competitors,
-      technical,
-      confidence: "medium",
-    },
-  };
-  const competitorsFinal = scoreCompetitors(withOverall, gaps);
-  const finalParts: { score: number; weight: number }[] = [
-    { score: reviews, weight: RESTAURANT_SCORE_WEIGHTS.reviews },
-    { score: gbp, weight: RESTAURANT_SCORE_WEIGHTS.gbp },
-    { score: website, weight: RESTAURANT_SCORE_WEIGHTS.website },
-    { score: competitorsFinal, weight: RESTAURANT_SCORE_WEIGHTS.competitors },
-    { score: technical, weight: RESTAURANT_SCORE_WEIGHTS.technical },
-  ];
-  const overallFinal = weighted(finalParts);
+  if (hasPlace) {
+    const w = RESTAURANT_SCORE_WEIGHTS_WITH_PLACE;
+    if (reviewsMeasured != null) axes.push({ key: "reviews", score: reviewsMeasured, weight: w.reviews });
+    if (gbpMeasured != null) axes.push({ key: "gbp", score: gbpMeasured, weight: w.gbp });
+    axes.push({ key: "website", score: website, weight: w.website });
+    axes.push({ key: "technical", score: technical, weight: w.technical });
+    axes.push({ key: "brandSocial", score: brandSocial, weight: w.brandSocial });
+    if (competitorsMeasured != null) {
+      axes.push({ key: "competitors", score: competitorsMeasured, weight: w.competitors });
+    }
+  } else {
+    const w = RESTAURANT_SCORE_WEIGHTS_URL_ONLY;
+    axes.push({ key: "website", score: website, weight: w.website });
+    axes.push({ key: "technical", score: technical, weight: w.technical });
+    axes.push({ key: "brandSocial", score: brandSocial, weight: w.brandSocial });
+    const seo = payload.rubricV2?.seo ?? payload.scores.seo;
+    if (Number.isFinite(seo)) {
+      axes.push({ key: "seo", score: clampScore(seo), weight: w.seo });
+    }
+  }
+
+  const overallFinal = evidenceOverallFromAxes(axes);
 
   const uniqueGaps = [...new Set(gaps)].slice(0, 12);
-  const hasPlace = Boolean(payload.evidencePack?.googlePlace?.placeId);
-  const fetched = Boolean(payload.evidencePack?.urlSignals?.fetched);
 
   return {
     overall: overallFinal,
     grade: gradeFromScore(overallFinal),
-    reviews,
-    gbp,
+    reviews: reviewsMeasured,
+    gbp: gbpMeasured,
     website,
-    competitors: competitorsFinal,
+    competitors: competitorsMeasured,
     technical,
     confidence: confidenceFromGaps(uniqueGaps, hasPlace, fetched),
     dataGaps: uniqueGaps.length ? uniqueGaps : undefined,
@@ -356,7 +274,6 @@ export function applyRestaurantScoresToPayload(payload: AuditResultPayload): Aud
   return {
     ...payload,
     restaurantScores,
-    // Keep legacy columns in sync for DB headline when restaurant scores exist
     scores: {
       ...payload.scores,
       overall: restaurantScores.overall,

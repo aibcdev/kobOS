@@ -22,6 +22,8 @@ export type UrlSignals = {
   hasTelLink: boolean;
   hasMailto: boolean;
   hasBookOrReserveKeyword: boolean;
+  /** Delivery, pickup, catering — common on QSR / chain sites. */
+  hasOrderOrDeliveryKeyword: boolean;
   hasOpenTableOrResy: boolean;
   imgCount: number;
   /** Images with a non-empty alt attribute. */
@@ -57,7 +59,10 @@ export type PageEvidenceExtras = {
   imageCandidates: ImageCandidateUrl[];
 };
 
-const RESERVED = /\b(book|reserve|reservation|order online|order now|toast|square|chownow)\b/i;
+const RESERVED =
+  /\b(book|reserve|reservation|order online|order now|get it delivered|delivery|pickup|click.?and.?collect|takeaway|catering|find a kfc|find a restaurant|locations?)\b/i;
+const ORDER_DELIVERY =
+  /\b(order|delivery|pickup|takeaway|click.?and.?collect|catering|ship|get it delivered)\b/i;
 
 const SOCIAL_PATTERNS: { platform: string; re: RegExp }[] = [
   { platform: "instagram", re: /https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?/gi },
@@ -228,6 +233,7 @@ const emptySignals = (): UrlSignals => ({
   hasTelLink: false,
   hasMailto: false,
   hasBookOrReserveKeyword: false,
+  hasOrderOrDeliveryKeyword: false,
   hasOpenTableOrResy: false,
   imgCount: 0,
   imgWithAltCount: 0,
@@ -353,6 +359,7 @@ export function analyzeWebsiteFromHtml(
   signals.hasTelLink = /href=["']tel:/i.test(html);
   signals.hasMailto = /href=["']mailto:/i.test(html);
   signals.hasBookOrReserveKeyword = RESERVED.test(html);
+  signals.hasOrderOrDeliveryKeyword = ORDER_DELIVERY.test(html);
   signals.hasOpenTableOrResy = /opentable|resy|tock|sevenrooms/i.test(html);
 
   signals.imgCount = (html.match(/<img[\s>]/gi) ?? []).length;

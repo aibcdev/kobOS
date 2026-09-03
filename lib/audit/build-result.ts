@@ -75,7 +75,7 @@ function scoreFromSignals(
   let conversion = 32;
   if (s.hasTelLink) conversion += 18;
   if (s.hasMailto) conversion += 8;
-  if (s.hasBookOrReserveKeyword) conversion += 22;
+  if (s.hasBookOrReserveKeyword || s.hasOrderOrDeliveryKeyword) conversion += 22;
   if (s.hasOpenTableOrResy) conversion += 20;
 
   if (engagement) {

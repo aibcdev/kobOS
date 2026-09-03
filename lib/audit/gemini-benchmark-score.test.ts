@@ -28,7 +28,6 @@ describe("mergeBenchmarkV1IntoPayload", () => {
         mobile: 80,
         conversion: 75,
         checks: [],
-        anchorHost: "kfc.com",
       },
       issues: [],
       opportunities: [],

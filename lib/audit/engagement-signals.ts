@@ -70,7 +70,9 @@ export function computeEngagementSignals(
     signals.hasBookOrReserveKeyword ||
     signals.hasOpenTableOrResy ||
     bool(/\b(reservations?|book a table|book now|find a table)\b/i, html);
-  const orderOnline = bool(/\b(order online|order now|delivery|click.?and.?collect|takeaway)\b/i, html);
+  const orderOnline =
+    signals.hasOrderOrDeliveryKeyword ||
+    bool(/\b(order online|order now|delivery|click.?and.?collect|takeaway)\b/i, html);
   const phone = signals.hasTelLink;
   const emailCapture = bool(/\b(newsletter|subscribe|join our list|mailing list|email signup|get updates)\b/i, html);
   const whatsApp = bool(/wa\.me|whatsapp\.com/i, html);

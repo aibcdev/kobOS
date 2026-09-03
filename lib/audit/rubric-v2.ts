@@ -7,6 +7,7 @@ import type { AuditStagehandExtraction } from "@/lib/browserbase/stagehand-schem
 import type { AuditVisualIntelligenceResult } from "@/lib/audit/visual-intelligence";
 import type { UrlSignals } from "@/lib/audit/analyze-url";
 import { normalizeUrlSignals } from "@/lib/audit/analyze-url";
+import { scoreBrandSocialFromEvidence } from "@/lib/audit/evidence-score";
 
 export type RubricV2Input = {
   evidencePack: AuditEvidencePackV1;
@@ -27,40 +28,12 @@ export type RubricV2Result = {
   mobile: number;
   conversion: number;
   checks: BenchmarkV1Section["checks"];
-  anchorHost?: string;
 };
-
-const ANCHOR_HOSTS = new Set([
-  "kfc.com",
-  "www.kfc.com",
-  "mcdonalds.com",
-  "www.mcdonalds.com",
-  "shakeshack.com",
-  "www.shakeshack.com",
-  "chipotle.com",
-  "www.chipotle.com",
-  "dominos.com",
-  "www.dominos.com",
-  "subway.com",
-  "www.subway.com",
-  "pizzahut.com",
-  "www.pizzahut.com",
-  "papajohns.com",
-  "www.papajohns.com",
-]);
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, Math.round(n)));
 }
 
-function hostFromUrl(url: string | null): string {
-  if (!url) return "";
-  try {
-    return new URL(url.startsWith("http") ? url : `https://${url}`).hostname.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
-}
 
 type Check = { id: string; pass: boolean; weight: number; detail: string; evidenceRef: string };
 
@@ -183,7 +156,11 @@ function runChecks(input: RubricV2Input): Check[] {
   });
   checks.push({
     id: "web_conversion_cta",
-    pass: s.hasBookOrReserveKeyword || s.hasOpenTableOrResy || s.hasTelLink,
+    pass:
+      s.hasBookOrReserveKeyword ||
+      s.hasOrderOrDeliveryKeyword ||
+      s.hasOpenTableOrResy ||
+      s.hasTelLink,
     weight: 10,
     detail: "Reservation / order / phone CTA signals in HTML.",
     evidenceRef: "urlSignals.hasBookOrReserveKeyword",
@@ -313,17 +290,16 @@ function sectionChecks(checks: Check[], prefix: string) {
     .map((c) => ({ id: c.id, pass: c.pass, detail: c.detail, evidenceRef: c.evidenceRef }));
 }
 
-function applyAnchorFloor(host: string, scores: { seo: number; website: number; brand: number; overall: number }, signals: UrlSignals) {
-  if (!ANCHOR_HOSTS.has(host) && !ANCHOR_HOSTS.has(`www.${host}`)) {
-    return scores;
-  }
-  if (!signals.fetched || !signals.isHttps) return scores;
-  return {
-    seo: Math.max(scores.seo, 82),
-    website: Math.max(scores.website, 84),
-    brand: Math.max(scores.brand, 72),
-    overall: Math.max(scores.overall, 82),
-  };
+function computeRubricV2BrandScore(
+  input: RubricV2Input,
+  brandChecks: Check[],
+): { score: number; confidence: "low" | "medium" | "high" } {
+  const brandR = scoreFromChecks(brandChecks.length ? brandChecks : []);
+  const brandEvidence = scoreBrandSocialFromEvidence(input.evidencePack);
+  const score = clamp(Math.round(brandR.score * 0.3 + brandEvidence * 0.7), 0, 100);
+  const confidence: "low" | "medium" | "high" =
+    brandEvidence >= 76 ? "high" : brandEvidence >= 55 ? "medium" : brandR.confidence;
+  return { score, confidence };
 }
 
 export function computeRubricV2(input: RubricV2Input): RubricV2Result {
@@ -334,7 +310,7 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
 
   const seoR = scoreFromChecks(seoChecks.length ? seoChecks : checks);
   const webR = scoreFromChecks(webChecks.length ? webChecks : checks);
-  const brandR = scoreFromChecks(brandChecks.length ? brandChecks : checks);
+  const brandR = computeRubricV2BrandScore(input, brandChecks);
 
   const s = normalizeUrlSignals(input.evidencePack.urlSignals);
   let mobile = s.hasViewport ? 72 : 48;
@@ -345,14 +321,15 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
 
   let conversion = 40;
   if (s.hasTelLink) conversion += 15;
-  if (s.hasBookOrReserveKeyword) conversion += 18;
+  if (s.hasBookOrReserveKeyword || s.hasOrderOrDeliveryKeyword) conversion += 18;
   if (s.hasOpenTableOrResy) conversion += 15;
   conversion = clamp(conversion, 22, 95);
 
-  let overall = clamp(seoR.score * 0.34 + webR.score * 0.36 + brandR.score * 0.14 + mobile * 0.1 + conversion * 0.06, 18, 97);
-
-  const host = hostFromUrl(input.evidencePack.websiteUrl);
-  const anchored = applyAnchorFloor(host, { seo: seoR.score, website: webR.score, brand: brandR.score, overall }, s);
+  const overall = clamp(
+    seoR.score * 0.34 + webR.score * 0.36 + brandR.score * 0.14 + mobile * 0.1 + conversion * 0.06,
+    18,
+    97,
+  );
 
   const confidences = [seoR.confidence, webR.confidence, brandR.confidence];
   const confidence: "low" | "medium" | "high" = confidences.includes("high")
@@ -365,10 +342,10 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
     version: 2,
     scoredAt: new Date().toISOString(),
     confidence,
-    seo: anchored.seo,
-    websiteExperience: anchored.website,
-    brandSocialPresence: anchored.brand,
-    overall: anchored.overall,
+    seo: seoR.score,
+    websiteExperience: webR.score,
+    brandSocialPresence: brandR.score,
+    overall,
     mobile,
     conversion,
     checks: checks.map((c) => ({
@@ -377,7 +354,6 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
       detail: c.detail,
       evidenceRef: c.evidenceRef,
     })),
-    anchorHost: ANCHOR_HOSTS.has(host) ? host : undefined,
   };
 }
 
@@ -418,6 +394,7 @@ export function rubricFixtureWeakSignals(): UrlSignals {
     hasTelLink: false,
     hasMailto: false,
     hasBookOrReserveKeyword: false,
+    hasOrderOrDeliveryKeyword: false,
     hasOpenTableOrResy: false,
     imgCount: 0,
     imgWithAltCount: 0,
@@ -451,6 +428,7 @@ export function rubricFixtureEliteSignals(): UrlSignals {
     hasTelLink: true,
     hasMailto: false,
     hasBookOrReserveKeyword: true,
+    hasOrderOrDeliveryKeyword: true,
     hasOpenTableOrResy: false,
     imgCount: 12,
     imgWithAltCount: 10,

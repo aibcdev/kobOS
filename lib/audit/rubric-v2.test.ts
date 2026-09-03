@@ -19,14 +19,14 @@ function pack(signals: ReturnType<typeof rubricFixtureEliteSignals>, url: string
 }
 
 describe("computeRubricV2", () => {
-  it("scores elite anchor hosts at least 82 overall", () => {
+  it("scores elite evidence at least 90 overall from measurable checks", () => {
     const evidencePack = pack(rubricFixtureEliteSignals(), "https://www.kfc.com");
     const rubric = computeRubricV2({
       evidencePack,
       pageSpeed: { fetchedAt: new Date().toISOString(), performanceScore: 78, lcpMs: 2200, cls: 0.05 },
     });
-    expect(rubric.overall).toBeGreaterThanOrEqual(82);
-    expect(rubric.seo).toBeGreaterThanOrEqual(82);
+    expect(rubric.overall).toBeGreaterThanOrEqual(90);
+    expect(rubric.seo).toBeGreaterThanOrEqual(90);
   });
 
   it("scores weak sites below 55 overall", () => {
