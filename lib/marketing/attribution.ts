@@ -1,6 +1,7 @@
 /**
  * Paid-acquisition attribution helpers (Google Ads → audit → trial).
  */
+import { readStoredHeardFrom } from "@/lib/marketing/heard-from";
 
 export type AuditAttribution = {
   utmSource?: string;
@@ -8,6 +9,8 @@ export type AuditAttribution = {
   utmCampaign?: string;
   gclid?: string;
   landingPath?: string;
+  heardFrom?: string;
+  aiPrompt?: string;
 };
 
 export const KOB_B2B_CAMPAIGN = "kob_b2b_audit";
@@ -50,13 +53,13 @@ export function readBrowserAttribution(): AuditAttribution {
     );
     if (hasAny) {
       sessionStorage.setItem(key, JSON.stringify(merged));
-      return merged;
+      return { ...merged, ...readStoredHeardFrom() };
     }
     const raw = sessionStorage.getItem(key);
-    if (!raw) return { landingPath: path };
-    return { ...(JSON.parse(raw) as AuditAttribution), landingPath: path };
+    if (!raw) return { landingPath: path, ...readStoredHeardFrom() };
+    return { ...(JSON.parse(raw) as AuditAttribution), landingPath: path, ...readStoredHeardFrom() };
   } catch {
-    return merged;
+    return { ...merged, ...readStoredHeardFrom() };
   }
 }
 

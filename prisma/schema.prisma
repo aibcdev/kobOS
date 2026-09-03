@@ -943,6 +943,10 @@ model VisibilityAudit {
   utmCampaign       String?
   gclid             String?
   landingPath       String?
+  /** Self-reported: google, chatgpt, claude, gemini, perplexity, reddit, referral, ads, other */
+  heardFrom         String?
+  /** Prompt they used in ChatGPT / Claude / Gemini / Perplexity */
+  aiPrompt          String?   @db.Text
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   siteScan          SiteScan?
@@ -951,6 +955,7 @@ model VisibilityAudit {
   @@index([restaurantId])
   @@index([utmCampaign, createdAt])
   @@index([gclid])
+  @@index([heardFrom, createdAt])
   @@schema("public")
 }
 
