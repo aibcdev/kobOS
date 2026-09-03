@@ -4,6 +4,7 @@ import { z } from "zod";
 import { findVisibilityAuditByIdOrSlug } from "@/lib/audit/find-audit-by-id-or-slug";
 import { prisma } from "@/lib/db/prisma";
 import { isValidAuditPhone, normalizeAuditPhone } from "@/lib/marketing/audit-lead";
+import { notifyOpsAboutAuditLead } from "@/lib/marketing/notify-audit-lead";
 import {
   checkSimpleRateLimit,
   clientIpFromHeaders,
@@ -71,6 +72,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         leadCapturedAt: new Date(),
       },
     });
+
+    void notifyOpsAboutAuditLead(existing.id).catch((e) =>
+      console.warn("[audit/lead] ops notify failed", e),
+    );
 
     revalidatePath(`/audit/${existing.id}`);
     if (existing.slug) revalidatePath(`/audit/${existing.slug}`);

@@ -1,6 +1,7 @@
 import { OutboundLeadSource, OutboundLeadStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { parseAuditPayload } from "@/lib/audit/types";
+import { formatDiscoverySummary, readStoredDiscovery } from "@/lib/marketing/audit-discovery";
 
 export type ImportAuditLeadsResult = {
   scanned: number;
@@ -53,17 +54,28 @@ export async function importAuditLeadsToOutbound(
     }
 
     const payload = parseAuditPayload(audit.resultPayload);
+    const discovery = readStoredDiscovery(payload?.discovery ?? null);
+    const discoveryBits = discovery
+      ? formatDiscoverySummary(discovery)
+          .filter((r) =>
+            ["Goal", "Willingness to pay", "Timeline", "Online leaks", "Marketing spend"].includes(
+              r.label,
+            ),
+          )
+          .map((r) => `${r.label}: ${r.value}`)
+          .join(" · ")
+      : "";
     const topIssue =
       payload?.issues[0]?.title ?? payload?.opportunities[0]?.title ?? "online visibility gaps";
     const score = audit.overallScore;
 
-    const messageSubject = `${audit.restaurantName}: quick note on your online visibility`;
+    const messageSubject = `${audit.restaurantName} Reviews`;
     const messageBody = [
       `Hi — you recently ran a visibility scan for ${audit.restaurantName} in ${audit.city}.`,
       ``,
       `Your overall score came back at ${score}/100. One area that stood out: ${topIssue}.`,
       ``,
-      `We help independent restaurants fix gaps like this (site, Google, photos, reviews) and grow direct orders — without marketplace fees eating margin.`,
+      `KOB helps independent restaurants improve reviews and the gaps behind them (replies, Google listing, site, photos) so more guests trust you enough to book.`,
       ``,
       `Would a 15-minute walkthrough of your scan results be useful this week?`,
       ``,
@@ -77,7 +89,9 @@ export async function importAuditLeadsToOutbound(
         restaurantName: audit.restaurantName,
         websiteUrl: audit.websiteUrl,
         contactEmail: email,
-        insightSummary: `Audit lead · score ${score}/100 · ${topIssue}`,
+        insightSummary: discoveryBits
+          ? `Audit lead · score ${score}/100 · ${topIssue} · ${discoveryBits}`
+          : `Audit lead · score ${score}/100 · ${topIssue}`,
         messageSubject,
         messageBody,
         suggestedTone: "helpful",

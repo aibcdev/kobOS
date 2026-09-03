@@ -3,7 +3,7 @@
 **Method:** [interview-me](https://gist.github.com/f3kin/e4c9b01310ee25c6a0d72a450bed1d9c)  
 **Skill:** [`.agents/skills/interview-me/SKILL.md`](../.agents/skills/interview-me/SKILL.md)  
 **Date:** 2026-09-03  
-**Confidence at handoff:** ~90% (seeded from live product + Owner wedge + food discovery ship). Remaining gaps are near-term priority and sales motion — see Grill below.
+**Status:** Grill defaults **locked** 2026-09-03 (user: go ahead).
 
 ---
 
@@ -16,6 +16,7 @@
 **Scope (near-term product):**
 - Audit funnel with required food discovery (budget, leaks, systems, decision, timeline)
 - Report personalization from discovery answers (“What you told us” + opportunity reordering)
+- Ops notify + outbound insight include discovery on unlock
 - Trial → Today / Chief of Staff approve list (hours, reviews, photos, GBP)
 - Marketing honesty: feature pages do not oversell ordering/app
 - Owner-compare SEO resources + IndexNow
@@ -39,7 +40,7 @@
 1. Find restaurant (Places or URL)
 2. Complete 8 required discovery taps
 3. Scan with live progress (only after start — no fake homepage progress)
-4. Unlock full report with email (phone optional)
+4. Unlock full report with email (phone optional) → ops email with discovery
 5. Trial: approve short daily list; nothing publishes without the owner
 
 **Constraints:**
@@ -48,34 +49,14 @@
 - Discovery optional on API/MCP; required on marketing UI
 - Preserve `resultPayload.discovery` across pipeline overwrites
 
-**Decisions (critique these):**
-1. **Discovery is required on all marketing starts (hero + /audit)** — qualify harder; accept drop-off. Reasoning: user asked for budget/pain before email/phone.
-2. **Do not invent Hourglass-style $ annual savings matrices** — bias report order from leaks/goals only. Reasoning: DESIGN + Owner battle plan honesty.
-3. **Primary wedge remains listing/reviews/hours, not replatform** — even when discovery selects delivery fees. Reasoning: product cannot fulfill POS swap in trial.
-4. **Email unlock stays after scan** — discovery is pre-scan; contact gate unchanged. Reasoning: keep report teaser gravity.
-5. **Next 90 days default priority = audit conversion + Today list quality + UK outbound**, not website builder polish. Reasoning: only funnel that steals Owner demo traffic without a sales army.
-
----
-
-## Grill (confirm or override)
-
-Reply with overrides; otherwise defaults above stand.
-
-| # | Decision | Options | Recommendation |
-|---|----------|---------|----------------|
-| A | Hero discovery friction | Required / Optional expand / Skip on hero only | **Required** (already shipped) |
-| B | Discovery → CRM | Payload only / Also Slack email to hello@ / Folk/Apollo sync | **Payload + include in lead unlock email body** next |
-| C | 90-day product #1 | Today list / Website credits / Multi-location / Owner conquest sales | **Today list excellence** |
-| D | Geography push | UK only / UK+US ads / LatAm/India with UK | **UK + selective Owner-conquest US ads** |
-
----
-
-## Next step (pick one)
-
-1. **Start building** — implement grill outcomes (e.g. discovery in unlock email)
-2. **Refresh CLAUDE.md / AGENTS.md** pointers to this brief
-3. **Enter plan mode** — design Today-list 90-day plan
-4. **Spec only** — stop here; this file is the source of truth
+**Decisions (locked):**
+1. **Discovery required on all marketing starts (hero + /audit)**
+2. **No Hourglass-style invented ROI matrices** — bias report order from leaks/goals only
+3. **Wedge = listing/reviews/hours, not POS replatform**
+4. **Email unlock stays after scan**; discovery is pre-scan
+5. **90 days = audit conversion + Today list quality + UK outbound**
+6. **Discovery → CRM:** payload + ops notify email on unlock + outbound `insightSummary`
+7. **Geography:** UK + selective Owner-conquest US ads
 
 ---
 
@@ -84,3 +65,4 @@ Reply with overrides; otherwise defaults above stand.
 - [DESIGN.md](./DESIGN.md) — note: marketing “500+” line is stale vs live site; prefer this brief + live trykob.com
 - [OWNER-COMPETITOR-INTEL.md](./OWNER-COMPETITOR-INTEL.md)
 - Food discovery: `lib/marketing/audit-discovery.ts`
+- Ops notify: `lib/marketing/notify-audit-lead.ts`
