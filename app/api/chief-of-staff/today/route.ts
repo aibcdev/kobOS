@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { ensureTodayBrief, getTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
+import { getPreviewChiefOfStaffBrief } from "@/lib/preview/chief-of-staff-preview";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
 
 const querySchema = z.object({
   restaurantId: z.string().min(12),
@@ -23,6 +25,10 @@ export async function GET(req: Request) {
 
   if (!parsed.success) {
     return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
+  }
+
+  if (isPreviewRestaurantId(parsed.data.restaurantId)) {
+    return NextResponse.json(getPreviewChiefOfStaffBrief());
   }
 
   const allowed = await assertRestaurantMembership(session.userId, parsed.data.restaurantId);

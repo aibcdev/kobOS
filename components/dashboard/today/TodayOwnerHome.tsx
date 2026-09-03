@@ -10,7 +10,9 @@ import type { TodayJourneySnapshot } from "@/lib/dashboard/load-today-journey";
 import type { DashboardNavIcon } from "@/lib/dashboard/nav";
 import {
   ctaHrefForOperatorTask,
+  externalTargetForOperatorTask,
   toOperatorTask,
+  type OperatorTaskVenue,
   type OperatorTaskView,
 } from "@/lib/dashboard/operator-task";
 import { withRestaurantQuery } from "@/lib/dashboard/nav";
@@ -97,12 +99,14 @@ function PriorityRow({
   task,
   restaurantId,
   auditId,
+  venue,
   initialStatus,
   onRequested,
 }: {
   task: OperatorTaskView;
   restaurantId: string;
   auditId: string | null;
+  venue: OperatorTaskVenue;
   initialStatus: "REQUESTED" | "IN_PROGRESS" | "DELIVERED" | null;
   onRequested: (req: TodayOpenRequest) => void;
 }) {
@@ -206,6 +210,7 @@ function PriorityRow({
           : "Fix this";
 
   const surfaceHref = ctaHrefForOperatorTask(task, restaurantId, withRestaurantQuery);
+  const external = externalTargetForOperatorTask(task, venue);
 
   return (
     <li className="border-t border-[var(--color-hairline)] py-6 first:border-t-0 first:pt-0">
@@ -240,11 +245,21 @@ function PriorityRow({
                 {busy ? (isDemand ? "Approving…" : "Requesting…") : cta}
               </button>
             )}
+            {external ? (
+              <a
+                href={external.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[var(--color-muted)] no-underline underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
+              >
+                {external.label}
+              </a>
+            ) : null}
             <Link
               href={surfaceHref}
               className="text-sm text-[var(--color-muted)] no-underline underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
             >
-              Open
+              {external ? "Details" : "Open"}
             </Link>
           </div>
         </div>
@@ -303,8 +318,10 @@ export function TodayOwnerHome({
   restaurantName,
   brief: initialBrief,
   briefNeedsRefresh = false,
+  city = null,
   journey,
   website = null,
+  googleBusinessUrl = null,
   demandHints = [],
   openRequests: initialOpenRequests = [],
   auditId = null,
@@ -319,6 +336,7 @@ export function TodayOwnerHome({
   briefNeedsRefresh?: boolean;
   journey: TodayJourneySnapshot | null;
   website?: string | null;
+  googleBusinessUrl?: string | null;
   demandHints?: TodayDemandHint[];
   openRequests?: TodayOpenRequest[];
   auditId?: string | null;
@@ -441,6 +459,16 @@ export function TodayOwnerHome({
       ? `/audit/${journey.auditId}`
       : withRestaurantQuery("/dashboard/analytics", restaurantId);
 
+  const venue = useMemo<OperatorTaskVenue>(
+    () => ({
+      name: restaurantName,
+      city,
+      websiteUrl: journey?.websiteUrl ?? website,
+      googleBusinessUrl,
+    }),
+    [city, googleBusinessUrl, journey?.websiteUrl, restaurantName, website],
+  );
+
   const holiday = brief.summary.holidayBlock;
   const greet = greetingLine(restaurantName);
   const siteUrl = journey?.websiteUrl ?? website;
@@ -503,6 +531,7 @@ export function TodayOwnerHome({
               task={task}
               restaurantId={restaurantId}
               auditId={auditId}
+              venue={venue}
               initialStatus={requestStatusForTask(task, openRequests)}
               onRequested={(req) =>
                 setOpenRequests((prev) => {
@@ -585,12 +614,14 @@ export function TodayOwnerHome({
           {siteUrl ? (
             <li className="flex items-center justify-between gap-3 text-[var(--color-muted)]">
               <span>Website</span>
-              <Link
-                href={withRestaurantQuery("/dashboard/website", restaurantId)}
+              <a
+                href={/^https?:\/\//i.test(siteUrl) ? siteUrl : `https://${siteUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="max-w-[60%] truncate font-medium text-[var(--color-primary)] no-underline hover:underline"
               >
-                Open
-              </Link>
+                {siteUrl.replace(/^https?:\/\//i, "").replace(/\/$/, "")}
+              </a>
             </li>
           ) : null}
           <li className="flex items-center justify-between gap-3 text-[var(--color-muted)]">

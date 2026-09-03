@@ -6,6 +6,7 @@ import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { integrationPublic } from "@/lib/api/safe-integration";
 import { encryptSecret } from "@/lib/crypto/tokens";
 import { prisma } from "@/lib/db/prisma";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
 
 const upsertSchema = z.object({
   restaurantId: z.string().min(15).max(64),
@@ -24,6 +25,10 @@ export async function GET(req: Request) {
   const restaurantId = new URL(req.url).searchParams.get("restaurantId");
   if (!restaurantId) {
     return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
+  }
+
+  if (isPreviewRestaurantId(restaurantId)) {
+    return NextResponse.json({ integrations: [] });
   }
 
   const allowed = await assertRestaurantMembership(session.userId, restaurantId);

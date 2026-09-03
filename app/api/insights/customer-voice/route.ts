@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { getCustomerVoiceInsights } from "@/lib/insights/customer-voice";
+import { getPreviewCustomerVoice } from "@/lib/preview/insights-preview";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
 
 export async function GET(req: Request) {
   const session = await requireApiUser();
@@ -11,6 +13,10 @@ export async function GET(req: Request) {
 
   const restaurantId = new URL(req.url).searchParams.get("restaurantId");
   if (!restaurantId) return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
+
+  if (isPreviewRestaurantId(restaurantId)) {
+    return NextResponse.json(getPreviewCustomerVoice());
+  }
 
   const allowed = await assertRestaurantMembership(session.userId, restaurantId);
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

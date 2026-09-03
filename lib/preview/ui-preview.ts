@@ -12,6 +12,11 @@ export const PREVIEW_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 export const PREVIEW_RESTAURANT_ID = "clpreviewrestaurant0001";
 
+/** Preview APIs answer for the demo venue only — never for a real restaurant id. */
+export function isPreviewRestaurantId(restaurantId: string | null | undefined): boolean {
+  return isUiPreviewEnabled() && restaurantId === PREVIEW_RESTAURANT_ID;
+}
+
 export function getPreviewUser(): User {
   const now = new Date().toISOString();
   return {

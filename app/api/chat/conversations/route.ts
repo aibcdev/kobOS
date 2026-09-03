@@ -3,6 +3,7 @@ import { z } from "zod";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { prisma } from "@/lib/db/prisma";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
 
 const createSchema = z.object({
   restaurantId: z.string().min(12),
@@ -18,6 +19,10 @@ export async function GET(req: Request) {
   const restaurantId = new URL(req.url).searchParams.get("restaurantId");
   if (!restaurantId) {
     return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
+  }
+
+  if (isPreviewRestaurantId(restaurantId)) {
+    return NextResponse.json({ conversations: [] });
   }
 
   const allowed = await assertRestaurantMembership(session.userId, restaurantId);

@@ -209,3 +209,60 @@ export function ctaHrefForOperatorTask(
       return withRestaurantQuery("/dashboard/requests", restaurantId);
   }
 }
+
+export type OperatorTaskVenue = {
+  name: string;
+  city?: string | null;
+  websiteUrl?: string | null;
+  googleBusinessUrl?: string | null;
+};
+
+export type OperatorTaskExternalTarget = { href: string; label: string };
+
+function mapsSearchHref(venue: OperatorTaskVenue): string {
+  const query = [venue.name, venue.city].filter(Boolean).join(" ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function normalizeSiteUrl(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+/**
+ * The page the task is actually about — the owner's Google profile or their live
+ * site — so a fix can be checked against the source rather than a KOB summary.
+ * Returns null when there's no honest destination to send them to.
+ */
+export function externalTargetForOperatorTask(
+  task: OperatorTaskView,
+  venue: OperatorTaskVenue,
+): OperatorTaskExternalTarget | null {
+  const site = venue.websiteUrl ? normalizeSiteUrl(venue.websiteUrl) : null;
+  const gbp = venue.googleBusinessUrl ? normalizeSiteUrl(venue.googleBusinessUrl) : null;
+  const hasVenueQuery = Boolean(venue.name?.trim());
+
+  switch (task.kind) {
+    case "reply_reviews":
+      if (gbp) return { href: gbp, label: "Open in Google" };
+      return hasVenueQuery ? { href: mapsSearchHref(venue), label: "Open in Google" } : null;
+    case "add_photos":
+      if (gbp) return { href: gbp, label: "Open your photos" };
+      return hasVenueQuery ? { href: mapsSearchHref(venue), label: "Open your photos" } : null;
+    case "gbp_basics":
+      return { href: "https://business.google.com/dashboard", label: "Open your profile" };
+    case "fix_cta":
+      // PageSpeed reruns Google's own mobile audit against the live page.
+      return site
+        ? {
+            href: `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(site)}&form_factor=mobile`,
+            label: "Check on mobile",
+          }
+        : null;
+    case "website":
+      return site ? { href: site, label: "Open your site" } : null;
+    default:
+      return null;
+  }
+}

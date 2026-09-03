@@ -1,11 +1,17 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
+import { isUiPreviewEnabled, PREVIEW_USER_ID } from "@/lib/preview/ui-preview";
 
 export type ApiSessionResult =
   | { ok: true; userId: string }
   | { ok: false; status: number; message: string };
 
 export async function requireApiUser(): Promise<ApiSessionResult> {
+  // UI preview browses the dashboard without Supabase or Postgres.
+  if (isUiPreviewEnabled()) {
+    return { ok: true, userId: PREVIEW_USER_ID };
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

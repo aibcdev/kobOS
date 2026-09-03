@@ -292,7 +292,7 @@ function stageDetailFor(
     score: displayScore,
     observed:
       gaps.find((g) => /CTA|website|menu|Hours|address/i.test(g)) ??
-      (score >= 75
+      (displayScore >= 75
         ? "Primary actions and menu access are present on the pages we crawled."
         : "The next action (call / order / reserve) isn’t obvious enough on the first screen."),
     whyItMatters: "Guests who reach the site still bounce if the path is unclear on mobile.",

@@ -10,6 +10,7 @@ import { requireApiUser } from "@/lib/auth/api-session";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { prisma } from "@/lib/db/prisma";
 import { notifyOpsAboutServiceRequest } from "@/lib/ops/notify-service-request";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
 
 const postSchema = z.object({
   restaurantId: z.string().min(12),
@@ -37,6 +38,10 @@ export async function GET(req: Request) {
   const restaurantId = new URL(req.url).searchParams.get("restaurantId")?.trim();
   if (!restaurantId) {
     return NextResponse.json({ error: "restaurantId required" }, { status: 422 });
+  }
+
+  if (isPreviewRestaurantId(restaurantId)) {
+    return NextResponse.json({ auditId: null, auditSlug: null, wins: [], requests: [] });
   }
 
   const restaurant = await getRestaurantForMember(session.userId, restaurantId);
@@ -126,6 +131,26 @@ export async function POST(req: Request) {
   }
 
   const { restaurantId, fixKey, title, detail, auditId } = parsed.data;
+
+  // Preview mode has no database — acknowledge the click so the UI flow can be reviewed.
+  if (isPreviewRestaurantId(restaurantId)) {
+    return NextResponse.json(
+      {
+        ok: true,
+        preview: true,
+        request: {
+          id: `preview-request-${fixKey}`,
+          title,
+          notes: `fixKey=${fixKey}`,
+          status: ServiceRequestStatus.REQUESTED,
+          createdAt: new Date().toISOString(),
+        },
+        message: "Requested — in preview mode nothing is sent to the team.",
+      },
+      { status: 201 },
+    );
+  }
+
   const restaurant = await getRestaurantForMember(session.userId, restaurantId);
   if (!restaurant) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

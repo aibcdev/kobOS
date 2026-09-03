@@ -49,6 +49,7 @@ function baseSignals(partial: Partial<UrlSignals> & Pick<UrlSignals, "fetched">)
     hasTelLink: false,
     hasMailto: false,
     hasBookOrReserveKeyword: false,
+    hasOrderOrDeliveryKeyword: false,
     hasOpenTableOrResy: false,
     imgCount: 0,
     imgWithAltCount: 0,

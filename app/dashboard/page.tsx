@@ -42,6 +42,7 @@ export default async function DashboardPage({
         brief={getPreviewChiefOfStaffBrief()}
         journey={null}
         website={preview.website ?? null}
+        googleBusinessUrl={preview.googleBusinessUrl ?? null}
         welcome={false}
         previewMode
       />
@@ -122,6 +123,7 @@ export default async function DashboardPage({
       briefNeedsRefresh={briefNeedsRefresh}
       journey={journey}
       website={restaurant.website}
+      googleBusinessUrl={restaurant.googleBusinessUrl}
       demandHints={demandHints}
       openRequests={serviceRequests}
       auditId={journey?.auditId ?? null}

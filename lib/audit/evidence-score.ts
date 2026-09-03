@@ -140,7 +140,7 @@ export function scoreIdentityFromEvidence(payload: AuditResultPayload): number {
   if (stagehand?.hero?.headline?.trim()) score += 8;
   if ((stagehand?.hero?.cta_buttons?.length ?? 0) > 0) score += 6;
   if (signals?.hasOgTitle && signals?.hasOgImage) score += 8;
-  if (signals?.titleLen >= 12 && signals.titleLen <= 70) score += 6;
+  if (signals != null && signals.titleLen >= 12 && signals.titleLen <= 70) score += 6;
   if (signals?.h1Count === 1) score += 4;
   return clampScore(score);
 }

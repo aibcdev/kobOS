@@ -6,6 +6,12 @@ import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { getOverviewMetrics } from "@/lib/dashboard/overview-metrics";
 import { getSalesMetrics } from "@/lib/dashboard/sales-metrics";
 import { prisma } from "@/lib/db/prisma";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
+import {
+  getPreviewEventBreakdown,
+  getPreviewOverviewMetrics,
+  getPreviewSalesMetrics,
+} from "@/lib/preview/static-dashboard-data";
 
 export const metadata: Metadata = {
   title: "Traffic & Sales · KOB",
@@ -21,17 +27,21 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - 7);
 
-  const [metrics, sales, byType] = await Promise.all([
-    getOverviewMetrics(restaurantId),
-    getSalesMetrics(restaurantId),
-    prisma.websiteEvent.groupBy({
-      by: ["type"],
-      where: { restaurantId, createdAt: { gte: since } },
-      _count: { id: true },
-    }),
-  ]);
+  const preview = isPreviewRestaurantId(restaurantId);
 
-  const eventBreakdown = byType.map((row) => ({ type: row.type, count: row._count.id }));
+  const [metrics, sales, eventBreakdown] = preview
+    ? [getPreviewOverviewMetrics(), getPreviewSalesMetrics(), getPreviewEventBreakdown()]
+    : await Promise.all([
+        getOverviewMetrics(restaurantId),
+        getSalesMetrics(restaurantId),
+        prisma.websiteEvent
+          .groupBy({
+            by: ["type"],
+            where: { restaurantId, createdAt: { gte: since } },
+            _count: { id: true },
+          })
+          .then((rows) => rows.map((row) => ({ type: row.type, count: row._count.id }))),
+      ]);
 
   return (
     <div className="mx-auto max-w-5xl px-[var(--spacing-md)] py-10">
