@@ -24,7 +24,7 @@ export function SaasFinalCta() {
 
             <div className="flex w-full flex-col justify-center gap-4 sm:flex-row">
               <Link
-                href="/#audit-form"
+                href="/audit"
                 className="rounded-full bg-white px-8 py-4 text-sm font-semibold text-[var(--color-forest)] shadow-md transition-all duration-300 hover:-translate-y-0.5"
               >
                 {marketingCopy.cta.aiReport} →

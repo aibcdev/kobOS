@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { marketingCopy } from "@/lib/marketing/copy";
+import { REVIEW_LISTINGS } from "@/lib/marketing/review-listings";
 
 import { SaasIcon } from "./SaasIcon";
 
@@ -135,11 +136,20 @@ export function SaasMarketingFooter() {
               </li>
               <li>
                 <a
-                  href="https://www.g2.com/search?query=KOB+restaurant"
+                  href={REVIEW_LISTINGS.g2Search}
                   className="transition-colors hover:text-white"
                   rel="noopener noreferrer"
                 >
                   Review KOB on G2
+                </a>
+              </li>
+              <li>
+                <a
+                  href={REVIEW_LISTINGS.capterraSearch}
+                  className="transition-colors hover:text-white"
+                  rel="noopener noreferrer"
+                >
+                  Review on Capterra
                 </a>
               </li>
             </ul>
@@ -147,7 +157,7 @@ export function SaasMarketingFooter() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 pt-8 text-[11px] text-white/40 sm:flex-row">
-          <p>© 2026 KOB. All rights reserved.</p>
+          <p>© 2026 KOB. All rights reserved. · Support Mon–Fri, UK hours · hello@trykob.com</p>
           <div className="flex items-center gap-4">
             <Link href="/privacy" className="transition-colors hover:text-white">
               Privacy

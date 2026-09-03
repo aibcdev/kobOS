@@ -59,7 +59,7 @@ export function SaasWebsiteFeaturePage() {
         <p className="mx-auto mt-4 max-w-xl text-sm text-white/85 md:text-base">{marketingCopy.heroSubline}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
-            href="/#audit-form"
+            href="/audit"
             className="inline-flex h-12 items-center justify-center rounded-full bg-[#fbf8f5] px-8 text-sm font-semibold text-[#094413] hover:bg-white"
           >
             {marketingCopy.cta.aiReport}

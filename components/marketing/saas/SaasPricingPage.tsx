@@ -7,6 +7,7 @@ import {
   PRICING_PLANS,
 } from "@/lib/marketing/pricing-plans";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { REVIEW_LISTINGS } from "@/lib/marketing/review-listings";
 
 import { SaasFaqAccordion } from "./SaasFaqAccordion";
 import { SaasIcon } from "./SaasIcon";
@@ -65,7 +66,35 @@ export function SaasPricingPage() {
           ))}
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-[#2c2c2c]/55">
-          Built to cost less than typical all-in-one platforms like Owner.com ($249–$499/mo).
+          Built to cost less than typical all-in-one platforms like Owner.com ($249–$499/mo). Owner public pricing as of
+          2026-06-20.
+        </p>
+        <p className="mx-auto mt-4 max-w-xl text-center text-sm text-[#2c2c2c]/70">
+          Questions from an Owner.com comparison?{" "}
+          <Link href="/demo" className="font-medium text-[#088924] underline-offset-2 hover:underline">
+            Talk to us
+          </Link>{" "}
+          ·{" "}
+          <a href="mailto:hello@trykob.com" className="font-medium text-[#088924] underline-offset-2 hover:underline">
+            hello@trykob.com
+          </a>
+          . Happy customers: leave an honest review on{" "}
+          <a
+            href={REVIEW_LISTINGS.g2Search}
+            className="font-medium text-[#088924] underline-offset-2 hover:underline"
+            rel="noopener noreferrer"
+          >
+            G2
+          </a>{" "}
+          or{" "}
+          <a
+            href={REVIEW_LISTINGS.capterraSearch}
+            className="font-medium text-[#088924] underline-offset-2 hover:underline"
+            rel="noopener noreferrer"
+          >
+            Capterra
+          </a>
+          — we never buy reviews.
         </p>
       </section>
 
@@ -102,7 +131,7 @@ export function SaasPricingPage() {
         <p className="mx-auto mt-3 max-w-lg text-sm text-[#2c2c2c]/70">{marketingCopy.auditSubline}</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-[#2c2c2c]/55">{marketingCopy.closingSuggestive}</p>
         <Link
-          href="/#audit-form"
+          href="/audit"
           className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#094413] px-8 text-sm font-semibold text-[#fbf8f5] hover:bg-[#088924]"
         >
           {marketingCopy.cta.aiReport}

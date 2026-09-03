@@ -46,13 +46,38 @@ export default function GoAuditAdsLandingPage() {
 
       <SaasSection className="bg-[#fbf8f5]">
         <p className="font-heading text-center text-xl font-semibold text-[#2c2c2c] md:text-2xl">
+          What we&apos;d typically fix this week
+        </p>
+        <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#2c2c2c]/70">
+          After the scan, KOB proposes a short approve-only list — hours, photos, review replies, Google listing
+          gaps — not a replatform of your POS or ordering stack.
+        </p>
+        <ul className="mx-auto mt-8 grid max-w-3xl gap-3 sm:grid-cols-2">
+          {[
+            "Wrong or missing Google hours before a bank holiday",
+            "Unanswered 1–3★ reviews that still show on Maps",
+            "Stale cover photos vs what guests see in-room",
+            "Website paths that bury book / order / call",
+          ].map((item) => (
+            <li
+              key={item}
+              className="rounded-2xl border border-[#2c2c2c]/10 bg-white px-5 py-4 text-left text-sm leading-relaxed text-[#2c2c2c]/85"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      </SaasSection>
+
+      <SaasSection className="bg-[#f9f3ed]">
+        <p className="font-heading text-center text-xl font-semibold text-[#2c2c2c] md:text-2xl">
           What the free scan surfaces for restaurants like yours
         </p>
         <ul className="mt-8 grid gap-4 md:gap-5">
           {INSIGHTS.map((item) => (
             <li
               key={item.tag}
-              className="rounded-3xl border border-[#2c2c2c]/10 bg-[#f9f3ed] px-6 py-5 text-left"
+              className="rounded-3xl border border-[#2c2c2c]/10 bg-white px-6 py-5 text-left"
             >
               <span className="text-[11px] font-medium uppercase tracking-wider text-[#088924]">
                 {item.tag}
