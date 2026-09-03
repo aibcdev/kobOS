@@ -11,6 +11,11 @@ import { prisma } from "@/lib/db/prisma";
 import { inngest } from "@/inngest/client";
 import { isPaidGoogleAttribution } from "@/lib/marketing/attribution";
 import {
+  parseAuditDiscoveryAnswers,
+  storeAuditDiscovery,
+} from "@/lib/marketing/audit-discovery";
+import { parseHeardFrom } from "@/lib/marketing/heard-from";
+import {
   gbpPlaceholderWebsiteUrl,
   isGoogleMapsUrl,
   isNonWebsitePresenceUrl,
@@ -46,8 +51,12 @@ export const auditStartBodySchema = z
         utmCampaign: z.string().trim().max(200).optional(),
         gclid: z.string().trim().max(200).optional(),
         landingPath: z.string().trim().max(500).optional(),
+        heardFrom: z.string().trim().max(40).optional(),
+        aiPrompt: z.string().trim().max(2000).optional(),
       })
       .optional(),
+    /** Optional for MCP/scripts; marketing UI always sends a complete survey. */
+    discovery: z.unknown().optional(),
   })
   .superRefine((data, ctx) => {
     const hasPlace = Boolean(data.place?.placeId?.trim() || data.place?.name?.trim());
@@ -58,6 +67,15 @@ export const auditStartBodySchema = z
         message: "Provide a website URL or select your restaurant on Google.",
         path: ["websiteUrl"],
       });
+    }
+    if (data.discovery !== undefined && data.discovery !== null) {
+      if (!parseAuditDiscoveryAnswers(data.discovery)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Discovery survey is incomplete or invalid.",
+          path: ["discovery"],
+        });
+      }
     }
   });
 
@@ -189,8 +207,11 @@ export async function handleAuditStart(req: Request) {
     parsed.data.userImageUrls?.map((u) => u.trim()).filter(Boolean).slice(0, 3) ?? undefined;
 
   try {
-    const { row } = createPendingAuditSeed({ restaurantName, city, websiteUrl });
+    const discoveryRaw = parseAuditDiscoveryAnswers(parsed.data.discovery);
+    const discovery = discoveryRaw ? storeAuditDiscovery(discoveryRaw) : undefined;
+    const { row } = createPendingAuditSeed({ restaurantName, city, websiteUrl, discovery });
     const attr = parsed.data.attribution;
+    const heard = parseHeardFrom(attr);
     const created = await prisma.visibilityAudit.create({
       data: {
         ...row,
@@ -199,6 +220,8 @@ export async function handleAuditStart(req: Request) {
         utmCampaign: attr?.utmCampaign || null,
         gclid: attr?.gclid || null,
         landingPath: attr?.landingPath || null,
+        heardFrom: heard.heardFrom || null,
+        aiPrompt: heard.aiPrompt || null,
       },
     });
 

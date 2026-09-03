@@ -16,6 +16,7 @@ export function createPendingAuditSeed(input: {
   restaurantName: string;
   city: string;
   websiteUrl: string;
+  discovery?: AuditResultPayload["discovery"];
 }): {
   row: Omit<Prisma.VisibilityAuditCreateInput, "id">;
   payload: AuditResultPayload;
@@ -44,6 +45,7 @@ export function createPendingAuditSeed(input: {
         s.id === "website" ? { ...s, status: "running" as const } : s,
       ),
     },
+    ...(input.discovery ? { discovery: input.discovery } : {}),
   };
 
   const row: Omit<Prisma.VisibilityAuditCreateInput, "id"> = {

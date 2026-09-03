@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AuditDiscoverySurvey } from "@/components/marketing/audit/AuditDiscoverySurvey";
 import { AuditFormAlert } from "@/components/marketing/audit/AuditFormAlert";
 import {
   auditInlineValidationMessage,
@@ -10,7 +11,13 @@ import {
 } from "@/lib/audit/audit-start-errors";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { looksLikeWebsiteInput, normalizeAuditWebsiteUrl } from "@/lib/audit/normalize-website-url";
+import { HeardFromFields } from "@/components/marketing/HeardFromFields";
 import { readBrowserAttribution } from "@/lib/marketing/attribution";
+import type { AuditDiscoveryAnswers } from "@/lib/marketing/audit-discovery";
+import {
+  storeHeardFrom,
+  type HeardFromPayload,
+} from "@/lib/marketing/heard-from";
 
 type Suggestion = { placeId: string; mainText: string; secondaryText: string };
 
@@ -147,8 +154,14 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
   const [sampleImageUrl1, setSampleImageUrl1] = useState("");
   const [sampleImageUrl2, setSampleImageUrl2] = useState("");
   const [sampleImageUrl3, setSampleImageUrl3] = useState("");
+  const [heardFrom, setHeardFrom] = useState<HeardFromPayload>({});
   const [alert, setAlert] = useState<AuditUserMessage | null>(null);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<"search" | "discovery">("search");
+  const [pendingSubmit, setPendingSubmit] = useState<{
+    url: string;
+    usePlaceGeo: boolean;
+  } | null>(null);
 
   const debounceRef = useRef<number | null>(null);
 
@@ -252,23 +265,10 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
     return { url: placeUrl, usePlaceGeo: true };
   }, [urlEntryMode, websiteOverride, query, queryLooksLikeUrl, selected, details, effectiveWebsite]);
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!hydrated) return;
-
-      setAlert(null);
-
-      const resolved = resolveSubmitWebsite();
-      if ("error" in resolved) {
-        setAlert(auditInlineValidationMessage(resolved.error));
-        return;
-      }
-
-      const { url: submitUrl, usePlaceGeo } = resolved;
-
+  const startAudit = useCallback(
+    async (submitUrl: string, usePlaceGeo: boolean, discovery: AuditDiscoveryAnswers) => {
       setLoading(true);
+      setAlert(null);
       try {
         const userSocial =
           instagram.trim() || facebook.trim() || tiktok.trim() || googleBusinessUrl.trim()
@@ -279,7 +279,9 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
                 googleBusinessUrl: googleBusinessUrl.trim() || undefined,
               }
             : undefined;
-        const sampleUrls = [sampleImageUrl1, sampleImageUrl2, sampleImageUrl3].map((s) => s.trim()).filter(Boolean);
+        const sampleUrls = [sampleImageUrl1, sampleImageUrl2, sampleImageUrl3]
+          .map((s) => s.trim())
+          .filter(Boolean);
 
         const placePayload =
           usePlaceGeo && details
@@ -292,6 +294,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
               }
             : undefined;
 
+        storeHeardFrom(heardFrom);
         const res = await fetch("/api/audit/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -299,7 +302,8 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
             websiteUrl: submitUrl,
             siteScope,
             userSocial,
-            attribution: readBrowserAttribution(),
+            discovery,
+            attribution: { ...readBrowserAttribution(), ...heardFrom },
             ...(placePayload ? { place: placePayload } : {}),
             ...(sampleUrls.length ? { userImageUrls: sampleUrls.slice(0, 3) } : {}),
           }),
@@ -310,9 +314,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
         try {
           data = rawText ? (JSON.parse(rawText) as typeof data) : {};
         } catch {
-          setAlert(
-            auditInlineValidationMessage("We got an unexpected response. Please try again."),
-          );
+          setAlert(auditInlineValidationMessage("We got an unexpected response. Please try again."));
           return;
         }
 
@@ -351,8 +353,6 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
       }
     },
     [
-      hydrated,
-      resolveSubmitWebsite,
       siteScope,
       instagram,
       facebook,
@@ -365,8 +365,42 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
       mapsOn,
       details,
       selected,
+      heardFrom,
     ],
   );
+
+  const onSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!hydrated) return;
+
+      setAlert(null);
+
+      const resolved = resolveSubmitWebsite();
+      if ("error" in resolved) {
+        setAlert(auditInlineValidationMessage(resolved.error));
+        return;
+      }
+
+      setPendingSubmit({ url: resolved.url, usePlaceGeo: resolved.usePlaceGeo });
+      setStep("discovery");
+    },
+    [hydrated, resolveSubmitWebsite],
+  );
+
+  const venueLabel = useMemo(() => {
+    if (details?.name) return details.name;
+    if (selected?.mainText) return selected.mainText;
+    if (pendingSubmit?.url) {
+      try {
+        return new URL(pendingSubmit.url).hostname.replace(/^www\./, "");
+      } catch {
+        return pendingSubmit.url;
+      }
+    }
+    return null;
+  }, [details, selected, pendingSubmit]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (urlEntryMode) return;
@@ -410,6 +444,34 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
       }
     }
   };
+
+  if (step === "discovery" && pendingSubmit) {
+    return (
+      <div className="relative mx-auto w-full">
+        {alert ? (
+          <div className="mb-4">
+            <AuditFormAlert
+              alert={alert}
+              onRetry={() => {
+                setAlert(null);
+              }}
+            />
+          </div>
+        ) : null}
+        <AuditDiscoverySurvey
+          venueLabel={venueLabel}
+          loading={loading}
+          onBack={() => {
+            setStep("search");
+            setAlert(null);
+          }}
+          onContinue={(answers) => {
+            void startAudit(pendingSubmit.url, pendingSubmit.usePlaceGeo, answers);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <form noValidate onSubmit={onSubmit} className="relative mx-auto w-full">
@@ -473,6 +535,19 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
           )}
         </button>
       </AuditCapsule>
+
+      {!isHero ? (
+        <div className="mt-4 rounded-[24px] border border-[var(--color-hairline)] bg-white px-5 py-4 text-left">
+          <HeardFromFields
+            value={heardFrom}
+            onChange={(next) => {
+              setHeardFrom(next);
+              storeHeardFrom(next);
+            }}
+            selectClass={`${fieldClass} mt-1.5`}
+          />
+        </div>
+      ) : null}
 
       {alert ? (
         <AuditFormAlert

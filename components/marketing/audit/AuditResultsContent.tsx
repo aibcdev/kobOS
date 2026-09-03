@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { VisibilityAudit } from "@prisma/client";
 import { AuditReportDashboard } from "@/components/marketing/audit/AuditReportDashboard";
 import { AuditUnlockModal } from "@/components/marketing/audit/AuditUnlockModal";
+import { AuditDiscoveryToldUs } from "@/components/marketing/audit/AuditDiscoveryToldUs";
 import type { AuditBenchmarkPollSnapshot } from "@/components/marketing/audit/use-audit-benchmark-poll";
 import { auditCard, auditCardMuted } from "@/lib/marketing/audit-theme";
 import {
@@ -15,6 +16,7 @@ import { buildDecisionJourneyReport } from "@/lib/audit/decision-journey";
 import { buildPerceptionTeaserFromPayload } from "@/lib/marketing/audit-scan-preview";
 import type { AuditResultPayload } from "@/lib/audit/types";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { rankOpportunitiesByDiscovery, readStoredDiscovery } from "@/lib/marketing/audit-discovery";
 import { buildDashboardFromAuditHref, buildSignupTrialHref } from "@/lib/marketing/signup-trial-href";
 
 /** Audit dashboard — full report unlocks after email (Owner.com-style popup). */
@@ -104,8 +106,12 @@ export function AuditResultsContent({
     perceptionTeaser,
   };
 
+  const discovery = readStoredDiscovery(payload.discovery);
+  const rankedOpportunities = rankOpportunitiesByDiscovery(payload.opportunities, discovery);
+
   const payloadWithOpp: AuditResultPayload = {
     ...payload,
+    opportunities: rankedOpportunities,
     opportunityReport: opportunity,
   };
 
@@ -148,6 +154,12 @@ export function AuditResultsContent({
         onRequestUnlock={() => setUnlockOpen(true)}
       />
 
+      {discovery ? (
+        <div className="mx-auto max-w-[90rem] px-6 pb-4 pt-8 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
+          <AuditDiscoveryToldUs discovery={discovery} />
+        </div>
+      ) : null}
+
       {unlocked ? (
         <div className="mx-auto max-w-[90rem] border-t border-[var(--color-hairline)] bg-[#f9fafb] px-6 py-12 md:px-10 lg:pl-[calc(14rem+2.5rem)]">
           <div className="max-w-3xl space-y-14">
@@ -157,7 +169,7 @@ export function AuditResultsContent({
             <section>
               <h2 className="font-head text-xl font-semibold">Opportunities</h2>
               <ul className="mt-4 space-y-3">
-                {payload.opportunities.map((o) => (
+                {rankedOpportunities.map((o) => (
                   <li
                     key={o.title}
                     className={`${auditCard} flex flex-col gap-1 p-5 sm:flex-row sm:justify-between`}

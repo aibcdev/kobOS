@@ -214,6 +214,11 @@ export type AuditResultPayload = {
   analysisProgress?: AnalysisProgressV1;
   /** Post-scan Opportunity Report (revenue / maturity / lost customers). */
   opportunityReport?: AuditOpportunityReportV1;
+  /**
+   * Pre-scan food discovery survey (budget, leaks, systems).
+   * Preserved across pipeline overwrites when present.
+   */
+  discovery?: import("@/lib/marketing/audit-discovery").AuditDiscoveryStored;
 };
 
 export type AuditOpportunityFix = {
