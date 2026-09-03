@@ -18,8 +18,8 @@ export default function AuditPage() {
     <>
       <SaasPageHero
         eyebrow={marketingCopy.trustLine}
-        title={`${marketingCopy.losingSalesOnline} ${marketingCopy.useAiToFix}`}
-        description={marketingCopy.auditSubline}
+        title={marketingCopy.losingSalesOnline}
+        description={`${marketingCopy.useAiToFix} ${marketingCopy.auditSubline}`}
       />
 
       <SaasSection className="bg-[#f9f3ed] pb-8 pt-0">

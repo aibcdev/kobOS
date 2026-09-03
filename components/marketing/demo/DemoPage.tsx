@@ -32,9 +32,9 @@ export function DemoPage() {
       <SaasPageHero
         eyebrow={marketingCopy.trustLine}
         variant="inset"
-        title={`${marketingCopy.losingSalesOnline} ${marketingCopy.useAiToFix}`}
+        title={marketingCopy.losingSalesOnline}
         description={
-          "Talk through your Google listing, reviews, and daily approve list. We do not replace your POS or launch a branded app. Self-serve scan stays on /audit — this call is for Owner.com-comparison shoppers and multi-site questions."
+          `${marketingCopy.useAiToFix} Talk through your Google listing, reviews, and daily approve list. We do not replace your POS or launch a branded app. Self-serve scan stays on /audit — this call is for Owner.com-comparison shoppers and multi-site questions.`
         }
       >
         <SaasPrimaryCta href="#demo-form">Get started</SaasPrimaryCta>

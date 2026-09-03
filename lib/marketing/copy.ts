@@ -27,8 +27,8 @@ export const marketingCopy = {
   heroProofPoints: ["Free scan", "Takes 1 minute", "No card required"] as const,
   heroSocialProof: "Built for busy independent restaurants",
   heroAnnotation: "Every morning. Clear. Simple. Saves hours.",
-  losingSalesOnline: "Most restaurants lose customers online and don’t know where",
-  useAiToFix: " Free hospitality perception report.",
+  losingSalesOnline: "Most restaurants lose customers online and don’t know where.",
+  useAiToFix: "A free scan shows the leaks — then you approve the fixes.",
 
   auditSubline:
     "In about a minute we’ll show what guests notice on your site and Google listing—photos, hours, reviews, and trust. No card.",
