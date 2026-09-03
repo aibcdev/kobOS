@@ -11,9 +11,22 @@ function pack(signals: ReturnType<typeof rubricFixtureEliteSignals>, url: string
     pageEvidence: {
       titleSnippet: "Title",
       metaDescriptionSnippet: "Desc",
-      socialLinksFound: [{ platform: "instagram", url: "https://instagram.com/test" }],
+      socialLinksFound: [
+        { platform: "instagram", url: "https://instagram.com/test" },
+        { platform: "tiktok", url: "https://tiktok.com/@test" },
+        { platform: "facebook", url: "https://facebook.com/test" },
+      ],
       contentFingerprint: "abc",
       imageCandidates: [],
+    },
+    guestSignals: {
+      hasOpeningHours: true,
+      hasAddressOrDirections: true,
+      hasMenuPath: true,
+      reviewWidgetDetected: false,
+      mapsPlaceIds: [],
+      aggregateRating: null,
+      aggregateReviewCount: null,
     },
   });
 }

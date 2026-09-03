@@ -64,7 +64,6 @@ export function AuditResultsContent({
     restaurantName: audit.restaurantName,
   });
   const dashboardHref = buildDashboardFromAuditHref({ auditIdOrSlug: pathKey });
-  const primaryHref = unlocked ? dashboardHref : signupHref;
   const perceptionTeaser = buildPerceptionTeaserFromPayload(payload, audit.overallScore);
 
   const opportunity = ensureMoneyFirstOpportunityReport(
@@ -135,12 +134,13 @@ export function AuditResultsContent({
         open={!unlocked && unlockOpen}
         required={!unlocked}
         initialEmail={initialEmail || audit.leadEmail}
+        signupHref={signupHref}
         teaser={{
           score: maturityScore ?? undefined,
           screenshotUrl: payload.browserbaseScan?.screenshotPublicUrl ?? null,
         }}
         onClose={() => {
-          if (unlocked) setUnlockOpen(false);
+          setUnlockOpen(false);
         }}
       />
 
@@ -150,7 +150,7 @@ export function AuditResultsContent({
         benchmarkInitial={benchmarkInitial}
         unlocked={unlocked}
         scanStillRunning={scanStillRunning}
-        trialHref={primaryHref}
+        trialHref={signupHref}
         onRequestUnlock={() => setUnlockOpen(true)}
       />
 
@@ -206,6 +206,12 @@ export function AuditResultsContent({
             </section>
 
             <div className="flex flex-wrap gap-3">
+              <Link
+                href={signupHref}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-forest)] px-6 text-sm font-semibold text-white no-underline"
+              >
+                Start 7-day free trial
+              </Link>
               <Link
                 href={dashboardHref}
                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--color-hairline)] bg-white px-6 text-sm font-medium no-underline"

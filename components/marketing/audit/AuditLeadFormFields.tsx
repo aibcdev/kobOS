@@ -16,7 +16,7 @@ export function AuditLeadFormFields({
 }: {
   auditId: string;
   formId?: string;
-  onSuccess?: () => void;
+  onSuccess?: (email?: string) => void;
   hideLegal?: boolean;
   initialEmail?: string | null;
   /** When true, phone is optional (email unlocks the report). */
@@ -61,7 +61,7 @@ export function AuditLeadFormFields({
         setLoading(false);
         return;
       }
-      onSuccess?.();
+      onSuccess?.(email.trim());
     } catch {
       setError("Network error. Try again.");
     }

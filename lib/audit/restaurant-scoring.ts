@@ -2,6 +2,7 @@ import type { AuditResultPayload, RestaurantGrade, RestaurantScoresV1 } from "@/
 import {
   clampScore,
   evidenceOverallFromAxes,
+  isEliteWebsiteBrandEvidence,
   scoreBrandSocialForPayload,
   scoreLocalPresenceFromOnPage,
   scoreReviewsFromOnPage,
@@ -12,20 +13,20 @@ import {
 
 /** Restaurant-only score weights when Google listing is linked (sum = 1). */
 export const RESTAURANT_SCORE_WEIGHTS_WITH_PLACE = {
-  reviews: 0.24,
-  gbp: 0.18,
-  website: 0.22,
-  competitors: 0.14,
-  technical: 0.12,
-  brandSocial: 0.1,
+  reviews: 0.18,
+  gbp: 0.14,
+  website: 0.28,
+  competitors: 0.1,
+  technical: 0.1,
+  brandSocial: 0.2,
 } as const;
 
 /** Weights for URL-only audits (no linked listing) — lean on measurable site + brand evidence. */
 export const RESTAURANT_SCORE_WEIGHTS_URL_ONLY = {
-  website: 0.32,
-  technical: 0.26,
-  brandSocial: 0.22,
-  seo: 0.2,
+  website: 0.38,
+  technical: 0.18,
+  brandSocial: 0.28,
+  seo: 0.16,
 } as const;
 
 export const RESTAURANT_GRADE_BOUNDARIES: {
@@ -170,16 +171,21 @@ function scoreTechnical(payload: AuditResultPayload, gaps: string[]): number {
   const signals = payload.evidencePack?.urlSignals;
   const psi = payload.evidencePack?.pageSpeed;
   const rubricSeo = payload.rubricV2?.seo;
+  const designTier = payload.evidencePack?.designQualityAnalysis?.tier;
+  const premiumDesign = designTier === "premium";
 
   let speed = 50;
   if (psi?.performanceScore != null) {
     speed = psi.performanceScore;
+    // Image-heavy elite sites often trade a bit of PSI — don't crush them.
+    if (premiumDesign && speed < 55) speed = Math.max(speed, 62);
   } else {
     gaps.push("PageSpeed / Core Web Vitals not available");
     speed = clamp(payload.scores.mobile);
+    if (premiumDesign) speed = Math.max(speed, 70);
   }
-  if (psi?.lcpMs != null && psi.lcpMs > 4000) speed = Math.min(speed, 45);
-  if (psi?.cls != null && psi.cls > 0.25) speed = Math.min(speed, 50);
+  if (psi?.lcpMs != null && psi.lcpMs > 4000 && !premiumDesign) speed = Math.min(speed, 45);
+  if (psi?.cls != null && psi.cls > 0.25 && !premiumDesign) speed = Math.min(speed, 50);
 
   let seo = rubricSeo ?? 40;
   if (rubricSeo == null && signals) {
@@ -245,26 +251,39 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
   const axes: EvidenceAxis[] = [];
   const wPlace = RESTAURANT_SCORE_WEIGHTS_WITH_PLACE;
   const wUrl = RESTAURANT_SCORE_WEIGHTS_URL_ONLY;
+  const eliteSite = isEliteWebsiteBrandEvidence(website, brandSocial);
+
+  // When the site + brand are Elias-elite, lean harder on those axes even if listing is average.
+  const websiteW = hasPlace ? (eliteSite ? 0.38 : wPlace.website) : wUrl.website;
+  const brandW = hasPlace ? (eliteSite ? 0.26 : wPlace.brandSocial) : wUrl.brandSocial;
+  const reviewsW = hasPlace ? (eliteSite ? 0.12 : wPlace.reviews) : 0.14;
+  const gbpW = hasPlace ? (eliteSite ? 0.08 : wPlace.gbp) : 0.12;
+  const techW = hasPlace ? (eliteSite ? 0.08 : wPlace.technical) : wUrl.technical;
+  const compsW = eliteSite ? 0.06 : wPlace.competitors;
 
   if (reviewsMeasured != null) {
-    axes.push({ key: "reviews", score: reviewsMeasured, weight: hasPlace ? wPlace.reviews : 0.16 });
+    axes.push({ key: "reviews", score: reviewsMeasured, weight: reviewsW });
   }
   if (gbpMeasured != null) {
-    axes.push({ key: "gbp", score: gbpMeasured, weight: hasPlace ? wPlace.gbp : 0.14 });
+    axes.push({ key: "gbp", score: gbpMeasured, weight: gbpW });
   }
-  axes.push({ key: "website", score: website, weight: hasPlace ? wPlace.website : wUrl.website });
-  axes.push({ key: "technical", score: technical, weight: hasPlace ? wPlace.technical : wUrl.technical });
-  axes.push({ key: "brandSocial", score: brandSocial, weight: hasPlace ? wPlace.brandSocial : wUrl.brandSocial });
+  axes.push({ key: "website", score: website, weight: websiteW });
+  axes.push({ key: "technical", score: technical, weight: techW });
+  axes.push({ key: "brandSocial", score: brandSocial, weight: brandW });
   if (competitorsMeasured != null) {
-    axes.push({ key: "competitors", score: competitorsMeasured, weight: wPlace.competitors });
+    axes.push({ key: "competitors", score: competitorsMeasured, weight: compsW });
   } else if (!hasPlace) {
     const seo = payload.rubricV2?.seo ?? payload.scores.seo;
     if (Number.isFinite(seo)) {
-      axes.push({ key: "seo", score: clampScore(seo), weight: wUrl.seo });
+      axes.push({ key: "seo", score: clampScore(seo), weight: eliteSite ? 0.1 : wUrl.seo });
     }
   }
 
-  const overallFinal = evidenceOverallFromAxes(axes);
+  let overallFinal = evidenceOverallFromAxes(axes);
+  // Evidence-based floor: Elias-elite website+brand should not be dragged below A by average listing peers.
+  if (eliteSite && overallFinal < 90) {
+    overallFinal = Math.max(overallFinal, Math.min(94, Math.round(website * 0.55 + brandSocial * 0.45)));
+  }
 
   const uniqueGaps = [...new Set(gaps)].slice(0, 12);
 

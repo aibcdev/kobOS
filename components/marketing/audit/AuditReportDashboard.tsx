@@ -386,7 +386,7 @@ export function AuditReportDashboard({
   unlocked: boolean;
   scanStillRunning?: boolean;
   onRequestUnlock?: () => void;
-  /** Free-trial onboarding — all Fix / Start CTAs. */
+  /** Free-trial onboarding — primary CTA after unlock. */
   trialHref?: string;
 }) {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
@@ -463,8 +463,8 @@ export function AuditReportDashboard({
     <div className="min-h-screen bg-[var(--color-surface-warm)] text-[var(--color-ink)]">
       <AuditFunnelHeader
         showTrialCta
-        ctaHref={trialCheckoutHref}
-        ctaLabel={unlocked ? "Open dashboard" : "Enter email to unlock"}
+        ctaHref={unlocked ? trialCheckoutHref : undefined}
+        ctaLabel={unlocked ? "Start 7-day free trial" : "Enter email to unlock"}
         onCtaClick={unlocked ? undefined : onRequestUnlock}
       />
 
@@ -518,7 +518,7 @@ export function AuditReportDashboard({
                 href={trialCheckoutHref}
                 className="mt-4 flex w-full items-center justify-center rounded-xl bg-white/10 py-2 text-xs font-semibold text-white no-underline hover:bg-white/20"
               >
-                Open dashboard
+                Start 7-day free trial
               </Link>
             ) : (
               <button
@@ -553,7 +553,7 @@ export function AuditReportDashboard({
                   href={trialCheckoutHref}
                   className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--color-primary)] px-5 text-sm font-semibold text-white no-underline shadow-[0_4px_14px_-2px_rgba(9,68,19,0.35)]"
                 >
-                  Open dashboard →
+                  Start 7-day free trial →
                 </Link>
               ) : (
                 <button

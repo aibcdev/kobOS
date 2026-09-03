@@ -200,11 +200,51 @@ function runChecks(input: RubricV2Input): Check[] {
     checks.push({
       id: "web_visual_quality",
       pass: vm.overallHeuristic >= 55,
-      weight: 8,
+      weight: 12,
       detail: `Screenshot visual heuristic ${vm.overallHeuristic}/100.`,
       evidenceRef: "visualMetrics.overallHeuristic",
     });
   }
+
+  const design = input.evidencePack.designQualityAnalysis;
+  if (design) {
+    checks.push({
+      id: "web_design_identity",
+      pass: design.tier === "premium" || design.tier === "competent" || design.designQualityScore >= 70,
+      weight: 12,
+      detail: `Design tier ${design.tier} (${design.designQualityScore}/100).`,
+      evidenceRef: "designQualityAnalysis.tier",
+    });
+  }
+
+  const guest = input.evidencePack.guestSignals;
+  const eng = input.evidencePack.engagementSignals;
+  const menuDepth =
+    (input.stagehandExtraction?.menu?.categories?.length ?? 0) > 0 ||
+    Boolean(guest?.hasMenuPath) ||
+    Boolean(eng?.contentDepth.hasMenuContent);
+  checks.push({
+    id: "web_menu_access",
+    pass: menuDepth,
+    weight: 10,
+    detail: menuDepth ? "Menu path or categories detected." : "No clear menu access on page.",
+    evidenceRef: "guestSignals.hasMenuPath",
+  });
+
+  const bookingPath =
+    s.hasBookOrReserveKeyword ||
+    s.hasOrderOrDeliveryKeyword ||
+    s.hasOpenTableOrResy ||
+    Boolean(eng?.ctaAudit.bookReserve) ||
+    Boolean(eng?.ctaAudit.orderOnline) ||
+    (input.stagehandExtraction?.hero?.cta_buttons?.length ?? 0) > 0;
+  checks.push({
+    id: "web_booking_path",
+    pass: bookingPath,
+    weight: 10,
+    detail: bookingPath ? "Booking or order path present." : "No frictionless booking/order path found.",
+    evidenceRef: "urlSignals.hasBookOrReserveKeyword",
+  });
 
   const sh = input.stagehandExtraction;
   if (sh) {
@@ -257,6 +297,24 @@ function runChecks(input: RubricV2Input): Check[] {
     pass: hasSocial,
     weight: 12,
     detail: hasSocial ? "Social or GBP links present." : "No social footprint in evidence.",
+    evidenceRef: "pageEvidence.socialLinksFound",
+  });
+
+  const platforms = new Set(
+    page.socialLinksFound.map((l) => l.platform.toLowerCase()).concat(
+      [social.instagram && "instagram", social.facebook && "facebook", social.tiktok && "tiktok"].filter(
+        Boolean,
+      ) as string[],
+    ),
+  );
+  const hasVisualSocial = platforms.has("instagram") || platforms.has("tiktok");
+  checks.push({
+    id: "brand_visual_social",
+    pass: hasVisualSocial,
+    weight: 8,
+    detail: hasVisualSocial
+      ? "Instagram or TikTok linked — visual brand channel present."
+      : "No Instagram/TikTok link found for visual branding.",
     evidenceRef: "pageEvidence.socialLinksFound",
   });
 
@@ -318,6 +376,10 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
     mobile = clamp(mobile * 0.35 + input.pageSpeed.performanceScore * 0.65, 35, 98);
   }
   if (s.htmlSizeKb > 0 && s.htmlSizeKb < 800) mobile = clamp(mobile + 8, 0, 98);
+  const designTier = input.evidencePack.designQualityAnalysis?.tier;
+  if (designTier === "premium" && s.hasViewport && mobile < 75) {
+    mobile = clamp(Math.max(mobile, 78), 35, 98);
+  }
 
   let conversion = 40;
   if (s.hasTelLink) conversion += 15;
@@ -325,8 +387,9 @@ export function computeRubricV2(input: RubricV2Input): RubricV2Result {
   if (s.hasOpenTableOrResy) conversion += 15;
   conversion = clamp(conversion, 22, 95);
 
+  // Lean slightly more on website experience + brand (Elias guest axes) vs raw SEO ratio.
   const overall = clamp(
-    seoR.score * 0.34 + webR.score * 0.36 + brandR.score * 0.14 + mobile * 0.1 + conversion * 0.06,
+    seoR.score * 0.26 + webR.score * 0.4 + brandR.score * 0.18 + mobile * 0.1 + conversion * 0.06,
     18,
     97,
   );

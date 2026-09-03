@@ -125,6 +125,9 @@ export const marketingCopy = {
     submitting: "Unlocking…",
     legal:
       "By continuing you agree to our Terms of Service and Privacy Policy. We use your email to save your report. Your account is created when you start a paid plan or free trial.",
+    trialSoftTitle: "Start your 7-day free trial",
+    trialSoftSkip: "View full report",
+    trialSoftCta: "Start 7-day free trial",
   },
 
   auditInsights: [
