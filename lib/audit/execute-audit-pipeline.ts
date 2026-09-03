@@ -153,7 +153,7 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
 
     const payloadWithStage: AuditResultPayload = {
       ...scoredPayload,
-      ...(prevPayload.discovery ? { discovery: prevPayload.discovery } : {}),
+      ...(prevPayload?.discovery ? { discovery: prevPayload.discovery } : {}),
       browserbaseScan: {
         capturedAt: scoredPayload.browserbaseScan?.capturedAt ?? new Date().toISOString(),
         mode: scoredPayload.browserbaseScan?.mode ?? "sync",
