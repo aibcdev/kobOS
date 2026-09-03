@@ -1,3 +1,4 @@
+import { mergeOnPageGuestSignals } from "@/lib/audit/on-page-guest-signals";
 import type { UrlSignals, WebsiteAnalysis } from "@/lib/audit/analyze-url";
 
 function avgBool(values: boolean[]): boolean {
@@ -121,5 +122,8 @@ export function mergeWebsiteAnalyses(analyses: WebsiteAnalysis[]): WebsiteAnalys
       imageCandidates,
     },
     engagementSignals: primary.engagementSignals,
+    guestSignals: mergeOnPageGuestSignals(
+      analyses.map((a) => a.guestSignals).filter((g): g is NonNullable<typeof g> => Boolean(g)),
+    ),
   };
 }

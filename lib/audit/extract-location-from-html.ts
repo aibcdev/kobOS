@@ -1,9 +1,12 @@
+import { extractMapsPlaceIdsFromHtml } from "@/lib/audit/on-page-guest-signals";
+
 /** Best-effort city + coordinates from JSON-LD / microdata in crawled HTML. */
 export type HtmlGeoHint = {
   city: string | null;
   lat: number | null;
   lng: number | null;
   source: "json_ld" | "meta_geo";
+  mapsPlaceIds?: string[];
 };
 
 function parseJsonLdBlocks(html: string): unknown[] {
@@ -78,9 +81,12 @@ function walkJsonLd(nodes: unknown[]): HtmlGeoHint | null {
 }
 
 export function extractLocationFromHtml(html: string): HtmlGeoHint | null {
+  const mapsPlaceIds = extractMapsPlaceIdsFromHtml(html);
   const blocks = parseJsonLdBlocks(html);
   const fromLd = walkJsonLd(blocks);
-  if (fromLd) return fromLd;
+  if (fromLd) {
+    return mapsPlaceIds.length ? { ...fromLd, mapsPlaceIds } : fromLd;
+  }
 
   const geoPos = html.match(/<meta[^>]+name=["']geo\.position["'][^>]+content=["']([^"']+)["']/i);
   if (geoPos?.[1]) {
@@ -88,8 +94,17 @@ export function extractLocationFromHtml(html: string): HtmlGeoHint | null {
     const lat = Number.parseFloat(latS ?? "");
     const lng = Number.parseFloat(lngS ?? "");
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      return { city: null, lat, lng, source: "meta_geo" };
+      return {
+        city: null,
+        lat,
+        lng,
+        source: "meta_geo",
+        ...(mapsPlaceIds.length ? { mapsPlaceIds } : {}),
+      };
     }
+  }
+  if (mapsPlaceIds.length) {
+    return { city: null, lat: null, lng: null, source: "json_ld", mapsPlaceIds };
   }
   return null;
 }

@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import type { AuditEngagementSignals } from "@/lib/audit/engagement-signals";
 import { computeEngagementSignals } from "@/lib/audit/engagement-signals";
+import {
+  extractOnPageGuestSignals,
+  type OnPageGuestSignals,
+} from "@/lib/audit/on-page-guest-signals";
 import { discoverSeoCrawlAssets } from "@/lib/audit/seo-discovery";
 
 export type UrlSignals = {
@@ -215,6 +219,7 @@ export type WebsiteAnalysis = {
   signals: UrlSignals;
   pageEvidence: PageEvidenceExtras;
   engagementSignals?: AuditEngagementSignals;
+  guestSignals?: OnPageGuestSignals;
 };
 
 const emptySignals = (): UrlSignals => ({
@@ -373,6 +378,7 @@ export function analyzeWebsiteFromHtml(
 
   const socialLinksFound = extractSocialLinks(html);
   const imageCandidates = extractImageCandidates(html, resolvedPageUrl);
+  const guestSignals = extractOnPageGuestSignals(html);
 
   return {
     signals,
@@ -384,6 +390,7 @@ export function analyzeWebsiteFromHtml(
       imageCandidates,
     },
     engagementSignals: computeEngagementSignals(html, signals),
+    guestSignals,
   };
 }
 

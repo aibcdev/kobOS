@@ -319,6 +319,115 @@ export async function placesFindByWebsite(
   };
 }
 
+function compactPlaceName(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function placeNameMatches(candidate: string | undefined, expected: string): boolean {
+  const a = compactPlaceName(candidate ?? "");
+  const b = compactPlaceName(expected);
+  if (!a || !b) return false;
+  if (a.includes(b) || b.includes(a)) return true;
+  const tokens = expected
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .filter((t) => t.length > 2);
+  if (tokens.length === 0) return false;
+  const hit = tokens.filter((t) => compactPlaceName(candidate ?? "").includes(t)).length;
+  return hit / tokens.length >= 0.6;
+}
+
+async function searchTextPlaces(
+  textQuery: string,
+  opts?: { includedType?: string; regionCode?: string },
+): Promise<Array<{
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  websiteUri?: string;
+  location?: { latitude?: number; longitude?: number };
+}>> {
+  const key = getApiKey();
+  if (!key) return [];
+
+  const body: Record<string, unknown> = {
+    textQuery: textQuery.slice(0, 200),
+    languageCode: "en-GB",
+    maxResultCount: 8,
+  };
+  if (opts?.includedType) body.includedType = opts.includedType;
+  if (opts?.regionCode) body.regionCode = opts.regionCode;
+
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.formattedAddress,places.location,places.websiteUri",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    console.warn("[places] searchText HTTP", res.status);
+    return [];
+  }
+  const json = (await res.json()) as {
+    places?: Array<{
+      id?: string;
+      displayName?: { text?: string };
+      formattedAddress?: string;
+      websiteUri?: string;
+      location?: { latitude?: number; longitude?: number };
+    }>;
+  };
+  return json.places ?? [];
+}
+
+/** Name + city text search when the website host does not match a Places websiteUri. */
+export async function placesFindByNameAndCity(
+  restaurantName: string,
+  city?: string | null,
+): Promise<{ placeId: string; lat: number; lng: number; city: string } | null> {
+  const name = restaurantName.trim();
+  if (!name || name.length < 2) return null;
+
+  const cityTrim = city?.trim() && city.trim() !== "Your area" ? city.trim() : "";
+  const queries = cityTrim
+    ? [`${name} ${cityTrim}`, `${name} restaurant ${cityTrim}`]
+    : [`${name} restaurant`, name];
+  const region = auditPlacesRegionCodes()[0];
+
+  for (const q of queries) {
+    const typed = await searchTextPlaces(q, { includedType: "restaurant", regionCode: region });
+    const loose = typed.length ? typed : await searchTextPlaces(q, { regionCode: region });
+    const pick =
+      loose.find(
+        (p) =>
+          placeNameMatches(p.displayName?.text, name) &&
+          p.location?.latitude != null &&
+          p.location.longitude != null,
+      ) ??
+      loose.find((p) => p.location?.latitude != null && p.location.longitude != null);
+
+    if (!pick?.id || pick.location?.latitude == null || pick.location.longitude == null) continue;
+    if (!placeNameMatches(pick.displayName?.text, name) && loose.length > 1) continue;
+
+    const { cityFromFormattedAddress } = await import("@/lib/audit/create-pending-audit");
+    return {
+      placeId: pick.id,
+      lat: pick.location.latitude,
+      lng: pick.location.longitude,
+      city: cityFromFormattedAddress(pick.formattedAddress ?? "") || cityTrim || "Your area",
+    };
+  }
+  return null;
+}
+
 /** Nearby restaurants for competitor comparison (excludes self when name matches). */
 export async function placesSearchNearbyRestaurants(
   lat: number,

@@ -439,6 +439,7 @@ export function buildAuditPayloadAndRow(
     multiSiteOrigins: input.multiSiteOrigins,
     engagementSignals: analysis.engagementSignals,
     stagehandExtraction: options?.stagehandExtraction,
+    guestSignals: analysis.guestSignals,
   });
 
   const evidencePack = applyEvidencePackV2Fields(evidencePackBase, {

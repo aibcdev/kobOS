@@ -3,7 +3,10 @@ import {
   clampScore,
   evidenceOverallFromAxes,
   scoreBrandSocialForPayload,
+  scoreLocalPresenceFromOnPage,
+  scoreReviewsFromOnPage,
   scoreWebsiteFromEvidence,
+  scoreConversionFromEvidence,
   type EvidenceAxis,
 } from "@/lib/audit/evidence-score";
 
@@ -63,59 +66,69 @@ function weighted(parts: { score: number; weight: number }[]): number {
 
 function scoreReviews(payload: AuditResultPayload, gaps: string[]): number | null {
   const gp = payload.evidencePack?.googlePlace;
-  if (!gp?.placeId) {
-    gaps.push("Google reviews unavailable — listing not linked");
-    return null;
+  if (gp?.placeId) {
+    const rating = gp.rating ?? 0;
+    const volume = gp.reviewCount ?? 0;
+    const sample = gp.reviews?.length ?? 0;
+
+    const ratingScore = rating <= 0 ? 25 : clamp(((rating - 3) / 2) * 100, 15, 100);
+    const volumeScore =
+      volume >= 200 ? 95 : volume >= 100 ? 85 : volume >= 50 ? 72 : volume >= 20 ? 55 : volume >= 5 ? 40 : 22;
+
+    gaps.push("Owner review response rate not available from Places API");
+    gaps.push("Average review response time not available from Places API");
+
+    let sentimentScore: number | null = null;
+    if (sample > 0 && gp.reviews) {
+      const avg = gp.reviews.reduce((a, r) => a + (r.rating || 0), 0) / sample;
+      sentimentScore = clamp(((avg - 2.5) / 2.5) * 100, 20, 95);
+    } else {
+      gaps.push("Review text sample thin for sentiment");
+    }
+
+    return weighted([
+      { score: ratingScore, weight: 0.45 },
+      { score: volumeScore, weight: 0.35 },
+      ...(sentimentScore != null ? [{ score: sentimentScore, weight: 0.2 }] : []),
+    ]);
   }
 
-  const rating = gp.rating ?? 0;
-  const volume = gp.reviewCount ?? 0;
-  const sample = gp.reviews?.length ?? 0;
-
-  const ratingScore = rating <= 0 ? 25 : clamp(((rating - 3) / 2) * 100, 15, 100);
-  const volumeScore =
-    volume >= 200 ? 95 : volume >= 100 ? 85 : volume >= 50 ? 72 : volume >= 20 ? 55 : volume >= 5 ? 40 : 22;
-
-  gaps.push("Owner review response rate not available from Places API");
-  gaps.push("Average review response time not available from Places API");
-
-  let sentimentScore: number | null = null;
-  if (sample > 0 && gp.reviews) {
-    const avg = gp.reviews.reduce((a, r) => a + (r.rating || 0), 0) / sample;
-    sentimentScore = clamp(((avg - 2.5) / 2.5) * 100, 20, 95);
-  } else {
-    gaps.push("Review text sample thin for sentiment");
+  const onPage = scoreReviewsFromOnPage(payload);
+  if (onPage != null) {
+    gaps.push("Google listing not linked — reviews scored from on-page schema/widgets");
+    return onPage;
   }
-
-  return weighted([
-    { score: ratingScore, weight: 0.45 },
-    { score: volumeScore, weight: 0.35 },
-    ...(sentimentScore != null ? [{ score: sentimentScore, weight: 0.2 }] : []),
-  ]);
+  gaps.push("Google reviews unavailable — listing not linked and no on-page ratings found");
+  return null;
 }
 
 function scoreGbp(payload: AuditResultPayload, gaps: string[]): number | null {
   const gp = payload.evidencePack?.googlePlace;
-  if (!gp?.placeId) {
-    gaps.push("Google Business Profile not resolved — discovery not scored");
-    return null;
+  if (gp?.placeId) {
+    let completeness = 40;
+    if (gp.placeId) completeness += 20;
+    if (gp.rating != null) completeness += 20;
+    if ((gp.reviewCount ?? 0) > 0) completeness += 20;
+
+    const photos = gp.photoCount ?? 0;
+    const photoScore = photos >= 80 ? 95 : photos >= 40 ? 80 : photos >= 15 ? 65 : photos >= 5 ? 45 : 25;
+    if (photos < 15) gaps.push("Few Google listing photos");
+
+    gaps.push("GBP categories, hours, posts, and Q&A not fully available from this scan");
+
+    return weighted([
+      { score: clamp(completeness), weight: 0.5 },
+      { score: photoScore, weight: 0.5 },
+    ]);
   }
 
-  let completeness = 40;
-  if (gp.placeId) completeness += 20;
-  if (gp.rating != null) completeness += 20;
-  if ((gp.reviewCount ?? 0) > 0) completeness += 20;
-
-  const photos = gp.photoCount ?? 0;
-  const photoScore = photos >= 80 ? 95 : photos >= 40 ? 80 : photos >= 15 ? 65 : photos >= 5 ? 45 : 25;
-  if (photos < 15) gaps.push("Few Google listing photos");
-
-  gaps.push("GBP categories, hours, posts, and Q&A not fully available from this scan");
-
-  return weighted([
-    { score: clamp(completeness), weight: 0.5 },
-    { score: photoScore, weight: 0.5 },
-  ]);
+  const onPage = scoreLocalPresenceFromOnPage(payload);
+  if (onPage != null) {
+    gaps.push("Google Business Profile not resolved — scored hours/address/maps on the website instead");
+    return onPage;
+  }
+  gaps.push("Google Business Profile not resolved — discovery not scored");
+  return null;
 }
 
 function scoreCompetitors(payload: AuditResultPayload, gaps: string[]): number | null {
@@ -230,25 +243,24 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
   const competitorsMeasured = scoreCompetitors(provisional, gaps);
 
   const axes: EvidenceAxis[] = [];
+  const wPlace = RESTAURANT_SCORE_WEIGHTS_WITH_PLACE;
+  const wUrl = RESTAURANT_SCORE_WEIGHTS_URL_ONLY;
 
-  if (hasPlace) {
-    const w = RESTAURANT_SCORE_WEIGHTS_WITH_PLACE;
-    if (reviewsMeasured != null) axes.push({ key: "reviews", score: reviewsMeasured, weight: w.reviews });
-    if (gbpMeasured != null) axes.push({ key: "gbp", score: gbpMeasured, weight: w.gbp });
-    axes.push({ key: "website", score: website, weight: w.website });
-    axes.push({ key: "technical", score: technical, weight: w.technical });
-    axes.push({ key: "brandSocial", score: brandSocial, weight: w.brandSocial });
-    if (competitorsMeasured != null) {
-      axes.push({ key: "competitors", score: competitorsMeasured, weight: w.competitors });
-    }
-  } else {
-    const w = RESTAURANT_SCORE_WEIGHTS_URL_ONLY;
-    axes.push({ key: "website", score: website, weight: w.website });
-    axes.push({ key: "technical", score: technical, weight: w.technical });
-    axes.push({ key: "brandSocial", score: brandSocial, weight: w.brandSocial });
+  if (reviewsMeasured != null) {
+    axes.push({ key: "reviews", score: reviewsMeasured, weight: hasPlace ? wPlace.reviews : 0.16 });
+  }
+  if (gbpMeasured != null) {
+    axes.push({ key: "gbp", score: gbpMeasured, weight: hasPlace ? wPlace.gbp : 0.14 });
+  }
+  axes.push({ key: "website", score: website, weight: hasPlace ? wPlace.website : wUrl.website });
+  axes.push({ key: "technical", score: technical, weight: hasPlace ? wPlace.technical : wUrl.technical });
+  axes.push({ key: "brandSocial", score: brandSocial, weight: hasPlace ? wPlace.brandSocial : wUrl.brandSocial });
+  if (competitorsMeasured != null) {
+    axes.push({ key: "competitors", score: competitorsMeasured, weight: wPlace.competitors });
+  } else if (!hasPlace) {
     const seo = payload.rubricV2?.seo ?? payload.scores.seo;
     if (Number.isFinite(seo)) {
-      axes.push({ key: "seo", score: clampScore(seo), weight: w.seo });
+      axes.push({ key: "seo", score: clampScore(seo), weight: wUrl.seo });
     }
   }
 
@@ -277,6 +289,7 @@ export function applyRestaurantScoresToPayload(payload: AuditResultPayload): Aud
     scores: {
       ...payload.scores,
       overall: restaurantScores.overall,
+      conversion: scoreConversionFromEvidence(payload),
     },
   };
 }

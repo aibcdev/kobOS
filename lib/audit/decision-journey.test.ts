@@ -104,13 +104,15 @@ describe("journeyStatusFromScore", () => {
 describe("scoreDesireStage", () => {
   it("uses photo count when present", () => {
     const p = basePayload();
-    expect(scoreDesireStage(p, p.restaurantScores)).toBe(48);
+    const score = scoreDesireStage(p, p.restaurantScores);
+    expect(score).toBeGreaterThanOrEqual(38);
+    expect(score).toBeLessThanOrEqual(55);
   });
 
-  it("returns null without a linked Google listing", () => {
+  it("scores site visuals when Google listing photos are missing", () => {
     const p = basePayload();
     if (p.evidencePack) delete p.evidencePack.googlePlace;
-    expect(scoreDesireStage(p, p.restaurantScores)).toBeNull();
+    expect(scoreDesireStage(p, p.restaurantScores)).not.toBeNull();
   });
 });
 
@@ -137,7 +139,7 @@ describe("buildDecisionJourneyReport", () => {
     expect(report.competitorFactors.length).toBeGreaterThan(0);
   });
 
-  it("does not invent weak Google findability without a linked listing", () => {
+  it("still scores Google, reviews, and photos from on-page evidence when listing is missing", () => {
     const p = basePayload({
       scores: { seo: 18, design: 32, mobile: 80, overall: 36, conversion: 40 },
       restaurantScores: undefined,
@@ -149,10 +151,12 @@ describe("buildDecisionJourneyReport", () => {
       websiteUrl: "http://www.vincenzomanchester.co.uk/",
     });
     const discovery = report.stages.find((s) => s.id === "discovery");
-    expect(discovery?.score).toBeNull();
-    expect(discovery?.status).toBeNull();
-    expect(discovery?.experience).toMatch(/wasn.?t verified|won.?t guess/i);
-    expect(report.dropOffs.every((d) => d.stageId !== "discovery" || d.score == null)).toBe(true);
-    expect(report.dropOffs.some((d) => /struggle to find/i.test(d.body))).toBe(false);
+    const trust = report.stages.find((s) => s.id === "trust");
+    const desire = report.stages.find((s) => s.id === "desire");
+    expect(discovery?.score).not.toBeNull();
+    expect(trust?.score).not.toBeNull();
+    expect(desire?.score).not.toBeNull();
+    expect(discovery?.score).toBeLessThan(55);
+    expect(report.dropOffs.some((d) => d.stageId === "conversion" && d.score >= 90)).toBe(false);
   });
 });

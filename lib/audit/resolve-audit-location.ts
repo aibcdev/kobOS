@@ -2,6 +2,7 @@ import { cityFromFormattedAddress } from "@/lib/audit/create-pending-audit";
 import { extractLocationFromHtml } from "@/lib/audit/extract-location-from-html";
 import type { AuditGeoLocation } from "@/lib/audit/types";
 import {
+  placesFindByNameAndCity,
   placesFindByWebsite,
   placesGeocodeCityUk,
   placesPlaceDetailsNew,
@@ -55,6 +56,20 @@ export async function resolveAuditLocation(input: ResolveAuditLocationInput): Pr
 
   if (input.html) {
     const hint = extractLocationFromHtml(input.html);
+    const mapsIds = hint?.mapsPlaceIds ?? [];
+    for (const pid of mapsIds) {
+      const details = await placesPlaceDetailsNew(pid);
+      if (details?.lat != null && details?.lng != null) {
+        const city = cityFromFormattedAddress(details.formattedAddress);
+        return {
+          lat: details.lat,
+          lng: details.lng,
+          city: city !== "Your area" ? city : input.fallbackCity,
+          source: "places_website",
+          placeId: details.placeId,
+        };
+      }
+    }
     if (hint?.lat != null && hint?.lng != null) {
       return {
         lat: hint.lat,
@@ -64,6 +79,16 @@ export async function resolveAuditLocation(input: ResolveAuditLocationInput): Pr
       };
     }
     if (hint?.city?.trim()) {
+      const named = await placesFindByNameAndCity(input.restaurantName, hint.city);
+      if (named) {
+        return {
+          lat: named.lat,
+          lng: named.lng,
+          city: named.city !== "Your area" ? named.city : input.fallbackCity,
+          source: "places_website",
+          placeId: named.placeId,
+        };
+      }
       const geocoded = await placesGeocodeCityUk(hint.city, input.restaurantName);
       if (geocoded) {
         return {
@@ -85,6 +110,20 @@ export async function resolveAuditLocation(input: ResolveAuditLocationInput): Pr
       city: fromWebsite.city !== "Your area" ? fromWebsite.city : input.fallbackCity,
       source: "places_website",
       placeId: fromWebsite.placeId,
+    };
+  }
+
+  const fromName = await placesFindByNameAndCity(
+    input.restaurantName,
+    input.fallbackCity !== "Your area" ? input.fallbackCity : null,
+  );
+  if (fromName) {
+    return {
+      lat: fromName.lat,
+      lng: fromName.lng,
+      city: fromName.city !== "Your area" ? fromName.city : input.fallbackCity,
+      source: "places_website",
+      placeId: fromName.placeId,
     };
   }
 

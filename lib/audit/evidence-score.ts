@@ -35,84 +35,130 @@ export function scoreBrandSocialFromEvidence(pack: AuditEvidencePackV1): number 
   return hasGbp ? 52 : 18;
 }
 
-function scoreWebsiteFromUrlSignals(
-  payload: AuditResultPayload,
-  gaps: string[],
-): number {
-  const signals = payload.evidencePack!.urlSignals!;
-  const hasOrderPath =
-    signals.hasBookOrReserveKeyword || signals.hasOpenTableOrResy || signals.hasOrderOrDeliveryKeyword;
+function guestCtaScore(payload: AuditResultPayload): number {
+  const pack = payload.evidencePack;
+  const signals = pack?.urlSignals;
+  const cta = pack?.engagementSignals?.ctaAudit;
+  const stagehand = pack?.stagehandExtraction ?? payload.stagehandExtraction;
+  const heroCtas = stagehand?.hero?.cta_buttons?.length ?? 0;
+  const convEls = stagehand?.conversion_elements?.length ?? 0;
 
-  let ctaScore = 28;
-  if (hasOrderPath) ctaScore += 42;
-  if (signals.hasTelLink) ctaScore += 18;
-  if (signals.hasOpenTableOrResy) ctaScore += 12;
-  ctaScore = clampScore(ctaScore);
-
-  let contentScore = 38;
-  if (signals.h2Count >= 3) contentScore += 18;
-  if (signals.imgCount >= 8) contentScore += 22;
-  else if (signals.imgCount >= 3) contentScore += 14;
-  if (signals.hasOgImage) contentScore += 12;
-  if (hasOrderPath) contentScore += 14;
-  if (signals.hasRestaurantSchema || signals.hasJsonLd) contentScore += 8;
-  contentScore = clampScore(contentScore);
-
-  const mobileScore = clampScore(payload.scores.mobile);
-  const visual =
-    payload.evidencePack?.designQualityAnalysis?.designQualityScore != null
-      ? payload.evidencePack.designQualityAnalysis.designQualityScore
-      : clampScore(payload.scores.design);
-
-  if (!hasOrderPath) gaps.push("Order/reserve path not obvious in page HTML");
-
-  return redistributeWeighted([
-    { score: contentScore, weight: 0.32 },
-    { score: ctaScore, weight: 0.33 },
-    { score: mobileScore, weight: 0.2 },
-    { score: visual, weight: 0.15 },
-  ]);
+  let score = 22;
+  if (cta?.orderOnline || signals?.hasOrderOrDeliveryKeyword) score += 28;
+  if (cta?.bookReserve || signals?.hasBookOrReserveKeyword || signals?.hasOpenTableOrResy) score += 22;
+  if (cta?.phone || signals?.hasTelLink) score += 14;
+  if (heroCtas >= 1) score += 10;
+  if (convEls >= 2) score += 8;
+  return clampScore(score);
 }
 
-function scoreWebsiteFromEngagement(payload: AuditResultPayload, gaps: string[]): number {
-  const pack = payload.evidencePack!;
-  const eng = pack.engagementSignals!;
-  const cta = eng.ctaAudit;
+function guestMenuScore(payload: AuditResultPayload): number {
+  const pack = payload.evidencePack;
+  const hasMenu =
+    Boolean(pack?.guestSignals?.hasMenuPath) ||
+    Boolean(pack?.engagementSignals?.contentDepth.hasMenuContent) ||
+    (pack?.stagehandExtraction?.menu?.categories?.length ?? 0) > 0;
+  const hasOrder =
+    Boolean(pack?.engagementSignals?.ctaAudit.orderOnline) ||
+    Boolean(pack?.urlSignals?.hasOrderOrDeliveryKeyword);
+  if (hasMenu) return 90;
+  if (hasOrder) return 78;
+  return 32;
+}
 
-  let ctaScore = 32;
-  if (cta.orderOnline) ctaScore += 38;
-  if (cta.bookReserve) ctaScore += 24;
-  if (cta.phone) ctaScore += 14;
-  if (cta.socialLinkCount >= 2) ctaScore += 8;
-  ctaScore = clampScore(ctaScore);
+function guestLocalOpsScore(payload: AuditResultPayload): number {
+  const g = payload.evidencePack?.guestSignals;
+  const s = payload.evidencePack?.urlSignals;
+  let score = 18;
+  if (g?.hasOpeningHours) score += 28;
+  if (g?.hasAddressOrDirections) score += 24;
+  if (s?.hasTelLink) score += 16;
+  if ((g?.mapsPlaceIds.length ?? 0) > 0) score += 14;
+  return clampScore(score);
+}
 
-  let contentScore = 42;
-  if (eng.contentDepth.hasMenuContent) contentScore += 32;
-  else if (cta.orderOnline) contentScore += 24;
-  if (eng.contentDepth.hasStoryOrAbout) contentScore += 10;
-  if (eng.contentDepth.visibleTextWords >= 300) contentScore += 10;
-  contentScore = clampScore(contentScore);
+function guestAppetiteScore(payload: AuditResultPayload): number {
+  const pack = payload.evidencePack;
+  const food = pack?.foodImageAnalysis?.aggregate?.foodPhotographyScore;
+  const visual = payload.visualMetrics?.overallHeuristic ?? pack?.designQualityAnalysis?.designQualityScore;
+  const imgCount = pack?.urlSignals?.imgCount ?? 0;
+  const foodShots = pack?.stagehandExtraction?.visuals?.food_images?.length ?? 0;
 
-  const designBase =
-    pack.designQualityAnalysis?.designQualityScore ?? payload.scores.design;
-  let heroScore = clampScore(eng.dwellScore * 0.35 + designBase * 0.65);
-  if (pack.designQualityAnalysis?.tier === "amateur") heroScore = Math.min(heroScore, 48);
+  const parts: { score: number; weight: number }[] = [];
+  if (food != null) parts.push({ score: food, weight: 0.45 });
+  if (visual != null) parts.push({ score: visual, weight: 0.3 });
+  const imgScore = imgCount >= 12 ? 88 : imgCount >= 6 ? 72 : imgCount >= 3 ? 55 : imgCount >= 1 ? 40 : 18;
+  parts.push({ score: imgScore, weight: 0.2 });
+  if (foodShots > 0) parts.push({ score: Math.min(92, 50 + foodShots * 12), weight: 0.15 });
+  return redistributeWeighted(parts);
+}
 
-  if (!eng.contentDepth.hasMenuContent && !cta.orderOnline) {
-    gaps.push("Menu not clearly visible on site");
-  }
-
+/** Call / order / reserve clarity — used by the journey conversion stage. */
+export function scoreConversionFromEvidence(payload: AuditResultPayload): number {
   return redistributeWeighted([
-    { score: heroScore, weight: 0.22 },
-    { score: contentScore, weight: 0.33 },
-    { score: ctaScore, weight: 0.35 },
+    { score: guestCtaScore(payload), weight: 0.7 },
+    { score: guestMenuScore(payload), weight: 0.2 },
     { score: clampScore(payload.scores.mobile), weight: 0.1 },
   ]);
 }
 
+/** Photos guests see: Google listing first, then site food/visuals. */
+export function scoreDesireFromEvidence(payload: AuditResultPayload): number {
+  const gp = payload.evidencePack?.googlePlace;
+  if (gp?.placeId && gp.photoCount != null && Number.isFinite(gp.photoCount)) {
+    const listing =
+      gp.photoCount >= 50
+        ? 82
+        : gp.photoCount >= 30
+          ? 68
+          : gp.photoCount >= 15
+            ? 55
+            : gp.photoCount >= 8
+              ? 48
+              : 38;
+    return redistributeWeighted([
+      { score: listing, weight: 0.65 },
+      { score: guestAppetiteScore(payload), weight: 0.35 },
+    ]);
+  }
+  return guestAppetiteScore(payload);
+}
+
+/** On-page rating widgets / JSON-LD when Places reviews are missing. */
+export function scoreReviewsFromOnPage(payload: AuditResultPayload): number | null {
+  const g = payload.evidencePack?.guestSignals;
+  if (!g) return null;
+  const rating = g.aggregateRating;
+  const volume = g.aggregateReviewCount ?? 0;
+  if (rating == null && !g.reviewWidgetDetected) return null;
+
+  const ratingScore =
+    rating == null ? (g.reviewWidgetDetected ? 50 : null) : clampScore(((rating - 3) / 2) * 100, 15, 100);
+  if (ratingScore == null) return null;
+  const volumeScore =
+    volume >= 200 ? 92 : volume >= 80 ? 80 : volume >= 20 ? 65 : volume > 0 ? 48 : g.reviewWidgetDetected ? 42 : 30;
+  return redistributeWeighted([
+    { score: ratingScore, weight: 0.65 },
+    { score: volumeScore, weight: 0.35 },
+  ]);
+}
+
+/** NAP + hours + maps embed as listing completeness when GBP isn’t linked. */
+export function scoreLocalPresenceFromOnPage(payload: AuditResultPayload): number | null {
+  const s = payload.evidencePack?.urlSignals;
+  if (!s?.fetched) return null;
+  const g = payload.evidencePack?.guestSignals;
+  let score = 16;
+  if (s.hasRestaurantSchema || s.hasJsonLd) score += 18;
+  if (s.hasTelLink) score += 12;
+  if (g?.hasOpeningHours) score += 18;
+  if (g?.hasAddressOrDirections) score += 16;
+  if ((g?.mapsPlaceIds.length ?? 0) > 0) score += 20;
+  return clampScore(score);
+}
+
 /**
- * Website experience from layered evidence: rubric checks, engagement CTAs, URL signals, design.
- * Strong corporate / QSR sites score high when HTML shows order paths, media, and mobile readiness.
+ * Website experience from guest-facing evidence: CTAs, menu, hours/location, food visuals, mobile.
  */
 export function scoreWebsiteFromEvidence(payload: AuditResultPayload, gaps: string[]): number {
   const pack = payload.evidencePack;
@@ -126,24 +172,29 @@ export function scoreWebsiteFromEvidence(payload: AuditResultPayload, gaps: stri
     return clampScore(payload.scores.design ?? payload.scores.conversion ?? 45, 30, 90);
   }
 
-  const parts: { score: number; weight: number }[] = [];
+  const conversion = scoreConversionFromEvidence(payload);
+  const menu = guestMenuScore(payload);
+  const localOps = guestLocalOpsScore(payload);
+  const appetite = guestAppetiteScore(payload);
+  const mobile = clampScore(payload.scores.mobile);
+
+  if (conversion < 55) gaps.push("Order/reserve/call path is weak on the site");
+  if (menu < 50) gaps.push("Menu not clearly visible on site");
+  if (localOps < 50) gaps.push("Hours or address not obvious on the site");
+
+  const parts: { score: number; weight: number }[] = [
+    { score: conversion, weight: 0.22 },
+    { score: menu, weight: 0.18 },
+    { score: localOps, weight: 0.16 },
+    { score: appetite, weight: 0.22 },
+    { score: mobile, weight: 0.12 },
+  ];
 
   if (rubricWeb != null) {
     parts.push({
       score: rubricWeb,
-      weight: rubricConf === "high" ? 0.42 : rubricConf === "medium" ? 0.3 : 0.22,
+      weight: rubricConf === "high" ? 0.18 : rubricConf === "medium" ? 0.12 : 0.08,
     });
-  }
-
-  if (pack?.engagementSignals) {
-    parts.push({ score: scoreWebsiteFromEngagement(payload, gaps), weight: 0.4 });
-  } else {
-    parts.push({ score: scoreWebsiteFromUrlSignals(payload, gaps), weight: 0.38 });
-  }
-
-  const food = pack?.foodImageAnalysis?.aggregate;
-  if (food?.foodPhotographyScore != null) {
-    parts.push({ score: food.foodPhotographyScore, weight: 0.12 });
   }
 
   return redistributeWeighted(parts);

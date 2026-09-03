@@ -13,6 +13,12 @@ import {
   revenueRangeFromCustomers,
 } from "@/lib/audit/growth-report-v2";
 import type { AuditResultPayload, RestaurantScoresV1 } from "@/lib/audit/types";
+import {
+  scoreConversionFromEvidence,
+  scoreDesireFromEvidence,
+  scoreLocalPresenceFromOnPage,
+  scoreReviewsFromOnPage,
+} from "@/lib/audit/evidence-score";
 
 export type JourneyStageId = "discovery" | "trust" | "desire" | "conversion" | "outcome";
 export type JourneyStatus = "Strong" | "Acceptable" | "Leaking" | "Broken";
@@ -118,42 +124,24 @@ function clampScore(n: number | null | undefined, fallback: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-/** Desire = photo / visual freshness on Google — null when listing wasn’t resolved. */
+/** Desire = listing photos + site food visuals. Always scored when the site was fetched. */
 export function scoreDesireStage(
   payload: AuditResultPayload,
-  rs: RestaurantScoresV1 | null | undefined,
+  _rs?: RestaurantScoresV1 | null,
 ): number | null {
+  const fetched = Boolean(payload.evidencePack?.urlSignals?.fetched);
   const gp = payload.evidencePack?.googlePlace;
-  if (!gp?.placeId) return null;
-  const photos = gp.photoCount;
-  if (photos != null && Number.isFinite(photos)) {
-    if (photos >= 50) return 82;
-    if (photos >= 30) return 68;
-    if (photos >= 15) return 55;
-    if (photos >= 8) return 48;
-    return 38;
-  }
-  // Listing linked but photo count missing — blend GBP + reviews only
-  const gbp = rs?.gbp;
-  const reviews = rs?.reviews;
-  if (gbp == null && reviews == null) return null;
-  return Math.round((gbp ?? 55) * 0.55 + (reviews ?? 55) * 0.45);
+  if (!fetched && !gp?.placeId) return null;
+  return scoreDesireFromEvidence(payload);
 }
 
 function experienceFor(
   id: JourneyStageId,
   status: JourneyStatus | null,
-  opts?: { hasGooglePlace?: boolean },
 ): string {
   if (id === "outcome") return "Decision happens here";
   if (!status) {
-    if (id === "discovery" && !opts?.hasGooglePlace) {
-      return "Google listing wasn’t verified in this scan — we won’t guess findability";
-    }
-    if ((id === "trust" || id === "desire") && !opts?.hasGooglePlace) {
-      return "Needs a linked Google listing before we score this";
-    }
-    return "Not enough data yet";
+    return "Not enough website or listing data yet";
   }
   switch (id) {
     case "discovery":
@@ -173,9 +161,11 @@ function experienceFor(
         ? "Photos feel outdated compared to competitors"
         : "Photos and posts look current enough to create appetite";
     case "conversion":
-      return status === "Strong" || status === "Acceptable"
-        ? "Site works, but the next action may still not be obvious"
-        : "The next action (call / order / reserve) is hard to find";
+      return status === "Strong"
+        ? "Menu, contact, and the next action are easy to find"
+        : status === "Acceptable"
+          ? "Site works, but the next action may still not be obvious"
+          : "The next action (call / order / reserve) is hard to find";
     default:
       return "";
   }
@@ -218,7 +208,15 @@ function dropOffCopy(
   if (id === "discovery") {
     return {
       headline: `Discovery stage is ${statusWord} (${score}/100)`,
-      body: "You appear in search, but the listing is not strong enough to win the click against nearby options.",
+      body: status === "Broken" || status === "Leaking"
+        ? "We could not verify a strong Google listing — guests may never see you in Maps or the local pack."
+        : "You appear in search, but the listing is not strong enough to win the click against nearby options.",
+    };
+  }
+  if (score >= 75) {
+    return {
+      headline: `${label} stage is ${statusWord} (${score}/100)`,
+      body: "This step is comparatively strong. The bigger leaks are earlier in the journey.",
     };
   }
   return {
@@ -243,12 +241,12 @@ function stageDetailFor(
       stageLabel: "Discovery – Google Presence",
       score: displayScore,
       observed: !hasPlace
-        ? "Google Business Profile was not linked in this scan — findability was not measured."
+        ? "No Google listing was attached — this score is hours, address, maps, and schema on the website."
         : (gaps.find((g) => /Google Business|GBP|listing|schema/i.test(g)) ??
           "Listing completeness signals (categories, attributes, schema) from available Places data."),
-      whyItMatters: "Local pack presence decides whether guests ever see you — but only when we have listing data.",
+      whyItMatters: "Local pack presence decides whether guests ever see you.",
       highestLeverageFix: !hasPlace
-        ? "Re-run the scan with a linked Google listing before acting on discovery advice."
+        ? "Claim or complete Google Business Profile and re-scan so Maps findability is measured directly."
         : topFixTitle && /google|schema|post|listing|gbp|discover/i.test(topFixTitle)
           ? topFixTitle
           : "Complete Restaurant schema + keep Google Posts active weekly.",
@@ -260,12 +258,12 @@ function stageDetailFor(
       stageLabel: "Trust – Reviews",
       score: displayScore,
       observed: !hasPlace
-        ? "Reviews were not loaded — Google listing missing from this scan."
+        ? "Google reviews were not loaded — this score is on-page ratings/widgets if present."
         : (gaps.find((g) => /review/i.test(g)) ??
           "Low owner reply rate on Google reviews — guests notice silence."),
       whyItMatters: "Unanswered reviews are a visible trust filter before anyone visits.",
       highestLeverageFix: !hasPlace
-        ? "Link the Google listing, then reply to open reviews."
+        ? "Link the Google listing and reply to open reviews."
         : topFixTitle && /review|reply/i.test(topFixTitle)
           ? topFixTitle
           : "Reply to every open review from the last 90 days within the next 7 days.",
@@ -277,12 +275,12 @@ function stageDetailFor(
       stageLabel: "Desire – Photos & Visuals",
       score: displayScore,
       observed: !hasPlace
-        ? "Photo freshness wasn’t scored — Google listing missing from this scan."
+        ? "Google listing photos missing — this score is food and page imagery on the website."
         : (gaps.find((g) => /photo/i.test(g)) ??
           "Old photos and infrequent Google Posts make the listing feel static."),
-      whyItMatters: "Appetite is decided visually in the map pack before the website.",
+      whyItMatters: "Appetite is decided visually in the map pack and on the homepage.",
       highestLeverageFix: !hasPlace
-        ? "Link the Google listing before judging photo competitiveness."
+        ? "Add current food photos on the site and on Google Business Profile."
         : topFixTitle && /photo|post|visual/i.test(topFixTitle)
           ? topFixTitle
           : "Replace 8–10 weakest photos with current food/interior shots; publish two posts this month.",
@@ -293,8 +291,10 @@ function stageDetailFor(
     stageLabel: "Conversion – Website",
     score: displayScore,
     observed:
-      gaps.find((g) => /CTA|website|menu/i.test(g)) ??
-      "The next action (call / order / reserve) isn’t obvious enough on the first screen.",
+      gaps.find((g) => /CTA|website|menu|Hours|address/i.test(g)) ??
+      (score >= 75
+        ? "Primary actions and menu access are present on the pages we crawled."
+        : "The next action (call / order / reserve) isn’t obvious enough on the first screen."),
     whyItMatters: "Guests who reach the site still bounce if the path is unclear on mobile.",
     highestLeverageFix:
       topFixTitle && /website|cta|mobile|menu|homepage/i.test(topFixTitle)
@@ -365,14 +365,18 @@ export function buildDecisionJourneyReport(
 
   const rs = payload.restaurantScores;
   const hasGooglePlace = Boolean(payload.evidencePack?.googlePlace?.placeId);
+  const fetched = Boolean(payload.evidencePack?.urlSignals?.fetched);
 
-  // Discovery / trust / desire require a linked Google listing.
-  // Never use website SEO as a proxy for “Finds you on Google” — that falsely
-  // flags strong local brands with thin on-page SEO (e.g. Vincenzo Trattoria).
-  const discovery = hasGooglePlace ? clampScore(rs?.gbp ?? rs?.competitors, 55) : null;
-  const trust = hasGooglePlace ? clampScore(rs?.reviews, 50) : null;
+  const discovery =
+    rs?.gbp != null
+      ? clampScore(rs.gbp, 34)
+      : scoreLocalPresenceFromOnPage(payload) ?? (fetched || hasGooglePlace ? 34 : null);
+  const trust =
+    rs?.reviews != null
+      ? clampScore(rs.reviews, 28)
+      : scoreReviewsFromOnPage(payload) ?? (fetched || hasGooglePlace ? 28 : null);
   const desire = scoreDesireStage(payload, rs);
-  const conversion = clampScore(rs?.website ?? payload.scores?.conversion, 60);
+  const conversion = fetched || hasGooglePlace ? scoreConversionFromEvidence(payload) : null;
 
   const scored: Array<{
     id: Exclude<JourneyStageId, "outcome">;
@@ -395,7 +399,7 @@ export function buildDecisionJourneyReport(
         customerAction: s.action,
         score: s.score,
         status,
-        experience: experienceFor(s.id, status, { hasGooglePlace }),
+        experience: experienceFor(s.id, status),
       };
     }),
     {
@@ -504,7 +508,7 @@ export function buildDecisionJourneyReport(
     city,
     opening: hasGooglePlace
       ? `We analysed the exact journey your next customer takes before deciding where to eat in ${city}. Here are the three places you’re currently losing them.`
-      : `We analysed your website journey for ${meta.restaurantName}. Google listing findability wasn’t verified in this scan, so we only call out website drop-offs we can evidence.`,
+      : `We analysed the guest journey for ${meta.restaurantName} from the website and any listing signals we could resolve. Stages without a Google listing use on-page hours, reviews, and photos — not a guess.`,
     stages,
     dropOffs,
     evidence: {
@@ -521,8 +525,8 @@ export function buildDecisionJourneyReport(
             `Conservative average ticket assumption for this category (~£${aov}).`,
           ]
         : [
-            "Google Business Profile was not linked — discovery/trust/desire scores withheld.",
-            "Website conversion and on-page signals only.",
+            "Google Business Profile was not linked — discovery uses on-page hours, address, maps, and schema.",
+            "Trust and photos use on-page ratings and website imagery when listing data is missing.",
             `Conservative average ticket assumption for this category (~£${aov}).`,
           ],
     },
@@ -535,7 +539,7 @@ export function buildDecisionJourneyReport(
       startStageLabel: weakest?.stageLabel ?? "Conversion",
       body: hasGooglePlace
         ? `Start with the ${weakest?.stageLabel ?? "Trust"} stage first — that’s where guests are most visibly dropping off before they ever reach you. Run this plan yourself, or let KOB handle daily execution with Daily Co-Pilot.`
-        : "Start with website conversion fixes we can evidence from the scan. Re-link Google to score discovery, reviews, and photos.",
+        : `Start with the ${weakest?.stageLabel ?? "Discovery"} stage first — we scored every step from the website${weakest ? "" : ""} and listing signals we could find. Claim Google Business Profile so Maps reviews and photos are measured directly.`,
     },
     cuisineLabel: cuisineReason,
   };

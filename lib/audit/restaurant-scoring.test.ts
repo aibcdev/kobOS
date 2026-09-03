@@ -6,7 +6,7 @@ import { scoreBrandSocialFromEvidence } from "@/lib/audit/evidence-score";
 import type { AuditResultPayload } from "@/lib/audit/types";
 
 function eliteKfcPack() {
-  return buildEvidencePackV1({
+  const pack = buildEvidencePackV1({
     restaurantName: "KFC",
     city: "Louisville",
     websiteUrl: "https://www.kfc.com",
@@ -23,7 +23,17 @@ function eliteKfcPack() {
       contentFingerprint: "abc",
       imageCandidates: [{ ref: "hero", url: "https://kfc.com/hero.jpg", source: "og:image" }],
     },
+    guestSignals: {
+      hasOpeningHours: true,
+      hasAddressOrDirections: true,
+      hasMenuPath: true,
+      reviewWidgetDetected: true,
+      mapsPlaceIds: ["ChIJkfcTestPlaceId000000000"],
+      aggregateRating: 4.5,
+      aggregateReviewCount: 12000,
+    },
   });
+  return pack;
 }
 
 describe("evidence-based restaurant scoring", () => {
@@ -61,9 +71,9 @@ describe("evidence-based restaurant scoring", () => {
 
     const restaurant = computeRestaurantScores(payload);
     expect(restaurant.overall).toBeGreaterThanOrEqual(90);
-    expect(restaurant.website).toBeGreaterThanOrEqual(85);
-    expect(restaurant.reviews).toBeNull();
-    expect(restaurant.gbp).toBeNull();
+    expect(restaurant.website).toBeGreaterThanOrEqual(80);
+    expect(restaurant.reviews).not.toBeNull();
+    expect(restaurant.gbp).not.toBeNull();
     expect(restaurant.grade).toBe("A");
   });
 

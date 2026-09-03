@@ -6,6 +6,7 @@ import type {
   SocialLinkFound,
   UrlSignals,
 } from "@/lib/audit/analyze-url";
+import type { OnPageGuestSignals } from "@/lib/audit/on-page-guest-signals";
 import type { AuditNetworkFact } from "@/lib/audit/network-capture";
 import type { PageSpeedInsightsSnapshot } from "@/lib/audit/pagespeed-insights";
 import { resolveUrlAgainstPage } from "@/lib/audit/analyze-url";
@@ -94,6 +95,8 @@ export type AuditEvidencePackV1 = {
   foodImageAnalysis?: AuditFoodImageAnalysis;
   /** v2: Gemini vision review of homepage/hero design quality. */
   designQualityAnalysis?: import("@/lib/audit/gemini-design-quality").AuditDesignQualityV1;
+  /** Hours, address, menu, on-page ratings — used when Places is missing. */
+  guestSignals?: OnPageGuestSignals;
 };
 
 export type MediaAssetMetaV1 = {
@@ -121,6 +124,7 @@ export function buildEvidencePackV1(input: {
   multiSiteOrigins?: string[] | null;
   engagementSignals?: AuditEngagementSignals | null;
   stagehandExtraction?: import("@/lib/browserbase/stagehand-schema").AuditStagehandExtraction | null;
+  guestSignals?: OnPageGuestSignals | null;
 }): AuditEvidencePackV1 {
   const userSocial: AuditUserSocialInput = {
     instagram: trimUrl(input.userSocial?.instagram),
@@ -154,6 +158,7 @@ export function buildEvidencePackV1(input: {
     ...(input.multiSiteOrigins?.length ? { multiSiteOrigins: input.multiSiteOrigins } : {}),
     ...(input.engagementSignals ? { engagementSignals: input.engagementSignals } : {}),
     ...(input.stagehandExtraction ? { stagehandExtraction: input.stagehandExtraction } : {}),
+    ...(input.guestSignals ? { guestSignals: input.guestSignals } : {}),
   };
   return pack;
 }
