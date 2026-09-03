@@ -58,7 +58,7 @@ export async function importAuditLeadsToOutbound(
     const discoveryBits = discovery
       ? formatDiscoverySummary(discovery)
           .filter((r) =>
-            ["Goal", "Willingness to pay", "Timeline", "Online leaks", "Marketing spend"].includes(
+            ["Biggest problem", "Where it shows up", "Weekly list worth", "Spend to get guests", "Timeline"].includes(
               r.label,
             ),
           )

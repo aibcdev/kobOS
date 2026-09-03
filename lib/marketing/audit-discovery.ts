@@ -3,7 +3,7 @@
  * Answers qualify budget / pain before email or phone follow-up.
  */
 
-export const AUDIT_DISCOVERY_VERSION = 1 as const;
+export const AUDIT_DISCOVERY_VERSION = 2 as const;
 
 export type AuditDiscoverySingleKey =
   | "venueSize"
@@ -48,7 +48,38 @@ export type AuditDiscoveryQuestion =
       choices: readonly Choice[];
     };
 
+/** Problem-first questions for independents — no agency jargon, no competitor names. */
 export const AUDIT_DISCOVERY_QUESTIONS: readonly AuditDiscoveryQuestion[] = [
+  {
+    id: "primaryGoal",
+    prompt: "What’s the biggest problem right now?",
+    choices: [
+      { value: "quiet_tables", label: "Not enough covers / quiet nights" },
+      { value: "weak_presence", label: "Weak online presence" },
+      { value: "online_sales", label: "Not enough online or delivery orders" },
+      { value: "reviews_hurt", label: "Reviews are hurting us" },
+      { value: "listing_wrong", label: "Google info is wrong or outdated" },
+      { value: "site_weak", label: "Website doesn’t win bookings" },
+      { value: "exploring", label: "Not sure — just want a clear picture" },
+    ],
+  },
+  {
+    id: "biggestLeaks",
+    prompt: "Where does that show up most? (pick up to 3)",
+    multi: true,
+    max: 3,
+    choices: [
+      { value: "empty_tables", label: "Empty tables / slow midweek" },
+      { value: "hard_to_find", label: "Hard to find on Google / Maps" },
+      { value: "reviews", label: "Bad or unanswered reviews" },
+      { value: "google_hours", label: "Wrong hours, photos, or listing details" },
+      { value: "website_menu", label: "Website or menu puts guests off" },
+      { value: "delivery_orders", label: "Delivery / takeaway orders are flat" },
+      { value: "booking_path", label: "Book / order / call is hard to find" },
+      { value: "photos", label: "Food photos look weak online" },
+      { value: "not_sure", label: "Not sure yet" },
+    ],
+  },
   {
     id: "venueSize",
     prompt: "How many people work in the venue?",
@@ -60,35 +91,8 @@ export const AUDIT_DISCOVERY_QUESTIONS: readonly AuditDiscoveryQuestion[] = [
     ],
   },
   {
-    id: "biggestLeaks",
-    prompt: "Where do you lose the most guests online?",
-    multi: true,
-    max: 3,
-    choices: [
-      { value: "google_hours", label: "Google listing & hours" },
-      { value: "reviews", label: "Reviews & replies" },
-      { value: "website_menu", label: "Website & menu" },
-      { value: "photos", label: "Photos" },
-      { value: "delivery_fees", label: "Delivery marketplace fees" },
-      { value: "booking_path", label: "Booking path buried" },
-      { value: "not_sure", label: "Not sure" },
-    ],
-  },
-  {
-    id: "primaryGoal",
-    prompt: "What’s the main reason you’re scanning?",
-    choices: [
-      { value: "covers_google", label: "More covers from Google" },
-      { value: "listing_hygiene", label: "Fix listing hygiene" },
-      { value: "better_website", label: "Better website" },
-      { value: "cut_agency", label: "Cut agency spend" },
-      { value: "vs_owner", label: "Compare vs Owner.com" },
-      { value: "exploring", label: "Exploring" },
-    ],
-  },
-  {
     id: "systems",
-    prompt: "What systems do you run on today?",
+    prompt: "What do you run the venue on today?",
     multi: true,
     max: 6,
     choices: [
@@ -97,15 +101,15 @@ export const AUDIT_DISCOVERY_QUESTIONS: readonly AuditDiscoveryQuestion[] = [
       { value: "toast", label: "Toast" },
       { value: "clover", label: "Clover" },
       { value: "lightspeed", label: "Lightspeed" },
-      { value: "other_pos", label: "Other POS" },
+      { value: "other_pos", label: "Other till / POS" },
       { value: "delivery_apps", label: "Deliveroo / Uber Eats / DoorDash" },
       { value: "reservations", label: "OpenTable / Resy" },
-      { value: "gbp_only", label: "Google Business only" },
+      { value: "gbp_only", label: "Mostly Google Business" },
     ],
   },
   {
     id: "monthlySpend",
-    prompt: "Rough monthly spend on marketing / agencies?",
+    prompt: "Rough monthly spend trying to get more guests?",
     choices: [
       { value: "under_200", label: "Under £200" },
       { value: "200_500", label: "£200–£500" },
@@ -116,7 +120,7 @@ export const AUDIT_DISCOVERY_QUESTIONS: readonly AuditDiscoveryQuestion[] = [
   },
   {
     id: "willingnessToPay",
-    prompt: "What would you pay for a clear weekly list you only approve?",
+    prompt: "What would a clear weekly list you only approve be worth?",
     choices: [
       { value: "under_50", label: "Under £50" },
       { value: "50_100", label: "£50–£100" },
@@ -126,7 +130,7 @@ export const AUDIT_DISCOVERY_QUESTIONS: readonly AuditDiscoveryQuestion[] = [
   },
   {
     id: "decisionMaker",
-    prompt: "Who signs off on something like this?",
+    prompt: "Who decides if you try something like this?",
     choices: [
       { value: "me_solo", label: "Me, solo" },
       { value: "me_partner", label: "Me + a partner" },
@@ -136,12 +140,12 @@ export const AUDIT_DISCOVERY_QUESTIONS: readonly AuditDiscoveryQuestion[] = [
   },
   {
     id: "timeline",
-    prompt: "When do you want the first fixes live?",
+    prompt: "When do you need the first fixes live?",
     choices: [
       { value: "this_week", label: "This week" },
       { value: "this_month", label: "This month" },
       { value: "this_quarter", label: "This quarter" },
-      { value: "exploring", label: "Just exploring" },
+      { value: "exploring", label: "Just looking around" },
     ],
   },
 ] as const;
@@ -206,15 +210,14 @@ export function storeAuditDiscovery(answers: AuditDiscoveryAnswers): AuditDiscov
   };
 }
 
-/** Optional parse from stored payload (pipeline may omit). */
+/** Optional parse from stored payload (pipeline may omit). Accepts v1 or v2. */
 export function readStoredDiscovery(raw: unknown): AuditDiscoveryStored | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   const parsed = parseAuditDiscoveryAnswers(o);
   if (!parsed) return null;
   const answeredAt = typeof o.answeredAt === "string" ? o.answeredAt : new Date().toISOString();
-  const version = o.version === AUDIT_DISCOVERY_VERSION ? AUDIT_DISCOVERY_VERSION : AUDIT_DISCOVERY_VERSION;
-  return { ...parsed, version, answeredAt };
+  return { ...parsed, version: AUDIT_DISCOVERY_VERSION, answeredAt };
 }
 
 export function discoveryAnsweredCount(partial: Partial<AuditDiscoveryAnswers>): number {
@@ -238,43 +241,46 @@ export function formatDiscoverySummary(stored: AuditDiscoveryStored): { label: s
     AuditDiscoveryQuestion
   >;
   return [
-    { label: "Venue size", value: labelFor(byId.venueSize!, stored.venueSize) },
+    { label: "Biggest problem", value: labelFor(byId.primaryGoal!, stored.primaryGoal) },
     {
-      label: "Online leaks",
+      label: "Where it shows up",
       value: stored.biggestLeaks.map((v) => labelFor(byId.biggestLeaks!, v)).join(", "),
     },
-    { label: "Goal", value: labelFor(byId.primaryGoal!, stored.primaryGoal) },
+    { label: "Venue size", value: labelFor(byId.venueSize!, stored.venueSize) },
     {
-      label: "Systems",
+      label: "Runs on",
       value: stored.systems.map((v) => labelFor(byId.systems!, v)).join(", "),
     },
-    { label: "Marketing spend", value: labelFor(byId.monthlySpend!, stored.monthlySpend) },
-    { label: "Willingness to pay", value: labelFor(byId.willingnessToPay!, stored.willingnessToPay) },
+    { label: "Spend to get guests", value: labelFor(byId.monthlySpend!, stored.monthlySpend) },
+    { label: "Weekly list worth", value: labelFor(byId.willingnessToPay!, stored.willingnessToPay) },
     { label: "Decision", value: labelFor(byId.decisionMaker!, stored.decisionMaker) },
     { label: "Timeline", value: labelFor(byId.timeline!, stored.timeline) },
   ];
 }
 
-/** Map discovery leaks/goals to opportunity title keywords for light reordering. */
+/** Map discovery problems to opportunity title keywords for light reordering. */
 export function discoveryPriorityKeywords(stored: AuditDiscoveryStored): string[] {
   const keywords: string[] = [];
   const leakMap: Record<string, string[]> = {
-    google_hours: ["hour", "google", "listing", "gbp", "maps"],
+    empty_tables: ["google", "review", "booking", "local", "seo"],
+    hard_to_find: ["google", "search", "seo", "maps", "listing"],
     reviews: ["review", "rating", "reply"],
+    google_hours: ["hour", "google", "listing", "gbp", "maps"],
     website_menu: ["website", "menu", "mobile", "site"],
-    photos: ["photo", "image", "visual"],
-    delivery_fees: ["delivery", "marketplace", "uber", "deliveroo"],
+    delivery_orders: ["delivery", "order", "takeaway", "menu"],
     booking_path: ["book", "reserv", "order", "cta", "conversion"],
+    photos: ["photo", "image", "visual"],
   };
   for (const leak of stored.biggestLeaks) {
     keywords.push(...(leakMap[leak] ?? []));
   }
   const goalMap: Record<string, string[]> = {
-    covers_google: ["google", "search", "seo", "local"],
-    listing_hygiene: ["listing", "hour", "google", "gbp"],
-    better_website: ["website", "design", "mobile", "menu"],
-    cut_agency: ["review", "post", "hour"],
-    vs_owner: ["google", "review", "listing"],
+    quiet_tables: ["google", "review", "local", "booking"],
+    weak_presence: ["google", "listing", "seo", "maps"],
+    online_sales: ["order", "delivery", "menu", "conversion", "mobile"],
+    reviews_hurt: ["review", "rating", "reply"],
+    listing_wrong: ["listing", "hour", "google", "gbp"],
+    site_weak: ["website", "design", "mobile", "menu", "conversion"],
   };
   keywords.push(...(goalMap[stored.primaryGoal] ?? []));
   return [...new Set(keywords.map((k) => k.toLowerCase()))];

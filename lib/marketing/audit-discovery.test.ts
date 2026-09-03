@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AUDIT_DISCOVERY_QUESTIONS,
   isDiscoveryComplete,
   parseAuditDiscoveryAnswers,
   rankOpportunitiesByDiscovery,
@@ -8,8 +9,8 @@ import {
 
 const valid = {
   venueSize: "2_10",
-  biggestLeaks: ["reviews", "google_hours"],
-  primaryGoal: "covers_google",
+  biggestLeaks: ["reviews", "empty_tables"],
+  primaryGoal: "quiet_tables",
   systems: ["square", "delivery_apps"],
   monthlySpend: "200_500",
   willingnessToPay: "50_100",
@@ -30,11 +31,11 @@ describe("audit-discovery", () => {
 
   it("stores version + answeredAt", () => {
     const stored = storeAuditDiscovery(valid);
-    expect(stored.version).toBe(1);
+    expect(stored.version).toBe(2);
     expect(stored.answeredAt).toBeTruthy();
   });
 
-  it("ranks opportunities by leak keywords", () => {
+  it("ranks opportunities by problem keywords", () => {
     const stored = storeAuditDiscovery(valid);
     const ranked = rankOpportunitiesByDiscovery(
       [
@@ -45,5 +46,10 @@ describe("audit-discovery", () => {
       stored,
     );
     expect(ranked[0]?.title).toMatch(/review/i);
+  });
+
+  it("has no competitor or agency wording", () => {
+    const blob = JSON.stringify(AUDIT_DISCOVERY_QUESTIONS).toLowerCase();
+    expect(blob).not.toMatch(/owner\.com|agency|agencies/);
   });
 });

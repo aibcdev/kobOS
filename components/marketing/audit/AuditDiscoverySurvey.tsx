@@ -118,7 +118,7 @@ export function AuditDiscoverySurvey({
         Discovery · 8 quick taps
       </p>
       <h2 className="font-heading mt-2 text-xl font-semibold tracking-tight text-[#2c2c2c] md:text-2xl">
-        So we know budget and pain before we email or call
+        Tell us what’s hurting — then we scan
       </h2>
       {venueLabel ? (
         <p className="mt-2 text-sm text-[#2c2c2c]/65">
@@ -126,7 +126,7 @@ export function AuditDiscoverySurvey({
         </p>
       ) : null}
       <p className="mt-1 text-sm text-[#2c2c2c]/60">
-        Answer more, get a sharper report. Those who finish are usually ready to act.
+        Covers, online presence, orders — so the report focuses on your real problems.
       </p>
 
       <div className="mt-5">
