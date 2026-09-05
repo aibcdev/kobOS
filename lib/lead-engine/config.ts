@@ -70,7 +70,7 @@ export function getLeadEngineConfig(): LeadEngineConfig {
     ratingMax: Number(process.env.OUTBOUND_RATING_MAX?.trim() || "4.7") || 4.7,
     requireWebsite: process.env.OUTBOUND_REQUIRE_WEBSITE?.trim() === "1",
     requireRecentReviewDays: Math.max(7, Number(process.env.LEAD_ENGINE_RECENT_REVIEW_DAYS?.trim() || "180") || 180),
-    locationMax: Math.max(1, Number(process.env.LEAD_ENGINE_LOCATION_MAX?.trim() || "5") || 5),
+    locationMax: Math.max(1, Number(process.env.LEAD_ENGINE_LOCATION_MAX?.trim() || "1") || 1),
     platformTopPct: Math.min(100, Math.max(5, Number(process.env.LEAD_ENGINE_PLATFORM_TOP_PCT?.trim() || "20") || 20)),
     staleWebsiteYears: Math.max(
       1,

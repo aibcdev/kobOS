@@ -21,7 +21,7 @@ export function platformFoundWhere(workspaceRestaurantId: string): Prisma.LeadPr
 }
 
 /**
- * Email-ready for outreach: must have 1..locationMax locations (hard ≤5 by default).
+ * Email-ready for outreach: 1..locationMax sites (default 1 — independents only).
  * Unknown location counts are excluded until the analyzer fills them.
  */
 export function platformQualifiedWhere(workspaceRestaurantId: string): Prisma.LeadProspectWhereInput {

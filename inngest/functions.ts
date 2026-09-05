@@ -25,6 +25,19 @@ import { runOpportunityAnalyzer } from "@/lib/lead-engine/run-opportunity-analyz
 import { runOutreachWriter } from "@/lib/lead-engine/run-outreach-writer";
 import { sendOutboundEmailViaResend } from "@/lib/outbound/send-resend-outbound-email";
 import { promoteReadyOutboundBatch } from "@/lib/outbound/promote-ready-batch";
+import { countOutboundSentUtcDay } from "@/lib/outbound/count-sent-today";
+import {
+  OUTBOUND_DAILY_FLOOR,
+  OUTBOUND_DAILY_HARD_CAP,
+  getOutboundPerRunCap,
+  getOutboundSendBatch,
+  getOutboundSendDelaySec,
+  remainingSendForDay,
+} from "@/lib/outbound/send-volume";
+import {
+  loadSentContactSets,
+  pickUniqueFreshLeads,
+} from "@/lib/outbound/outbound-send-dedupe";
 import { runUkColdPipeline } from "@/lib/outbound/run-uk-cold-pipeline";
 import { detectInsightsFromRules } from "@/lib/growth/detect";
 import { summarizeMetadata } from "@/lib/growth/normalize";
@@ -561,26 +574,27 @@ export const outboundDraftDaily = inngest.createFunction(
   },
 );
 
-/** Sends up to OUTBOUND_SEND_BATCH (default 100) Resend emails daily at 07:00 BST.
+/** Sends remaining daily quota via Resend (target 300–400/UTC day, hard cap 400).
+ * Waves at 10:00 / 14:00 / 18:00 UTC so morning writer audits are ready.
  * Auto-promotes PENDING leads that already have ready audits + message bodies.
  */
 export const outboundSendApprovedDaily = inngest.createFunction(
   {
     id: "outbound-send-approved",
     name: "Outbound · send approved",
-    // 07:00 BST = 06:00 UTC (British Summer Time). Aligns with Resend daily reset / morning send.
-    triggers: [cron("0 6 * * *"), { event: "outbound/send.requested" }],
+    timeouts: { finish: "2h" },
+    triggers: [
+      cron("0 10 * * *"),
+      cron("0 14 * * *"),
+      cron("0 18 * * *"),
+      { event: "outbound/send.requested" },
+    ],
   },
   async ({ step, event }) => {
     const key = process.env.RESEND_API_KEY?.trim();
     if (!key) {
       return { skipped: true as const, reason: "RESEND_API_KEY missing" };
     }
-
-    // Hard cap 100 — Resend free/daily reset friendly
-    const batch = Math.min(100, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH?.trim() || "100") || 100));
-    const delaySec = Math.max(2, Number(process.env.OUTBOUND_SEND_DELAY_SEC?.trim() || "3") || 3);
-    const autoPromote = process.env.OUTBOUND_AUTO_PROMOTE?.trim() !== "0";
 
     const fromEvent =
       event && typeof event === "object" && "data" in event
@@ -592,9 +606,25 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID missing" };
     }
 
+    const sentToday = await step.run("count-sent-today", () => countOutboundSentUtcDay(workspaceId));
+    const remaining = remainingSendForDay(sentToday);
+    if (remaining <= 0) {
+      return { skipped: true as const, reason: "daily_cap_reached", sentToday };
+    }
+
+    const batch = Math.min(getOutboundSendBatch(), getOutboundPerRunCap(), remaining);
+    const delaySec = getOutboundSendDelaySec();
+    const autoPromote = process.env.OUTBOUND_AUTO_PROMOTE?.trim() !== "0";
+
+    const prepared = await step.run("prepare-fresh-leads", async () => {
+      const analyzed = await runOpportunityAnalyzer(workspaceId, { max: batch * 2 });
+      const written = await runOutreachWriter(workspaceId, { max: batch * 2 });
+      return { analyzed, written };
+    });
+
     const promoted = await step.run("promote-ready-pending", async () => {
       if (!autoPromote) return { promoted: 0, ids: [] as string[] };
-      // Top up APPROVED pool so we can send a full batch of 100
+      // Top up APPROVED pool toward this wave's remaining quota
       const already = await prisma.outboundLead.count({
         where: {
           workspaceRestaurantId: workspaceId,
@@ -616,17 +646,19 @@ export const outboundSendApprovedDaily = inngest.createFunction(
           contactEmail: { not: null },
           messageBody: { not: null },
         },
-        take: batch * 2,
+        take: batch * 4,
         orderBy: { createdAt: "asc" },
       });
       const withEmail = rows.filter((r) => r.contactEmail?.trim() && r.messageBody?.includes("/audit/"));
-      return withEmail.slice(0, batch);
+      const sentContacts = await loadSentContactSets(workspaceId);
+      return pickUniqueFreshLeads(withEmail, sentContacts, batch).picked;
     });
 
     if (!leads.length) {
       return {
         sent: 0 as const,
         promoted: promoted.promoted,
+        prepared,
         message: "no_eligible_leads" as const,
       };
     }
@@ -675,7 +707,59 @@ export const outboundSendApprovedDaily = inngest.createFunction(
       }
     }
 
-    return { sent, processed: leads.length, promoted: promoted.promoted };
+    return { sent, processed: leads.length, promoted: promoted.promoted, prepared, sentToday, remainingAfter: remaining - sent };
+  },
+);
+
+/** 19:00 UTC: if under 400, fire another send; email ops only if under 300. */
+export const outboundVolumeWatchDaily = inngest.createFunction(
+  {
+    id: "outbound-volume-watch",
+    name: "Outbound · daily volume watch",
+    triggers: [cron("0 19 * * *"), { event: "outbound/volume-watch.requested" }],
+  },
+  async ({ step }) => {
+    const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
+    if (!workspaceId) {
+      return { skipped: true as const, reason: "OUTBOUND_WORKSPACE_RESTAURANT_ID missing" };
+    }
+
+    const sentToday = await step.run("count-sent-today", () => countOutboundSentUtcDay(workspaceId));
+    const remaining = remainingSendForDay(sentToday);
+    const belowFloor = sentToday < OUTBOUND_DAILY_FLOOR;
+
+    const catchUp = await step.run("catch-up-if-short", async () => {
+      if (remaining <= 0) return { enqueued: false as const };
+      await inngest.send([
+        { name: "lead-engine/analyzer.requested", data: { restaurantId: workspaceId, source: "volume-watch" } },
+        { name: "lead-engine/outreach-writer.requested", data: { restaurantId: workspaceId, source: "volume-watch" } },
+        { name: "outbound/send.requested", data: { restaurantId: workspaceId, source: "volume-watch" } },
+      ]);
+      return { enqueued: true as const };
+    });
+
+    const notified = await step.run("notify-if-below-floor", async () => {
+      if (!belowFloor) return { skipped: true as const, reason: "on_target" as const };
+      const key = process.env.RESEND_API_KEY?.trim();
+      const to = process.env.OUTBOUND_RESEND_NOTIFY_EMAIL?.trim();
+      if (!key || !to) return { skipped: true as const, reason: "no_notify" as const };
+      const { Resend } = await import("resend");
+      const resend = new Resend(key);
+      const from =
+        process.env.RESEND_FROM_EMAIL?.trim() || "KOB Growth <onboarding@resend.dev>";
+      const { error } = await resend.emails.send({
+        from,
+        to: [to],
+        subject: `KOB outbound short: ${sentToday}/${OUTBOUND_DAILY_HARD_CAP} today (need ${OUTBOUND_DAILY_FLOOR}+)`,
+        html: `<p>UTC day sends: <strong>${sentToday}</strong> (floor ${OUTBOUND_DAILY_FLOOR}, cap ${OUTBOUND_DAILY_HARD_CAP}).</p>
+<p>Remaining quota: ${remaining}. Catch-up send ${catchUp.enqueued ? "was queued" : "was not queued"}.</p>
+<p>Check Inngest and Resend if this repeats.</p>`,
+      });
+      if (error) throw new Error(error.message);
+      return { sent: true as const };
+    });
+
+    return { sentToday, remaining, belowFloor, catchUp, notified };
   },
 );
 
@@ -749,7 +833,7 @@ export const leadFinderDaily = inngest.createFunction(
   {
     id: "lead-finder-daily",
     name: "Lead engine · finder daily",
-    triggers: [cron("0 6 * * *"), { event: "lead-engine/finder.requested" }],
+    triggers: [cron("0 6 * * *"), cron("0 11 * * *"), { event: "lead-engine/finder.requested" }],
   },
   async ({ step }) => {
     const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
@@ -791,7 +875,7 @@ export const leadAnalyzerDaily = inngest.createFunction(
   {
     id: "lead-analyzer-daily",
     name: "Lead engine · analyzer daily",
-    triggers: [cron("15 6 * * *"), { event: "lead-engine/analyzer.requested" }],
+    triggers: [cron("15 6 * * *"), cron("45 8 * * *"), cron("45 12 * * *"), { event: "lead-engine/analyzer.requested" }],
   },
   async ({ step }) => {
     const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
@@ -808,7 +892,7 @@ export const leadOutreachWriterDaily = inngest.createFunction(
   {
     id: "lead-outreach-writer-daily",
     name: "Lead engine · outreach writer daily",
-    triggers: [cron("30 6 * * *"), { event: "lead-engine/outreach-writer.requested" }],
+    triggers: [cron("30 6 * * *"), cron("0 9 * * *"), cron("0 13 * * *"), { event: "lead-engine/outreach-writer.requested" }],
   },
   async ({ step }) => {
     const workspaceId = process.env.OUTBOUND_WORKSPACE_RESTAURANT_ID?.trim();
@@ -937,7 +1021,7 @@ export const outboundSequenceDaily = inngest.createFunction(
     id: "outbound-sequence-daily",
     name: "Outbound · multi-channel sequence",
     // 08:00 BST = 07:00 UTC — after morning email send
-    triggers: [cron("0 7 * * *"), { event: "outbound/sequence.requested" }],
+    triggers: [cron("0 10 * * *"), cron("0 14 * * *"), cron("0 18 * * *"), { event: "outbound/sequence.requested" }],
   },
   async ({ step, event }) => {
     const fromEvent =
@@ -984,6 +1068,7 @@ export const functions = [
   demandRecommendationsDaily,
   outboundDraftDaily,
   outboundSendApprovedDaily,
+  outboundVolumeWatchDaily,
   outboundSequenceDaily,
   outboundUkColdDaily,
   outboundAuditImportDaily,

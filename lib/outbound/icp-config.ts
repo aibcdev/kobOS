@@ -39,6 +39,6 @@ export function getOutboundIcpConfig(): OutboundIcpConfig {
     maxQualifyScore: Math.min(100, Math.max(1, Number(process.env.OUTBOUND_MAX_QUALIFY_SCORE?.trim() || "65") || 65)),
     requireWebsite: process.env.OUTBOUND_REQUIRE_WEBSITE !== "0",
     ukCities: ukCities.length ? ukCities : ["London"],
-    dailyProspectCap: Math.min(30, Math.max(5, Number(process.env.OUTBOUND_UK_DAILY_CAP?.trim() || "20") || 20)),
+    dailyProspectCap: Math.min(400, Math.max(5, Number(process.env.OUTBOUND_UK_DAILY_CAP?.trim() || "400") || 400)),
   };
 }

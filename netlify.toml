@@ -16,7 +16,16 @@
   schedule = "*/2 * * * *"
 
 [functions."outbound-daily"]
-  schedule = "0 7 * * *"
+  schedule = "0 10 * * *"
+
+[functions."outbound-daily-mid"]
+  schedule = "0 14 * * *"
+
+[functions."outbound-daily-eve"]
+  schedule = "0 18 * * *"
+
+[functions."outbound-volume-watch"]
+  schedule = "0 19 * * *"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

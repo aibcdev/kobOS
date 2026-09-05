@@ -80,7 +80,7 @@ LEAD_ENGINE_DAILY_CAP=50
 LEAD_ENGINE_MIN_SCORE=60
 LEAD_ENGINE_SEED_TARGET=3000
 LEAD_ENGINE_INSTAGRAM_MAX=10000
-LEAD_ENGINE_LOCATION_MAX=3
+LEAD_ENGINE_LOCATION_MAX=1
 LEAD_ENGINE_PLATFORM_TOP_PCT=30
 LEAD_ENGINE_REQUIRE_STALE_WEBSITE=1
 LEAD_ENGINE_UK_IE_CITIES=London,Manchester,...,Dublin,Cork,Galway
@@ -163,7 +163,7 @@ Enqueues:
 
 Schedule daily (e.g. Netlify scheduled function) at a time you will review within 1–2 hours.
 
-**Outbound send (100/day):** Inngest cron `0 6 * * *` (07:00 BST) auto-promotes PENDING leads with ready audits, then sends up to `OUTBOUND_SEND_BATCH` (default **100**) via Resend. Prep tomorrow’s batch with:
+**Outbound send (300–400/day):** Inngest crons `0 10/14/18 * * *` UTC auto-promote PENDING leads with ready audits, then send remaining quota (hard cap **400**) via Resend. Independents only (`LEAD_ENGINE_LOCATION_MAX=1`). Prep with:
 
 ```bash
 OUTBOUND_PREP_LIMIT=100 OUTBOUND_PREP_APPROVE=1 npm run outbound:prep-next-100

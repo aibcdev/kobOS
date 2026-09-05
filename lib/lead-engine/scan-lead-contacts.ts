@@ -10,6 +10,7 @@ import { resolveJustEatMenuPath } from "@/lib/lead-engine/justeat-menu-url";
 import type { MergedPlatformLead } from "@/lib/lead-engine/merge-platform-listings";
 import { fetchRenderedHtml } from "@/lib/lead-engine/scrapers/playwright-fetch";
 import { isValidProspectEmail } from "@/lib/outbound/validate-prospect-email";
+import { enrichProspectEmail } from "@/lib/outbound/enrich-email";
 import { scrapeWebsiteEmail } from "@/lib/outbound/scrape-website-email";
 
 const MAILTO_RE = /mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
@@ -172,6 +173,16 @@ export async function scanLeadContacts(lead: MergedPlatformLead): Promise<Contac
       contactEmail = await scrapeEmailFromSite(websiteUrl, prepared.name);
     }
     if (!contactEmail) {
+      const enriched = await enrichProspectEmail(websiteUrl, {
+        businessName: prepared.name,
+        preferScrape: false,
+      });
+      if (enriched.ok) {
+        contactEmail = enriched.email;
+        enrichmentSource = enriched.source;
+      }
+    }
+    if (!contactEmail) {
       const alt = alternateWebsiteTld(websiteUrl);
       if (alt) {
         const altEmail = await scrapeEmailFromSite(alt, prepared.name);
@@ -184,7 +195,14 @@ export async function scanLeadContacts(lead: MergedPlatformLead): Promise<Contac
     if (!contactPhone) {
       contactPhone = await scrapeWebsitePhone(websiteUrl);
     }
-    enrichmentSource = contactEmail ? "scrape" : contactPhone ? "platform_phone" : "scanned_no_email";
+    enrichmentSource =
+      enrichmentSource === "hunter" || enrichmentSource === "apollo"
+        ? enrichmentSource
+        : contactEmail
+          ? "scrape"
+          : contactPhone
+            ? "platform_phone"
+            : "scanned_no_email";
   } else if (contactEmail) {
     enrichmentSource = "platform";
   } else if (contactPhone) {

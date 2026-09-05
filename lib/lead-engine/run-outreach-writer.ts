@@ -7,6 +7,11 @@ import {
 import { isExcludedFromOutboundIcp } from "@/lib/outbound/chain-denylist";
 import { ensureOutboundAudit } from "@/lib/outbound/ensure-outbound-audit";
 import { generateOutboundAbEmail } from "@/lib/outbound/generate-uk-cold-draft";
+import {
+  loadSentContactSets,
+  normalizeOutboundEmail,
+  type SentContactSets,
+} from "@/lib/outbound/outbound-send-dedupe";
 import { isValidProspectEmail } from "@/lib/outbound/validate-prospect-email";
 import { LeadProspectStatus, OutboundLeadSource, OutboundLeadStatus, type LeadProspect } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -44,10 +49,11 @@ export async function runOutreachWriter(
     take: max,
   });
 
+  const sent = await loadSentContactSets(workspaceRestaurantId);
   let queued = 0;
 
   for (const prospect of prospects) {
-    const result = await queueProspectOutreach(workspaceRestaurantId, prospect);
+    const result = await queueProspectOutreach(workspaceRestaurantId, prospect, sent);
     if (result === "queued") queued++;
     else bump(result);
   }
@@ -58,6 +64,7 @@ export async function runOutreachWriter(
 export async function queueProspectOutreach(
   workspaceRestaurantId: string,
   prospect: LeadProspect,
+  sentContacts?: SentContactSets,
 ): Promise<"queued" | string> {
   const config = getLeadEngineConfig();
 
@@ -65,7 +72,14 @@ export async function queueProspectOutreach(
   if (!prospect.websiteUrl?.trim()) return "no_website";
   if (prospect.outboundLeadId) return "already_queued";
   if (isExcludedFromOutboundIcp(prospect.name, prospect.websiteUrl)) return "chain_or_elite";
-  if (!isValidProspectEmail(prospect.contactEmail, prospect.websiteUrl).ok) return "invalid_email";
+  const emailNorm = normalizeOutboundEmail(prospect.contactEmail);
+  if (!emailNorm || !isValidProspectEmail(emailNorm, prospect.websiteUrl).ok) return "invalid_email";
+
+  const sent = sentContacts ?? (await loadSentContactSets(workspaceRestaurantId));
+  if (sent.emails.has(emailNorm)) return "email_already_sent";
+  if (prospect.placeId?.trim() && sent.placeIds.has(prospect.placeId.trim())) {
+    return "place_already_sent";
+  }
 
   // Restaurant classifier (name / opportunities text as proxy for site language)
   const classifier = classifyRestaurant({
@@ -115,7 +129,7 @@ export async function queueProspectOutreach(
 
   if ((prospect.kobOpportunityScore ?? 0) < config.minScoreForOutreach) return "score_too_low";
   if (prospect.disqualifiers.length > 0) return "disqualified";
-  if (prospect.locationCount == null || prospect.locationCount < 1 || prospect.locationCount > config.locationMax) {
+  if (prospect.locationCount != null && prospect.locationCount > config.locationMax) {
     return "too_many_locations";
   }
 
@@ -146,6 +160,9 @@ export async function queueProspectOutreach(
   const oppCount = prospect.opportunities.length || 1;
   const insightSummary = `Lead engine · KOB score ${prospect.kobOpportunityScore}/100 · ${oppCount} opportunities · variant pending`;
 
+  sent.emails.add(emailNorm);
+  if (prospect.placeId?.trim()) sent.placeIds.add(prospect.placeId.trim());
+
   const outboundLead = await prisma.outboundLead.create({
     data: {
       workspaceRestaurantId,
@@ -153,7 +170,7 @@ export async function queueProspectOutreach(
       city: prospect.city,
       restaurantName: prospect.name,
       websiteUrl: prospect.websiteUrl,
-      contactEmail: prospect.contactEmail,
+      contactEmail: emailNorm,
       insightSummary,
       messageSubject: "",
       messageBody: "",

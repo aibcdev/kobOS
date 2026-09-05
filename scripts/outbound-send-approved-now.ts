@@ -1,5 +1,5 @@
 /**
- * One-shot: promote ready PENDING → APPROVED and send via Resend (up to 100).
+ * One-shot: promote ready PENDING → APPROVED and send via Resend (up to remaining daily cap).
  * Bypasses Inngest when cron keys are missing.
  *
  *   OUTBOUND_SEND_NOW=1 npm run outbound:send-now
@@ -7,8 +7,20 @@
 import { OutboundLeadStatus } from "@prisma/client";
 import { mkdirSync, writeFileSync } from "fs";
 import { prisma } from "../lib/db/prisma";
+import { countOutboundSentUtcDay } from "../lib/outbound/count-sent-today";
+import {
+  loadSentContactSets,
+  normalizeOutboundEmail,
+  pickUniqueFreshLeads,
+} from "../lib/outbound/outbound-send-dedupe";
 import { promoteReadyOutboundBatch } from "../lib/outbound/promote-ready-batch";
 import { sendOutboundEmailViaResend } from "../lib/outbound/send-resend-outbound-email";
+import {
+  getOutboundPerRunCap,
+  getOutboundSendBatch,
+  getOutboundSendDelaySec,
+  remainingSendForDay,
+} from "../lib/outbound/send-volume";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -22,8 +34,14 @@ async function main() {
   const key = process.env.RESEND_API_KEY?.trim();
   if (!key) throw new Error("RESEND_API_KEY missing");
 
-  const batch = Math.min(100, Math.max(1, Number(process.env.OUTBOUND_SEND_BATCH || "100") || 100));
-  const delaySec = Math.max(2, Number(process.env.OUTBOUND_SEND_DELAY_SEC || "3") || 3);
+  const sentToday = await countOutboundSentUtcDay(wid);
+  const remaining = remainingSendForDay(sentToday);
+  const batch = Math.min(getOutboundSendBatch(), getOutboundPerRunCap(), remaining);
+  const delaySec = getOutboundSendDelaySec();
+  if (batch <= 0) {
+    console.log(JSON.stringify({ apply, sentToday, remaining: 0, message: "daily_cap_reached" }));
+    return;
+  }
 
   let promoted = { promoted: 0, ids: [] as string[] };
   if (apply) {
@@ -49,11 +67,10 @@ async function main() {
       messageBody: { not: null },
     },
     orderBy: { createdAt: "asc" },
-    take: batch * 2,
+    take: batch * 4,
   });
-  const eligible = leads
-    .filter((r) => r.contactEmail?.trim() && r.messageBody?.includes("/audit/"))
-    .slice(0, batch);
+  const sentContacts = await loadSentContactSets(wid);
+  const { picked: eligible, skipped: sendSkipped } = pickUniqueFreshLeads(leads, sentContacts, batch);
 
   console.log(
     JSON.stringify(
@@ -61,9 +78,10 @@ async function main() {
         apply,
         promoted: promoted.promoted,
         eligible: eligible.length,
+        sendSkipped,
         sample: eligible.slice(0, 3).map((l) => ({
           name: l.restaurantName,
-          email: l.contactEmail,
+          email: normalizeOutboundEmail(l.contactEmail),
           variant: l.emailVariant,
         })),
       },
@@ -84,7 +102,7 @@ async function main() {
   const results: Array<{ id: string; email: string; ok: boolean; error?: string; resendId?: string }> = [];
   for (let i = 0; i < eligible.length; i++) {
     const lead = eligible[i]!;
-    const to = lead.contactEmail!.trim();
+    const to = normalizeOutboundEmail(lead.contactEmail) || lead.contactEmail!.trim();
     const subject = lead.messageSubject?.trim() || "A note from KOB";
     const result = await sendOutboundEmailViaResend(key, {
       to,

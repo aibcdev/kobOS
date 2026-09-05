@@ -1,4 +1,5 @@
 import { hostFromWebsiteUrl } from "@/lib/outbound/chain-denylist";
+import { enrichViaApollo } from "@/lib/outbound/enrich-apollo";
 import { scrapeWebsiteEmail } from "@/lib/outbound/scrape-website-email";
 import { isValidProspectEmail } from "@/lib/outbound/validate-prospect-email";
 
@@ -9,7 +10,7 @@ function emailMode(): "scrape" | "hunter" | "auto" {
 }
 
 export type EnrichEmailResult =
-  | { ok: true; email: string; source: "hunter" | "scrape" }
+  | { ok: true; email: string; source: "hunter" | "scrape" | "apollo" }
   | { ok: false; reason: string };
 
 export type EnrichEmailOptions = {
@@ -158,5 +159,12 @@ export async function enrichProspectEmail(
 
   const scraped = await tryScrape();
   if (scraped?.ok) return scraped;
+
+  const apolloEmail = await enrichViaApollo(websiteUrl);
+  if (apolloEmail) {
+    const valid = isValidProspectEmail(apolloEmail, websiteUrl);
+    if (valid.ok) return { ok: true, email: apolloEmail, source: "apollo" };
+  }
+
   return hunted ?? scraped ?? { ok: false, reason: "no_email_found" };
 }

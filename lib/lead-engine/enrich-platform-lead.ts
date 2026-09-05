@@ -4,6 +4,7 @@ import { resolveRestaurantWebsite, scrapeWebsitePhone } from "@/lib/lead-engine/
 import { effectiveReviewCount, passesLeadIcpFilters } from "@/lib/lead-engine/icp-filters";
 import type { MergedPlatformLead } from "@/lib/lead-engine/merge-platform-listings";
 import { quickWebsiteScan } from "@/lib/lead-engine/quick-website-scan";
+import { enrichProspectEmail } from "@/lib/outbound/enrich-email";
 import { scrapeWebsiteEmail } from "@/lib/outbound/scrape-website-email";
 import { placesPlaceClassifierFields } from "@/lib/places/google-places-server";
 
@@ -70,6 +71,16 @@ export async function enrichPlatformLead(
     if (scraped) {
       contactEmail = scraped;
       emailSource = "scrape";
+    }
+    if (!contactEmail) {
+      const enriched = await enrichProspectEmail(google.websiteUrl, {
+        businessName: google.name,
+        preferScrape: false,
+      });
+      if (enriched.ok) {
+        contactEmail = enriched.email;
+        emailSource = enriched.source;
+      }
     }
     if (!contactPhone) {
       contactPhone = await scrapeWebsitePhone(google.websiteUrl);
