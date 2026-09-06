@@ -16,7 +16,7 @@ export async function promoteReadyOutboundBatch(input: {
   workspaceRestaurantId: string;
   limit: number;
 }): Promise<{ promoted: number; ids: string[]; skipped: Record<string, number> }> {
-  const limit = Math.min(400, Math.max(1, input.limit));
+  const limit = Math.min(100, Math.max(1, input.limit));
   const sent = await loadSentContactSets(input.workspaceRestaurantId);
 
   const candidates = await prisma.outboundLead.findMany({

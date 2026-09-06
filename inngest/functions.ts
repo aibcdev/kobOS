@@ -574,7 +574,7 @@ export const outboundDraftDaily = inngest.createFunction(
   },
 );
 
-/** Sends remaining daily quota via Resend (target 300–400/UTC day, hard cap 400).
+/** Sends remaining daily quota via Resend (target 100/UTC day, hard cap 100).
  * Waves at 10:00 / 14:00 / 18:00 UTC so morning writer audits are ready.
  * Auto-promotes PENDING leads that already have ready audits + message bodies.
  */
@@ -711,7 +711,7 @@ export const outboundSendApprovedDaily = inngest.createFunction(
   },
 );
 
-/** 19:00 UTC: if under 400, fire another send; email ops only if under 300. */
+/** 19:00 UTC: if under 100, fire another send; email ops only if the day is short. */
 export const outboundVolumeWatchDaily = inngest.createFunction(
   {
     id: "outbound-volume-watch",

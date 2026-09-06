@@ -163,7 +163,7 @@ Enqueues:
 
 Schedule daily (e.g. Netlify scheduled function) at a time you will review within 1–2 hours.
 
-**Outbound send (300–400/day):** Inngest crons `0 10/14/18 * * *` UTC auto-promote PENDING leads with ready audits, then send remaining quota (hard cap **400**) via Resend. Independents only (`LEAD_ENGINE_LOCATION_MAX=1`). Prep with:
+**Outbound send (100/day):** Inngest crons `0 10/14/18 * * *` UTC auto-promote PENDING leads with ready audits, then send remaining quota (hard cap **100**) via Resend. Independents only (`LEAD_ENGINE_LOCATION_MAX=1`). Prep with:
 
 ```bash
 OUTBOUND_PREP_LIMIT=100 OUTBOUND_PREP_APPROVE=1 npm run outbound:prep-next-100
