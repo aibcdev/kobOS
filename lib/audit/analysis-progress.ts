@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { auditScoreColumns, finalizeAuditScores } from "@/lib/audit/finalize-audit-scores";
 import { applyRestaurantScoresToPayload } from "@/lib/audit/restaurant-scoring";
 import {
   parseAuditPayload,
@@ -205,15 +206,12 @@ export async function persistAnalysisPayload(
   auditId: string,
   payload: AuditResultPayload,
 ): Promise<void> {
+  const finalized = finalizeAuditScores(payload);
   await prisma.visibilityAudit.update({
     where: { id: auditId },
     data: {
-      resultPayload: payload as Prisma.InputJsonValue,
-      overallScore: payload.restaurantScores?.overall ?? payload.scores.overall,
-      seoScore: payload.scores.seo,
-      designScore: payload.scores.design,
-      mobileScore: payload.scores.mobile,
-      conversionScore: payload.scores.conversion,
+      resultPayload: finalized as Prisma.InputJsonValue,
+      ...auditScoreColumns(finalized),
     },
   });
 }

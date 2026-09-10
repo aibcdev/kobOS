@@ -67,6 +67,7 @@
     "outbound:schedule-100": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-schedule-100.ts",
     "outbound:send-now": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-send-approved-now.ts",
     "outbound:record-grok": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-record-grok-sent.ts",
+    "prescan:city": "dotenv -e .env -e .env.local -- npx tsx scripts/prescan-city-restaurants.ts",
     "outbound:refill-ready": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-refill-ready.ts",
     "outbound:prep-next-100": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-prep-next-100.ts",
     "outbound:call-list": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-call-list.ts",

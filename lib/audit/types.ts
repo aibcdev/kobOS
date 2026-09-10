@@ -20,10 +20,18 @@ export type AuditCompetitor = {
   name: string;
   note: string;
   mockScore: number;
-  /** Real Google Places listing when location was resolved. */
-  source?: "places" | "estimated";
+  /**
+   * "index" = pre-scanned KOB score for a real local restaurant (preferred).
+   * "places" = real listing, score derived from listing strength only.
+   * "estimated" = legacy placeholder, never shown in production.
+   */
+  source?: "index" | "places" | "estimated";
   lat?: number;
   lng?: number;
+  /** How far from the subject restaurant this peer is, in kilometres. */
+  distanceKm?: number | null;
+  /** True when the peer's KOB score came from a real pre-scan. */
+  scoreMeasured?: boolean;
   /** Real Places metrics when available — never invent for peers. */
   rating?: number | null;
   reviewCount?: number | null;

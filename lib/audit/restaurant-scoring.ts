@@ -3,6 +3,7 @@ import {
   clampScore,
   evidenceOverallFromAxes,
   isEliteWebsiteBrandEvidence,
+  isWebsiteUnassessed,
   scoreBrandSocialForPayload,
   scoreLocalPresenceFromOnPage,
   scoreReviewsFromOnPage,
@@ -267,8 +268,16 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
   if (gbpMeasured != null) {
     axes.push({ key: "gbp", score: gbpMeasured, weight: gbpW });
   }
-  axes.push({ key: "website", score: website, weight: websiteW });
-  axes.push({ key: "technical", score: technical, weight: techW });
+  // With no readable site evidence, a website/technical score says nothing about the
+  // restaurant. Drop both axes so the listing and brand carry the grade, unless they
+  // are all we have.
+  const websiteUnassessed = isWebsiteUnassessed(payload);
+  if (!websiteUnassessed || !hasPlace) {
+    axes.push({ key: "website", score: website, weight: websiteW });
+  }
+  if (!websiteUnassessed) {
+    axes.push({ key: "technical", score: technical, weight: techW });
+  }
   axes.push({ key: "brandSocial", score: brandSocial, weight: brandW });
   if (competitorsMeasured != null) {
     axes.push({ key: "competitors", score: competitorsMeasured, weight: compsW });
@@ -295,7 +304,7 @@ export function computeRestaurantScores(payload: AuditResultPayload): Restaurant
     website,
     competitors: competitorsMeasured,
     technical,
-    confidence: confidenceFromGaps(uniqueGaps, hasPlace, fetched),
+    confidence: websiteUnassessed ? "low" : confidenceFromGaps(uniqueGaps, hasPlace, fetched),
     dataGaps: uniqueGaps.length ? uniqueGaps : undefined,
   };
 }

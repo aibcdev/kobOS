@@ -144,11 +144,14 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
       fallbackCity: cityHint,
     });
 
-    const { applyRestaurantScoresToPayload } = await import("@/lib/audit/restaurant-scoring");
-    const scoredPayload = applyRestaurantScoresToPayload(payload);
+    const { auditScoreColumns, finalizeAuditScores } = await import(
+      "@/lib/audit/finalize-audit-scores"
+    );
+    const { applyPeerRestaurantsToPayload } = await import("@/lib/audit/apply-peer-restaurants");
+    const scoredPayload = await applyPeerRestaurantsToPayload(finalizeAuditScores(payload));
     const scoredRow = {
       ...row,
-      overallScore: scoredPayload.scores.overall,
+      ...auditScoreColumns(scoredPayload),
     };
 
     const placesCompetitors = scoredPayload.competitors.filter((c) => c.source === "places").length;

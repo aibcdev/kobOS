@@ -1020,6 +1020,41 @@ model StripeWebhookEvent {
 }
 
 /**
+ * Pre-scanned KOB scores for restaurants we have not audited, used to show a
+ * prospect three real, named local peers who score at or above them.
+ * Populated by `npm run prescan:city`; never shown as a KOB customer.
+ */
+model RestaurantScoreIndex {
+  id          String   @id @default(cuid())
+  placeId     String   @unique
+  name        String
+  city        String
+  country     String   @default("GB")
+  websiteUrl  String?
+  lat         Float?
+  lng         Float?
+  rating      Float?
+  reviewCount Int?
+  photoCount  Int?
+  /**
+   * Same 0-100 scale as VisibilityAudit.overallScore.
+   */
+  kobScore    Int
+  /**
+   * "lightweight" = website crawl + Google listing only (no AI, no PageSpeed).
+   */
+  scanDepth   String   @default("lightweight")
+  scoredAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([city, kobScore])
+  @@index([country, kobScore])
+  @@index([lat, lng])
+  @@schema("public")
+}
+
+/**
  * Public visibility audit (grader funnel); no auth required to create.
  */
 model VisibilityAudit {

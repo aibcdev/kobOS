@@ -17,7 +17,7 @@ import type { AuditResultPayload } from "@/lib/audit/types";
 import { designScoreNudgeFromVisual } from "@/lib/audit/visual-intelligence";
 import { scoreWebsiteIdentityFromSnippets } from "@/lib/audit/website-identity";
 import { applyAuditScoringV2 } from "@/lib/audit/apply-audit-scoring";
-import { buildEstimatedCompetitors, fetchNearbyCompetitors } from "@/lib/audit/fetch-nearby-competitors";
+import { selectPeerRestaurants } from "@/lib/audit/select-peer-restaurants";
 import { placesGeocodeCityUk } from "@/lib/places/google-places-server";
 import { resolveAuditLocation } from "@/lib/audit/resolve-audit-location";
 import type { AuditGeoLocation } from "@/lib/audit/types";
@@ -324,21 +324,15 @@ async function resolveCityAndCompetitors(input: {
     }
   }
 
-  const seed = displayName + input.websiteUrl;
-  let competitors =
-    geo != null
-      ? await fetchNearbyCompetitors({
-          lat: geo.lat,
-          lng: geo.lng,
-          excludeName: displayName,
-          city: resolvedCity,
-          seed,
-        })
-      : [];
-
-  if (competitors.length === 0 && geo != null && resolvedCity !== "Your area") {
-    competitors = buildEstimatedCompetitors(resolvedCity, seed);
-  }
+  // Provisional peers: real, measured locals. Re-selected against the subject's own
+  // score once scoring completes (see applyPeerRestaurantsToPayload).
+  const competitors = await selectPeerRestaurants({
+    city: resolvedCity,
+    lat: geo?.lat ?? null,
+    lng: geo?.lng ?? null,
+    excludeName: displayName,
+    subjectScore: null,
+  });
 
   return { city: resolvedCity, geoLocation: geo, competitors };
 }
@@ -487,11 +481,8 @@ export function buildAuditPayloadAndRow(
           impactEstimate: "High — listing data is safer when the website is wrong or missing",
         },
       ];
-  const competitors =
-    options?.competitors ??
-    (siteMatched
-      ? buildEstimatedCompetitors(input.city, input.restaurantName + (input.websiteUrl ?? ""))
-      : []);
+  // Never fabricate peers: an empty list is honest, an invented restaurant is not.
+  const competitors = options?.competitors ?? [];
   const teaser = siteMatched
     ? {
         headline: `${input.restaurantName} — modern guest-first layout`,

@@ -38,12 +38,15 @@ export function scoreBrandSocialFromEvidence(pack: AuditEvidencePackV1): number 
   const hasTiktok = platforms.has("tiktok");
   const visualBoost = hasIg && hasTiktok ? 6 : hasIg || hasTiktok ? 3 : 0;
 
+  // Tiers rise gently: a great restaurant that only runs Instagram should not be
+  // punished as if it had no brand presence at all. Number of platforms is a weak
+  // proxy for brand quality, so the gap between tiers stays small.
   let base: number;
   if (count >= 4) base = hasGbp ? 98 : 93;
-  else if (count === 3) base = hasGbp ? 94 : 88;
-  else if (count === 2) base = hasGbp ? 84 : 76;
-  else if (count === 1) base = hasGbp ? 68 : 58;
-  else base = hasGbp ? 52 : 18;
+  else if (count === 3) base = hasGbp ? 94 : 89;
+  else if (count === 2) base = hasGbp ? 88 : 83;
+  else if (count === 1) base = hasGbp ? 80 : 74;
+  else base = hasGbp ? 62 : 45;
 
   return clampScore(base + visualBoost, 0, 100);
 }
@@ -213,6 +216,21 @@ export function scoreLocalPresenceFromOnPage(payload: AuditResultPayload): numbe
 }
 
 /**
+ * True when we have no readable website evidence, so any website score would be a
+ * guess about the site rather than a measurement of it. Two cases:
+ *  - the crawl errored (timeout, non-HTML, bad status)
+ *  - the server HTML is a JavaScript app shell and the browser render has not landed
+ * Callers must drop the website axis instead of scoring these sites as weak.
+ */
+export function isWebsiteUnassessed(payload: AuditResultPayload): boolean {
+  const s = payload.evidencePack?.urlSignals;
+  if (!s?.fetched) return true;
+  if (s.fetchError) return true;
+  const emptyShell = s.h1Count === 0 && s.h2Count === 0 && s.imgCount === 0 && s.titleLen === 0;
+  return emptyShell && payload.scanStatus !== "ready";
+}
+
+/**
  * Website experience (Elias axes): identity, immersive visuals, menu, booking, mobile.
  * Rubric SEO filler is secondary so design-led sites can land mid-90s.
  */
@@ -222,9 +240,11 @@ export function scoreWebsiteFromEvidence(payload: AuditResultPayload, gaps: stri
   const rubricWeb = payload.rubricV2?.websiteExperience;
   const rubricConf = payload.rubricV2?.confidence;
 
-  if (!signals?.fetched) {
-    gaps.push("Website could not be fetched");
-    if (rubricWeb != null) return clampScore(rubricWeb);
+  if (isWebsiteUnassessed(payload)) {
+    gaps.push(
+      signals?.fetched ? "Website content could not be read" : "Website could not be fetched",
+    );
+    if (rubricWeb != null && !signals?.fetchError) return clampScore(rubricWeb);
     return clampScore(payload.scores.design ?? payload.scores.conversion ?? 45, 30, 90);
   }
 

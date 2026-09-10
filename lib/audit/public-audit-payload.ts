@@ -34,6 +34,8 @@ export function stripAuditPayloadForPublic(payload: AuditResultPayload): AuditRe
       lat: c.lat,
       lng: c.lng,
       source: c.source,
+      scoreMeasured: c.scoreMeasured ?? false,
+      distanceKm: c.distanceKm ?? null,
       rating: c.rating ?? null,
       reviewCount: c.reviewCount ?? null,
       photoCount: c.photoCount ?? null,

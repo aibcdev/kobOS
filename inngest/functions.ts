@@ -316,14 +316,18 @@ export const auditBrowserbaseScan = inngest.createFunction(
           stagehandExtraction,
         });
 
+        // The render just changed the website evidence — rescore before persisting.
+        const { auditScoreColumns, finalizeAuditScores } = await import(
+          "@/lib/audit/finalize-audit-scores"
+        );
+        const { applyPeerRestaurantsToPayload } = await import(
+          "@/lib/audit/apply-peer-restaurants"
+        );
+        payload = await applyPeerRestaurantsToPayload(finalizeAuditScores(payload));
         await prisma.visibilityAudit.update({
           where: { id: auditId },
           data: {
-            overallScore: payload.scores.overall,
-            seoScore: payload.scores.seo,
-            designScore: payload.scores.design,
-            mobileScore: payload.scores.mobile,
-            conversionScore: payload.scores.conversion,
+            ...auditScoreColumns(payload),
             resultPayload: payload as object,
           },
         });

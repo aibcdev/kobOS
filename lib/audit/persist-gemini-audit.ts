@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { fetchMediaAssetsForVision } from "@/lib/audit/collect-media-assets";
+import { auditScoreColumns, finalizeAuditScores } from "@/lib/audit/finalize-audit-scores";
 import { runGeminiDesignQualityV1 } from "@/lib/audit/gemini-design-quality";
 import {
   mergeBenchmarkV1MediaIntoPayload,
@@ -22,15 +23,13 @@ export async function persistAuditResultPayload(
   auditId: string,
   payload: AuditResultPayload,
 ): Promise<void> {
+  // Rescore before writing: Gemini design/media changes the evidence the headline depends on.
+  const finalized = finalizeAuditScores(payload);
   await prisma.visibilityAudit.update({
     where: { id: auditId },
     data: {
-      resultPayload: payload as Prisma.InputJsonValue,
-      overallScore: payload.scores.overall,
-      seoScore: payload.scores.seo,
-      designScore: payload.scores.design,
-      mobileScore: payload.scores.mobile,
-      conversionScore: payload.scores.conversion,
+      resultPayload: finalized as Prisma.InputJsonValue,
+      ...auditScoreColumns(finalized),
     },
   });
 }

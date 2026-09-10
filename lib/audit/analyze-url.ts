@@ -9,6 +9,12 @@ import { discoverSeoCrawlAssets } from "@/lib/audit/seo-discovery";
 
 export type UrlSignals = {
   fetched: boolean;
+  /**
+   * True when we reached the network but got no readable HTML (timeout, abort,
+   * non-HTML body, error status). The site is then *unassessed*, not bad — scoring
+   * must not treat missing content as evidence of a weak website.
+   */
+  fetchError?: boolean;
   status?: number;
   titleLen: number;
   hasMetaDescription: boolean;
@@ -64,9 +70,9 @@ export type PageEvidenceExtras = {
 };
 
 const RESERVED =
-  /\b(book|reserve|reservation|order online|order now|get it delivered|delivery|pickup|click.?and.?collect|takeaway|catering|find a kfc|find a restaurant|locations?)\b/i;
+  /\b(book|booking|bookings|reserve|reservations?|book a table|table for|enquir(?:e|y|ies)|walk.?ins?|order online|order now|get it delivered|delivery|pickup|click.?and.?collect|takeaway|catering|private dining|find a kfc|find a restaurant|locations?)\b/i;
 const ORDER_DELIVERY =
-  /\b(order|delivery|pickup|takeaway|click.?and.?collect|catering|ship|get it delivered)\b/i;
+  /\b(order|delivery|deliver(?:y|ies)?|pickup|collection|takeaway|click.?and.?collect|catering|ship|get it delivered|deliveroo|uber ?eats|just ?eat|doordash|grubhub|slerp)\b/i;
 
 const SOCIAL_PATTERNS: { platform: string; re: RegExp }[] = [
   { platform: "instagram", re: /https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?/gi },
@@ -224,6 +230,7 @@ export type WebsiteAnalysis = {
 
 const emptySignals = (): UrlSignals => ({
   fetched: false,
+  fetchError: false,
   titleLen: 0,
   hasMetaDescription: false,
   metaDescriptionLen: 0,
@@ -365,7 +372,11 @@ export function analyzeWebsiteFromHtml(
   signals.hasMailto = /href=["']mailto:/i.test(html);
   signals.hasBookOrReserveKeyword = RESERVED.test(html);
   signals.hasOrderOrDeliveryKeyword = ORDER_DELIVERY.test(html);
-  signals.hasOpenTableOrResy = /opentable|resy|tock|sevenrooms/i.test(html);
+  // Any real booking provider counts, not just the two US market leaders.
+  signals.hasOpenTableOrResy =
+    /opentable|resy|exploretock|sevenrooms|quandoo|thefork|dishcult|design ?my ?night|collinson|eveve|tablein|superbexperience|res ?diary|resdiary|bookatable|toasttab|squareup\.com\/appointments/i.test(
+      html,
+    );
 
   signals.imgCount = (html.match(/<img[\s>]/gi) ?? []).length;
   signals.imgWithAltCount = countImgWithAlt(html);
@@ -502,6 +513,7 @@ export async function analyzeWebsiteFull(rawUrl: string | undefined): Promise<We
     signals.fetched = true;
     signals.status = res.status;
     if (!res.ok || !res.headers.get("content-type")?.includes("text/html")) {
+      signals.fetchError = true;
       return { signals, pageEvidence: emptyPage };
     }
     const html = await res.text();
@@ -511,7 +523,11 @@ export async function analyzeWebsiteFull(rawUrl: string | undefined): Promise<We
     return enrichWebsiteAnalysisWithSeoDiscovery(analysis, res.url || url.toString());
   } catch {
     clearTimeout(t);
-    return { signals: { ...emptySignals(), ...signals, fetched: true }, pageEvidence: emptyPage };
+    // Reached the network but never read HTML: mark unassessed rather than empty-and-bad.
+    return {
+      signals: { ...emptySignals(), ...signals, fetched: true, fetchError: true },
+      pageEvidence: emptyPage,
+    };
   }
 }
 

@@ -5,6 +5,7 @@ import type { VisibilityAudit } from "@prisma/client";
 import { useCallback, useState } from "react";
 import { AuditOpportunityReport } from "@/components/marketing/audit/AuditOpportunityReport";
 import { AuditFunnelHeader } from "@/components/marketing/audit/AuditFunnelHeader";
+import AuditLocalPeers from "@/components/marketing/audit/AuditLocalPeers";
 import { AuditPerceptionGapTable } from "@/components/marketing/audit/AuditPerceptionGapTable";
 import { AuditPerceptionHero } from "@/components/marketing/audit/AuditPerceptionHero";
 import { AuditPositioningTable } from "@/components/marketing/audit/AuditPositioningTable";
@@ -39,13 +40,15 @@ const CUISINE_LABEL: Record<string, string> = {
   general: "independent restaurants",
 };
 
-type NavId = "overview" | "reviews" | "discovery" | "competitors" | "technical";
+/**
+ * Three sections, not five tabs: what guests see, how you get found and trusted,
+ * and the detail for a web team. Fewer choices reads faster and converts better.
+ */
+type NavId = "overview" | "discovery" | "technical";
 
 const NAV: { id: NavId; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "reviews", label: "Reviews & Social" },
-  { id: "discovery", label: "Local discovery" },
-  { id: "competitors", label: "Competitors" },
+  { id: "overview", label: "What guests see" },
+  { id: "discovery", label: "Getting found & trusted" },
   { id: "technical", label: "Technical detail" },
 ];
 
@@ -403,7 +406,9 @@ export function AuditReportDashboard({
       ? buildTeaserPerception(data.perceptionTeaser, payload)
       : null;
   const perception = data.perceptionAuditV1 ?? payload.perceptionAuditV1 ?? teaserPerception;
-  const displayScore = restaurantScores?.overall ?? perception?.digitalPositioningScore ?? overall;
+  // Headline comes only from the scored pipeline. Perception positioning is a different
+  // scale (capped hard on identity mismatch) and must never become the visible score.
+  const displayScore = restaurantScores?.overall ?? overall;
   const displayTone = scoreTone(displayScore);
   const healthLabel = growthOpportunityLabel(displayScore);
   const tone = scoreTone(restaurantScores?.overall ?? overall);
@@ -449,8 +454,10 @@ export function AuditReportDashboard({
         cuisineLabel,
       })
     : [];
+  // Only real restaurants qualify; "estimated" peers are never shown.
   const competitorsFromPlaces =
-    payload.competitors.length > 0 && payload.competitors.some((c) => c.source === "places");
+    payload.competitors.length > 0 &&
+    payload.competitors.some((c) => c.source === "places" || c.source === "index");
   const competitorInsight = competitorInsightCopy(payload, data.benchmarkV1, audit.city);
   const meta = data.evidencePack?.mediaAssetsMeta;
   const cands = data.evidencePack?.imageCandidates ?? [];
@@ -629,6 +636,31 @@ export function AuditReportDashboard({
 
               {activeNav === "overview" && (
                 <div className="mb-8 space-y-10">
+                  <AuditLocalPeers
+                    city={audit.city}
+                    restaurantName={restaurantDisplay}
+                    score={displayScore}
+                    competitors={payload.competitors}
+                    cta={
+                      unlocked ? (
+                        <Link
+                          href={trialCheckoutHref}
+                          className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 text-sm font-semibold text-white no-underline shadow-[0_4px_14px_-2px_rgba(9,68,19,0.35)]"
+                        >
+                          Close the gap — start 7-day free trial →
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onRequestUnlock?.()}
+                          className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 text-sm font-semibold text-white shadow-[0_4px_14px_-2px_rgba(9,68,19,0.35)]"
+                        >
+                          Show me what they do better →
+                        </button>
+                      )
+                    }
+                  />
+
                   <AuditOpportunityReport
                     auditId={audit.id}
                     restaurantName={restaurantDisplay}
@@ -682,17 +714,12 @@ export function AuditReportDashboard({
                 </div>
               )}
 
-              {activeNav === "reviews" && perception && unlocked ? (
-                <div className="mb-8">
+              {activeNav === "discovery" && perception && unlocked ? (
+                <div className="mb-8 space-y-6">
                   <AuditReviewSocialIntel
                     reviewIntelligence={perception.reviewIntelligence}
                     socialAnalysis={perception.socialAnalysis}
                   />
-                </div>
-              ) : null}
-
-              {activeNav === "discovery" && perception && unlocked ? (
-                <div className="mb-8 space-y-6">
                   <AuditCommercialSeoBlock text={perception.commercialSeo} />
                   {payload.gated.keywordOpportunities.length ? (
                     <div className="rounded-2xl border border-[var(--color-hairline)] bg-white p-6">
@@ -742,7 +769,7 @@ export function AuditReportDashboard({
                 </div>
               )}
 
-              {activeNav === "competitors" && (
+              {activeNav === "discovery" && (
                 <div className="mb-8 max-w-2xl">
                   {perception?.benchmarkAnchors.length ? (
                     <p className="mb-4 text-sm text-[var(--color-muted)]">

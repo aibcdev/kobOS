@@ -434,6 +434,8 @@ export async function placesSearchNearbyRestaurants(
   lng: number,
   excludeName?: string,
   maxResults = 4,
+  /** Widened by peer selection when a city has too few scored restaurants. */
+  radiusMeters = 5000,
 ): Promise<NearbyPlace[]> {
   const key = getApiKey();
   if (!key) return [];
@@ -450,11 +452,11 @@ export async function placesSearchNearbyRestaurants(
       includedTypes: ["restaurant"],
       languageCode: "en-GB",
       regionCode: auditPlacesRegionCodes()[0] ?? "GB",
-      maxResultCount: Math.min(10, maxResults + 2),
+      maxResultCount: Math.min(20, maxResults + 2),
       locationRestriction: {
         circle: {
           center: { latitude: lat, longitude: lng },
-          radius: 5000,
+          radius: Math.max(500, Math.min(50000, radiusMeters)),
         },
       },
     }),
