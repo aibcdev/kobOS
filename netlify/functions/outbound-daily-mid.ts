@@ -1,4 +1,4 @@
-import type { Config, Context } from "@netlify/functions";
+import type { Context } from "@netlify/functions";
 
 async function pingOutbound() {
   const base =
@@ -28,7 +28,3 @@ async function pingOutbound() {
 export default async function handler(_req: Request, _context: Context) {
   return pingOutbound();
 }
-
-export const config: Config = {
-  schedule: "0 14 * * *",
-};

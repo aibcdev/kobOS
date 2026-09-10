@@ -5,11 +5,6 @@ const nextConfig: NextConfig = {
   experimental: {
     cpus: 2,
   },
-  // Temporary: unblock Netlify while we keep the audit funnel shipping.
-  // Remove once CI typecheck is green again.
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   // Ensure sharp resolves as a real Node package (linux binary installed at build).
   serverExternalPackages: ["sharp"],
   turbopack: {

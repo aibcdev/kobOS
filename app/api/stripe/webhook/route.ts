@@ -31,12 +31,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  const already = await prisma.stripeWebhookEvent.findUnique({ where: { id: event.id } });
-  if (already) {
-    return NextResponse.json({ received: true, duplicate: true });
-  }
-
   try {
+    try {
+      await prisma.stripeWebhookEvent.create({
+        data: { id: event.id, type: event.type },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      throw e;
+    }
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -86,22 +92,24 @@ export async function POST(req: Request) {
         });
         break;
       }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId =
+          typeof invoice.subscription === "string"
+            ? invoice.subscription
+            : invoice.subscription?.id;
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          await syncRestaurantFromStripeSubscription(subscription);
+        }
+        break;
+      }
       default:
         break;
     }
-
-    try {
-      await prisma.stripeWebhookEvent.create({
-        data: { id: event.id, type: event.type },
-      });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        return NextResponse.json({ received: true, duplicate: true });
-      }
-      throw e;
-    }
   } catch (e) {
     console.error("stripe webhook handler", e);
+    await prisma.stripeWebhookEvent.delete({ where: { id: event.id } }).catch(() => {});
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 

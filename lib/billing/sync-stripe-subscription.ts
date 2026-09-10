@@ -12,7 +12,7 @@ export async function syncRestaurantFromStripeSubscription(sub: Stripe.Subscript
   const priceId = sub.items.data[0]?.price?.id;
 
   let plan: SubscriptionPlan = SubscriptionPlan.FREE;
-  if (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due") {
+  if (sub.status === "active" || sub.status === "trialing") {
     const mapped = subscriptionPlanFromPriceId(priceId);
     plan = mapped ?? SubscriptionPlan.STARTER;
   }

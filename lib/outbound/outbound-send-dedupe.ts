@@ -21,14 +21,17 @@ export type SentContactSets = {
 };
 
 export async function loadSentContactSets(workspaceRestaurantId: string): Promise<SentContactSets> {
-  const rows = await prisma.outboundLead.findMany({
-    where: {
-      workspaceRestaurantId,
-      status: OutboundLeadStatus.SENT,
-      OR: [{ contactEmail: { not: null } }, { placeId: { not: null } }],
-    },
-    select: { contactEmail: true, placeId: true },
-  });
+  const [rows, suppressions] = await Promise.all([
+    prisma.outboundLead.findMany({
+      where: {
+        workspaceRestaurantId,
+        status: OutboundLeadStatus.SENT,
+        OR: [{ contactEmail: { not: null } }, { placeId: { not: null } }],
+      },
+      select: { contactEmail: true, placeId: true },
+    }),
+    prisma.outboundSuppression.findMany({ select: { normalizedEmail: true } }),
+  ]);
   const emails = new Set<string>();
   const placeIds = new Set<string>();
   for (const r of rows) {
@@ -36,6 +39,7 @@ export async function loadSentContactSets(workspaceRestaurantId: string): Promis
     if (e) emails.add(e);
     if (r.placeId?.trim()) placeIds.add(r.placeId.trim());
   }
+  for (const row of suppressions) emails.add(row.normalizedEmail);
   return { emails, placeIds };
 }
 

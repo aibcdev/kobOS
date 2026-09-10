@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { executeAuditPipeline } from "@/lib/audit/execute-audit-pipeline";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { prisma } from "@/lib/db/prisma";
+import { markOpsHeartbeat } from "@/lib/ops/heartbeat";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -17,15 +18,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const since = new Date(Date.now() - 6 * 3600_000);
+  const since = new Date(Date.now() - 24 * 3600_000);
+  const stale = new Date(Date.now() - 5 * 60_000);
   const pending = await prisma.visibilityAudit.findMany({
     where: {
-      overallScore: 0,
       createdAt: { gte: since },
+      processingCompletedAt: null,
+      processingAttempts: { lt: 3 },
+      OR: [{ processingStartedAt: null }, { processingStartedAt: { lt: stale } }],
     },
     orderBy: { createdAt: "asc" },
     take: 5,
-    select: { id: true, websiteUrl: true, resultPayload: true, overallScore: true },
+    select: { id: true, websiteUrl: true, resultPayload: true, overallScore: true, processingAttempts: true },
   });
 
   const results: { id: string; status: string; detail?: string }[] = [];
@@ -47,10 +51,15 @@ export async function GET(req: Request) {
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       console.error("[cron/audit-drain]", row.id, message);
-      results.push({ id: row.id, status: "failed", detail: message.slice(0, 200) });
+      results.push({
+        id: row.id,
+        status: row.processingAttempts + 1 >= 3 ? "dead_letter" : "failed_retryable",
+        detail: message.slice(0, 200),
+      });
     }
   }
 
+  await markOpsHeartbeat("audit-drain", { checked: pending.length, results });
   return NextResponse.json({
     ok: true,
     checked: pending.length,

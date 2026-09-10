@@ -44,9 +44,11 @@ export async function POST() {
   } catch (err) {
     const timedOut = err instanceof Error && err.message === "profile_timeout";
     console.error("[api/auth/complete]", err);
-    // Session is valid — let the client continue to the dashboard; layout retries upsert.
     if (timedOut) {
-      return NextResponse.json({ ok: true, deferred: true });
+      return NextResponse.json(
+        { error: "profile_timeout", retryable: true },
+        { status: 503, headers: { "Retry-After": "3" } },
+      );
     }
     return NextResponse.json({ error: "profile" }, { status: 500 });
   }

@@ -1,4 +1,4 @@
-import type { Config, Context } from "@netlify/functions";
+import type { Context } from "@netlify/functions";
 
 /**
  * Daily outbound backup: enqueue finder → analyzer → writer → send.
@@ -28,7 +28,3 @@ export default async function handler(_req: Request, _context: Context) {
     headers: { "content-type": "application/json" },
   });
 }
-
-export const config: Config = {
-  schedule: "0 10 * * *",
-};

@@ -5,10 +5,16 @@ import { requireApiUser } from "@/lib/auth/api-session";
 import { planMeetsMinimum } from "@/lib/billing/plan-access";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
-import { ensureMonthlyCredits, spendCredits } from "@/lib/credits/balance";
-import { catalogItem, SERVICE_CATALOG } from "@/lib/credits/catalog";
+import { ensureMonthlyCredits } from "@/lib/credits/balance";
+import {
+  catalogItem,
+  includedWithPlan,
+  monthlyIncludedLimit,
+  SERVICE_CATALOG,
+} from "@/lib/credits/catalog";
 import { prisma } from "@/lib/db/prisma";
 import { notifyOpsAboutServiceRequest } from "@/lib/ops/notify-service-request";
+import { isPreviewRestaurantId } from "@/lib/preview/ui-preview";
 
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
@@ -30,6 +36,11 @@ export async function GET(req: Request) {
   const restaurant = await getRestaurantForMember(session.userId, restaurantId);
   if (!restaurant) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isPreviewRestaurantId(restaurantId)) {
+    const { creditBalance } = await ensureMonthlyCredits(restaurantId);
+    return NextResponse.json({ creditBalance, catalog: SERVICE_CATALOG, requests: [] });
   }
 
   const { creditBalance } = await ensureMonthlyCredits(restaurantId);
@@ -82,13 +93,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unknown service type" }, { status: 422 });
   }
 
-  await ensureMonthlyCredits(parsed.data.restaurantId);
+  // Preview mode has no database — acknowledge the request so the flow can be reviewed.
+  if (isPreviewRestaurantId(parsed.data.restaurantId)) {
+    return NextResponse.json(
+      {
+        ok: true,
+        preview: true,
+        request: {
+          id: `preview-request-${parsed.data.type}`,
+          type: parsed.data.type,
+          status: "REQUESTED",
+          title: item.title,
+          notes: parsed.data.notes?.trim() || "",
+          creditCost: item.creditCost,
+          createdAt: new Date().toISOString(),
+        },
+        notified: false,
+        creditBalance: 40 - item.creditCost,
+        message: "Requested — in preview mode nothing is sent to the team.",
+      },
+      { status: 201 },
+    );
+  }
+
+  const { creditBalance } = await ensureMonthlyCredits(parsed.data.restaurantId);
 
   const openSame = await prisma.serviceRequest.findFirst({
     where: {
       restaurantId: parsed.data.restaurantId,
       type: parsed.data.type,
-      status: { in: ["REQUESTED", "IN_PROGRESS"] },
+      status: { in: ["REQUESTED", "IN_PROGRESS", "DRAFTS_READY"] },
     },
     select: { id: true, status: true },
   });
@@ -103,6 +137,51 @@ export async function POST(req: Request) {
     );
   }
 
+  const included = includedWithPlan(parsed.data.type, restaurant.subscriptionPlan);
+  const includedLimit = monthlyIncludedLimit(parsed.data.type, restaurant.subscriptionPlan);
+  if (included && includedLimit != null) {
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+    const usedThisMonth = await prisma.serviceRequest.count({
+      where: {
+        restaurantId: parsed.data.restaurantId,
+        type: parsed.data.type,
+        createdAt: { gte: monthStart },
+        status: { not: "CANCELLED" },
+      },
+    });
+    if (usedThisMonth >= includedLimit) {
+      return NextResponse.json(
+        {
+          error: `Your included monthly limit for ${item.title.toLowerCase()} is ${includedLimit}.`,
+          includedLimit,
+        },
+        { status: 429 },
+      );
+    }
+  }
+  const reservedTotal = included
+    ? 0
+    : (
+        await prisma.serviceRequest.aggregate({
+        where: {
+          restaurantId: parsed.data.restaurantId,
+          chargedAt: null,
+          status: { in: ["REQUESTED", "IN_PROGRESS", "DRAFTS_READY"] },
+        },
+        _sum: { reservedCredits: true },
+        })
+      )._sum.reservedCredits ?? 0;
+  const reservedCredits = included ? 0 : item.creditCost;
+  const available = creditBalance - reservedTotal;
+  if (!included && available < reservedCredits) {
+    return NextResponse.json(
+      { error: "Not enough available credits", creditBalance, available, needed: reservedCredits },
+      { status: 402 },
+    );
+  }
+
   const created = await prisma.serviceRequest.create({
     data: {
       restaurantId: parsed.data.restaurantId,
@@ -110,24 +189,10 @@ export async function POST(req: Request) {
       title: item.title,
       notes: parsed.data.notes?.trim() || "",
       creditCost: item.creditCost,
+      reservedCredits,
       status: "REQUESTED",
     },
   });
-
-  const spent = await spendCredits({
-    restaurantId: parsed.data.restaurantId,
-    amount: item.creditCost,
-    note: `Request: ${item.title}`,
-    requestId: created.id,
-  });
-
-  if (!spent.ok) {
-    await prisma.serviceRequest.delete({ where: { id: created.id } });
-    return NextResponse.json(
-      { error: spent.error, creditBalance: spent.balance, needed: item.creditCost },
-      { status: 402 },
-    );
-  }
 
   const owner = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -144,8 +209,9 @@ export async function POST(req: Request) {
       ok: true,
       request: created,
       notified: notified.ok,
-      creditBalance: spent.balanceAfter,
-      message: "Requested. Our team will pick this up — you'll see status update when work starts or ships.",
+      creditBalance,
+      reservedCredits,
+      message: "Requested. We will create three drafts. Credits are only charged after you approve one.",
     },
     { status: 201 },
   );

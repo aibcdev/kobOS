@@ -9,6 +9,21 @@ import {
 import { ensureSalesWorkspaceMembership } from "@/lib/outbound/ensure-sales-membership";
 
 export const runtime = "nodejs";
+const PROFILE_TIMEOUT_MS = 12_000;
+
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("profile_timeout")), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 function loginErrorRedirect(
   origin: string,
@@ -86,16 +101,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Session cookies are already on `response`. Do not await Prisma here —
-  // cold DB / outbound membership used to freeze the magic-link landing page.
-  // Dashboard layout + /api/auth/complete still call ensureAppUser.
   const user = verify.data.user;
-  void Promise.all([
-    ensureAppUser(user),
-    ensureSalesWorkspaceMembership(user.id, user.email),
-  ]).catch((err) => {
+  try {
+    await withTimeout(
+      Promise.all([
+        ensureAppUser(user),
+        ensureSalesWorkspaceMembership(user.id, user.email),
+      ]),
+      PROFILE_TIMEOUT_MS,
+    );
+  } catch (err) {
     console.error("[auth/confirm] profile setup", err);
-  });
+    return loginErrorRedirect(
+      origin,
+      err instanceof Error && err.message === "profile_timeout"
+        ? "profile_timeout"
+        : "profile_setup",
+    );
+  }
 
   return response;
 }

@@ -9,7 +9,7 @@ import type { ImageCandidateUrl } from "@/lib/audit/analyze-url";
 import type { AuditUserSocialInput } from "@/lib/audit/evidence-pack";
 import { upsertSiteScanForAudit } from "@/lib/audit/persist-site-scan";
 import { finalizePendingAuditScan, failPendingAuditScan } from "@/lib/audit/finalize-pending-scan";
-import { parseAuditPayload, type AuditResultPayload } from "@/lib/audit/types";
+import { parseAuditPayload } from "@/lib/audit/types";
 import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import { isStagehandAuditEnabled } from "@/lib/browserbase/stagehand-config";
 import type { StagehandRenderedPage } from "@/lib/browserbase/stagehand-scan";
@@ -23,8 +23,7 @@ import { isUkColdOutboundMode } from "@/lib/outbound/icp-config";
 import { runLeadFinder } from "@/lib/lead-engine/run-lead-finder";
 import { runOpportunityAnalyzer } from "@/lib/lead-engine/run-opportunity-analyzer";
 import { runOutreachWriter } from "@/lib/lead-engine/run-outreach-writer";
-import { sendOutboundEmailViaResend } from "@/lib/outbound/send-resend-outbound-email";
-import { promoteReadyOutboundBatch } from "@/lib/outbound/promote-ready-batch";
+import { sendApprovedOutboundLead } from "@/lib/outbound/send-approved-lead";
 import { countOutboundSentUtcDay } from "@/lib/outbound/count-sent-today";
 import {
   OUTBOUND_DAILY_FLOOR,
@@ -576,7 +575,7 @@ export const outboundDraftDaily = inngest.createFunction(
 
 /** Sends remaining daily quota via Resend (target 100/UTC day, hard cap 100).
  * Waves at 10:00 / 14:00 / 18:00 UTC so morning writer audits are ready.
- * Auto-promotes PENDING leads that already have ready audits + message bodies.
+ * Sends only leads explicitly approved by a human.
  */
 export const outboundSendApprovedDaily = inngest.createFunction(
   {
@@ -614,28 +613,10 @@ export const outboundSendApprovedDaily = inngest.createFunction(
 
     const batch = Math.min(getOutboundSendBatch(), getOutboundPerRunCap(), remaining);
     const delaySec = getOutboundSendDelaySec();
-    const autoPromote = process.env.OUTBOUND_AUTO_PROMOTE?.trim() !== "0";
-
     const prepared = await step.run("prepare-fresh-leads", async () => {
       const analyzed = await runOpportunityAnalyzer(workspaceId, { max: batch * 2 });
       const written = await runOutreachWriter(workspaceId, { max: batch * 2 });
       return { analyzed, written };
-    });
-
-    const promoted = await step.run("promote-ready-pending", async () => {
-      if (!autoPromote) return { promoted: 0, ids: [] as string[] };
-      // Top up APPROVED pool toward this wave's remaining quota
-      const already = await prisma.outboundLead.count({
-        where: {
-          workspaceRestaurantId: workspaceId,
-          status: OutboundLeadStatus.APPROVED,
-          contactEmail: { not: null },
-          messageBody: { not: null },
-        },
-      });
-      const need = Math.max(0, batch - already);
-      if (need === 0) return { promoted: 0, ids: [] as string[] };
-      return promoteReadyOutboundBatch({ workspaceRestaurantId: workspaceId, limit: need });
     });
 
     const leads = await step.run("list-approved-with-email", async () => {
@@ -657,7 +638,6 @@ export const outboundSendApprovedDaily = inngest.createFunction(
     if (!leads.length) {
       return {
         sent: 0 as const,
-        promoted: promoted.promoted,
         prepared,
         message: "no_eligible_leads" as const,
       };
@@ -666,33 +646,9 @@ export const outboundSendApprovedDaily = inngest.createFunction(
     let sent = 0;
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i]!;
-      await step.run(`resend-${lead.id}`, async () => {
-        const to = lead.contactEmail!.trim();
-        const subject = lead.messageSubject?.trim() || "A note from KOB";
-        const result = await sendOutboundEmailViaResend(key, {
-          to,
-          subject,
-          body: lead.messageBody || "",
-          tags: lead.emailVariant
-            ? [
-                { name: "variant", value: lead.emailVariant },
-                { name: "outbound", value: "1" },
-              ]
-            : [{ name: "outbound", value: "1" }],
-        });
-        if (!result.ok) {
-          throw new Error(result.error);
-        }
-        await prisma.outboundLead.update({
-          where: { id: lead.id },
-          data: {
-            status: OutboundLeadStatus.SENT,
-            insightSummary: `SENT daily-cron ${new Date().toISOString()} resend:${result.id ?? "ok"}`.slice(
-              0,
-              500,
-            ),
-          },
-        });
+      const outcome = await step.run(`resend-${lead.id}`, async () => {
+        const result = await sendApprovedOutboundLead(lead.id, key);
+        if (!result.sent) return result;
         try {
           const { ensureOutboundSequenceForLead } = await import("@/lib/outbound/run-outbound-sequence");
           await ensureOutboundSequenceForLead(lead.id);
@@ -701,13 +657,13 @@ export const outboundSendApprovedDaily = inngest.createFunction(
         }
         return { ok: true as const };
       });
-      sent++;
+      if ("ok" in outcome && outcome.ok) sent++;
       if (i < leads.length - 1) {
         await step.sleep(`outbound-delay-${i}`, `${delaySec}s`);
       }
     }
 
-    return { sent, processed: leads.length, promoted: promoted.promoted, prepared, sentToday, remainingAfter: remaining - sent };
+    return { sent, processed: leads.length, prepared, sentToday, remainingAfter: remaining - sent };
   },
 );
 

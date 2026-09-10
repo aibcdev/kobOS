@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { inngest } from "@/inngest/client";
+import { markOpsHeartbeat } from "@/lib/ops/heartbeat";
 
 export const runtime = "nodejs";
 
@@ -15,5 +16,6 @@ export async function GET(req: Request) {
     name: "outbound/volume-watch.requested",
     data: { source: "http-cron", ...(workspaceId ? { restaurantId: workspaceId } : {}) },
   });
+  await markOpsHeartbeat("outbound-volume-watch", { workspaceConfigured: Boolean(workspaceId) });
   return NextResponse.json({ ok: true, enqueued: ["outbound/volume-watch.requested"] });
 }

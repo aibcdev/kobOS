@@ -14,7 +14,7 @@ import {
   pickUniqueFreshLeads,
 } from "../lib/outbound/outbound-send-dedupe";
 import { promoteReadyOutboundBatch } from "../lib/outbound/promote-ready-batch";
-import { sendOutboundEmailViaResend } from "../lib/outbound/send-resend-outbound-email";
+import { sendApprovedOutboundLead } from "../lib/outbound/send-approved-lead";
 import {
   getOutboundPerRunCap,
   getOutboundSendBatch,
@@ -103,39 +103,18 @@ async function main() {
   for (let i = 0; i < eligible.length; i++) {
     const lead = eligible[i]!;
     const to = normalizeOutboundEmail(lead.contactEmail) || lead.contactEmail!.trim();
-    const subject = lead.messageSubject?.trim() || "A note from KOB";
-    const result = await sendOutboundEmailViaResend(key, {
-      to,
-      subject,
-      body: lead.messageBody || "",
-      tags: lead.emailVariant
-        ? [
-            { name: "variant", value: lead.emailVariant },
-            { name: "outbound", value: "1" },
-          ]
-        : [{ name: "outbound", value: "1" }],
-    });
-    if (!result.ok) {
-      results.push({ id: lead.id, email: to, ok: false, error: result.error });
-      console.error(`FAIL ${to}: ${result.error}`);
+    const result = await sendApprovedOutboundLead(lead.id, key);
+    if (!result.sent) {
+      results.push({ id: lead.id, email: to, ok: false, error: result.reason });
+      console.error(`SKIP ${to}: ${result.reason}`);
     } else {
-      await prisma.outboundLead.update({
-        where: { id: lead.id },
-        data: {
-          status: OutboundLeadStatus.SENT,
-          insightSummary: `SENT send-now ${new Date().toISOString()} resend:${result.id ?? "ok"}`.slice(
-            0,
-            500,
-          ),
-        },
-      });
       try {
         const { ensureOutboundSequenceForLead } = await import("../lib/outbound/run-outbound-sequence");
         await ensureOutboundSequenceForLead(lead.id);
       } catch (e) {
         console.warn("sequence create failed", lead.id, e);
       }
-      results.push({ id: lead.id, email: to, ok: true, resendId: result.id });
+      results.push({ id: lead.id, email: to, ok: true, resendId: result.providerMessageId });
       console.log(`[${i + 1}/${eligible.length}] sent ${to}`);
     }
     if (i < eligible.length - 1) await sleep(delaySec * 1000);

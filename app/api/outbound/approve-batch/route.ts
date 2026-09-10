@@ -6,6 +6,8 @@ import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { jsonUpgradeRequired } from "@/lib/billing/upgrade-response";
 import { canUseOutboundWorkspace } from "@/lib/outbound/sales-access";
 import { prisma } from "@/lib/db/prisma";
+import { parseAuditPayload } from "@/lib/audit/types";
+import { isOutboundSuppressed } from "@/lib/outbound/suppression";
 
 const bodySchema = z.object({
   restaurantId: z.string().min(12),
@@ -74,13 +76,38 @@ export async function POST(req: Request) {
 
   for (const row of rows) {
     const email = row.contactEmail?.trim();
-    if (!email) {
+    if (
+      !email ||
+      !row.messageBody?.includes("/audit/") ||
+      !row.visibilityAuditId ||
+      (await isOutboundSuppressed(email))
+    ) {
+      skipped++;
+      continue;
+    }
+    const [audit, prospect] = await Promise.all([
+      prisma.visibilityAudit.findUnique({
+        where: { id: row.visibilityAuditId },
+        select: { resultPayload: true },
+      }),
+      prisma.leadProspect.findUnique({
+        where: { outboundLeadId: row.id },
+        select: { kobOpportunityScore: true, locationCount: true, disqualifiers: true },
+      }),
+    ]);
+    if (
+      parseAuditPayload(audit?.resultPayload)?.scanStatus !== "ready" ||
+      (prospect &&
+        ((prospect.kobOpportunityScore ?? 0) < 70 ||
+          prospect.locationCount !== 1 ||
+          prospect.disqualifiers.length > 0))
+    ) {
       skipped++;
       continue;
     }
     await prisma.outboundLead.update({
       where: { id: row.id },
-      data: { status: OutboundLeadStatus.APPROVED, contactEmail: email },
+      data: { status: OutboundLeadStatus.APPROVED, contactEmail: email, approvedAt: new Date() },
     });
     approved++;
   }

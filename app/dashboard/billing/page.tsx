@@ -2,23 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BillingActions } from "@/components/dashboard/billing/BillingActions";
 import { DashboardEmptyRestaurant } from "@/components/dashboard/DashboardEmptyRestaurant";
-import { PreviewPlaceholder } from "@/components/dashboard/PreviewPlaceholder";
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { planLabel } from "@/lib/billing/plan-access";
 import { getStripe } from "@/lib/billing/stripe-server";
 import { getActiveRestaurantContext } from "@/lib/dashboard/active-restaurant";
 import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
-import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
-
 export const metadata: Metadata = {
   title: "Billing · KOB",
   description: "Subscriptions and invoices.",
 };
 
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ r?: string; checkout?: string }> }) {
-  if (isUiPreviewEnabled()) {
-    return <PreviewPlaceholder title="Billing" description="Stripe checkout and invoices need a live backend and keys." />;
-  }
   const userId = (await getDashboardPageUser()).id;
   const sp = await searchParams;
   const { restaurantId, restaurant } = await getActiveRestaurantContext(userId, sp.r);
@@ -72,10 +66,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             <strong className="text-[var(--color-ink)]">Free</strong> — daily Growth briefing, up to 3 SEO keywords, read-only dashboards.
           </li>
           <li>
-            <strong className="text-[var(--color-ink)]">Starter</strong> — AI food &amp; brand studio, website strategist, smart review replies, SEO refresh tools.
+            <strong className="text-[var(--color-ink)]">Starter</strong> — 20 monthly credits for human-made requests. Text 3, images 10, video 20.
           </li>
           <li>
-            <strong className="text-[var(--color-ink)]">Pro</strong> — everything in Starter plus outbound acquisition drafts with human approval queue.
+            <strong className="text-[var(--color-ink)]">Pro</strong> — social requests use no credits, with monthly fair-use limits: 4 text, 2 image, 1 video.
           </li>
         </ul>
       </div>

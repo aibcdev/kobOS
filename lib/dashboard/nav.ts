@@ -1,8 +1,4 @@
-/**
- * Owner-facing dashboard nav — six primary destinations.
- * Settings / Billing live in the account menu, not the sidebar.
- * Deep routes stay reachable via Marketing / Reports hubs (and direct URLs).
- */
+/** Owner-facing navigation: ask as little of the restaurant as possible. */
 
 export type DashboardNavIcon =
   | "home"
@@ -56,30 +52,17 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
     label: null,
     items: [
       { id: "today", href: "/dashboard", label: "Today", icon: "home" },
-      { id: "customers", href: "/dashboard/customers", label: "Customers", icon: "customers" },
-      { id: "website", href: "/dashboard/website", label: "Website", icon: "website" },
-      { id: "reviews", href: "/dashboard/reviews", label: "Reviews", icon: "reviews" },
       {
-        id: "marketing",
-        href: "/dashboard/marketing",
-        label: "Marketing",
-        icon: "demand",
-        activePrefixes: [
-          "/dashboard/demand-engine",
-          "/dashboard/listings",
-          "/dashboard/seo",
-          "/dashboard/content",
-          "/dashboard/creative",
-          "/dashboard/ordering",
-          "/dashboard/upsells",
-        ],
+        id: "content",
+        href: "/dashboard/content",
+        label: "Social Media Content",
+        icon: "content",
       },
       {
-        id: "reports",
-        href: "/dashboard/analytics",
-        label: "Reports",
-        icon: "analytics",
-        activePrefixes: ["/dashboard/brand", "/dashboard/menu", "/dashboard/requests"],
+        id: "requests",
+        href: "/dashboard/requests",
+        label: "Your Requests",
+        icon: "requests",
       },
     ],
   },

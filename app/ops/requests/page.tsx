@@ -16,7 +16,14 @@ export default async function OpsRequestsPage() {
   const [open, delivered] = await Promise.all([
     prisma.serviceRequest.findMany({
       where: {
-        status: { in: [ServiceRequestStatus.REQUESTED, ServiceRequestStatus.IN_PROGRESS] },
+        status: {
+          in: [
+            ServiceRequestStatus.REQUESTED,
+            ServiceRequestStatus.IN_PROGRESS,
+            ServiceRequestStatus.DRAFTS_READY,
+            ServiceRequestStatus.APPROVED,
+          ],
+        },
       },
       orderBy: { createdAt: "asc" },
       take: 100,

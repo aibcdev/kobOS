@@ -1,4 +1,4 @@
-import type { Config, Context } from "@netlify/functions";
+import type { Context } from "@netlify/functions";
 
 export default async function handler(_req: Request, _context: Context) {
   const base =
@@ -24,7 +24,3 @@ export default async function handler(_req: Request, _context: Context) {
     headers: { "content-type": "application/json" },
   });
 }
-
-export const config: Config = {
-  schedule: "0 19 * * *",
-};

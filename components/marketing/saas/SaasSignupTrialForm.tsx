@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { AUTH_NEXT_COOKIE, AUTH_NEXT_MAX_AGE_SEC } from "@/lib/auth/auth-next-cookie";
 import { withTimeout } from "@/lib/auth/with-timeout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { createMagicLinkAuthClient } from "@/lib/supabase/magic-link-auth";
+import { HeardFromFields } from "@/components/marketing/HeardFromFields";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { storeHeardFrom, type HeardFromPayload } from "@/lib/marketing/heard-from";
 
 import { SaasIcon } from "./SaasIcon";
 
@@ -47,11 +49,12 @@ export function SaasSignupTrialForm() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => params.get("email")?.trim() ?? "");
   const [phone, setPhone] = useState("");
-  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantName, setRestaurantName] = useState(() => params.get("name")?.trim() ?? "");
   const [locations, setLocations] = useState("");
   const [role, setRole] = useState("");
+  const [heardFrom, setHeardFrom] = useState<HeardFromPayload>({});
   const [otpCode, setOtpCode] = useState("");
   const [status, setStatus] = useState<"idle" | "sent" | "verifying" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -60,13 +63,6 @@ export function SaasSignupTrialForm() {
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
   );
-
-  useEffect(() => {
-    const emailFromQuery = params.get("email")?.trim();
-    if (emailFromQuery) setEmail(emailFromQuery);
-    const nameFromQuery = params.get("name")?.trim();
-    if (nameFromQuery) setRestaurantName(nameFromQuery);
-  }, [params]);
 
   function persistIntent() {
     if (typeof window === "undefined") return;
@@ -81,6 +77,7 @@ export function SaasSignupTrialForm() {
           restaurantName: restaurantName.trim(),
           locations,
           role,
+          heardFrom,
           audit: auditFromQuery,
         }),
       );
@@ -98,6 +95,14 @@ export function SaasSignupTrialForm() {
       return;
     }
     persistIntent();
+    storeHeardFrom(heardFrom);
+    if (auditFromQuery && (heardFrom.heardFrom || heardFrom.aiPrompt)) {
+      void fetch("/api/marketing/heard-from", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auditId: auditFromQuery, ...heardFrom }),
+      }).catch(() => {});
+    }
     if (typeof window !== "undefined") {
       document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(nextPath)};path=/;max-age=${AUTH_NEXT_MAX_AGE_SEC};SameSite=Lax`;
     }
@@ -371,6 +376,15 @@ export function SaasSignupTrialForm() {
             </select>
           </label>
 
+          <HeardFromFields
+            value={heardFrom}
+            onChange={(next) => {
+              setHeardFrom(next);
+              storeHeardFrom(next);
+            }}
+            selectClass={inputClass}
+          />
+
           {status === "error" ? (
             <p className="text-sm text-red-600">{errorMessage ?? "Something went wrong. Try again."}</p>
           ) : null}
@@ -384,7 +398,7 @@ export function SaasSignupTrialForm() {
 
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-[#2c2c2c]/50">
             <SaasIcon icon="solar:lock-keyhole-linear" className="text-sm" />
-            No card to sign up · Card only when you request work (7-day trial)
+            No card to create your account · Card required when you start the 7-day trial
           </p>
         </form>
       )}

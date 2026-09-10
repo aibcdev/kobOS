@@ -1,5 +1,7 @@
 /** Lazy sharp load — never crash the audit if the binary is missing/wrong OS. */
-export type SharpLike = typeof import("sharp").default;
+import type sharp from "sharp";
+
+export type SharpLike = typeof sharp;
 
 let sharpPromise: Promise<SharpLike | null> | null = null;
 

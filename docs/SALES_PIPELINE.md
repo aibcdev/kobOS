@@ -5,6 +5,18 @@ Two tracks in `/dashboard/outbound`:
 1. **UK cold** — proactive outreach to qualified UK independents (main growth motion).
 2. **Audit follow-up** — people who unlocked a free visibility scan.
 
+## Locked sending contract
+
+- Target: 100 submitted emails per day, with at least 100 approved and ready before sending.
+- UK and Ireland first; other English-speaking countries may refill the queue.
+- Independent, single-site restaurants only. No chains, hotels, ghost kitchens, or multi-site groups.
+- Apollo supplies quality leads; Hunter verifies or finds business-domain email addresses.
+- A human-approved lead list is mandatory.
+- Every send requires a completed audit, score 70+, matching website, valid email, no duplicate, and no suppression.
+- Grok sends through the connected KOB Gmail account after approval, then imports Gmail receipts into KOB.
+- Bounce, complaint, and unsubscribe suppressions are permanent across workspaces.
+- Automated health checks alert when the ready queue or daily send count falls below 100.
+
 ---
 
 ## UK cold flow (set `OUTBOUND_MODE=uk_cold`)

@@ -10,7 +10,7 @@ import { isPrismaDbUnreachableError } from "@/lib/db/prisma-errors";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ preview?: string; email?: string }>;
+  searchParams: Promise<{ preview?: string; email?: string; unlock?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -77,7 +77,11 @@ export default async function AuditResultPage({ params, searchParams }: Props) {
   }
 
   const user = await getOptionalAppUser();
-  const unlocked = Boolean(user) || Boolean(audit.leadCapturedAt);
+  // Local review: ?unlock=1 skips email/soft-paywall (dev / UI preview only).
+  const unlockBypass =
+    sp.unlock === "1" &&
+    (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_UI_PREVIEW === "1");
+  const unlocked = unlockBypass || Boolean(user) || Boolean(audit.leadCapturedAt);
   const viewPayload = unlocked ? payload : stripAuditPayloadForPublic(payload);
 
   return (

@@ -11,6 +11,8 @@ export type OutboundEmailPayload = {
   tags?: Array<{ name: string; value: string }>;
   /** ISO 8601 or natural language (e.g. "in 1 hour") — Resend schedules delivery. */
   scheduledAt?: string;
+  /** Stable per lead; Resend will return the original result on retries. */
+  idempotencyKey?: string;
 };
 
 function replyToAddress(): string | undefined {
@@ -63,17 +65,20 @@ export async function sendOutboundEmailViaResend(
     headers["List-Unsubscribe"] = `<mailto:${replyTo}?subject=unsubscribe>`;
   }
 
-  const { data, error } = await resend.emails.send({
-    from,
-    to: [payload.to.trim()],
-    subject: payload.subject.trim() || "A note from KOB",
-    text,
-    html: htmlBody(text),
-    ...(replyTo ? { replyTo } : {}),
-    ...(Object.keys(headers).length ? { headers } : {}),
-    ...(payload.tags?.length ? { tags: payload.tags } : {}),
-    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
-  });
+  const { data, error } = await resend.emails.send(
+    {
+      from,
+      to: [payload.to.trim()],
+      subject: payload.subject.trim() || "A note from KOB",
+      text,
+      html: htmlBody(text),
+      ...(replyTo ? { replyTo } : {}),
+      ...(Object.keys(headers).length ? { headers } : {}),
+      ...(payload.tags?.length ? { tags: payload.tags } : {}),
+      ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
+    },
+    payload.idempotencyKey ? { idempotencyKey: payload.idempotencyKey } : undefined,
+  );
 
   if (error) return { ok: false, error: error.message };
   return { ok: true, id: data?.id };

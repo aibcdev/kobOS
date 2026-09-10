@@ -81,7 +81,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             by: ["restaurantId"],
             where: {
               restaurantId: { in: restaurantIds },
-              status: { in: ["REQUESTED", "IN_PROGRESS"] },
+              status: { in: ["REQUESTED", "IN_PROGRESS", "DRAFTS_READY", "APPROVED"] },
             },
             _count: { id: true },
           }),

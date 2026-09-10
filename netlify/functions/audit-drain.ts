@@ -1,4 +1,4 @@
-import type { Config, Context } from "@netlify/functions";
+import type { Context } from "@netlify/functions";
 
 /**
  * Scheduled backup: ask the Next app to finish any stuck free audits.
@@ -28,7 +28,3 @@ export default async function handler(_req: Request, _context: Context) {
     headers: { "content-type": "application/json" },
   });
 }
-
-export const config: Config = {
-  schedule: "*/2 * * * *",
-};

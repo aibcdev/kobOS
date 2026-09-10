@@ -4,9 +4,9 @@ import type { ServiceRequestType, SubscriptionPlan } from "@prisma/client";
 export function monthlyCreditGrant(plan: SubscriptionPlan): number {
   switch (plan) {
     case "STARTER":
-      return Number(process.env.CREDITS_STARTER_MONTHLY?.trim() || "50") || 50;
+      return Number(process.env.CREDITS_STARTER_MONTHLY?.trim() || "20") || 20;
     case "PRO":
-      return Number(process.env.CREDITS_PRO_MONTHLY?.trim() || "120") || 120;
+      return Number(process.env.CREDITS_PRO_MONTHLY?.trim() || "40") || 40;
     default:
       return 0;
   }
@@ -26,6 +26,27 @@ export type ServiceCatalogItem = {
  * AUDIT_FIX is created from Today wins (0 credits), not listed here.
  */
 export const SERVICE_CATALOG: ServiceCatalogItem[] = [
+  {
+    type: "SOCIAL_TEXT",
+    title: "Social text",
+    description: "Three human-written caption or post options, delivered for your approval.",
+    creditCost: 3,
+    href: "/dashboard/content",
+  },
+  {
+    type: "SOCIAL_IMAGES",
+    title: "Social images",
+    description: "Three human-curated image concepts, delivered for your approval.",
+    creditCost: 10,
+    href: "/dashboard/content",
+  },
+  {
+    type: "SOCIAL_VIDEO",
+    title: "Social video",
+    description: "Three human-produced video directions or drafts, delivered for your approval.",
+    creditCost: 20,
+    href: "/dashboard/content",
+  },
   {
     type: "WEBSITE",
     title: "New website",
@@ -120,4 +141,20 @@ export function catalogTitle(type: ServiceRequestType): string {
   if (type === "AUDIT_FIX") return "Audit fix";
   if (type === "OTHER") return "Custom request";
   return catalogItem(type)?.title ?? type.replace(/_/g, " ");
+}
+
+export function includedWithPlan(type: ServiceRequestType, plan: SubscriptionPlan): boolean {
+  return (
+    plan === "PRO" &&
+    (type === "SOCIAL_TEXT" || type === "SOCIAL_IMAGES" || type === "SOCIAL_VIDEO")
+  );
+}
+
+/** Fair-use limits keep the £99 PRO plan commercially sustainable. */
+export function monthlyIncludedLimit(type: ServiceRequestType, plan: SubscriptionPlan): number | null {
+  if (plan !== "PRO") return null;
+  if (type === "SOCIAL_TEXT") return 4;
+  if (type === "SOCIAL_IMAGES") return 2;
+  if (type === "SOCIAL_VIDEO") return 1;
+  return null;
 }

@@ -26,6 +26,10 @@ function statusLabel(status: string) {
       return "In progress";
     case "DELIVERED":
       return "Delivered";
+    case "DRAFTS_READY":
+      return "3 drafts ready";
+    case "APPROVED":
+      return "Approved";
     default:
       return status.replace(/_/g, " ");
   }
@@ -35,7 +39,6 @@ export function RequestServiceButton({
   restaurantId,
   type,
   title,
-  creditCost,
   isPaid,
   billingHref,
   openStatus,
@@ -105,7 +108,13 @@ export function RequestServiceButton({
     }
   }
 
-  if (status === "REQUESTED" || status === "IN_PROGRESS" || status === "DELIVERED") {
+  if (
+    status === "REQUESTED" ||
+    status === "IN_PROGRESS" ||
+    status === "DRAFTS_READY" ||
+    status === "APPROVED" ||
+    status === "DELIVERED"
+  ) {
     return (
       <div className={className}>
         <span className="inline-flex min-h-12 items-center rounded-[var(--radius-md)] bg-[var(--color-muted-faint)] px-6 py-3 text-sm font-semibold text-[var(--color-ink)]">
@@ -128,12 +137,12 @@ export function RequestServiceButton({
           ? "Submitting…"
           : !isPaid
             ? "Start 7-day free trial (card)"
-            : label ?? `Request · ${creditCost} credits`}
+            : label ?? "Request"}
       </button>
       {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
       {!error && title ? (
         <p className="mt-2 text-xs text-[var(--color-muted)]">
-          {title} — status becomes Requested; we fulfill manually.
+          {title} — no charge now; approve one of three drafts before credits are taken.
         </p>
       ) : null}
     </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { inngest } from "@/inngest/client";
+import { markOpsHeartbeat } from "@/lib/ops/heartbeat";
 
 export const runtime = "nodejs";
 
@@ -17,8 +18,6 @@ export async function GET(req: Request) {
     { name: "lead-engine/finder.requested", data: { ...base } },
     { name: "lead-engine/analyzer.requested", data: { ...base } },
     { name: "lead-engine/outreach-writer.requested", data: { ...base } },
-    { name: "outbound/send.requested", data: { ...base } },
-    { name: "outbound/sequence.requested", data: { ...base } },
     { name: "outbound/audit-import.requested", data: { ...base } },
   ];
 
@@ -29,5 +28,6 @@ export async function GET(req: Request) {
   }
 
   await inngest.send(events);
+  await markOpsHeartbeat("outbound-cron", { enqueued: events.map((event) => event.name) });
   return NextResponse.json({ ok: true, enqueued: events.map((e) => e.name) });
 }

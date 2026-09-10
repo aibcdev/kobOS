@@ -46,7 +46,8 @@ export async function enrichViaApollo(websiteUrl: string | null): Promise<string
   const people = [...(json.people ?? []), ...(json.contacts ?? [])];
   const emails = people
     .map((p) => p.email?.trim().toLowerCase())
-    .filter((e): e is string => Boolean(e) && !e.includes("email_not_unlocked") && e.includes("@"));
+    .filter((e): e is string => typeof e === "string")
+    .filter((e) => !e.includes("email_not_unlocked") && e.includes("@"));
 
   for (const email of emails) {
     if (isValidProspectEmail(email, websiteUrl).ok) return email;

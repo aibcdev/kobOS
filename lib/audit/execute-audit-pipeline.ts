@@ -116,7 +116,14 @@ function failedPayload(prev: AuditResultPayload | null, message: string): AuditR
 
 /** Runs full audit analysis and updates an existing pending VisibilityAudit row. */
 export async function executeAuditPipeline(auditId: string, input: AuditPipelineInput): Promise<void> {
-  const existing = await prisma.visibilityAudit.findUnique({ where: { id: auditId } });
+  const existing = await prisma.visibilityAudit.update({
+    where: { id: auditId },
+    data: {
+      processingAttempts: { increment: 1 },
+      processingStartedAt: new Date(),
+      processingLastError: null,
+    },
+  }).catch(() => null);
   if (!existing) {
     throw new Error(`executeAuditPipeline: audit ${auditId} not found`);
   }
@@ -179,6 +186,8 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
         mobileScore: scoredRow.mobileScore,
         conversionScore: scoredRow.conversionScore,
         resultPayload: payloadWithStage as Prisma.InputJsonValue,
+        processingCompletedAt: new Date(),
+        processingLastError: null,
       },
     });
 
@@ -216,6 +225,7 @@ export async function executeAuditPipeline(auditId: string, input: AuditPipeline
         designScore: failed.scores.design,
         mobileScore: failed.scores.mobile,
         conversionScore: failed.scores.conversion,
+        processingLastError: msg.slice(0, 1000),
       },
     });
     throw e;

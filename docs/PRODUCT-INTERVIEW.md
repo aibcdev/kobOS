@@ -5,6 +5,18 @@
 **Date:** 2026-09-03  
 **Status:** Grill defaults **locked** 2026-09-03 (user: go ahead).
 
+## Service-first update — 2026-09-10
+
+KOB is an outcome service, not a complex dashboard. The restaurant should do almost nothing.
+
+- Primary customer flow: **Today**, **Social Media Content**, **Your Requests**.
+- Text, image, and video work is manually curated by KOB. Never promise random AI output.
+- Every social request receives exactly three private `trykob.com` previews.
+- The customer approves one draft. Credits are charged only after approval.
+- Starter: 20 monthly credits. Text costs 3, images 10, video 20.
+- Pro social work uses no credits, with fair-use limits of 4 text, 2 image, and 1 video request per month.
+- These limits reserve no more than roughly half of plan revenue for manual fulfilment.
+
 ---
 
 ## What I'm building
