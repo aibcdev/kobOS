@@ -38,7 +38,7 @@ async function scoreOne(name: string, url: string) {
       opportunities: [],
       scores: { overall: 0, seo: 0, design: 0, mobile: 0, conversion: 0 },
       evidencePack: pack,
-    } as AuditResultPayload,
+    } as unknown as AuditResultPayload,
     rubric,
   );
   const rs = computeRestaurantScores(payload);
