@@ -5,12 +5,12 @@ export default defineConfig({
   timeout: 30_000,
   retries: process.env.CI ? 2 : 0,
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: "http://127.0.0.1:3102",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
-    url: "http://127.0.0.1:3100",
+    command: "npm run dev -- --hostname 127.0.0.1 --port 3102",
+    url: "http://127.0.0.1:3102",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -50,6 +50,16 @@ function runChecks(input: RubricV2Input): Check[] {
     detail: s.isHttps ? "Site is served over HTTPS." : "HTTPS not detected.",
     evidenceRef: "urlSignals.isHttps",
   });
+  if (s.fetchError) {
+    checks.push({
+      id: "fetch_unassessed",
+      pass: true,
+      weight: 1,
+      detail: "Website HTML could not be read — not scored as weak.",
+      evidenceRef: "urlSignals.fetchError",
+    });
+    return checks;
+  }
   checks.push({
     id: "seo_title",
     pass: s.titleLen >= 12 && s.titleLen <= 70,
@@ -363,7 +373,9 @@ function computeRubricV2BrandScore(
 export function computeRubricV2(input: RubricV2Input): RubricV2Result {
   const checks = runChecks(input);
   const seoChecks = checks.filter((c) => c.id.startsWith("seo_"));
-  const webChecks = checks.filter((c) => c.id.startsWith("web_") || c.id === "fetch_failed");
+  const webChecks = checks.filter(
+    (c) => c.id.startsWith("web_") || c.id === "fetch_failed" || c.id === "fetch_unassessed",
+  );
   const brandChecks = checks.filter((c) => c.id.startsWith("brand_"));
 
   const seoR = scoreFromChecks(seoChecks.length ? seoChecks : checks);

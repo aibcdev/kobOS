@@ -102,18 +102,6 @@ function ScoreRing({
   );
 }
 
-function plainEnglishStatus(score: number): {
-  label: "Strong" | "Good" | "Needs attention" | "Weak" | "Below average";
-  tone: ReturnType<typeof scoreTone>;
-} {
-  if (score >= 80) return { label: "Strong", tone: scoreTone(90) };
-  if (score >= 65) return { label: "Good", tone: scoreTone(75) };
-  if (score >= 50) return { label: "Needs attention", tone: scoreTone(55) };
-  if (score >= 40) return { label: "Below average", tone: scoreTone(45) };
-  return { label: "Weak", tone: scoreTone(30) };
-}
-
-/** Low visibility score = more upside — reframes “failing” as opportunity. */
 function growthOpportunityLabel(overall: number): "Significant" | "High" | "Moderate" | "Limited" {
   if (overall < 50) return "Significant";
   if (overall < 65) return "High";
@@ -180,61 +168,6 @@ function ownerStoryLine(pillars: OwnerPillar[]): string {
     return "The biggest gap is discovery — too many nearby diners never see you.";
   }
   return "The booking and comparison step is where nearby restaurants pull ahead.";
-}
-
-function RestaurantAxisStrip({ scores }: { scores: RestaurantScoresV1 }) {
-  const pillars = ownerPillarsFromScores(scores);
-  const opportunity = growthOpportunityLabel(scores.overall);
-  const story = ownerStoryLine(pillars);
-
-  return (
-    <div className="rounded-2xl border border-[var(--color-hairline)] bg-white p-5 shadow-sm md:p-6">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">
-            Restaurant scorecard
-          </p>
-          <p className="mt-1 font-head text-lg font-semibold">
-            Growth opportunity · {opportunity}
-          </p>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            How guests experience you online today — and how much room there is to grow.
-          </p>
-        </div>
-        <p className="text-xs text-[var(--color-muted-medium)]">Confidence: {scores.confidence}</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {pillars.map((pillar) => {
-          const status = plainEnglishStatus(pillar.score);
-          return (
-            <div key={pillar.id} className="rounded-xl bg-[var(--color-surface-cream)]/70 px-4 py-4">
-              <p className="text-sm font-semibold text-[var(--color-ink)]">{pillar.question}</p>
-              <p className={`mt-3 font-head text-2xl font-semibold ${status.tone.text}`}>{status.label}</p>
-              <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--color-muted-faint)]">
-                <div
-                  className={`h-full rounded-full ${status.tone.bar}`}
-                  style={{ width: `${pillar.score}%` }}
-                />
-              </div>
-              <p className="mt-2 text-[11px] leading-snug text-[var(--color-muted)]">{pillar.meaning}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {story ? (
-        <p className="mt-5 rounded-xl bg-[var(--color-surface-cream)]/80 px-4 py-3 text-sm font-medium leading-relaxed text-[var(--color-ink)]">
-          {story}
-        </p>
-      ) : null}
-
-      <p className="mt-4 text-xs leading-relaxed text-[var(--color-muted)]">
-        Built from public Google, website, review, and nearby restaurant signals
-        {scores.dataGaps?.length ? ` · Gaps: ${scores.dataGaps.slice(0, 2).join("; ")}` : ""}.
-      </p>
-    </div>
-  );
 }
 
 function competitorInsightCopy(
@@ -411,6 +344,13 @@ export function AuditReportDashboard({
   const displayScore = restaurantScores?.overall ?? overall;
   const displayTone = scoreTone(displayScore);
   const healthLabel = growthOpportunityLabel(displayScore);
+  const ownerPillars = restaurantScores ? ownerPillarsFromScores(restaurantScores) : null;
+  const biggestCause =
+    ownerPillars && ownerStoryLine(ownerPillars)
+      ? ownerStoryLine(ownerPillars)
+      : restaurantScores?.dataGaps?.[0]
+        ? restaurantScores.dataGaps[0]
+        : `Guests in ${audit.city} compare you with nearby restaurants before they book.`;
   const tone = scoreTone(restaurantScores?.overall ?? overall);
   const restaurantDisplay = decodeHtmlEntities(audit.restaurantName);
   const locationLabel = `${restaurantDisplay}, ${audit.city}`;
@@ -419,7 +359,9 @@ export function AuditReportDashboard({
     typeof window !== "undefined" ? `${window.location.origin}/audit/${audit.id}` : `/audit/${audit.id}`;
   const cuisineKey = inferCuisineKey(audit.restaurantName, audit.websiteUrl);
   const cuisineLabel = CUISINE_LABEL[cuisineKey] ?? "independent restaurants";
-  const competitorCount = payload.competitors.filter((c) => c.source === "places").length;
+  const competitorCount = payload.competitors.filter(
+    (c) => c.source === "places" || c.source === "index",
+  ).length;
 
   const shareReport = useCallback(async () => {
     const url = typeof window !== "undefined" ? window.location.href : reportUrl;
@@ -464,7 +406,6 @@ export function AuditReportDashboard({
   const mediaThumbs = meta && meta.length > 0 ? meta : cands;
   const showMedia = unlocked && data.benchmarkV1MediaStatus === "ready" && data.benchmarkV1Media;
   const showVideo = showMedia && Boolean(data.benchmarkV1Media?.videoPresentationQuality);
-  const showHeaderScoreRing = unlocked && (Boolean(restaurantScores) || !perception || perceptionPending);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface-warm)] text-[var(--color-ink)]">
@@ -596,46 +537,39 @@ export function AuditReportDashboard({
 
             <div>
               {unlocked ? (
-                <div className="mb-8 flex flex-col items-center gap-6 text-center md:flex-row md:items-end md:justify-between md:text-left">
-                  <div className="md:text-left">
-                    <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-                      Restaurant Growth Report
-                    </p>
-                    <h1 className="mt-1 font-head text-3xl font-semibold tracking-tight md:text-4xl">
-                      Your next customers are judging your restaurant before they ever visit.
-                    </h1>
-                    <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-                      We analysed every step of that journey. Generated{" "}
-                      {new Date(audit.updatedAt).toLocaleDateString("en-GB", { dateStyle: "medium" })} ·{" "}
-                      {formatEvidenceSourcesSummary(collectAuditEvidenceSources(payload))}
-                    </p>
-                    <div className="mt-3">
-                      <AuditEvidenceSources payload={payload} />
-                    </div>
+                <div className="mb-8">
+                  <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+                    Restaurant Growth Report
+                  </p>
+                  <h1 className="mt-1 font-head text-3xl font-semibold tracking-tight md:text-4xl">
+                    Your next customers are judging your restaurant before they ever visit.
+                  </h1>
+                  <p className="type-body-sm mt-2 text-[var(--color-muted)]">
+                    We analysed every step of that journey. Generated{" "}
+                    {new Date(audit.updatedAt).toLocaleDateString("en-GB", { dateStyle: "medium" })} ·{" "}
+                    {formatEvidenceSourcesSummary(collectAuditEvidenceSources(payload))}
+                  </p>
+                  <div className="mt-3">
+                    <AuditEvidenceSources payload={payload} />
                   </div>
-                  {showHeaderScoreRing ? (
-                    <div className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-white p-6 shadow-sm sm:flex-row sm:gap-6">
-                      <ScoreRing score={displayScore} size={120} />
-                      <div className="text-center sm:text-left">
-                        <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
-                          Growth opportunity
-                        </p>
-                        <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>{healthLabel}</p>
-                        <p className="type-body-sm mt-2 max-w-[220px] text-[var(--color-muted)]">
-                          {restaurantScores
-                            ? `Visibility ${displayScore}/100 vs similar restaurants in ${audit.city}.`
-                            : perceptionPending
-                              ? `Comparing ${restaurantDisplay} against ${cuisineLabel} in ${audit.city}…`
-                              : `Your score vs. similar restaurants in ${audit.city}.`}
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
 
               {activeNav === "overview" && (
                 <div className="mb-8 space-y-10">
+                  <section className="flex flex-col items-center gap-5 rounded-2xl border border-[var(--color-hairline)] bg-white p-6 shadow-sm sm:flex-row sm:gap-8">
+                    <ScoreRing score={displayScore} size={120} />
+                    <div className="text-center sm:text-left">
+                      <p className="type-caption font-medium uppercase tracking-wide text-[var(--color-muted-medium)]">
+                        Your score
+                      </p>
+                      <p className={`type-title-md mt-1 font-semibold ${displayTone.text}`}>
+                        {healthLabel} growth opportunity
+                      </p>
+                      <p className="type-body-sm mt-2 max-w-md text-[var(--color-muted)]">{biggestCause}</p>
+                    </div>
+                  </section>
+
                   <AuditLocalPeers
                     city={audit.city}
                     restaurantName={restaurantDisplay}
@@ -674,8 +608,6 @@ export function AuditReportDashboard({
                       onRequestUnlock?.();
                     }}
                   />
-
-                  {unlocked && restaurantScores ? <RestaurantAxisStrip scores={restaurantScores} /> : null}
 
                   {unlocked ? (
                     <>

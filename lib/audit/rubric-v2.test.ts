@@ -47,4 +47,19 @@ describe("computeRubricV2", () => {
     const rubric = computeRubricV2({ evidencePack });
     expect(rubric.overall).toBeLessThanOrEqual(55);
   });
+
+  it("does not treat a failed crawl as a bad website", () => {
+    const evidencePack = pack(
+      {
+        ...rubricFixtureWeakSignals(),
+        fetched: true,
+        fetchError: true,
+        isHttps: true,
+      },
+      "https://blocked.example",
+    );
+    const rubric = computeRubricV2({ evidencePack });
+    expect(rubric.checks.some((c) => c.id === "fetch_failed")).toBe(false);
+    expect(rubric.checks.some((c) => c.id === "fetch_unassessed")).toBe(true);
+  });
 });
