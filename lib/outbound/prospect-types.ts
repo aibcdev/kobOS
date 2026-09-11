@@ -12,5 +12,5 @@ export type UkColdQualifiedProspect = OutboundProspect & {
   qualifyScore: number;
   topIssue: string;
   contactEmail: string;
-  enrichmentSource: "hunter" | "scrape";
+  enrichmentSource: "hunter" | "scrape" | "apollo";
 };

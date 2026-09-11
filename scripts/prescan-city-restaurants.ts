@@ -101,15 +101,18 @@ async function discoverFromPlaces(city: string, want: number): Promise<NearbyPla
 /** Leads we already discovered are free candidates — no extra Places spend. */
 async function discoverFromLeadPool(city: string, want: number): Promise<NearbyPlace[]> {
   const leads = await prisma.leadProspect.findMany({
-    where: { city: { equals: city, mode: "insensitive" }, placeId: { not: null } },
-    select: { placeId: true, name: true, websiteUrl: true, rating: true, reviewCount: true },
+    where: {
+      city: { contains: city, mode: "insensitive" },
+      OR: [{ placeId: { not: null } }, { websiteUrl: { not: null } }],
+    },
+    select: { id: true, placeId: true, name: true, websiteUrl: true, rating: true, reviewCount: true },
     orderBy: { updatedAt: "desc" },
-    take: want,
+    take: Math.max(want, 40),
   });
   return leads
-    .filter((l) => l.placeId && !isLikelyChainRestaurant(l.name, null))
+    .filter((l) => !isLikelyChainRestaurant(l.name, null))
     .map((l) => ({
-      placeId: l.placeId as string,
+      placeId: l.placeId?.trim() || `lead:${l.id}`,
       name: l.name,
       lat: 0,
       lng: 0,
