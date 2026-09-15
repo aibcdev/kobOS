@@ -6,13 +6,13 @@ import { Button } from "@/components/kob-ui/button";
 
 export function Hero() {
   return (
-    <section className="relative min-h-dvh overflow-hidden bg-espresso">
+    <section className="relative min-h-dvh overflow-hidden bg-[#0a0a0a]">
       <img
         src="/photos/hero-interior.jpg"
         alt="Looking through glass into a quiet independent restaurant"
         className="absolute inset-0 size-full object-cover"
       />
-      <div className="absolute inset-0 bg-espresso/30" />
+      <div className="absolute inset-0 bg-[#0a0a0a]/40" />
 
       <div className="relative mx-auto flex min-h-dvh max-w-7xl flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:justify-center lg:pb-24 lg:pt-32">
         <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto] lg:items-center">

@@ -11,22 +11,46 @@ export const EXAMPLE_BRAND = {
   disclaimer: "* Examples only. Not affiliated with the brands shown.",
 };
 
+/** Jobs KOB prepares — shown on the homepage proof. */
+export const KOB_JOBS = [
+  {
+    title: "Hours & listings",
+    body: "Aligns Google, the website, and booking pages when they disagree. Nothing publishes until you say yes.",
+  },
+  {
+    title: "Reviews",
+    body: "Drafts replies in your tone. Five-stars can go on rules you set. Complaints stay with you.",
+  },
+  {
+    title: "Food waste & invoices",
+    body: "Snap a delivery note. KOB checks house rate vs the line, flags waste vs covers, and drafts a supplier note — approve only.",
+  },
+  {
+    title: "Weather prep",
+    body: "When rain or cold will hit covers, KOB suggests prep cuts so the kitchen does not overcook.",
+  },
+  {
+    title: "Google watch",
+    body: "Watches public hours, rating, and review count every morning. You talk. He takes the job.",
+  },
+] as const;
+
 export const CORE_BENEFITS = [
   {
     title: "You talk. He takes the job.",
-    body: "Hours, reviews, Google, the site, and kitchen jobs — prepared in the tools you already use.",
+    body: "Hours, reviews, Google, the site, food waste, and kitchen jobs — prepared in the tools you already use.",
   },
   {
     title: "Nothing public without you.",
     body: "Approve-only. Drafts wait. No surprise posts, no silent supplier notes.",
   },
   {
-    title: "Not a dashboard.",
-    body: "KOB is an employee who uses your tools. Free tools first. Paid partners later.",
+    title: "Kitchen, not just the listing.",
+    body: "Invoice photos, house rate, waste vs dishes sold, weather prep. Same Talk thread as hours and reviews.",
   },
   {
-    title: "Multi-site ready.",
-    body: "Same house rules across rooms. One Talk thread. You stay in charge.",
+    title: "Not a dashboard.",
+    body: "KOB is an employee who uses your tools. Free tools first. Paid partners later.",
   },
 ] as const;
 
@@ -41,7 +65,7 @@ export const PROOF_CASE = {
   website: EXAMPLE_BRAND.website,
   logoSrc: EXAMPLE_BRAND.logoSrc,
   locationLabel: EXAMPLE_BRAND.locationLabel,
-  note: "Sample hours drift a guest might see across public sources — prepared as an example for how KOB works.",
+  note: "Hours, reviews, Google, the site, invoice waste flags, and weather prep — each job waits for your yes.",
   disclaimer: EXAMPLE_BRAND.disclaimer,
   sources: [
     {
@@ -75,16 +99,16 @@ export const PROOF_CASE = {
   ],
   before: [
     {
-      title: "Hours",
+      title: "Hours drift",
       body: "Four public sources, four Fridays. The guest cannot tell which door is true.",
     },
     {
-      title: "Listing vs site",
-      body: "Google and the website disagree on Monday close. Nobody owns the correction.",
+      title: "Food waste blind",
+      body: "Delivery notes sit in a drawer. Nobody checks house rate vs the line before prep overshoots.",
     },
     {
-      title: "Multi-site drift",
-      body: "London* hours should match the house sheet. Other rooms stay on their own clocks.",
+      title: "Reviews & listing",
+      body: "Replies wait. Google and the site disagree. Nobody owns the morning pass.",
     },
   ],
   after: [
@@ -93,12 +117,12 @@ export const PROOF_CASE = {
       body: "KOB drafts one set for Google, the site, and bookings. Nothing publishes until you say yes.",
     },
     {
-      title: "Talk to approve",
-      body: "You get Apply hours / Leave it in Talk — same flow on the phone later.",
+      title: "Waste on the desk",
+      body: "Invoice photo in. House rate vs line, waste vs covers flagged. Draft supplier note — or leave it.",
     },
     {
-      title: "Truth log",
-      body: "Only approved jobs land in the log. No invented savings.",
+      title: "Talk to approve",
+      body: "Apply hours / Leave it. Same for reviews and kitchen. Truth log only stores what you approved.",
     },
   ],
 };
@@ -115,6 +139,7 @@ export const PRICING = [
       "KOB Daily Manager",
       "Reviews and Google",
       "Website watching",
+      "Invoice photo & waste flags",
       "Morning brief on WhatsApp or email",
       "Suggest → approve on every public change",
       "14-day trial",

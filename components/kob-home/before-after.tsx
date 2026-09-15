@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { LangosteriaWordmark } from "@/components/kob-brand/langosteria-mark";
 import { Button } from "@/components/kob-ui/button";
-import { DEMO_RESTAURANTS, PROOF_CASE, CORE_BENEFITS } from "@/lib/kob/demo";
+import {
+  DEMO_RESTAURANTS,
+  PROOF_CASE,
+  CORE_BENEFITS,
+  KOB_JOBS,
+} from "@/lib/kob/demo";
 import { useKobStore } from "@/lib/kob/store";
 
 export function BeforeAfter() {
@@ -22,25 +27,28 @@ export function BeforeAfter() {
 
   return (
     <section id="proof" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
-      <div className="flex flex-wrap items-end justify-between gap-8 border-b border-line pb-10">
-        <div>
-          <p className="text-sm text-muted">Example design*</p>
-          <p className="font-display mt-2 text-4xl font-medium tracking-tight text-espresso sm:text-5xl">
-            {PROOF_CASE.locationLabel}
-          </p>
-        </div>
-        <LangosteriaWordmark size="lg" />
+      <div className="border-b border-line pb-10">
+        <LangosteriaWordmark size="proof" />
       </div>
 
       <h2 className="font-display text-headline mt-12 max-w-2xl font-medium">
         How KOB works on a multi-site room
       </h2>
       <p className="mt-5 max-w-2xl text-lg text-ink">
-        {PROOF_CASE.name}, {PROOF_CASE.area}*. An example of hours drift across
-        public sources — and what KOB prepares for your yes. {PROOF_CASE.note}
+        {PROOF_CASE.name}, {PROOF_CASE.area}*. An example of the jobs KOB
+        prepares for your yes — not a customer claim. {PROOF_CASE.note}
       </p>
 
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {KOB_JOBS.map((item) => (
+          <article key={item.title} className="rounded-[1.75rem] bg-cream p-5 sm:p-6">
+            <p className="font-medium text-espresso">{item.title}</p>
+            <p className="mt-2 text-sm text-ink">{item.body}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {CORE_BENEFITS.map((item) => (
           <article key={item.title} className="rounded-[1.75rem] bg-cream p-5 sm:p-6">
             <p className="font-medium text-espresso">{item.title}</p>
@@ -49,7 +57,8 @@ export function BeforeAfter() {
         ))}
       </div>
 
-      <div className="mt-14 overflow-hidden rounded-[1.75rem] bg-cream">
+      <p className="mt-14 text-sm text-muted">One job example · hours drift</p>
+      <div className="mt-4 overflow-hidden rounded-[1.75rem] bg-cream">
         <div className="grid gap-px bg-line sm:grid-cols-4">
           <div className="bg-cream px-5 py-4 sm:px-6">
             <p className="text-sm text-muted">Source</p>
@@ -93,7 +102,7 @@ export function BeforeAfter() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <article className="rounded-[1.75rem] bg-cream p-6 sm:p-8">
-          <p className="text-sm text-muted">Before · what a guest sees</p>
+          <p className="text-sm text-muted">Before · without KOB</p>
           <ul className="mt-6 space-y-6">
             {PROOF_CASE.before.map((item) => (
               <li key={item.title}>

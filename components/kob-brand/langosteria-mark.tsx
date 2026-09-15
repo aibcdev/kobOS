@@ -6,12 +6,14 @@ export function LangosteriaWordmark({
   size = "md",
 }: {
   className?: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "proof"
 }) {
   const sizes = {
     sm: "text-[1.05rem] tracking-[0.12em]",
     md: "text-[1.35rem] tracking-[0.14em]",
     lg: "text-[1.75rem] tracking-[0.16em] sm:text-[2rem]",
+    /** ~20% smaller than lg — homepage proof header */
+    proof: "text-[1.4rem] tracking-[0.14em] sm:text-[1.6rem]",
   } as const;
 
   return (

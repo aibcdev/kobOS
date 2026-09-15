@@ -1,7 +1,7 @@
 const ROWS = [
   {
     name: "Google listing",
-    detail: "Public hours, rating, review count",
+    detail: "Public hours, rating, review count — watched every morning",
     state: "Free",
   },
   {
@@ -10,18 +10,20 @@ const ROWS = [
     state: "Free",
   },
   {
-    name: "Invoice photo",
-    detail: "Snap a delivery note. House rate vs the line.",
+    name: "Invoice photo & food waste",
+    detail:
+      "Snap a delivery note. House rate vs the line, waste vs covers, draft supplier note — approve only.",
     state: "Free",
   },
   {
     name: "Weather",
-    detail: "Prep cuts when rain or cold will hit covers",
+    detail: "Prep cuts when rain or cold will hit covers — less overcook, less waste",
     state: "Free",
   },
   {
     name: "Till / bookings / WhatsApp",
-    detail: "Paid partners. KOB uses them when they land — he does not replace them.",
+    detail:
+      "Paid partners. KOB uses them when they land — he does not replace them.",
     state: "Soon",
   },
 ];
@@ -33,8 +35,8 @@ export function Connect() {
         Add KOB to the tools you already have
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        Two minutes. No demo call. Free tools work now. Nothing public leaves
-        the kitchen without you.
+        Two minutes. No demo call. Free tools work now — listings, site, invoices,
+        food waste flags, weather. Nothing public leaves without you.
       </p>
 
       <div className="mt-12 overflow-hidden rounded-[1.75rem] bg-cream">
@@ -58,7 +60,7 @@ export function Connect() {
                 className={
                   row.state === "Free"
                     ? "shrink-0 rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage"
-                    : "shrink-0 rounded-full bg-paper px-3 py-1 text-xs text-subtle"
+                    : "shrink-0 rounded-full bg-paper/10 px-3 py-1 text-xs text-subtle"
                 }
               >
                 {row.state}
