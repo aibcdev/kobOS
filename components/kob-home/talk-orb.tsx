@@ -22,21 +22,21 @@ function speak(text: string) {
 function replyTo(text: string) {
   const t = text.toLowerCase();
   if (/hour|closed|open/.test(t)) {
-    return "I’ll prepare the hours on Google and the site. Nothing goes live until you say Apply hours.";
+    return "KOB will prepare the hours on Google and the site. Nothing goes live until you say Apply hours.";
   }
   if (/review/.test(t)) {
-    return "Five-stars I send in your tone. Complaints stay with you. I will not offer a voucher unless you ask.";
+    return "Five-stars go out in your tone. Complaints stay with you. KOB will not offer a voucher unless you ask.";
   }
   if (/waste|invoice|kitchen|delivery|prep|salmon|cheese/.test(t)) {
-    return "Send the delivery photo. I read the lines, check the house rate, and draft the supplier note. You approve before it leaves.";
+    return "Send the delivery photo. KOB reads the lines, checks the house rate, and drafts the supplier note. You approve before it leaves.";
   }
   if (/price|cost|£|trial/.test(t)) {
     return "Founding is £99 a location. Fourteen-day trial. You start it yourself — no demo call.";
   }
   if (/dashboard|tool|platform/.test(t)) {
-    return "I’m not a dashboard. I’m the manager who uses your tools. You talk. I take the job.";
+    return "KOB is not a dashboard. KOB is the manager who uses your tools. You talk. KOB takes the job.";
   }
-  return "You talk on the floor. I take Google, reviews, hours, the website, and the kitchen. Sign in when you want me on the job.";
+  return "You talk on the floor. KOB takes Google, reviews, hours, the website, and the kitchen. Sign in when you want KOB on the job.";
 }
 
 export function TalkOrb({ className }: { className?: string }) {
