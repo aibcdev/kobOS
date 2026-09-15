@@ -24,7 +24,7 @@ export function PricingBand() {
         </Button>
       </div>
       <p className="mt-8 max-w-lg text-sm text-muted">
-        Later, £149 when KOB is the assistant manager, and £299 when he starts
+        Later, £149 when KOB is the assistant manager, and £299 when KOB starts
         taking guests and the phone.
       </p>
     </section>

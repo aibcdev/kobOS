@@ -41,7 +41,11 @@ export function BeforeAfter() {
 
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {KOB_JOBS.map((item) => (
-          <article key={item.title} className="rounded-[1.75rem] bg-cream p-5 sm:p-6">
+          <article
+            key={item.title}
+            className="rounded-[1.75rem] border border-line bg-cream p-5 sm:p-6"
+            style={{ borderTop: "3px solid #e23c1a" }}
+          >
             <p className="font-medium text-espresso">{item.title}</p>
             <p className="mt-2 text-sm text-ink">{item.body}</p>
           </article>
@@ -50,7 +54,10 @@ export function BeforeAfter() {
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {CORE_BENEFITS.map((item) => (
-          <article key={item.title} className="rounded-[1.75rem] bg-cream p-5 sm:p-6">
+          <article
+            key={item.title}
+            className="rounded-[1.75rem] border border-[#e23c1a]/20 bg-cream p-5 sm:p-6"
+          >
             <p className="font-medium text-espresso">{item.title}</p>
             <p className="mt-2 text-sm text-ink">{item.body}</p>
           </article>

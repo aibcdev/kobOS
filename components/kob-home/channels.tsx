@@ -15,10 +15,10 @@ export function Channels() {
       <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-5 sm:px-8 lg:grid-cols-[1fr_auto]">
         <div className="max-w-xl text-paper">
           <h2 className="font-display text-headline font-medium text-paper">
-            Send him a message. Give him the job.
+            Send KOB a message. Give KOB the job.
           </h2>
           <p className="mt-6 text-lg text-paper/80">
-            WhatsApp, email, or here. “We’re closed next Monday.” He prepares
+            WhatsApp, email, or here. “We’re closed next Monday.” KOB prepares
             Google, the website and the booking page — then waits.
           </p>
         </div>

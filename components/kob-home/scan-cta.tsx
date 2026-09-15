@@ -25,7 +25,7 @@ export function ScanCta() {
         Hire the manager. Keep the restaurant.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        Point KOB at the room. He looks at Google, reviews and hours — then
+        Point KOB at the room. KOB looks at Google, reviews and hours — then
         takes the job. You stay on the floor.
       </p>
       <form

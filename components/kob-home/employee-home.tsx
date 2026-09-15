@@ -9,6 +9,7 @@ import { Loop } from "@/components/kob-home/loop";
 import { Memory } from "@/components/kob-home/memory";
 import { PricingBand } from "@/components/kob-home/pricing-band";
 import { ProductVideo } from "@/components/kob-home/product-video";
+import { Reveal } from "@/components/kob-home/reveal";
 import { ScanCta } from "@/components/kob-home/scan-cta";
 import { Serving } from "@/components/kob-home/serving";
 import { SiteFooter } from "@/components/kob-site/site-footer";
@@ -21,18 +22,42 @@ export function EmployeeHome() {
       <SiteNav onPhoto />
       <main>
         <Hero />
-        <Loop />
-        <Jobs />
-        <Serving />
-        <Employee />
-        <Connect />
-        <BeforeAfter />
-        <ProductVideo />
-        <Memory />
-        <Autonomy />
-        <PricingBand />
-        <Channels />
-        <ScanCta />
+        <Reveal>
+          <Loop />
+        </Reveal>
+        <Reveal>
+          <Jobs />
+        </Reveal>
+        <Reveal>
+          <Serving />
+        </Reveal>
+        <Reveal>
+          <Employee />
+        </Reveal>
+        <Reveal>
+          <Connect />
+        </Reveal>
+        <Reveal>
+          <BeforeAfter />
+        </Reveal>
+        <Reveal>
+          <ProductVideo />
+        </Reveal>
+        <Reveal>
+          <Memory />
+        </Reveal>
+        <Reveal>
+          <Autonomy />
+        </Reveal>
+        <Reveal>
+          <PricingBand />
+        </Reveal>
+        <Reveal>
+          <Channels />
+        </Reveal>
+        <Reveal>
+          <ScanCta />
+        </Reveal>
       </main>
       <SiteFooter />
     </div>

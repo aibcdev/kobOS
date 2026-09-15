@@ -1,58 +1,68 @@
 const TOOLS_NOW = [
-  "Google listing",
-  "Website",
-  "Invoice photo",
-  "Weather",
-  "Email",
+  { name: "Google listing", color: "#4285F4", bg: "#e8f0fe" },
+  { name: "Website", color: "#111111", bg: "#f4f4f2" },
+  { name: "Invoice photo", color: "#d85a3a", bg: "#fbece8" },
+  { name: "Weather", color: "#1a73e8", bg: "#e8f0fe" },
+  { name: "Email", color: "#ea4335", bg: "#fce8e6" },
 ];
 
-const TOOLS_SOON = ["Till / POS", "Bookings", "WhatsApp", "Delivery apps"];
+const TOOLS_SOON = [
+  { name: "Till / POS", color: "#5f6368", bg: "#f1f3f4" },
+  { name: "Bookings", color: "#5f6368", bg: "#f1f3f4" },
+  { name: "WhatsApp", color: "#25D366", bg: "#e7f8ee" },
+  { name: "Delivery apps", color: "#5f6368", bg: "#f1f3f4" },
+];
 
 export function Employee() {
   return (
     <section id="employee" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
       <h2 className="font-display text-headline max-w-2xl font-medium">
-        KOB isn’t a dashboard. He’s an employee who uses your tools.
+        KOB isn’t a dashboard. KOB is an employee who uses your tools.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        He watches the listing, writes into Google and the site, drafts reviews
+        KOB watches the listing, writes into Google and the site, drafts reviews
         in your tone, and flags invoice surprises before they hit the till.
         You do not sit in KOB. KOB sits in the tools you already have.
       </p>
 
       <div className="mt-12 grid gap-4 lg:grid-cols-2">
-        <article className="rounded-[1.75rem] bg-cream p-7 sm:p-8">
-          <p className="text-sm text-muted">Works now — free</p>
+        <article className="rounded-[1.75rem] border border-line bg-cream p-7 sm:p-8">
+          <p className="text-sm font-medium text-sage">Works now — free</p>
           <ul className="mt-5 flex flex-wrap gap-2">
-            {TOOLS_NOW.map((name) => (
+            {TOOLS_NOW.map((item) => (
               <li
-                key={name}
-                className="rounded-full bg-paper px-4 py-2 text-sm font-medium text-espresso shadow-card"
+                key={item.name}
+                className="rounded-full px-4 py-2 text-sm font-medium shadow-card"
+                style={{ backgroundColor: item.bg, color: item.color }}
               >
-                {name}
+                {item.name}
               </li>
             ))}
           </ul>
           <p className="mt-6 text-ink">
-            Point him at the listing, the site URL, an inbox, and a delivery
-            photo. He starts this morning.
+            Point KOB at the listing, the site URL, an inbox, and a delivery
+            photo. KOB starts this morning.
           </p>
         </article>
-        <article className="rounded-[1.75rem] bg-cream p-7 sm:p-8">
+        <article className="rounded-[1.75rem] border border-line bg-cream p-7 sm:p-8">
           <p className="text-sm text-muted">Paid partners — soon</p>
           <ul className="mt-5 flex flex-wrap gap-2">
-            {TOOLS_SOON.map((name) => (
+            {TOOLS_SOON.map((item) => (
               <li
-                key={name}
-                className="rounded-full bg-paper/70 px-4 py-2 text-sm text-muted"
+                key={item.name}
+                className="rounded-full px-4 py-2 text-sm font-medium"
+                style={{ backgroundColor: item.bg, color: item.color }}
               >
-                {name}
+                {item.name}
               </li>
             ))}
           </ul>
           <p className="mt-6 text-ink">
-            The till and the booker come later. KOB does not replace them. He
+            The till and the booker come later. KOB does not replace them. KOB
             uses them — with your yes.
+          </p>
+          <p className="mt-4 text-xs text-muted">
+            Example rooms use Langosteria* colours for clarity — not a customer claim.
           </p>
         </article>
       </div>

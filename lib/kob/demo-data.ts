@@ -345,7 +345,7 @@ export const JOBS: JobDemo[] = [
     actions: ["Draft supplier note", "Leave it"],
     flow: [
       { from: "guest", who: "Chef", text: "Delivery photo. Cheddar line looks high." },
-      { from: "kob", text: "House rate is lower. I can draft the supplier note — or leave it." },
+      { from: "kob", text: "House rate is lower. Waste vs covers flagged. Draft supplier note — or leave it." },
       { from: "kob", text: "Forecast 12°C. Salad usually drops on cold Tuesdays. Cut prep, or dismiss." },
       { from: "done", text: "Waiting on you" },
     ],

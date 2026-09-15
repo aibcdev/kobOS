@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="max-w-sm space-y-4">
           <KobWordmark />
           <p className="text-muted">
-            The AI restaurant manager. You talk. He takes the job.
+            The AI restaurant manager. You talk. KOB takes the job.
           </p>
         </div>
         <div className="space-y-3 text-sm">

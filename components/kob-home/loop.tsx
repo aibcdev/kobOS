@@ -23,7 +23,7 @@ export function Loop() {
         You talk. KOB works. You stay in charge.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        KOB is not a dashboard you log into after service. He is the manager
+        KOB is not a dashboard you log into after service. KOB is the manager
         who uses your tools while you run the room.
       </p>
       <ol className="mt-14 space-y-4">

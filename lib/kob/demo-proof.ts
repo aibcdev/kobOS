@@ -31,13 +31,13 @@ export const KOB_JOBS = [
   },
   {
     title: "Google watch",
-    body: "Watches public hours, rating, and review count every morning. You talk. He takes the job.",
+    body: "Watches public hours, rating, and review count every morning. You talk. KOB takes the job.",
   },
 ] as const;
 
 export const CORE_BENEFITS = [
   {
-    title: "You talk. He takes the job.",
+    title: "You talk. KOB takes the job.",
     body: "Hours, reviews, Google, the site, food waste, and kitchen jobs — prepared in the tools you already use.",
   },
   {

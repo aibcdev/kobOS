@@ -6,7 +6,7 @@ export function ProductVideo() {
         You talk. KOB takes the job.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        He watches the listing, writes into Google and the site, drafts reviews
+        KOB watches the listing, writes into Google and the site, drafts reviews
         in your tone, and flags invoice surprises before they hit the till.
         Nothing public until you say yes.
       </p>
