@@ -42,7 +42,7 @@ export function ProductVideo() {
         </div>
       </div>
       <p className="mt-4 text-[0.65rem] text-subtle">
-        * Examples only. Not affiliated with the brands shown.
+        Product demo. No customer brand in this film.
       </p>
     </section>
   );
