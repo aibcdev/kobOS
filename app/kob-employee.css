@@ -31,21 +31,8 @@
 
 .kob-employee {
   font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  /* Dark page. Keep espresso #111 for hero/buttons. */
-  --color-bone: #111111;
-  --color-cream: #1c1c1c;
-  --color-paper: #ffffff;
-  --color-espresso: #111111;
-  --color-ink: #e8e8e6;
-  --color-muted: #9a9a98;
-  --color-subtle: #7a7a78;
-  --color-line: #2e2e2c;
-  --color-line-strong: #3f3f3c;
-  --color-sage: #3ecf78;
-  --color-sage-soft: #163528;
-  --color-amber-soft: #3a2218;
-  background-color: #111111;
-  color: #f4f4f2;
+  background-color: #f4f4f2;
+  color: #111111;
   font-size: 1.0625rem;
   line-height: 1.55;
 }
@@ -59,37 +46,6 @@
   text-wrap: balance;
   font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   font-weight: 500;
-  color: #f4f4f2;
-}
-/* text-espresso used as body/heading ink → light on dark */
-.kob-employee .text-espresso {
-  color: #f4f4f2;
-}
-/* Primary buttons need light label on true black fill */
-.kob-employee .bg-espresso {
-  background-color: #111111;
-  color: #ffffff;
-}
-.kob-employee .bg-espresso:hover {
-  background-color: #1c1c1c;
-}
-/* Nav pill stays dark type on light glass */
-.kob-employee header .text-espresso,
-.kob-employee header .text-ink {
-  color: #111111;
-}
-.kob-employee header .bg-espresso {
-  background-color: #111111;
-  color: #ffffff;
-}
-/* Light pills/buttons: dark ink on paper */
-.kob-employee .bg-paper {
-  color: #111111;
-}
-.kob-employee .bg-paper.text-espresso,
-.kob-employee button.bg-paper,
-.kob-employee a.bg-paper {
-  color: #111111;
 }
 
 
