@@ -23,6 +23,16 @@ const nextConfig: NextConfig = {
         destination: "/go/audit",
         permanent: false,
       },
+      {
+        source: "/audit",
+        destination: "/scan",
+        permanent: false,
+      },
+      {
+        source: "/dashboard",
+        destination: "/app",
+        permanent: false,
+      },
     ];
   },
   images: {

@@ -1,0 +1,201 @@
+
+/* --- KOB employee product (Alven-style) --- */
+@theme {
+  --font-display: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-bone: #f4f4f2;
+  --color-cream: #ecece9;
+  --color-paper: #ffffff;
+  --color-espresso: #111111;
+  --color-ink: #1c1c1c;
+  --color-muted: #8a8a8a;
+  --color-subtle: #a8a8a8;
+  --color-line: #e6e6e4;
+  --color-line-strong: #d4d4d1;
+  --color-sage: #2f9e5f;
+  --color-sage-soft: #e7f6ee;
+  --color-amber: #d85a3a;
+  --color-amber-soft: #fbece8;
+  --color-bronze: #c4a07a;
+  --text-display: clamp(2.75rem, 1.4rem + 5.6vw, 5.25rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.045em;
+  --text-headline: clamp(2rem, 1.2rem + 2.4vw, 3.35rem);
+  --text-headline--line-height: 1.08;
+  --text-headline--letter-spacing: -0.035em;
+  --text-title: clamp(1.35rem, 1.1rem + 1vw, 1.85rem);
+  --text-title--line-height: 1.2;
+  --shadow-soft: 0 24px 60px -32px rgba(17, 17, 17, 0.28);
+  --shadow-nav: 0 8px 30px -18px rgba(17, 17, 17, 0.25);
+}
+
+.kob-employee {
+  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  background-color: #f4f4f2;
+  color: #111111;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+.kob-employee .font-display {
+  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+}
+.kob-employee h1,
+.kob-employee h2,
+.kob-employee h3,
+.kob-employee h4 {
+  text-wrap: balance;
+  font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  color: #111111;
+}
+
+
+.green-orb {
+  --hx: 28%;
+  --hy: 22%;
+  --rx: 0deg;
+  --ry: 0deg;
+  display: inline-flex;
+  perspective: 600px;
+}
+
+.green-orb-sphere {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  box-shadow:
+    inset 0 -18% 28% rgba(6, 28, 14, 0.45),
+    0 18px 40px -18px rgba(17, 80, 40, 0.55);
+}
+
+.green-orb-fill {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 32% 18%, #9be7b8 0%, transparent 38%),
+    radial-gradient(circle at 70% 78%, #0d3d22 0%, transparent 48%),
+    radial-gradient(circle at 50% 45%, #3ecf78 0%, #1f8a4d 42%, #0b3d22 100%);
+}
+
+.green-orb-band {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: calc(var(--hy) - 8%);
+  height: 28%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(210, 255, 230, 0.15) 20%,
+    rgba(255, 255, 255, 0.85) 48%,
+    rgba(180, 255, 210, 0.35) 62%,
+    transparent
+  );
+  filter: blur(1px);
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+.green-orb-spec {
+  position: absolute;
+  width: 38%;
+  height: 22%;
+  left: var(--hx);
+  top: var(--hy);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, transparent 70%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.green-orb-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  background: radial-gradient(circle at 50% 120%, transparent 55%, rgba(255, 255, 255, 0.12) 100%);
+  pointer-events: none;
+}
+
+.green-orb-working .green-orb-sphere,
+.green-orb-thinking .green-orb-sphere {
+  animation: orb-swirl 1.1s linear infinite;
+  box-shadow:
+    inset 0 -18% 28% rgba(6, 28, 14, 0.45),
+    0 0 0 3px rgba(47, 158, 95, 0.45),
+    0 18px 40px -18px rgba(17, 80, 40, 0.55);
+}
+
+.green-orb-idle .green-orb-sphere {
+  animation: orb-pulse 2.8s ease-in-out infinite;
+}
+
+.green-orb-alert .green-orb-fill {
+  background:
+    radial-gradient(circle at 32% 18%, #ffe0b0 0%, transparent 38%),
+    radial-gradient(circle at 50% 45%, #e8a04a 0%, #c45c12 50%, #4a2208 100%);
+}
+
+.green-orb-alert .green-orb-sphere {
+  animation: orb-pulse 0.9s ease-in-out infinite;
+}
+
+.green-orb-done .green-orb-sphere {
+  animation: orb-flash 0.9s ease-out 1;
+}
+
+.green-orb-tight .green-orb-sphere {
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(0.92);
+}
+
+.green-orb-soft .green-orb-sphere {
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(1.08);
+}
+
+@keyframes orb-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes orb-swirl {
+  from {
+    filter: hue-rotate(0deg) brightness(1.05);
+  }
+  to {
+    filter: hue-rotate(25deg) brightness(1.15);
+  }
+}
+
+@keyframes orb-flash {
+  0% {
+    filter: brightness(1.6);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

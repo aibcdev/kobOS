@@ -3,6 +3,7 @@ import { Caveat, DM_Sans, Instrument_Serif } from "next/font/google";
 import { defaultSiteMeta } from "@/lib/homepage-defaults";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
+import "./kob-employee.css";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -53,6 +54,14 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${caveat.variable} ${instrumentSerif.variable} h-full scroll-smooth antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-full bg-[var(--color-surface-soft)] text-[var(--color-body)]">{children}</body>
     </html>
   );
