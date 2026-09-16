@@ -91,26 +91,26 @@ export const STEP_COPY: Record<
   matters: { title: "What matters more to you at the moment?" },
   start: {
     title: "Where should I start?",
-    hint: "Pick one or more. Phone and bookings stay Coming soon.",
+    hint: "Pick the jobs I can do now. Phone answering is Coming soon on KOB.",
     multi: true,
   },
   scope: { title: "Should I start on your whole group, or one room?" },
   book: {
     title: "Where do guests book?",
-    hint: "OpenTable, Resy, and the phone are Coming soon.",
+    hint: "How they book today. We are not connecting those systems yet.",
     multi: true,
     skippable: true,
   },
   chat: {
     title: "Where does your team message you?",
-    hint: "Email works now. WhatsApp is Coming soon.",
+    hint: "How they reach you today — not a KOB integration.",
     multi: true,
     skippable: true,
   },
   menu: { title: "Where is the live menu kept?", skippable: true },
   phone: {
     title: "Want KOB to answer the phone?",
-    hint: "KOB will not take calls yet.",
+    hint: "Coming soon on KOB. We will not take calls yet.",
     skippable: true,
   },
   run: { title: "Last one — how much should I run on my own?" },
@@ -155,14 +155,14 @@ export const BOOK_CHIPS: Chip[] = [
   { id: "website", label: "Website" },
   { id: "google", label: "Google" },
   { id: "walkin", label: "Walk-in" },
-  { id: "opentable", label: "OpenTable / Resy", soon: true },
-  { id: "phone", label: "Phone", soon: true },
+  { id: "opentable", label: "OpenTable / Resy" },
+  { id: "phone", label: "Phone" },
 ];
 
 export const CHAT_CHIPS: Chip[] = [
   { id: "email", label: "Email" },
-  { id: "whatsapp", label: "WhatsApp", soon: true },
-  { id: "imessage", label: "iMessage", soon: true },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "imessage", label: "iMessage" },
   { id: "other", label: "Other" },
 ];
 
@@ -173,7 +173,7 @@ export const MENU_CHIPS: Chip[] = [
 ];
 
 export const PHONE_CHIPS: Chip[] = [
-  { id: "soon", label: "Coming soon — tell me when it lands" },
+  { id: "soon", label: "Yes — tell me when it lands on KOB" },
   { id: "skip", label: "Skip for now" },
 ];
 

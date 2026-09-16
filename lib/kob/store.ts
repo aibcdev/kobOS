@@ -21,7 +21,10 @@ import {
   EMPTY_RULES,
   QUESTIONS,
   RULE_CHOICES,
+  RULE_ORDER,
+  houseRulesFromAutonomy,
   rulesComplete,
+  sanitizeHouseRules,
   todayKey,
   type HouseRules,
   type Overrides,
@@ -88,20 +91,20 @@ type KobStore = {
 };
 
 function setupMessages(restaurant: Restaurant, opener?: string): ChatMessage[] {
-  const first = QUESTIONS.price;
+  const first = QUESTIONS[RULE_ORDER[0]];
   return [
     {
       id: "setup-hello",
       role: "kob",
       text:
         opener ??
-        `Morning, ${restaurant.ownerFirstName}. Teach me how you run the floor. Five short answers. Then I can take jobs — still nothing public until you say so.`,
+        `Morning, ${restaurant.ownerFirstName}. Two short answers — reviews and hours. Those are the jobs I can actually do today. Nothing public until you say so.`,
     },
     {
-      id: "setup-price",
+      id: `setup-${RULE_ORDER[0]}`,
       role: "kob",
       text: first.ask,
-      actions: RULE_CHOICES.price.map((choice) => ({
+      actions: RULE_CHOICES[RULE_ORDER[0]].map((choice) => ({
         id: choice.id,
         label: choice.label,
         kind: "yes" as const,
@@ -116,18 +119,26 @@ function snapshot(
   rules: HouseRules,
   opener?: string,
 ) {
+  const findings = applyAutonomyToFindings(findingsFor(restaurant), autonomy);
+  const reviews = applyAutonomyToReviews(reviewsFor(restaurant), autonomy);
   if (!rulesComplete(rules)) {
     return {
-      findings: applyAutonomyToFindings(findingsFor(restaurant), autonomy),
-      reviews: applyAutonomyToReviews(reviewsFor(restaurant), autonomy),
+      findings,
+      reviews,
       messages: setupMessages(restaurant, opener),
       approvedIds: [] as string[],
     };
   }
+  const morning = morningMessages(restaurant, autonomy);
   return {
-    findings: applyAutonomyToFindings(findingsFor(restaurant), autonomy),
-    reviews: applyAutonomyToReviews(reviewsFor(restaurant), autonomy),
-    messages: morningMessages(restaurant, autonomy),
+    findings,
+    reviews,
+    messages: opener
+      ? [
+          { id: "setup-hello", role: "kob" as const, text: opener },
+          ...morning.filter((m) => m.id !== "setup-hello"),
+        ]
+      : morning,
     approvedIds: [] as string[],
   };
 }
@@ -280,7 +291,8 @@ export const useKobStore = create<KobStore>()(
       hydrateFromOnboard: (profile, lens) => {
         const restaurant = restaurantFromOnboard(profile);
         const autonomy = lens?.autonomy ?? get().autonomy;
-        const base = snapshot(restaurant, autonomy, get().houseRules, lens?.talkOpener);
+        const houseRules = houseRulesFromAutonomy(autonomy);
+        const base = snapshot(restaurant, autonomy, houseRules, lens?.talkOpener);
         const onboardFindings = findingsFromOnboard(profile);
         const ordered = lens?.priority?.length
           ? [
@@ -297,6 +309,7 @@ export const useKobStore = create<KobStore>()(
           onboardProfile: profile,
           onboardLens: lens ?? null,
           autonomy,
+          houseRules,
           pane: "kob",
           websiteUrl: profile.website ?? "",
           weatherCity: profile.city || "London",
@@ -477,9 +490,28 @@ export const useKobStore = create<KobStore>()(
         const rawMessages = (saved.messages ?? current.messages) as Array<{
           role: string
         }>;
-        const messages = rawMessages.filter(
-          (message) => message.role !== "note",
-        ) as ChatMessage[];
+        const staleQuiz =
+          /cut prep|bad deliveries in a month|stay late|Kitchens are messy|sales-per-hour|supplier raises prices/i;
+        const oldShape = Boolean(
+          saved.houseRules &&
+            ("price" in (saved.houseRules as object) ||
+              "weather" in (saved.houseRules as object) ||
+              "supplier" in (saved.houseRules as object)),
+        );
+        const messages = rawMessages
+          .filter((message) => message.role !== "note")
+          .filter((message) => {
+            if (!oldShape) return true;
+            const text = "text" in message ? String(message.text ?? "") : "";
+            return !staleQuiz.test(text);
+          }) as ChatMessage[];
+        const houseRules = oldShape
+          ? saved.onboardLens
+            ? houseRulesFromAutonomy(autonomy)
+            : { ...EMPTY_RULES }
+          : saved.onboardLens && !sanitizeHouseRules(saved.houseRules).reviews.answer
+            ? houseRulesFromAutonomy(autonomy)
+            : sanitizeHouseRules(saved.houseRules);
         return {
           ...current,
           ...saved,
@@ -490,7 +522,7 @@ export const useKobStore = create<KobStore>()(
           websiteUrl: saved.websiteUrl ?? "",
           weatherCity: saved.weatherCity ?? "Cape Town",
           notifyEmail: saved.notifyEmail ?? "",
-          houseRules: { ...EMPTY_RULES, ...saved.houseRules },
+          houseRules,
           overrides: saved.overrides ?? {},
           truthLog: saved.truthLog ?? [],
           holding: saved.holding ?? [],

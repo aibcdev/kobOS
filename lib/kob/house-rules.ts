@@ -1,51 +1,87 @@
-export type RuleId = "price" | "weather" | "waste" | "overtime" | "supplier";
+/**
+ * Only rules KOB can actually act on with the free tools an owner has on day one:
+ * public Google reviews, Google vs website hours, and a photo of a delivery note.
+ * No till, no rota, no supplier network — so no questions about them.
+ */
+export type RuleId = "reviews" | "hours" | "invoice";
 
-export type PrepLevel = "relaxed" | "normal" | "strict";
+export type ReplyMode = "handle" | "show" | "never";
+export type HoursMode = "fix" | "show";
 
 export type HouseRules = {
-  price: { hikePct: number | null; bookUnderGbp: number | null; answer: string }
-  weather: { level: PrepLevel | null; answer: string }
-  waste: { ignoreKg: number | null; ignoreGbp: number | null; theftGbp: number | null; answer: string }
-  overtime: { salesPerHour: number | null; answer: string }
-  supplier: { strikes: number | null; answer: string }
+  reviews: { mode: ReplyMode | null; answer: string }
+  hours: { mode: HoursMode | null; answer: string }
+  invoice: { flagPct: number | null; answer: string }
 };
 
-export const RULE_ORDER: RuleId[] = [
-  "price",
-  "weather",
-  "waste",
-  "overtime",
-  "supplier",
-];
+export const RULE_ORDER: RuleId[] = ["reviews", "hours", "invoice"];
+
+/** Ask these in Talk. Invoice uses a 10% default until they change it. */
+const ASK_ORDER: RuleId[] = ["reviews", "hours"];
 
 export const EMPTY_RULES: HouseRules = {
-  price: { hikePct: null, bookUnderGbp: null, answer: "" },
-  weather: { level: null, answer: "" },
-  waste: { ignoreKg: null, ignoreGbp: null, theftGbp: null, answer: "" },
-  overtime: { salesPerHour: null, answer: "" },
-  supplier: { strikes: null, answer: "" },
+  reviews: { mode: null, answer: "" },
+  hours: { mode: null, answer: "" },
+  invoice: { flagPct: 10, answer: "Flag invoice lines more than 10% above the last price I read." },
 };
 
+type AutonomyLike = { id: string; level: string };
+
+export function houseRulesFromAutonomy(autonomy: AutonomyLike[]): HouseRules {
+  const reviewsHigh = autonomy.find((r) => r.id === "reviews-high")?.level;
+  const hours = autonomy.find((r) => r.id === "hours")?.level;
+  const reviewsMode: ReplyMode =
+    reviewsHigh === "handle" ? "handle" : reviewsHigh === "always-ask" ? "show" : "show";
+  const hoursMode: HoursMode = hours === "handle" ? "fix" : "show";
+  return {
+    reviews: {
+      mode: reviewsMode,
+      answer:
+        reviewsMode === "handle"
+          ? "Post the thank-you on 5-star reviews with no complaint. Everything else waits for me."
+          : "Draft every reply and show me before it goes public.",
+    },
+    hours: {
+      mode: hoursMode,
+      answer:
+        hoursMode === "fix"
+          ? "When Google and the website disagree, fix Google to match the site and tell me after."
+          : "Show me the hours change before anything goes live on Google.",
+    },
+    invoice: { ...EMPTY_RULES.invoice },
+  };
+}
+
+export function sanitizeHouseRules(raw: unknown): HouseRules {
+  const r = (raw ?? {}) as Partial<HouseRules>;
+  return {
+    reviews: {
+      mode: r.reviews?.mode ?? null,
+      answer: r.reviews?.answer ?? "",
+    },
+    hours: {
+      mode: r.hours?.mode ?? null,
+      answer: r.hours?.answer ?? "",
+    },
+    invoice: {
+      flagPct: r.invoice?.flagPct ?? EMPTY_RULES.invoice.flagPct,
+      answer: r.invoice?.answer || EMPTY_RULES.invoice.answer,
+    },
+  };
+}
+
 export const QUESTIONS: Record<RuleId, { title: string; ask: string }> = {
-  price: {
-    title: "Price",
-    ask: "If a supplier raises prices, at what point should I stop them? Tell me a percent hike, and if a small rise is fine to book.",
+  reviews: {
+    title: "Review replies",
+    ask: "I can see your public Google reviews. When a guest leaves 5 stars and no complaint, should I post the thank-you in your tone, or show you first? Anything below 5 stars always waits for you.",
   },
-  weather: {
-    title: "Weather prep",
-    ask: "If the weather is bad, how hard should I cut prep — relaxed, normal, or strict?",
+  hours: {
+    title: "Opening hours",
+    ask: "I compare your Google hours with your website. When they disagree, should I fix Google to match the site, or show you the change first?",
   },
-  waste: {
-    title: "Waste",
-    ask: "Kitchens are messy. How much missing food is just spill, and when is it theft? Give me kilos or pounds I should ignore, and a pound figure that is a flag.",
-  },
-  overtime: {
-    title: "Overtime",
-    ask: "When the floor asks to stay late, when can I auto-approve? Give me a sales-per-hour number. If the till is not connected I will only suggest.",
-  },
-  supplier: {
-    title: "Supplier",
-    ask: "How many bad deliveries in a month before I draft a switch?",
+  invoice: {
+    title: "Invoice prices",
+    ask: "Send me a photo of a delivery note and I read the lines. How big a price rise should I flag — 10%, 15%, or every rise?",
   },
 };
 
@@ -54,38 +90,48 @@ export const RULE_CHOICES: Record<
   RuleId,
   { id: string; label: string; answer: string }[]
 > = {
-  price: [
-    { id: "rule-price-10", label: "Stop above 10%", answer: "Stop if any item is more than 10% up. Under £5 total is fine to book." },
-    { id: "rule-price-15", label: "Stop above 15%", answer: "Stop if any item is more than 15% up. Under £10 total is fine to book." },
-    { id: "rule-price-ask", label: "Always ask me", answer: "Always ask me before booking a hike. No auto-book." },
+  reviews: [
+    {
+      id: "rule-reviews-handle",
+      label: "Post 5-star thank-yous",
+      answer: "Post the thank-you on 5-star reviews with no complaint. Everything else waits for me.",
+    },
+    {
+      id: "rule-reviews-show",
+      label: "Show me every reply",
+      answer: "Draft every reply and show me before it goes public.",
+    },
+    {
+      id: "rule-reviews-never",
+      label: "Don't reply for me",
+      answer: "Do not reply to reviews. Tell me what came in and I will handle it.",
+    },
   ],
-  weather: [
-    { id: "rule-weather-relaxed", label: "Relaxed", answer: "relaxed" },
-    { id: "rule-weather-normal", label: "Normal", answer: "normal" },
-    { id: "rule-weather-strict", label: "Strict", answer: "strict" },
+  hours: [
+    {
+      id: "rule-hours-fix",
+      label: "Fix Google to match the site",
+      answer: "When Google and the website disagree, fix Google to match the site and tell me after.",
+    },
+    {
+      id: "rule-hours-show",
+      label: "Show me the change first",
+      answer: "Show me the hours change before anything goes live on Google.",
+    },
   ],
-  waste: [
-    { id: "rule-waste-soft", label: "Ignore under £20", answer: "Ignore under 2kg or £20 a week. Flag theft risk above £50 of meat." },
-    { id: "rule-waste-mid", label: "Ignore under £50", answer: "Ignore under 3kg or £50 a week. Flag above £100." },
-    { id: "rule-waste-tight", label: "Flag everything", answer: "Ignore under 1kg or £10. Flag anything above £30." },
-  ],
-  overtime: [
-    { id: "rule-ot-busy", label: "If busy (sales high)", answer: "Auto-approve overtime if sales are over £1500 an hour. If quiet, cut the shift." },
-    { id: "rule-ot-ask", label: "Always ask me", answer: "Never auto-approve overtime. Always ask me." },
-  ],
-  supplier: [
-    { id: "rule-sup-3", label: "3 strikes", answer: "3 bad deliveries in a month — draft a switch." },
-    { id: "rule-sup-2", label: "2 strikes", answer: "2 bad deliveries in a month — draft a switch." },
-    { id: "rule-sup-5", label: "5 strikes", answer: "5 bad deliveries in a month — draft a switch." },
+  invoice: [
+    { id: "rule-invoice-10", label: "Flag over 10%", answer: "Flag any invoice line more than 10% above the last price." },
+    { id: "rule-invoice-15", label: "Flag over 15%", answer: "Flag any invoice line more than 15% above the last price." },
+    { id: "rule-invoice-all", label: "Flag every rise", answer: "Flag every price rise on a delivery note, however small." },
   ],
 };
 
 export function rulesComplete(rules: HouseRules) {
-  return RULE_ORDER.every((id) => rules[id].answer.trim().length > 0);
+  return ASK_ORDER.every((id) => rules[id].answer.trim().length > 0);
 }
 
 export function nextUnanswered(rules: HouseRules): RuleId | null {
-  return RULE_ORDER.find((id) => !rules[id].answer.trim()) ?? null;
+  return ASK_ORDER.find((id) => !rules[id].answer.trim()) ?? null;
 }
 
 function nums(text: string) {
@@ -104,61 +150,50 @@ export function looksLikeRuleAnswer(id: RuleId, text: string) {
   const t = text.trim().toLowerCase();
   if (!t) return false;
   if (looksLikeQuestion(t)) return false;
-  if (/margin|profit|google|review|invoice|weather forecast|hours? are/.test(t)) {
-    return false;
+  if (id === "reviews") {
+    return /5[- ]?star|five star|thank|reply|replies|show me|don'?t reply|never reply|post/.test(t);
   }
-  const n = nums(t);
-  if (id === "price") {
-    return /%|percent|hike|stop (them|it)|under £|under \$/.test(t) && n.length > 0;
+  if (id === "hours") {
+    return /google|website|site|hours|fix|match|show me/.test(t);
   }
-  if (id === "weather") {
-    return /relax|normal|strict|aggress|soft|hard/.test(t);
-  }
-  if (id === "waste") {
-    return n.length > 0 && /kg|kilo|£|\$|rand|zar|ignore|theft|spill/.test(t);
-  }
-  if (id === "overtime") {
-    return n.length > 0 && /hour|sales|cover|ot|overtime/.test(t);
-  }
-  return n.length > 0 && /time|strike|deliver|month|screw/.test(t);
+  return /%|percent|every rise|any rise|all rises|flag/.test(t) && (nums(t).length > 0 || /every|any|all/.test(t));
 }
 
 export function parseRuleAnswer(id: RuleId, text: string): HouseRules[RuleId] {
   const t = text.trim();
-  const n = nums(t);
-  if (id === "price") {
-    const pct = n.find((v) => v <= 100) ?? n[0] ?? null;
-    const gbp = n.find((v) => v !== pct) ?? (t.includes("£") || t.includes("$") ? n[0] : null);
-    return { hikePct: pct, bookUnderGbp: gbp, answer: t };
+  const low = t.toLowerCase();
+  if (id === "reviews") {
+    const mode: ReplyMode = /do not|don'?t|never/.test(low)
+      ? "never"
+      : /show me|draft every|before it goes/.test(low)
+        ? "show"
+        : "handle";
+    return { mode, answer: t };
   }
-  if (id === "weather") {
-    const level: PrepLevel = /relax|soft|low/.test(t)
-      ? "relaxed"
-      : /strict|hard|aggress/.test(t)
-        ? "strict"
-        : "normal";
-    return { level, answer: t };
+  if (id === "hours") {
+    const mode: HoursMode = /show me|before anything|wait/.test(low) ? "show" : "fix";
+    return { mode, answer: t };
   }
-  if (id === "waste") {
-    const kg = /kg/.test(t) ? (n[0] ?? null) : n.length > 2 ? n[0] : null;
-    const ignoreGbp = n[1] ?? n[0] ?? null;
-    const theftGbp = n[n.length - 1] ?? null;
-    return { ignoreKg: kg, ignoreGbp, theftGbp, answer: t };
-  }
-  if (id === "overtime") {
-    return { salesPerHour: n[0] ?? null, answer: t };
-  }
-  return { strikes: Math.round(n[0] ?? 3), answer: t };
+  const pct = nums(low).find((v) => v > 0 && v <= 100) ?? (/every|any|all/.test(low) ? 0 : null);
+  return { flagPct: pct, answer: t };
 }
 
+/** How tight the owner wants price flagging — drives orb motion only. */
 export function priceTightness(rules: HouseRules) {
-  const pct = rules.price.hikePct;
+  const pct = rules.invoice.flagPct;
   if (pct == null) return 0.5;
+  if (pct === 0) return 1;
   return Math.min(1, Math.max(0.15, (40 - pct) / 40));
 }
 
-export function weatherSoft(rules: HouseRules) {
-  return rules.weather.level === "relaxed";
+/** Owner let KOB post the easy 5-star thank-yous. */
+export function repliesOnAutopilot(rules: HouseRules) {
+  return rules.reviews.mode === "handle";
+}
+
+/** Owner wants Google hours fixed without a stop each time. */
+export function hoursOnAutopilot(rules: HouseRules) {
+  return rules.hours.mode === "fix";
 }
 
 export function todayKey() {

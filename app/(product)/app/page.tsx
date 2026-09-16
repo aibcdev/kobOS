@@ -11,9 +11,7 @@ import { actOnTalk } from "@/lib/kob/act";
 import { talkToKob } from "@/lib/kob/ai/kob";
 import { DEMO_RESTAURANTS, type ChatMessage } from "@/lib/kob/demo";
 import { parseInvoice, reviewVelocity, weatherPrep } from "@/lib/kob/engines/server";
-import { DEMO_POS } from "@/lib/kob/engines/kitchen-data";
 import { priceAlerts } from "@/lib/kob/engines/prices";
-import { leakageCopy, runVariance } from "@/lib/kob/engines/variance";
 import {
   QUESTIONS,
   RULE_CHOICES,
@@ -22,8 +20,8 @@ import {
   parseRuleAnswer,
   looksLikeRuleAnswer,
   priceTightness,
+  repliesOnAutopilot,
   rulesComplete,
-  weatherSoft,
   type RuleId,
 } from "@/lib/kob/house-rules";
 import { useKobStore } from "@/lib/kob/store";
@@ -71,7 +69,7 @@ function Workspace() {
           size="sm"
           mode={orbMode}
           tightness={priceTightness(houseRules)}
-          soft={weatherSoft(houseRules)}
+          soft={repliesOnAutopilot(houseRules)}
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{restaurant.name}</p>
@@ -147,36 +145,22 @@ function KobChat() {
     }
     const lines = result.lines;
     const alerts = priceAlerts(lines).filter((a) => {
-      if (isOverridden(overrides, "price")) return true;
-      const cap = houseRules.price.hikePct;
-      if (cap != null && a.abovePct < cap) return false;
+      if (isOverridden(overrides, "invoice")) return true;
+      const cap = houseRules.invoice.flagPct;
+      if (cap != null && cap > 0 && a.abovePct < cap) return false;
       return true;
     });
-    const leak = runVariance(lines, DEMO_POS);
-    const copy = leakageCopy(leak);
-    const ignoreGbp = houseRules.waste.ignoreGbp ?? 0;
-    const theft = houseRules.waste.theftGbp ?? 50;
-    const leakGbp = leak.reduce((s, r) => s + r.lostGbp, 0);
-    const hold = [
-      ...alerts.map((a) => ({
+    setHolding(
+      alerts.map((a) => ({
         id: `p-${a.item}`,
-        text: `${a.item} is ${a.abovePct}% over house rate.`,
+        text: `${a.item} is ${a.abovePct}% above the price I last read.`,
       })),
-    ];
-    if (leakGbp >= ignoreGbp) {
-      hold.push({
-        id: "waste",
-        text:
-          leakGbp >= theft
-            ? `Waste flag · about £${leakGbp.toFixed(0)} vs dishes sold.`
-            : copy,
-      });
-    }
-    setHolding(hold);
+    );
     const text = [
       result.note,
-      alerts.map((a) => a.note).join("\n\n"),
-      leakGbp >= ignoreGbp ? copy : "Waste is under your ignore line. I will not nag.",
+      alerts.length
+        ? alerts.map((a) => a.note).join("\n\n")
+        : "No line is above your flag. Nothing to chase.",
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -187,7 +171,7 @@ function KobChat() {
       actions: [
         { id: "approve-all", label: "Draft supplier note", kind: "approve" },
         { id: "ignore", label: "Leave it", kind: "ignore" },
-        { id: "override-price", label: "Override today", kind: "yes" },
+        { id: "override-invoice", label: "Override today", kind: "yes" },
       ],
       doneText: "Done.\nSupplier note queued. Not sent.\nI'll keep watching.",
     });

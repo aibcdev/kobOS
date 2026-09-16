@@ -125,9 +125,9 @@ export function actOnTalk(input: {
     return {
       kind: "handled",
       reply:
-        "MARGIN\nI check three leaks: supplier prices vs house rate, dishes sold vs what you bought, and waste over your ignore line.\nI can run last night's demo invoice against dish counts now. Nothing goes to a supplier until you tap yes.",
+        "MARGIN\nI am not connected to your till, so I do not guess your food cost. What I can read is a photo of a delivery note: I compare each line with the last price I read and flag the rises.\nRun the demo note and see. Nothing goes to a supplier until you tap yes.",
       actions: [
-        { id: "demo-invoice", label: "Run invoice vs till", kind: "yes" },
+        { id: "demo-invoice", label: "Read a delivery note", kind: "yes" },
         { id: "ignore", label: "Leave it", kind: "ignore" },
       ],
       mutations: {},
@@ -138,8 +138,8 @@ export function actOnTalk(input: {
     return {
       kind: "handled",
       reply:
-        "Weather is off. Open kitchen and turn it on if you want prep cuts. For margins, send a delivery note or tap the invoice.",
-      actions: [{ id: "demo-invoice", label: "Check invoice vs till", kind: "yes" }],
+        "Weather is off. Open kitchen and turn it on if you want a heads-up on a wet service. For prices, send me a delivery note.",
+      actions: [{ id: "demo-invoice", label: "Read a delivery note", kind: "yes" }],
       mutations: {},
     };
   }
@@ -412,18 +412,16 @@ export function actOnTalk(input: {
         mutations: {},
       };
     }
-    const ignore = houseRules?.waste.ignoreGbp ?? 0;
-    if (houseRules && !isOverridden(overrides, "waste") && ignore > 200) {
-      return {
-        kind: "handled",
-        reply: `Your waste rule ignores small gaps. I'll only flag a real hole. Want the demo invoice anyway?`,
-        actions: [{ id: "demo-invoice", label: "Use demo invoice", kind: "yes" }],
-        mutations: {},
-      };
-    }
+    const flagPct = houseRules?.invoice.flagPct;
+    const line =
+      flagPct != null && !isOverridden(overrides, "invoice")
+        ? flagPct === 0
+          ? "I'll read the delivery note and flag every rise, as you asked."
+          : `I'll read the delivery note and flag anything more than ${flagPct}% above the last price I read.`
+        : "I'll read the delivery note and flag the price rises.";
     return {
       kind: "handled",
-      reply: "I'll read the delivery note against the till counts. Nothing texts the chef until you say so.",
+      reply: `${line} No till, so I do not guess portions. Nothing goes to a supplier until you say so.`,
       actions: [
         { id: "demo-invoice", label: "Use demo invoice", kind: "yes" },
         { id: "review", label: "Leave it", kind: "ignore" },
@@ -436,18 +434,16 @@ export function actOnTalk(input: {
     if (connected && !connected.weather) {
       return {
         kind: "handled",
-        reply: "Turn on weather in the kitchen sheet. Then I'll propose prep — you still approve.",
+        reply: "Turn on weather in Open kitchen if you want a heads-up. I will not cut prep unless you ask.",
         mutations: {},
       };
     }
-    const strict = houseRules?.weather.level === "strict";
     return {
       kind: "handled",
-      reply: strict
-        ? "Weather is on. Your rule is strict — I'll cut salad hard if rain is in. Approve the prep note?"
-        : "Weather is on. I'll propose a prep change. You approve. Nothing goes to the chef yet.",
+      reply:
+        "Weather is on. I'll read the forecast and write a note for the team. You approve it — nothing goes to the chef on its own.",
       actions: [
-        { id: "weather-prep", label: "Run weather prep", kind: "yes" },
+        { id: "weather-prep", label: "Check the forecast", kind: "yes" },
         { id: "review", label: "Leave it", kind: "ignore" },
       ],
       mutations: {},
