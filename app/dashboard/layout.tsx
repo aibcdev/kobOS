@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { User } from "@supabase/supabase-js";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
 import { withTimeout } from "@/lib/auth/with-timeout";
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 const PROFILE_BUDGET_MS = 6_000;
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  let user: { id: string; email?: string | null } | null = null;
+  let user: User | null = null;
   try {
     const supabase = await createSupabaseServerClient();
     const {
