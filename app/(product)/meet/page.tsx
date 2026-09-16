@@ -20,6 +20,7 @@ const LOOKING = [
 
 export default function MeetPage() {
   const storeRestaurant = useKobStore((s) => s.restaurant);
+  const onboardProfile = useKobStore((s) => s.onboardProfile);
   const hydrateRestaurant = useKobStore((s) => s.hydrateRestaurant);
   const connectGoogle = useKobStore((s) => s.connectGoogle);
   const restaurant = storeRestaurant ?? DEMO_RESTAURANTS[0];
@@ -82,6 +83,25 @@ export default function MeetPage() {
             <h1 className="font-display text-headline font-medium">
               I’ll take {restaurant.name} from here.
             </h1>
+
+            {onboardProfile ? (
+              <article className="space-y-3 rounded-[1.75rem] bg-cream p-5 text-sm text-ink">
+                <p className="font-medium text-espresso">
+                  First read — {onboardProfile.roleLabel}
+                </p>
+                <p>{onboardProfile.googlePerformance.summary}</p>
+                <p>{onboardProfile.popularity.summary}</p>
+                <p>{onboardProfile.websiteView.summary}</p>
+                <p>
+                  Likely focus: <strong>{onboardProfile.biggestIssue.label}</strong> —{" "}
+                  {onboardProfile.biggestIssue.why}
+                </p>
+                <p className="text-muted">
+                  Team guess: ~{onboardProfile.staffEstimate.range}.{" "}
+                  {onboardProfile.dayToDayFocus[0]}
+                </p>
+              </article>
+            ) : null}
 
             <article className="rounded-[1.75rem] bg-cream p-5">
               <div className="flex gap-3">

@@ -10,10 +10,15 @@ function isAuditFunnelPath(pathname: string | null) {
   return /^\/audit\/[^/]+(\/(scanning|upgrade(\/checkout)?|plain|share)?)?$/.test(pathname);
 }
 
+function isBareMarketingPath(pathname: string | null) {
+  if (!pathname) return false;
+  return pathname === "/onboard" || pathname.startsWith("/onboard/");
+}
+
 /** All other marketing routes use SaaS template header + footer. */
 export function MarketingPageChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  if (isAuditFunnelPath(pathname)) {
+  if (isAuditFunnelPath(pathname) || isBareMarketingPath(pathname)) {
     return <>{children}</>;
   }
   return <SaasMarketingShell>{children}</SaasMarketingShell>;

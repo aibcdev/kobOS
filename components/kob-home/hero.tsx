@@ -32,7 +32,7 @@ export function Hero() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" variant="cream" asChild>
-                <Link href="/signup">Try for free</Link>
+                <Link href="/onboard">Try for free</Link>
               </Button>
               <Button size="lg" variant="frost" asChild>
                 <Link href="/login">Log in</Link>

@@ -27,6 +27,12 @@ import {
   type Overrides,
   type RuleId,
 } from "@/lib/kob/house-rules";
+import {
+  findingsFromOnboard,
+  restaurantFromOnboard,
+} from "@/lib/kob/onboard-map";
+import type { OnboardLens } from "@/lib/kob/onboard-lens";
+import type { OnboardProfile } from "@/lib/kob/onboard-profile";
 
 export type AppPane = "kob";
 export type OrbMode = "idle" | "thinking" | "alert" | "done";
@@ -55,7 +61,10 @@ type KobStore = {
   orbMode: OrbMode
   truthLog: TruthEntry[]
   holding: HoldingItem[]
+  onboardProfile: OnboardProfile | null
+  onboardLens: OnboardLens | null
   hydrateRestaurant: (restaurant: Restaurant) => void
+  hydrateFromOnboard: (profile: OnboardProfile, lens?: OnboardLens | null) => void
   replayMorning: () => void
   setPane: (pane: AppPane) => void
   setTone: (tone: "friendly" | "professional" | "casual") => void
@@ -78,13 +87,15 @@ type KobStore = {
   setHolding: (items: HoldingItem[]) => void
 };
 
-function setupMessages(restaurant: Restaurant): ChatMessage[] {
+function setupMessages(restaurant: Restaurant, opener?: string): ChatMessage[] {
   const first = QUESTIONS.price;
   return [
     {
       id: "setup-hello",
       role: "kob",
-      text: `Morning, ${restaurant.ownerFirstName}. Teach me how you run the floor. Five short answers. Then I can take jobs — still nothing public until you say so.`,
+      text:
+        opener ??
+        `Morning, ${restaurant.ownerFirstName}. Teach me how you run the floor. Five short answers. Then I can take jobs — still nothing public until you say so.`,
     },
     {
       id: "setup-price",
@@ -99,12 +110,17 @@ function setupMessages(restaurant: Restaurant): ChatMessage[] {
   ];
 }
 
-function snapshot(restaurant: Restaurant, autonomy: AutonomyRule[], rules: HouseRules) {
+function snapshot(
+  restaurant: Restaurant,
+  autonomy: AutonomyRule[],
+  rules: HouseRules,
+  opener?: string,
+) {
   if (!rulesComplete(rules)) {
     return {
       findings: applyAutonomyToFindings(findingsFor(restaurant), autonomy),
       reviews: applyAutonomyToReviews(reviewsFor(restaurant), autonomy),
-      messages: setupMessages(restaurant),
+      messages: setupMessages(restaurant, opener),
       approvedIds: [] as string[],
     };
   }
@@ -248,13 +264,66 @@ export const useKobStore = create<KobStore>()(
       orbMode: "idle",
       truthLog: [],
       holding: [],
+      onboardProfile: null,
+      onboardLens: null,
       hydrateRestaurant: (restaurant) => {
         const autonomy = get().autonomy;
         set({
           restaurant,
           ownerName: restaurant.ownerFirstName,
+          onboardProfile: null,
+          onboardLens: null,
           pane: "kob",
           ...snapshot(restaurant, autonomy, get().houseRules),
+        });
+      },
+      hydrateFromOnboard: (profile, lens) => {
+        const restaurant = restaurantFromOnboard(profile);
+        const autonomy = lens?.autonomy ?? get().autonomy;
+        const base = snapshot(restaurant, autonomy, get().houseRules, lens?.talkOpener);
+        const onboardFindings = findingsFromOnboard(profile);
+        const ordered = lens?.priority?.length
+          ? [
+              ...onboardFindings.filter((f) =>
+                lens.priority.some((p) => f.area.includes(p) || f.id.includes(p)),
+              ),
+              ...onboardFindings,
+              ...base.findings,
+            ].filter((item, i, all) => all.findIndex((x) => x.id === item.id) === i)
+          : [...onboardFindings, ...base.findings];
+        set({
+          restaurant,
+          ownerName: restaurant.ownerFirstName,
+          onboardProfile: profile,
+          onboardLens: lens ?? null,
+          autonomy,
+          pane: "kob",
+          websiteUrl: profile.website ?? "",
+          weatherCity: profile.city || "London",
+          googleConnected: Boolean(lens?.connected.google ?? profile.source === "places"),
+          connected: lens?.connected
+            ? { ...EMPTY_TOOLS, ...lens.connected }
+            : profile.source === "places"
+              ? {
+                  ...get().connected,
+                  google: true,
+                  website: Boolean(profile.website),
+                }
+              : get().connected,
+          findings: ordered.slice(0, 14),
+          reviews: base.reviews,
+          messages: base.messages,
+          memory: lens?.memoryNote
+            ? [
+                {
+                  id: "onboard-matters",
+                  text: lens.memoryNote,
+                  learned: lens.talkOpener,
+                },
+                ...get().memory,
+              ]
+            : get().memory,
+          approvedIds: base.approvedIds,
         });
       },
       replayMorning: () => {
@@ -396,6 +465,8 @@ export const useKobStore = create<KobStore>()(
         overrides: state.overrides,
         truthLog: state.truthLog,
         holding: state.holding,
+        onboardProfile: state.onboardProfile,
+        onboardLens: state.onboardLens,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<KobStore>;
@@ -423,6 +494,8 @@ export const useKobStore = create<KobStore>()(
           overrides: saved.overrides ?? {},
           truthLog: saved.truthLog ?? [],
           holding: saved.holding ?? [],
+          onboardProfile: saved.onboardProfile ?? null,
+          onboardLens: saved.onboardLens ?? null,
         };
       },
     },

@@ -23,6 +23,7 @@ export function KitchenSheet() {
   const setWeatherCity = useKobStore((s) => s.setWeatherCity);
   const notifyEmail = useKobStore((s) => s.notifyEmail);
   const setNotifyEmail = useKobStore((s) => s.setNotifyEmail);
+  const onboardLens = useKobStore((s) => s.onboardLens);
   const [siteDraft, setSiteDraft] = useState(websiteUrl);
   const [cityDraft, setCityDraft] = useState(weatherCity);
   const [emailDraft, setEmailDraft] = useState(notifyEmail);
@@ -48,7 +49,9 @@ export function KitchenSheet() {
         <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-line-strong" />
         <h2 className="font-display text-2xl font-medium">Kitchen</h2>
         <p className="mt-1 text-sm text-muted">
-          Free tools work now. Paid partners show Soon. You still approve.
+          {onboardLens
+            ? `Starting with ${onboardLens.firstJobLabel}. Phone and the till are Coming soon.`
+            : "Free tools work now. Paid partners show Soon. You still approve."}
         </p>
 
         <section className="mt-6">
@@ -91,6 +94,20 @@ export function KitchenSheet() {
 
         <section className="mt-6">
           <h3 className="text-sm font-medium">Connect</h3>
+          <ul className="mt-3 space-y-2">
+            <li className="rounded-2xl bg-paper px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">
+                    Phone
+                    <span className="ml-2 text-[0.65rem] font-normal text-subtle">Soon</span>
+                  </p>
+                  <p className="text-xs text-muted">KOB will not take calls yet.</p>
+                </div>
+                <p className="shrink-0 text-xs text-subtle">Coming soon</p>
+              </div>
+            </li>
+          </ul>
           {TOOL_GROUPS.map((group) => (
             <div key={group} className="mt-4">
               <p className="text-xs font-medium text-muted">{group}</p>
@@ -103,17 +120,21 @@ export function KitchenSheet() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium">
                             {tool.name}
-                            {tool.free ? (
-                              <span className="ml-2 text-[0.65rem] font-normal text-sage">
-                                Free
-                              </span>
-                            ) : (
+                            {tool.id === "pos" || !tool.free ? (
                               <span className="ml-2 text-[0.65rem] font-normal text-subtle">
                                 Soon
                               </span>
+                            ) : (
+                              <span className="ml-2 text-[0.65rem] font-normal text-sage">
+                                Free
+                              </span>
                             )}
                           </p>
-                          <p className="text-xs text-muted">{tool.does}</p>
+                          <p className="text-xs text-muted">
+                            {tool.id === "pos"
+                              ? "We do not replace your till. Partner login is Coming soon."
+                              : tool.does}
+                          </p>
                           <p className="mt-1 text-[0.7rem] text-subtle">
                             {tool.vendors.join(" · ")}
                           </p>
