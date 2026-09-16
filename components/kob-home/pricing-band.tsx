@@ -3,11 +3,11 @@ import { Button } from "@/components/kob-ui/button";
 
 export function PricingBand() {
   return (
-    <section id="pricing" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section id="pricing" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <h2 className="font-display text-headline max-w-xl font-medium">
         Simple pricing. One manager per location.
       </h2>
-      <div className="mt-12 max-w-lg rounded-[1.75rem] bg-cream p-8 sm:p-10">
+      <div className="mt-8 max-w-lg rounded-[1.75rem] bg-cream p-8 sm:p-10">
         <p className="font-display text-5xl font-medium tracking-tight">£99</p>
         <p className="mt-1 text-muted">per location / month · founding</p>
         <p className="mt-5 text-ink">

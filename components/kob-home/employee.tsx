@@ -15,7 +15,7 @@ const TOOLS_SOON = [
 
 export function Employee() {
   return (
-    <section id="employee" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section id="employee" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <h2 className="font-display text-headline max-w-2xl font-medium">
         KOB isn’t a dashboard. KOB is an employee who uses your tools.
       </h2>
@@ -25,7 +25,7 @@ export function Employee() {
         You do not sit in KOB. KOB sits in the tools you already have.
       </p>
 
-      <div className="mt-12 grid gap-4 lg:grid-cols-2">
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
         <article className="rounded-[1.75rem] border border-line bg-cream p-7 sm:p-8">
           <p className="text-sm font-medium text-sage">Works now — free</p>
           <ul className="mt-5 flex flex-wrap gap-2">

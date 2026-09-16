@@ -26,7 +26,7 @@ export function BeforeAfter() {
   }
 
   return (
-    <section id="proof" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section id="proof" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <div className="flex flex-wrap items-center gap-3">
         <LangosteriaWordmark size="proof" withExample />
       </div>
@@ -39,7 +39,7 @@ export function BeforeAfter() {
         prepares for your yes — not a customer claim. {PROOF_CASE.note}
       </p>
 
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {KOB_JOBS.map((item) => (
           <article
             key={item.title}
@@ -64,7 +64,7 @@ export function BeforeAfter() {
         ))}
       </div>
 
-      <p className="mt-14 text-sm text-muted">One job example · hours drift</p>
+      <p className="mt-8 text-sm text-muted">One job example · hours drift</p>
       <div className="mt-4 overflow-hidden rounded-[1.75rem] bg-cream">
         <div className="grid gap-px bg-line sm:grid-cols-4">
           <div className="bg-cream px-5 py-4 sm:px-6">

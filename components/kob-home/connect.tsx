@@ -41,7 +41,7 @@ const ROWS = [
 
 export function Connect() {
   return (
-    <section id="connect" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section id="connect" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <h2 className="font-display text-headline max-w-2xl font-medium">
         Add KOB to the tools you already have
       </h2>
@@ -50,7 +50,7 @@ export function Connect() {
         food waste flags, weather. Nothing public leaves without you.
       </p>
 
-      <div className="mt-12 overflow-hidden rounded-[1.75rem] border border-line bg-cream">
+      <div className="mt-8 overflow-hidden rounded-[1.75rem] border border-line bg-cream">
         <div
           className="border-b border-line px-6 py-5 sm:px-8"
           style={{ borderLeft: "4px solid #e23c1a" }}

@@ -18,7 +18,7 @@ const STEPS = [
 
 export function Loop() {
   return (
-    <section id="how" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section id="how" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <h2 className="font-display text-headline max-w-2xl font-medium">
         You talk. KOB works. You stay in charge.
       </h2>
@@ -26,7 +26,7 @@ export function Loop() {
         KOB is not a dashboard you log into after service. KOB is the manager
         who uses your tools while you run the room.
       </p>
-      <ol className="mt-14 space-y-4">
+      <ol className="mt-8 space-y-4">
         {STEPS.map((step) => (
           <li
             key={step.title}

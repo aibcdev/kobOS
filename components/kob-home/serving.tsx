@@ -1,10 +1,10 @@
 export function Serving() {
   return (
-    <section className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <h2 className="font-display text-headline max-w-2xl font-medium">
         KOB does the manager work. You keep the restaurant.
       </h2>
-      <div className="mt-12 grid gap-4 md:grid-cols-2">
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
         {CARDS.map((card) => (
           <article
             key={card.title}

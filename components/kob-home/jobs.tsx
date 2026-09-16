@@ -67,13 +67,13 @@ export function Jobs() {
   const accent = ROLE_ACCENT[job.key] ?? "#e23c1a";
 
   return (
-    <section id="jobs" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
-      <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+    <section id="jobs" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
+      <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
         <div>
           <h2 className="font-display text-headline font-medium">
             KOB does what restaurant managers do
           </h2>
-          <ul className="mt-12">
+          <ul className="mt-8">
             {JOBS.map((item) => {
               const ItemIcon = ICONS[item.key];
               const on = active === item.key;

@@ -17,8 +17,8 @@ export function Memory() {
   const [remembered, setRemembered] = useState(false);
 
   return (
-    <section className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
-      <div className="grid items-start gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+    <section className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
+      <div className="grid items-start gap-8 lg:grid-cols-[0.7fr_1.3fr]">
         <h2 className="font-display text-headline font-medium">
           KOB is the only manager that learns on each note
         </h2>

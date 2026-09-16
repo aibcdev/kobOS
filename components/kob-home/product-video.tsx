@@ -1,6 +1,6 @@
 export function ProductVideo() {
   return (
-    <section id="watch" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
+    <section id="watch" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <p className="text-sm text-muted">Meet KOB</p>
       <h2 className="font-display text-headline mt-3 max-w-2xl font-medium">
         You talk. KOB takes the job.

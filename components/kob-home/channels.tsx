@@ -4,7 +4,7 @@ import { Phone } from "@/components/kob-home/phone";
 
 export function Channels() {
   return (
-    <section className="relative overflow-hidden bg-espresso py-28">
+    <section className="relative overflow-hidden bg-espresso py-14 sm:py-16">
       <img
         src="/photos/channels-blur.jpg"
         alt=""
@@ -12,7 +12,7 @@ export function Channels() {
       />
       <div className="absolute inset-0 bg-espresso/45" />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-5 sm:px-8 lg:grid-cols-[1fr_auto]">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[1fr_auto]">
         <div className="max-w-xl text-paper">
           <h2 className="font-display text-headline font-medium text-paper">
             Send KOB a message. Give KOB the job.

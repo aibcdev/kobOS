@@ -14,13 +14,13 @@ export function Autonomy() {
   const [granted, setGranted] = useState(false);
 
   return (
-    <section id="autonomy" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
-      <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+    <section id="autonomy" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
+      <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
         <div>
           <h2 className="font-display text-headline font-medium">
             Suggest, then approve, then autopilot
           </h2>
-          <ul className="mt-12">
+          <ul className="mt-8">
             {AUTONOMY_STAGES.map((item) => {
               const on = active === item.id;
               return (
