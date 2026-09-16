@@ -33,11 +33,11 @@ export function getStripeGrowthPriceId(): string | null {
   return process.env.STRIPE_GROWTH_PRICE_ID?.trim() || getStripePriceStarter();
 }
 
-export function getStripeTrialDays(): number | undefined {
+export function getStripeTrialDays(): number {
   const raw = process.env.STRIPE_TRIAL_DAYS?.trim();
-  if (!raw) return undefined;
+  if (!raw) return 3;
   const n = Number(raw);
-  if (!Number.isFinite(n) || n < 1 || n > 90) return undefined;
+  if (!Number.isFinite(n) || n < 1 || n > 90) return 3;
   return Math.floor(n);
 }
 

@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 /** Walkthrough: start a 3-day no-card trial. Stripe runs if keys exist; Talk always unlocks locally. */
 export async function POST() {
-  const trialDays = getStripeTrialDays();
+  const trialDays = getStripeTrialDays() ?? 3;
   const trialEndsAt = new Date(Date.now() + trialDays * 86400000).toISOString();
   const stripe = getStripe();
   const priceId = getStripeGrowthPriceId();
