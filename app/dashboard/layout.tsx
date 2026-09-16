@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ensureAppUser } from "@/lib/auth/ensure-user";
 import { withTimeout } from "@/lib/auth/with-timeout";
@@ -15,7 +14,18 @@ export const dynamic = "force-dynamic";
 const PROFILE_BUDGET_MS = 6_000;
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  if (isUiPreviewEnabled()) {
+  let user: { id: string; email?: string | null } | null = null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user: authed },
+    } = await supabase.auth.getUser();
+    user = authed;
+  } catch {
+    user = null;
+  }
+
+  if (isUiPreviewEnabled() || !user) {
     const restaurants = [
       {
         id: PREVIEW_RESTAURANT_ID,
@@ -30,15 +40,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </DashboardShell>
       </Suspense>
     );
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
   }
 
   // Soft-timeout profile setup so a cold DB cannot freeze the post-login paint.

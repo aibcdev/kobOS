@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
+import { isOpenProductPath } from "@/lib/preview/open-product";
 import { updateSession } from "@/lib/supabase/middleware";
 import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
@@ -25,16 +25,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const previewDashboard =
-    isUiPreviewEnabled() && (path.startsWith("/dashboard") || path.startsWith("/app"));
-  if (previewDashboard) {
+  if (isOpenProductPath(path)) {
     return NextResponse.next();
   }
 
   const hasSupabase = Boolean(readSupabasePublicEnv());
 
   if (!hasSupabase) {
-    if (path.startsWith("/dashboard") || path.startsWith("/app") || path.startsWith("/ops")) {
+    if (path.startsWith("/ops")) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("error", "missing_env");

@@ -7,7 +7,7 @@ import type { OrbMode } from "@/lib/kob/store";
 type Size = "sm" | "md" | "hero";
 
 const box: Record<Size, string> = {
-  sm: "size-7",
+  sm: "green-orb-sm size-8 shrink-0",
   md: "size-16",
   hero: "size-32 sm:size-[9.6rem]",
 };
@@ -35,6 +35,7 @@ export function GreenOrb({
   useEffect(() => {
     const el = root.current;
     if (!el) return;
+    if (size === "sm") return;
 
     const node = el;
 
@@ -85,7 +86,7 @@ export function GreenOrb({
       window.removeEventListener("pointermove", onMove);
       node.removeEventListener("pointerleave", onLeave);
     };
-  }, [tightness]);
+  }, [tightness, size]);
 
   return (
     <span

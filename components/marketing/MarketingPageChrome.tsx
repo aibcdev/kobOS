@@ -4,21 +4,26 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SaasMarketingShell } from "@/components/marketing/saas/SaasMarketingShell";
 
-/** Audit funnel: report, scanning, upgrade, plain share view — Owner header only (no marketing footer). */
-function isAuditFunnelPath(pathname: string | null) {
+/** Only old SaaS template pages get that banner. Homepage and onboard never do. */
+function usesSaasBanner(pathname: string | null) {
   if (!pathname) return false;
-  return /^\/audit\/[^/]+(\/(scanning|upgrade(\/checkout)?|plain|share)?)?$/.test(pathname);
+  if (pathname === "/") return false;
+  if (pathname === "/onboard" || pathname.startsWith("/onboard/")) return false;
+  if (pathname.startsWith("/audit")) return false;
+  return (
+    pathname === "/pricing" ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname.startsWith("/resources") ||
+    pathname.startsWith("/features") ||
+    pathname.startsWith("/solutions") ||
+    pathname === "/demo"
+  );
 }
 
-function isBareMarketingPath(pathname: string | null) {
-  if (!pathname) return false;
-  return pathname === "/onboard" || pathname.startsWith("/onboard/");
-}
-
-/** All other marketing routes use SaaS template header + footer. */
 export function MarketingPageChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  if (isAuditFunnelPath(pathname) || isBareMarketingPath(pathname)) {
+  if (!usesSaasBanner(pathname)) {
     return <>{children}</>;
   }
   return <SaasMarketingShell>{children}</SaasMarketingShell>;

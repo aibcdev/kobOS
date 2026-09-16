@@ -20,7 +20,7 @@ export function PricingBand() {
           <li>Talk on WhatsApp or email when those land</li>
         </ul>
         <Button size="lg" className="mt-8" asChild>
-          <Link href="/signup">Try for free</Link>
+          <Link href="/onboard">Try for free</Link>
         </Button>
       </div>
       <p className="mt-8 max-w-lg text-sm text-muted">

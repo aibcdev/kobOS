@@ -166,7 +166,7 @@ export function TalkOrb({ className }: { className?: string }) {
 
             <div className="flex shrink-0 gap-2 border-t border-line px-5 py-4">
               <Button size="sm" className="flex-1" asChild>
-                <Link href="/signup">Try for free</Link>
+                <Link href="/onboard">Try for free</Link>
               </Button>
               <Button size="sm" variant="outline" className="flex-1" asChild>
                 <Link href="/login">Log in</Link>

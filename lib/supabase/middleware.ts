@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
+import { isOpenProductPath } from "@/lib/preview/open-product";
 import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
 export async function updateSession(request: NextRequest) {
@@ -33,13 +33,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const previewDashboard =
-    isUiPreviewEnabled() && (path.startsWith("/dashboard") || path.startsWith("/app"));
-  if (previewDashboard) {
+  if (isOpenProductPath(path)) {
     return supabaseResponse;
   }
 
-  if (path.startsWith("/dashboard") || path.startsWith("/app") || path.startsWith("/ops")) {
+  if (path.startsWith("/ops")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";

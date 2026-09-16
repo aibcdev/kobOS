@@ -58,6 +58,24 @@
   perspective: 600px;
 }
 
+.green-orb-sm {
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  perspective: none;
+}
+
+.green-orb-sm .green-orb-sphere {
+  transform: none;
+  box-shadow:
+    inset 0 -18% 28% rgba(6, 28, 14, 0.45),
+    0 8px 16px -8px rgba(17, 80, 40, 0.55);
+}
+
+.green-orb-sm.green-orb-soft .green-orb-sphere,
+.green-orb-sm.green-orb-tight .green-orb-sphere {
+  transform: none;
+}
+
 .green-orb-sphere {
   position: relative;
   display: block;

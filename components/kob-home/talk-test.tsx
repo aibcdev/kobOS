@@ -151,7 +151,7 @@ export function TalkTest({ className }: { className?: string }) {
 
             <div className="flex gap-2 border-t border-line px-4 py-3">
               <Button size="sm" className="flex-1" asChild>
-                <Link href="/signup">Start free trial</Link>
+                <Link href="/onboard">Start free trial</Link>
               </Button>
               <Button size="sm" variant="outline" className="flex-1" asChild>
                 <Link href="/login">Log in</Link>
