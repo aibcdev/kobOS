@@ -66,6 +66,8 @@ type KobStore = {
   holding: HoldingItem[]
   onboardProfile: OnboardProfile | null
   onboardLens: OnboardLens | null
+  trialEndsAt: string | null
+  startNoCardTrial: () => void
   hydrateRestaurant: (restaurant: Restaurant) => void
   hydrateFromOnboard: (profile: OnboardProfile, lens?: OnboardLens | null) => void
   replayMorning: () => void
@@ -77,7 +79,7 @@ type KobStore = {
   setWebsiteUrl: (url: string) => void
   setWeatherCity: (city: string) => void
   setNotifyEmail: (email: string) => void
-  approve: (id: string) => void
+  approve: (id: string, opts?: { complete?: boolean }) => void
   applyWork: (mutations: WorkMutations) => void
   addMessage: (message: ChatMessage) => void
   remember: (item: MemoryItem) => void
@@ -264,7 +266,7 @@ export const useKobStore = create<KobStore>()(
       ownerName: "there",
       tone: "casual",
       googleConnected: false,
-      connected: { ...EMPTY_TOOLS },
+      connected: { ...EMPTY_TOOLS, google: true, accounting: true, weather: true },
       websiteUrl: "",
       weatherCity: "Cape Town",
       notifyEmail: "",
@@ -277,6 +279,11 @@ export const useKobStore = create<KobStore>()(
       holding: [],
       onboardProfile: null,
       onboardLens: null,
+      trialEndsAt: null,
+      startNoCardTrial: () => {
+        const ends = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+        set({ trialEndsAt: ends });
+      },
       hydrateRestaurant: (restaurant) => {
         const autonomy = get().autonomy;
         set({
@@ -397,11 +404,17 @@ export const useKobStore = create<KobStore>()(
         const next = applyMutations(get(), mutations);
         set(next);
       },
-      approve: (id) => {
+      approve: (id, opts) => {
+        const complete = opts?.complete !== false;
         const msg = get().messages.find((m) => m.id === id);
-        const autonomy = get().autonomy;
-        if (!msg?.doneText) {
-          set({ approvedIds: [...get().approvedIds, id], orbMode: "done" });
+        if (!complete || !msg?.doneText) {
+          set({
+            approvedIds: [...get().approvedIds, id],
+            orbMode: "idle",
+            messages: get().messages.map((m) =>
+              m.id === id ? { ...m, actions: undefined } : m,
+            ),
+          });
           return;
         }
         const next = applyMutations(get(), {
@@ -480,6 +493,7 @@ export const useKobStore = create<KobStore>()(
         holding: state.holding,
         onboardProfile: state.onboardProfile,
         onboardLens: state.onboardLens,
+        trialEndsAt: state.trialEndsAt,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<KobStore>;
@@ -518,7 +532,7 @@ export const useKobStore = create<KobStore>()(
           autonomy,
           messages,
           pane: "kob" as const,
-          connected: { ...EMPTY_TOOLS, ...saved.connected },
+          connected: { ...EMPTY_TOOLS, google: true, accounting: true, weather: true, ...saved.connected },
           websiteUrl: saved.websiteUrl ?? "",
           weatherCity: saved.weatherCity ?? "Cape Town",
           notifyEmail: saved.notifyEmail ?? "",
@@ -528,6 +542,7 @@ export const useKobStore = create<KobStore>()(
           holding: saved.holding ?? [],
           onboardProfile: saved.onboardProfile ?? null,
           onboardLens: saved.onboardLens ?? null,
+          trialEndsAt: saved.trialEndsAt ?? null,
         };
       },
     },

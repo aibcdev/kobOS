@@ -85,10 +85,10 @@ export function narrateJobs(
 export function doneSummary(findings: Finding[], autonomy: AutonomyRule[]) {
   const jobs = waitingJobs(findings, autonomy);
   const bits = jobs.map((finding) => {
-    if (finding.ruleId === "hours") return "Hours aligned on Google and the site";
-    if (finding.ruleId === "menu") return "Website menu queued to the printed one";
-    if (finding.ruleId === "google-info") return "Booking link added on Google";
-    if (finding.ruleId === "reviews-high") return "Five-star replies sent";
+    if (finding.ruleId === "hours") return "Hours drafted — waiting. Not posted to Google.";
+    if (finding.ruleId === "menu") return "Website menu queued to the printed one. Not live yet.";
+    if (finding.ruleId === "google-info") return "Booking link drafted for Google. Not posted.";
+    if (finding.ruleId === "reviews-high") return "Five-star thank-yous drafted. Not posted to Google.";
     return finding.headline;
   });
   if (!bits.length) return "Done. I'll keep watching.";
@@ -329,13 +329,6 @@ export function actOnTalk(input: {
   }
 
   if (/\breviews?\b/.test(q)) {
-    if (connected && !connected.google) {
-      return {
-        kind: "handled",
-        reply: "Reviews sit in Google. Connect Google in the kitchen sheet first.",
-        mutations: {},
-      };
-    }
     if (/nearby|competitor|velocity|spike|neighbour|neighbor/.test(q)) {
       return {
         kind: "handled",
@@ -351,35 +344,28 @@ export function actOnTalk(input: {
     if (highLevel === "handle") {
       return {
         kind: "handled",
-        reply: `Already done. 4 and 5 star reviews at ${restaurant.name} are on autopilot. I replied overnight.\n\nOne guest complained about a wait. That stays with you — I have not offered a voucher.`,
+        reply: `When you approve, I’ll draft the 5-star thank-yous in your tone. They stay in Talk until Google posting is live. The wait complaint always waits for you.`,
         mutations: { replyHighReviews: true },
       };
     }
     return {
       kind: "handled",
-      reply: `I'll draft the 5-stars in your tone and leave the complaint with you. Want me to send the easy ones now?`,
+      reply: `I'll draft the 5-stars in your tone and leave the complaint with you. They will not post to Google from here yet. Want the drafts?`,
       actions: [
         ...(askActions() ?? []),
         { id: "nearby-reviews", label: "Check nearby reviews", kind: "yes" },
       ],
-      doneText: "Done.\nFive-star replies sent.\nI'll keep watching.",
+      doneText: "Done.\nFive-star thank-yous drafted in Talk. Not posted to Google.\nI'll keep watching.",
       mutations: {},
     };
   }
 
   if (/\bhours\b|we're closed|we are closed|bank holiday|closed monday/.test(q)) {
-    if (connected && !connected.google) {
-      return {
-        kind: "handled",
-        reply: "Hours live on Google. Connect it in the kitchen sheet, then I'll prepare the change.",
-        mutations: {},
-      };
-    }
     if (hoursLevel === "handle") {
       return {
         kind: "handled",
         reply:
-          "Hours are on autopilot. I'll update Google, the website and the booking page now.",
+          "I'll prepare the hours for Google, the site, and bookings. Nothing posts until Google login is live — I'll show you the draft.",
         mutations: { alignHours: true },
       };
     }
@@ -398,7 +384,7 @@ export function actOnTalk(input: {
         { id: "approve-all", label: "Apply hours", kind: "approve" },
         { id: "review", label: "Leave it", kind: "ignore" },
       ],
-      doneText: "Done.\nHours aligned on Google and the site.\nI'll keep watching.",
+      doneText: "Done.\nHours drafted for Google and the site. Not posted.\nI'll keep watching.",
       mutations: {},
     };
   }

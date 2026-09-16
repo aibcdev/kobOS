@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { KitchenSheet } from "@/components/kob-app/kitchen-sheet";
+import { Paywall } from "@/components/kob-app/paywall";
 import { WaBubble, WaWorking } from "@/components/kob-chat/wa-thread";
 import { GreenOrb } from "@/components/kob-home/green-orb";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
@@ -60,10 +61,10 @@ function Workspace() {
   const houseRules = useKobStore((s) => s.houseRules);
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-[#efeae2]">
-      <header className="flex h-14 items-center gap-3 bg-[#075e54] px-3 text-paper">
-        <Link href="/" className="text-paper" aria-label="KOB home">
-          <KobWordmark invert />
+    <div className="relative flex min-h-dvh flex-col bg-[#ecece9]">
+      <header className="flex h-14 items-center gap-3 border-b border-line bg-paper px-4">
+        <Link href="/" aria-label="KOB home">
+          <KobWordmark />
         </Link>
         <GreenOrb
           size="sm"
@@ -72,12 +73,12 @@ function Workspace() {
           soft={repliesOnAutopilot(houseRules)}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{restaurant.name}</p>
-          <p className="text-[0.7rem] text-paper/70">KOB · Talk</p>
+          <p className="truncate text-sm font-medium text-espresso">{restaurant.name}</p>
+          <p className="text-[0.7rem] text-muted">KOB · Talk</p>
         </div>
         <button
           type="button"
-          className="rounded-full bg-paper/15 px-3 py-1.5 text-sm"
+          className="rounded-full bg-espresso px-3 py-1.5 text-sm text-paper"
           onClick={() => setSheetOpen(true)}
         >
           Open kitchen
@@ -85,6 +86,7 @@ function Workspace() {
       </header>
       <KobChat />
       <KitchenSheet />
+      <Paywall />
     </div>
   );
 }
@@ -107,7 +109,6 @@ function KobChat() {
   const overrides = useKobStore((s) => s.overrides);
   const overrideToday = useKobStore((s) => s.overrideToday);
   const setOrbMode = useKobStore((s) => s.setOrbMode);
-  const addTruth = useKobStore((s) => s.addTruth);
   const setHolding = useKobStore((s) => s.setHolding);
   const setSheetOpen = useKobStore((s) => s.setSheetOpen);
   const weatherCity = useKobStore((s) => s.weatherCity);
@@ -346,7 +347,7 @@ function KobChat() {
         )?.[0] ?? nextUnanswered(houseRules)
       ) as RuleId | null;
       if (choice && ruleId) {
-        approve(id);
+        approve(id, { complete: false });
         addMessage({
           id: `u-rule-${Date.now()}`,
           role: "owner",
@@ -358,17 +359,17 @@ function KobChat() {
     }
     if (actionId === "demo-invoice") {
       void runDemoInvoice();
-      approve(id);
+      approve(id, { complete: false });
       return;
     }
     if (actionId === "weather-prep") {
       void runWeather();
-      approve(id);
+      approve(id, { complete: false });
       return;
     }
     if (actionId === "nearby-reviews") {
       void runNearbyReviews();
-      approve(id);
+      approve(id, { complete: false });
       return;
     }
     if (actionId.startsWith("override-")) {
@@ -379,25 +380,25 @@ function KobChat() {
         role: "done",
         text: `Override on. That house rule is off until tomorrow.`,
       });
-      approve(id);
+      approve(id, { complete: false });
       return;
     }
-    if (actionId === "ignore") {
-      approve(id);
+    if (actionId === "ignore" || actionId === "review") {
+      approve(id, { complete: false });
       addMessage({
         id: `leave-${Date.now()}`,
         role: "kob",
-        text: "Left it. I'll keep watching.",
+        text: "Left it. I'll keep watching. Nothing posted.",
       });
       return;
     }
-    approve(id);
-    addTruth("You approved a job in Talk.");
+    approve(id, { complete: true });
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div ref={scroller} className="flex-1 space-y-2 overflow-y-auto px-3 py-4">
+      <div ref={scroller} className="relative flex-1 space-y-3 overflow-y-auto px-4 py-6 sm:px-8">
+        <span className="absolute bottom-8 left-[2.15rem] top-10 w-px bg-sage/25" />
         {messages.map((message) => (
           <WaBubble
             key={message.id}
@@ -409,7 +410,7 @@ function KobChat() {
         {busy ? <WaWorking mode="thinking" /> : null}
       </div>
       <form
-        className="bg-[#f0f2f5] p-2"
+        className="border-t border-line bg-paper p-3"
         onSubmit={(event) => {
           event.preventDefault();
           void send();

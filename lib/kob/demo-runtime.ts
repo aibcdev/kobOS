@@ -257,11 +257,11 @@ export function morningMessages(
       if (f.ruleId === "hours") {
         return websiteHoursMissing(restaurant)
           ? "Hours drafted — waiting for you to say which are true"
-          : "Hours aligned on Google and the site";
+          : "Hours drafted — waiting. Not posted to Google";
       }
       if (f.ruleId === "menu") return "Website menu queued to the printed one";
-      if (f.ruleId === "google-info") return "Booking link added on Google";
-      if (f.ruleId === "reviews-high") return "Five-star replies sent";
+      if (f.ruleId === "google-info") return "Booking link drafted for Google. Not posted";
+      if (f.ruleId === "reviews-high") return "Five-star thank-yous drafted. Not posted to Google";
       return f.headline;
     });
     messages.push({
