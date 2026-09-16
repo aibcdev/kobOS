@@ -39,8 +39,6 @@ export default function MeetPage() {
     return () => window.clearTimeout(t);
   }, [tick, lookingDone]);
 
-  const hoursMismatch = restaurant.hoursGoogle !== restaurant.hoursWebsite;
-
   function start(connect: boolean) {
     if (connect) connectGoogle();
     router.push("/app");
@@ -107,13 +105,11 @@ export default function MeetPage() {
               <div className="flex gap-3">
                 <KobMark size="sm" />
                 <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-ink">
-                  {`I’ll watch Google, reviews, the website and hours every morning.
+                  {`I’ll watch public Google, reviews, the website and hours.
 
-${hoursMismatch ? "Google hours don’t match the website. I’ll align them when you say Apply hours." : "Hours already match."}
-Five-star replies I send in your usual tone.
-The wait complaint stays with you. I will not offer a voucher.
+Drafts stay in Talk until you approve. I do not post to Google from here yet.
 
-You talk. I take the job. Nothing public goes live without you.`}
+You talk. I take the job.`}
                 </p>
               </div>
             </article>
