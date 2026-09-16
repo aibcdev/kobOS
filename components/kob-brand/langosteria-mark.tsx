@@ -4,29 +4,42 @@ import { cn } from "@/lib/kob/utils";
 export function LangosteriaWordmark({
   className,
   size = "md",
+  withExample = false,
 }: {
   className?: string
   size?: "sm" | "md" | "lg" | "proof"
+  /** Show a quiet “example” label beside the name */
+  withExample?: boolean
 }) {
-  const sizes = {
-    sm: "text-[1.05rem] tracking-[0.12em]",
-    md: "text-[1.35rem] tracking-[0.14em]",
-    lg: "text-[1.75rem] tracking-[0.16em] sm:text-[2rem]",
-    /** ~20% smaller than lg — homepage proof header */
-    proof: "text-[1.4rem] tracking-[0.14em] sm:text-[1.6rem]",
+  const name = {
+    sm: "text-[0.8125rem] sm:text-sm",
+    md: "text-sm sm:text-[0.9375rem]",
+    lg: "text-base sm:text-lg",
+    proof: "text-sm sm:text-base",
   } as const;
 
   return (
     <span
-      className={cn(
-        "inline-block font-serif font-semibold uppercase text-[#e23c1a]",
-        sizes[size],
-        className,
-      )}
-      style={{ fontFamily: '"Bodoni Moda", Didot, "Times New Roman", serif' }}
-      aria-label="Langosteria"
+      className={cn("inline-flex items-baseline gap-2", className)}
+      aria-label={withExample ? "Langosteria, example only" : "Langosteria"}
     >
-      LANGOSTERIA
+      <span
+        className={cn(
+          "font-semibold tracking-[-0.02em] text-[#c23018]",
+          name[size],
+        )}
+        style={{
+          fontFamily:
+            '"Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif',
+        }}
+      >
+        Langosteria
+      </span>
+      {withExample ? (
+        <span className="text-[0.65rem] font-medium uppercase tracking-[0.08em] text-[#c23018]/70">
+          Example
+        </span>
+      ) : null}
     </span>
   );
 }

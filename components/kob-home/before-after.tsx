@@ -27,15 +27,15 @@ export function BeforeAfter() {
 
   return (
     <section id="proof" className="mx-auto max-w-6xl px-5 py-28 sm:px-8">
-      <div className="border-b border-line pb-10">
-        <LangosteriaWordmark size="proof" />
+      <div className="flex flex-wrap items-center gap-3">
+        <LangosteriaWordmark size="proof" withExample />
       </div>
 
-      <h2 className="font-display text-headline mt-12 max-w-2xl font-medium">
+      <h2 className="font-display text-headline mt-6 max-w-2xl font-medium">
         How KOB works on a multi-site room
       </h2>
       <p className="mt-5 max-w-2xl text-lg text-ink">
-        {PROOF_CASE.name}, {PROOF_CASE.area}*. An example of the jobs KOB
+        {PROOF_CASE.name}, {PROOF_CASE.area}. An example of the jobs KOB
         prepares for your yes — not a customer claim. {PROOF_CASE.note}
       </p>
 
