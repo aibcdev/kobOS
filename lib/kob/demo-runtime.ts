@@ -8,6 +8,7 @@ import type {
   Review,
 } from "@/lib/kob/demo-data";
 import { DEMO_RESTAURANTS } from "@/lib/kob/demo-data";
+import { formatMorningBrief } from "@/lib/os/attention";
 
 export function findingsFor(restaurant: Restaurant): Finding[] {
   const hoursMismatch = restaurant.hoursGoogle !== restaurant.hoursWebsite;
@@ -241,14 +242,11 @@ export function morningMessages(
       ? `${locked[0].headline} stays with you.`
       : "";
 
-  const intro = [
-    `Morning, ${restaurant.ownerFirstName}.`,
-    handledLine,
-    ...suggestLines,
-    lockedLine,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const intro = formatMorningBrief({
+    handled: handled.length ? [handledLine] : [`Looked at ${restaurant.name}`],
+    needsYou: suggestLines,
+    noticed: lockedLine ? [lockedLine] : [],
+  }).replace("GOOD MORNING", `Morning, ${restaurant.ownerFirstName}.`);
 
   const messages: ChatMessage[] = [{ id: "m1", role: "kob", text: intro }];
 

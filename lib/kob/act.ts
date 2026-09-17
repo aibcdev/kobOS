@@ -10,10 +10,16 @@ import type {
 import { levelFor } from "@/lib/kob/demo";
 import { toolNeededFor, type ToolId } from "@/lib/kob/integrations";
 import {
+  hoursOnAutopilot,
   isOverridden,
   type HouseRules,
   type Overrides,
 } from "@/lib/kob/house-rules";
+import { talkClosure, talkSyncHours } from "@/lib/kob/os-talk";
+import {
+  parseNeverDiscountFriday,
+  parseNeverSwitchCoffee,
+} from "@/lib/os/reputation-memory";
 
 export type WorkMutations = {
   approveSuggest?: boolean
@@ -23,6 +29,7 @@ export type WorkMutations = {
   addBookingLink?: boolean
   addMemory?: MemoryItem
   setAutonomy?: { id: string; level: AutonomyLevel }[]
+  pendingClosureDate?: string | null
 };
 
 export type ActResult = {
@@ -102,7 +109,7 @@ function askActions(): ChatMessage["actions"] {
   ];
 }
 
-export function actOnTalk(input: {
+export async function actOnTalk(input: {
   text: string
   restaurant: Restaurant
   findings: Finding[]
@@ -112,7 +119,8 @@ export function actOnTalk(input: {
   connected?: Record<ToolId, boolean>
   houseRules?: HouseRules
   overrides?: Overrides
-}): ActResult {
+  pendingClosureDate?: string | null
+}): Promise<ActResult> {
   const q = input.text.toLowerCase().trim();
   const { restaurant, findings, autonomy } = input;
   const connected = input.connected;
@@ -231,6 +239,19 @@ export function actOnTalk(input: {
       q,
     )
   ) {
+    if (input.pendingClosureDate) {
+      const closed = await talkClosure({
+        utterance: `we're shut ${input.pendingClosureDate}`,
+        connected,
+        approved: true,
+        mode: "ASK",
+      });
+      return {
+        kind: "handled",
+        reply: closed.message || "Sent — waiting for confirmation.",
+        mutations: { pendingClosureDate: null },
+      };
+    }
     if (!waiting.length) {
       return {
         kind: "handled",
@@ -238,13 +259,24 @@ export function actOnTalk(input: {
         mutations: {},
       };
     }
+    const hoursWaiting = waiting.some((f) => f.ruleId === "hours");
+    let hoursNote = "";
+    if (hoursWaiting) {
+      const sync = await talkSyncHours({
+        restaurant,
+        connected,
+        approved: true,
+        mode: houseRules && hoursOnAutopilot(houseRules) ? "AUTO_WITH_LIMITS" : "ASK",
+      });
+      hoursNote = sync.message;
+    }
     return {
       kind: "handled",
-      reply: doneSummary(findings, autonomy),
+      reply: hoursNote || doneSummary(findings, autonomy),
       mutations: {
         approveSuggest: true,
         replyHighReviews: true,
-        alignHours: waiting.some((f) => f.ruleId === "hours"),
+        alignHours: hoursWaiting,
         queueMenu: waiting.some((f) => f.ruleId === "menu"),
         addBookingLink: waiting.some((f) => f.ruleId === "google-info"),
       },
@@ -295,16 +327,33 @@ export function actOnTalk(input: {
   }
 
   if (/never discount friday|don't discount friday|do not discount friday/.test(q)) {
+    const rule = parseNeverDiscountFriday(q);
     return {
       kind: "handled",
-      reply:
-        "Understood. Offers only Monday–Thursday, unless you ask. Friday and Saturday stay full price.",
+      reply: rule
+        ? "I'll remember that Friday discounts are never allowed. Correct?"
+        : "Understood. Offers only Monday–Thursday, unless you ask.",
       mutations: {
         setAutonomy: [{ id: "promos", level: "always-ask" }],
         addMemory: {
           id: `mem-${Date.now()}`,
           text: "Never discount Friday nights.",
-          learned: "Offers only Monday–Thursday, unless you ask.",
+          learned: "Structured rule: marketing discount prohibited Friday.",
+        },
+      },
+    };
+  }
+
+  if (parseNeverSwitchCoffee(q)) {
+    return {
+      kind: "handled",
+      reply:
+        "I'll remember never to switch the coffee supplier because of price. Correct?",
+      mutations: {
+        addMemory: {
+          id: `mem-${Date.now()}`,
+          text: "Don't ever switch our coffee supplier because of price.",
+          learned: "Structured rule: coffee substitution_policy NEVER.",
         },
       },
     };
@@ -360,32 +409,52 @@ export function actOnTalk(input: {
     };
   }
 
-  if (/\bhours\b|we're closed|we are closed|bank holiday|closed monday/.test(q)) {
-    if (hoursLevel === "handle") {
+  if (/\bhours\b|we're closed|we are closed|bank holiday|closed monday|we're shut|we are shut/.test(q)) {
+    const closure = await talkClosure({
+      utterance: input.text,
+      connected,
+      approved: false,
+      mode: hoursLevel === "handle" ? "AUTO_WITH_LIMITS" : "ASK",
+    });
+    if (closure.ask) {
       return {
         kind: "handled",
-        reply:
-          "I'll prepare the hours for Google, the site, and bookings. Nothing posts until Google login is live — I'll show you the draft.",
-        mutations: { alignHours: true },
+        reply: closure.ask,
+        actions: [
+          { id: "approve-all", label: "Apply all", kind: "approve" },
+          { id: "review", label: "Leave it", kind: "ignore" },
+        ],
+        mutations: { pendingClosureDate: closure.date ?? null },
       };
     }
     if (hoursLevel === "always-ask") {
       return {
         kind: "handled",
-        reply:
-          "Hours are protected. I'll prepare the change everywhere and wait.",
+        reply: "Hours are protected. I'll prepare the change everywhere and wait.",
+        mutations: {},
+      };
+    }
+    const sync = await talkSyncHours({
+      restaurant,
+      connected,
+      approved: hoursLevel === "handle",
+      mode: hoursLevel === "handle" ? "AUTO_WITH_LIMITS" : "ASK",
+    });
+    if (sync.needsApproval) {
+      return {
+        kind: "handled",
+        reply: sync.message,
+        actions: [
+          { id: "approve-all", label: "Apply hours", kind: "approve" },
+          { id: "review", label: "Leave it", kind: "ignore" },
+        ],
         mutations: {},
       };
     }
     return {
       kind: "handled",
-      reply: `I'll prepare the hours everywhere — Google, the website, bookings.\n\nGoogle still says ${restaurant.hoursGoogle}. The website says ${restaurant.hoursWebsite}. Nothing goes live until you say so.`,
-      actions: [
-        { id: "approve-all", label: "Apply hours", kind: "approve" },
-        { id: "review", label: "Leave it", kind: "ignore" },
-      ],
-      doneText: "Done.\nHours drafted for Google and the site. Not posted.\nI'll keep watching.",
-      mutations: {},
+      reply: sync.message,
+      mutations: { alignHours: sync.verifiedLocal },
     };
   }
 

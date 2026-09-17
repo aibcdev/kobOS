@@ -67,6 +67,7 @@ type KobStore = {
   onboardProfile: OnboardProfile | null
   onboardLens: OnboardLens | null
   trialEndsAt: string | null
+  pendingClosureDate: string | null
   startNoCardTrial: () => void
   hydrateRestaurant: (restaurant: Restaurant) => void
   hydrateFromOnboard: (profile: OnboardProfile, lens?: OnboardLens | null) => void
@@ -154,6 +155,7 @@ function applyMutations(
     autonomy: AutonomyRule[]
     googleConnected: boolean
     connected: Record<ToolId, boolean>
+    pendingClosureDate?: string | null
   },
   mutations: WorkMutations,
 ) {
@@ -250,7 +252,12 @@ function applyMutations(
     });
   }
 
-  return { restaurant, findings, reviews, memory, autonomy, googleConnected, connected };
+  let pendingClosureDate = state.pendingClosureDate ?? null;
+  if (mutations.pendingClosureDate !== undefined) {
+    pendingClosureDate = mutations.pendingClosureDate;
+  }
+
+  return { restaurant, findings, reviews, memory, autonomy, googleConnected, connected, pendingClosureDate };
 }
 
 export const useKobStore = create<KobStore>()(
@@ -280,6 +287,7 @@ export const useKobStore = create<KobStore>()(
       onboardProfile: null,
       onboardLens: null,
       trialEndsAt: null,
+      pendingClosureDate: null,
       startNoCardTrial: () => {
         const ends = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
         set({ trialEndsAt: ends });
@@ -494,6 +502,7 @@ export const useKobStore = create<KobStore>()(
         onboardProfile: state.onboardProfile,
         onboardLens: state.onboardLens,
         trialEndsAt: state.trialEndsAt,
+        pendingClosureDate: state.pendingClosureDate,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<KobStore>;

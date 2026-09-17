@@ -112,6 +112,7 @@ function KobChat() {
   const setHolding = useKobStore((s) => s.setHolding);
   const setSheetOpen = useKobStore((s) => s.setSheetOpen);
   const weatherCity = useKobStore((s) => s.weatherCity);
+  const pendingClosureDate = useKobStore((s) => s.pendingClosureDate);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
@@ -243,7 +244,7 @@ function KobChat() {
     }
 
     setOrbMode("thinking");
-    const acted = actOnTalk({
+    const acted = await actOnTalk({
       text,
       restaurant,
       findings,
@@ -253,6 +254,7 @@ function KobChat() {
       connected,
       houseRules,
       overrides,
+      pendingClosureDate,
     });
     applyWork(acted.mutations);
 
@@ -390,6 +392,11 @@ function KobChat() {
         role: "kob",
         text: "Left it. I'll keep watching. Nothing posted.",
       });
+      return;
+    }
+    if (actionId === "approve-all") {
+      approve(id, { complete: false });
+      void send("apply all");
       return;
     }
     approve(id, { complete: true });
