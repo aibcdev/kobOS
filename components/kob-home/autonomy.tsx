@@ -100,6 +100,25 @@ export function Autonomy() {
           </div>
         </div>
       </div>
+      <div className="mt-10 overflow-hidden rounded-[1.75rem] border border-line">
+        <p className="px-6 py-4 text-sm font-medium text-espresso sm:px-8">
+          You choose what KOB can handle automatically.
+        </p>
+        <ul className="divide-y divide-line text-sm">
+          {[
+            ["5-star reviews", "AUTOPILOT"],
+            ["Google hours", "ASK"],
+            ["Supplier changes", "ASK"],
+            ["Prep adjustments", "±10% AUTOPILOT"],
+            ["Guest refunds", "NEVER"],
+          ].map(([job, mode]) => (
+            <li key={job} className="flex justify-between gap-4 px-6 py-3 sm:px-8">
+              <span>{job}</span>
+              <span className="text-muted">{mode}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

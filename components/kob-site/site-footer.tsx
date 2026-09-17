@@ -5,7 +5,7 @@ import { KobWordmark } from "@/components/kob-brand/kob-mark";
 const PRODUCT = [
   { href: "/#how", label: "How it works" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/onboard", label: "Try for free" },
+  { href: "/onboard", label: "Try KOB" },
   { href: "/login", label: "Log in" },
 ];
 
@@ -25,17 +25,17 @@ export function SiteFooter() {
             <KobWordmark />
           </Link>
           <p className="mt-5 text-[1.05rem] font-medium leading-snug">
-            The AI restaurant manager for independent rooms.
+            The AI restaurant manager for independent restaurants and cafés.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            You talk. KOB takes Google, reviews, hours, and the kitchen.
-            Nothing public without your yes.
+            Handles the repetitive work behind the restaurant — so the team can
+            focus on guests. You choose what KOB can handle automatically.
           </p>
           <Link
             href="/onboard"
             className="mt-6 inline-flex h-11 items-center rounded-full bg-espresso px-5 text-sm font-medium text-paper hover:bg-espresso/90"
           >
-            Try for free
+            Try KOB
           </Link>
         </div>
 
@@ -62,7 +62,7 @@ export function SiteFooter() {
             Independent restaurants and cafés. One to five locations.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            Cut waste. Save hours. Grow in your area. You stay in charge.
+            Less admin. Lower costs. Fewer missed guests.
           </p>
         </div>
 

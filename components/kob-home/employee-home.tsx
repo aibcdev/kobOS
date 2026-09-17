@@ -2,18 +2,21 @@ import { Autonomy } from "@/components/kob-home/autonomy";
 import { Claims } from "@/components/kob-home/claims";
 import { Channels } from "@/components/kob-home/channels";
 import { Connect } from "@/components/kob-home/connect";
+import { CostWatch } from "@/components/kob-home/cost-watch";
+import { HandledToday } from "@/components/kob-home/handled-today";
 import { Hero } from "@/components/kob-home/hero";
+import { JobTabs } from "@/components/kob-home/job-tabs";
+import { KitchenPrep } from "@/components/kob-home/kitchen-prep";
 import { Loop } from "@/components/kob-home/loop";
 import { Memory } from "@/components/kob-home/memory";
+import { PhoneBlock } from "@/components/kob-home/phone-block";
 import { PricingBand } from "@/components/kob-home/pricing-band";
 import { ProductVideo } from "@/components/kob-home/product-video";
 import { Reveal } from "@/components/kob-home/reveal";
 import { ScanCta } from "@/components/kob-home/scan-cta";
-import { Serving } from "@/components/kob-home/serving";
 import { SiteFooter } from "@/components/kob-site/site-footer";
 import { SiteNav } from "@/components/kob-site/site-nav";
 
-/** Alven-style employee homepage — Talk first, not a dashboard. */
 export function EmployeeHome() {
   return (
     <div className="kob-employee min-h-dvh bg-bone text-espresso">
@@ -22,10 +25,22 @@ export function EmployeeHome() {
         <Hero />
         <Claims />
         <Reveal>
-          <Loop />
+          <HandledToday />
         </Reveal>
         <Reveal>
-          <Serving />
+          <JobTabs />
+        </Reveal>
+        <Reveal>
+          <PhoneBlock />
+        </Reveal>
+        <Reveal>
+          <CostWatch />
+        </Reveal>
+        <Reveal>
+          <KitchenPrep />
+        </Reveal>
+        <Reveal>
+          <Loop />
         </Reveal>
         <Reveal>
           <Connect />

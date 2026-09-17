@@ -11,22 +11,18 @@ export function PricingBand() {
         <p className="font-display text-5xl font-medium tracking-tight">£99</p>
         <p className="mt-1 text-muted">per location / month · founding</p>
         <p className="mt-5 text-ink">
-          Reviews, Google, the website, and the kitchen. Suggest, then approve,
-          then autopilot. You start the trial yourself.
+          Founding restaurants keep this rate while they stay subscribed. Suggest, then
+          approve, then autopilot — you choose what KOB can handle automatically.
         </p>
         <ul className="mt-6 space-y-2 text-ink">
-          <li>14-day trial — no demo call</li>
-          <li>Nothing public goes live without you</li>
-          <li>Talk on WhatsApp or email when those land</li>
+          <li>3-day trial — no card</li>
+          <li>Google, reviews, website, invoices, weather prep</li>
+          <li>KOB Phone: Coming to founding restaurants</li>
         </ul>
         <Button size="lg" className="mt-8" asChild>
-          <Link href="/onboard">Try for free</Link>
+          <Link href="/onboard">Try KOB</Link>
         </Button>
       </div>
-      <p className="mt-8 max-w-lg text-sm text-muted">
-        Later, £149 when KOB is the assistant manager, and £299 when KOB starts
-        taking guests and the phone.
-      </p>
     </section>
   );
 }

@@ -19,7 +19,7 @@ export function Serving() {
         ))}
       </div>
       <p className="mt-8 text-sm text-muted">
-        Nothing public without your yes.
+        You choose what KOB can handle automatically.
       </p>
     </section>
   );

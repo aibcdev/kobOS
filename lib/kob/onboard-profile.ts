@@ -145,7 +145,7 @@ function popularity(
   let rankHint = "Unknown vs peers";
   if (peerCount >= 3 && peerAvg > 0) {
     if (n > peerAvg * 1.25) rankHint = "Above local peer review volume";
-    else if (n < peerAvg * 0.6) rankHint = "Quieter than nearby rooms";
+    else if (n < peerAvg * 0.6) rankHint = "Quieter than nearby restaurants";
     else rankHint = "In line with nearby peers";
   } else if (n >= 100) rankHint = "Busy listing for its city";
   else if (n < 20) rankHint = "Low review velocity";

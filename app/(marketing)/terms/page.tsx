@@ -4,10 +4,10 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service · KOB",
-  description: "Terms governing use of trykob.com, free scans, accounts, subscriptions, and service requests.",
+  description: "Terms governing use of trykob.com, the AI restaurant manager, scans, accounts, and subscriptions.",
 };
 
-const UPDATED = "23 July 2026";
+const UPDATED = "17 September 2026";
 
 export default function TermsPage() {
   return (
@@ -30,18 +30,16 @@ export default function TermsPage() {
       </p>
 
       <Section title="1. What KOB provides">
-        <p>Depending on your plan and usage, the Service may include:</p>
+        <p>KOB is an AI restaurant manager. Depending on your plan, the Service may include:</p>
         <ul>
           <li>Free online scans of public website and listing signals</li>
-          <li>Reports and scores describing guest-facing online presence</li>
-          <li>A daily task list, drafts, and approvals for items such as reviews, hours, and posts</li>
-          <li>Credits to request deliverables (for example website, SEO, logo, or creative work) fulfilled by KOB or
-            partners</li>
-          <li>Related account, billing, and support features</li>
+          <li>Talk: drafts and actions for hours, reviews, invoices, weather prep, and house rules</li>
+          <li>Optional credits for human-fulfilled work (website, SEO, brand) as described in-product</li>
+          <li>KOB Phone (guest answering) is Coming soon and is not live until we say so in the product</li>
         </ul>
         <p className="mt-3">
-          Features may change as we improve the product. Scans and AI-assisted drafts are tools to help operators—they
-          are not legal, financial, or professional advice, and they do not guarantee rankings, bookings, or revenue.
+          Features may change. AI output is not legal, allergen, or financial advice. KOB does not guarantee rankings,
+          waste reduction percentages, hours saved, or revenue. You choose which jobs run on autopilot.
         </p>
       </Section>
 
@@ -69,9 +67,9 @@ export default function TermsPage() {
       <Section title="4. Approvals and publish control">
         <p>
           Where the Service prepares drafts or suggested actions, <strong>you remain responsible</strong> for reviewing
-          and approving what goes live on your channels. Unless you explicitly authorise otherwise, KOB does not claim
-          the right to publish to your Google Business Profile, website, or social accounts without your approval in the
-          product.
+          what goes live unless you have put that job on autopilot in the product. Guest phone answering is not live
+          today. When it launches, callers will be told they are speaking with an AI assistant and that the call may be
+          recorded. KOB will not collect card details on a call.
         </p>
       </Section>
 
@@ -85,11 +83,10 @@ export default function TermsPage() {
 
       <Section title="6. Subscriptions, trials, and fees">
         <p>
-          Paid plans (for example Flex or Flat) are billed as described at checkout or on the pricing page. Fees may
-          include a monthly subscription and, on Flex, a percentage fee on applicable orders where that feature is
-          enabled. Trials convert to paid plans unless cancelled before the trial ends, as disclosed at signup. Taxes may
-          apply. Except where required by law, fees are non-refundable once a billing period starts. You authorise Stripe
-          (or our payment processor) to charge your payment method for amounts due.
+          Paid plans are billed as described at checkout or on the pricing page (founding rate while you stay
+          subscribed, as disclosed). Trials convert as stated at signup. Taxes may apply. Except where required by law,
+          fees are non-refundable once a billing period starts. You authorise Stripe (or our payment processor) to charge
+          your payment method for amounts due.
         </p>
       </Section>
 
@@ -115,9 +112,9 @@ export default function TermsPage() {
 
       <Section title="9. Third-party services">
         <p>
-          The Service integrates with third parties (for example Google Places, email, payments, AI providers). Their
-          terms and privacy policies apply to their processing. We are not responsible for outages or changes by those
-          providers outside our reasonable control.
+          The Service integrates with third parties (for example Google Places, email, payments, AI providers, and — when
+          Phone is live — voice/telephony such as ElevenLabs). Their terms and privacy policies apply to their
+          processing. We are not responsible for outages or changes by those providers.
         </p>
       </Section>
 

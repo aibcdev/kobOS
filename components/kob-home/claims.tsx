@@ -4,9 +4,18 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
 const CLAIMS = [
-  "KOB will cut your food waste by at least 33% — or your money back.",
-  "KOB will save you at least 30 hours of work — or your money back.",
-  "KOB will grow your restaurant’s positioning and popularity in your area.",
+  {
+    title: "Save time",
+    body: "KOB handles repetitive admin so the floor stays the floor.",
+  },
+  {
+    title: "Lower costs",
+    body: "KOB spots over-prep, over-ordering, and supplier overspend. Direct waste measurement stays Coming soon.",
+  },
+  {
+    title: "Capture more revenue",
+    body: "KOB is built to catch missed calls, bookings, and guest chances. Phone answering is Coming soon.",
+  },
 ];
 
 export function Claims() {
@@ -23,11 +32,14 @@ export function Claims() {
       <section className="bg-paper px-5 py-12 text-espresso sm:px-8">
         <div className="mx-auto max-w-2xl space-y-10">
           {CLAIMS.map((claim) => (
-            <p key={claim} className="font-display text-3xl font-medium leading-snug tracking-tight">
-              {claim}
-            </p>
+            <article key={claim.title}>
+              <h2 className="font-display text-3xl font-medium tracking-tight">{claim.title}</h2>
+              <p className="mt-3 text-ink">{claim.body}</p>
+            </article>
           ))}
-          <p className="text-[0.7rem] text-espresso/45">You still approve anything public.</p>
+          <p className="text-[0.7rem] text-espresso/45">
+            You choose what KOB can handle automatically.
+          </p>
         </div>
       </section>
     );
@@ -37,7 +49,7 @@ export function Claims() {
     <section ref={rail} className="relative h-[180vh] bg-paper text-espresso">
       <div className="sticky top-24 mx-auto flex h-[min(22rem,70vh)] max-w-3xl items-center overflow-hidden px-5 sm:px-8">
         {CLAIMS.map((claim, i) => (
-          <ClaimSlide key={claim} claim={claim} index={i} active={active} />
+          <ClaimSlide key={claim.title} claim={claim} index={i} active={active} />
         ))}
       </div>
     </section>
@@ -49,7 +61,7 @@ function ClaimSlide({
   index,
   active,
 }: {
-  claim: string;
+  claim: (typeof CLAIMS)[number];
   index: number;
   active: ReturnType<typeof useTransform<number, number>>;
 }) {
@@ -65,11 +77,14 @@ function ClaimSlide({
       style={{ opacity, y }}
       className="pointer-events-none absolute inset-x-0 px-5 sm:px-8"
     >
-      <p className="font-display text-[1.85rem] font-medium leading-[1.15] tracking-tight sm:text-4xl">
-        {claim}
-      </p>
+      <h2 className="font-display text-[1.85rem] font-medium leading-[1.15] tracking-tight sm:text-4xl">
+        {claim.title}
+      </h2>
+      <p className="mt-4 max-w-xl text-lg text-ink">{claim.body}</p>
       {index === CLAIMS.length - 1 ? (
-        <p className="mt-6 text-[0.7rem] text-espresso/45">You still approve anything public.</p>
+        <p className="mt-6 text-[0.7rem] text-espresso/45">
+          You choose what KOB can handle automatically.
+        </p>
       ) : null}
     </motion.article>
   );

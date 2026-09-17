@@ -5,10 +5,10 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy Policy · KOB",
   description:
-    "How KOB collects, uses, and protects personal data when you run a free scan or use trykob.com.",
+    "How KOB collects, uses, and protects personal data for the restaurant manager on trykob.com.",
 };
 
-const UPDATED = "23 July 2026";
+const UPDATED = "17 September 2026";
 
 export default function PrivacyPage() {
   return (
@@ -18,8 +18,9 @@ export default function PrivacyPage() {
       <p className="mt-2 text-sm text-[#2c2c2c]/55">Last updated: {UPDATED}</p>
       <p className="mt-6 text-sm leading-relaxed text-[#2c2c2c]/80">
         This Privacy Policy explains how <strong>KOB</strong> (&quot;we&quot;, &quot;us&quot;) handles personal data when you
-        visit <strong>trykob.com</strong>, run a free online scan, create an account, or use our restaurant helper
-        (daily tasks, drafts, credits, and service requests).
+        visit <strong>trykob.com</strong>, run a free online scan, create an account, or use the AI restaurant manager
+        (Talk, listings, reviews, invoices, operational memory, and related tools). Guest phone answering is not live
+        yet; when it launches we will process call data as described below.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-[#2c2c2c]/80">
         If you have questions, email{" "}
@@ -45,9 +46,15 @@ export default function PrivacyPage() {
             demo, or create an account.
           </li>
           <li>
-            <strong>Restaurant &amp; business details</strong> — name, website URL, address, Google Place ID, public
-            listing information, photos, reviews, and similar publicly available online presence data used to run your
-            scan and daily helper.
+            <strong>Restaurant operations</strong> — public listing and website data, invoices and supplier lines you
+            send or connect, house rules and operational memory, Talk messages, and (when you connect them) POS or
+            reservation records.
+          </li>
+          <li>
+            <strong>Future voice / phone (not live today)</strong> — if KOB Phone launches: call audio, transcripts,
+            caller numbers, booking and order details from the call, and recording notices. Voice providers such as
+            ElevenLabs and LLM processors may act as processors or subprocessors under contract. Callers will be told
+            they are speaking with an AI assistant and that the call may be recorded.
           </li>
           <li>
             <strong>Account &amp; usage data</strong> — sign-in events, task approvals, drafts, credit balance, service
@@ -56,6 +63,9 @@ export default function PrivacyPage() {
           <li>
             <strong>Billing data</strong> — subscription plan and payment status. Card details are processed by Stripe;
             we do not store full card numbers on our servers.
+          </li>
+          <li>
+            <strong>How you found us</strong> — optional answers on the free scan or signup (search, an AI assistant, referral, ads) and, if you choose, the prompt you used. We use this to see which guides AI systems cite, not to sell your data.
           </li>
           <li>
             <strong>Technical data</strong> — IP address, device/browser type, approximate location derived from IP,
@@ -110,6 +120,7 @@ export default function PrivacyPage() {
           <li>Payments (Stripe)</li>
           <li>Maps / Places data (Google) when you search for or enrich a restaurant listing</li>
           <li>AI providers used to generate scores, summaries, or drafts inside the product</li>
+          <li>Voice / telephony providers (for example ElevenLabs) if KOB Phone is enabled for your location</li>
         </ul>
         <p className="mt-3">
           We may also disclose data if required by law, to protect rights and safety, or as part of a business transfer

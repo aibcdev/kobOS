@@ -10,4 +10,4 @@ For product scope, wedge vs Owner.com, audit funnel, and near-term priorities, r
 
 ## KOB operating system
 
-KOB is an operational manager, not a chat UI. Before any restaurant workflow, read [`docs/KOB-OPERATING-SYSTEM.md`](docs/KOB-OPERATING-SYSTEM.md) and follow [`.agents/skills/kob-operating-system/SKILL.md`](.agents/skills/kob-operating-system/SKILL.md). Doctrine: OBSERVE → UNDERSTAND → DECIDE → AUTHORISE → ACT → VERIFY → LEARN. Postgres is source of truth. Never mark Done without verification. Guest phone/POS stay Coming soon.
+Phone answering is Coming soon. Guest tools live in `lib/os/mcp-guest.ts` and `docs/KOB-PHONE-ELEVENLABS.md`. Guest agent never gets owner tools.

@@ -32,7 +32,7 @@ export function BeforeAfter() {
       </div>
 
       <h2 className="font-display text-headline mt-6 max-w-2xl font-medium">
-        How KOB works on a multi-site room
+        How KOB works for a restaurant group
       </h2>
       <p className="mt-5 max-w-2xl text-lg text-ink">
         {PROOF_CASE.name}, {PROOF_CASE.area}. An example of the jobs KOB

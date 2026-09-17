@@ -26,16 +26,15 @@ export function Hero() {
               restaurant manager
             </h1>
             <p className="mt-5 max-w-md text-lg text-paper/80">
-              You talk. KOB takes Google, reviews, hours, the website — and the
-              kitchen. Invoice photos, waste, weather prep. You approve. No
-              demo.
+              Handles the repetitive work behind your restaurant — so your team
+              can focus on guests.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" variant="cream" asChild>
-                <Link href="/onboard">Try for free</Link>
+                <Link href="/onboard">Try KOB</Link>
               </Button>
               <Button size="lg" variant="frost" asChild>
-                <Link href="/login">Log in</Link>
+                <Link href="/login">Talk to KOB</Link>
               </Button>
             </div>
           </div>

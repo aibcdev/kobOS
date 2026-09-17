@@ -62,7 +62,7 @@ export function Employee() {
             uses them — with your yes.
           </p>
           <p className="mt-4 text-xs text-muted">
-            Example rooms use Langosteria* colours for clarity — not a customer claim.
+            Example venues use Langosteria* colours for clarity — not a customer claim.
           </p>
         </article>
       </div>

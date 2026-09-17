@@ -56,8 +56,8 @@ export function Loop() {
       </ol>
       <p className="mt-10 text-sm font-medium text-espresso">What KOB takes on</p>
       <p className="mt-2 max-w-xl text-sm text-muted">
-        Reviews, Google hours, the website, invoice photos, waste, and weather prep.
-        You approve. Phone and the till stay Coming soon.
+        Reviews, Google hours, the website, invoices, and weather prep.
+        You choose what goes on autopilot. Phone answering is Coming soon.
       </p>
     </section>
   );

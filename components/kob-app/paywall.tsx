@@ -18,7 +18,7 @@ export function Paywall() {
         <GreenOrb size="md" />
         <p className="mt-4 text-sm font-medium text-sage">3 days free · no card</p>
         <h2 className="font-display mt-2 text-3xl font-medium tracking-tight text-espresso">
-          Hire KOB for {restaurant?.name ?? "the room"}
+          Hire KOB for {restaurant?.name ?? "your restaurant"}
         </h2>
         <p className="mt-3 text-ink">
           Start a 3-day trial with no card. We learn what you need, then we

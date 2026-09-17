@@ -20,7 +20,7 @@ export function Memory() {
     <section className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <div className="grid items-start gap-8 lg:grid-cols-[0.7fr_1.3fr]">
         <h2 className="font-display text-headline font-medium">
-          KOB is the only manager that learns on each note
+          KOB learns how you run the restaurant
         </h2>
 
         <div>
@@ -96,10 +96,10 @@ export function Memory() {
           </div>
           <div className="mt-5 flex justify-center">
             {remembered ? (
-              <p className="text-sm text-muted">Committed to memory</p>
+              <p className="text-sm text-muted">Committed to house rules</p>
             ) : (
               <Button size="sm" variant="outline" onClick={() => setRemembered(true)}>
-                Remember this
+                Never change our coffee supplier without asking
               </Button>
             )}
           </div>

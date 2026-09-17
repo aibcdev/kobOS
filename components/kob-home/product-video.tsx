@@ -7,8 +7,8 @@ export function ProductVideo() {
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
         KOB watches the listing, writes into Google and the site, drafts reviews
-        in your tone, and flags invoice surprises before they hit the till.
-        Nothing public until you say yes.
+        in your tone, and flags invoice surprises. You choose what goes on
+        autopilot.
       </p>
       <ul className="mt-8 grid gap-3 sm:grid-cols-2">
         <li className="rounded-[1.75rem] bg-cream px-5 py-4 text-sm text-ink">
@@ -25,7 +25,7 @@ export function ProductVideo() {
         </li>
         <li className="rounded-[1.75rem] bg-cream px-5 py-4 text-sm text-ink">
           <span className="font-medium text-espresso">Multi-site ready</span> —
-          same house rules across rooms. You stay in charge*
+          same house rules across locations. You stay in charge*
         </li>
       </ul>
       <div className="mt-10 overflow-hidden rounded-[1.75rem] bg-espresso">
