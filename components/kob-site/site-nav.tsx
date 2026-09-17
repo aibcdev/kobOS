@@ -9,8 +9,6 @@ import { cn } from "@/lib/kob/utils";
 
 const links = [
   { href: "/#how", label: "How it works" },
-  { href: "/#jobs", label: "Jobs" },
-  { href: "/#proof", label: "Proof" },
   { href: "/#pricing", label: "Pricing" },
 ];
 

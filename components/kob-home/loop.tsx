@@ -1,18 +1,18 @@
 const STEPS = [
   {
     n: "1",
-    title: "You talk on the floor",
-    body: "Closed Monday. Reply to last night. The cheddar line looks high. Say it once.",
+    title: "Onboard in seconds",
+    body: "Restaurant name, what matters now, how much KOB should run. That is the whole start.",
   },
   {
     n: "orb",
-    title: "KOB prepares the job in your tools",
-    body: "Hours on Google and the site. A review in your tone. A supplier note from the photo. Ready before you leave the pass.",
+    title: "We learn what you need first",
+    body: "Reviews, Google, hours, the site. KOB ranks the jobs from your answers — then talks to you in Talk.",
   },
   {
     n: "check",
-    title: "You approve — nothing goes live alone",
-    body: "Apply hours. Leave it. No surprise posts. No silent supplier notes. You stay in charge.",
+    title: "Then we learn with you",
+    body: "You approve. KOB remembers the house. Next morning is sharper. Nothing public without your yes.",
   },
 ];
 
@@ -20,11 +20,11 @@ export function Loop() {
   return (
     <section id="how" className="mx-auto max-w-6xl px-5 py-14 sm:py-16 sm:px-8">
       <h2 className="font-display text-headline max-w-2xl font-medium">
-        You talk. KOB works. You stay in charge.
+        How it works
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        KOB is not a dashboard you log into after service. KOB is the manager
-        who uses your tools while you run the room.
+        We onboard in seconds. We learn what you need initially. Then we learn
+        with you — while you stay on the floor.
       </p>
       <ol className="mt-8 space-y-4">
         {STEPS.map((step) => (
@@ -54,6 +54,11 @@ export function Loop() {
           </li>
         ))}
       </ol>
+      <p className="mt-10 text-sm font-medium text-espresso">What KOB takes on</p>
+      <p className="mt-2 max-w-xl text-sm text-muted">
+        Reviews, Google hours, the website, invoice photos, waste, and weather prep.
+        You approve. Phone and the till stay Coming soon.
+      </p>
     </section>
   );
 }

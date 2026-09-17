@@ -1,10 +1,8 @@
 import { Autonomy } from "@/components/kob-home/autonomy";
-import { BeforeAfter } from "@/components/kob-home/before-after";
 import { Claims } from "@/components/kob-home/claims";
 import { Channels } from "@/components/kob-home/channels";
 import { Connect } from "@/components/kob-home/connect";
 import { Hero } from "@/components/kob-home/hero";
-import { Jobs } from "@/components/kob-home/jobs";
 import { Loop } from "@/components/kob-home/loop";
 import { Memory } from "@/components/kob-home/memory";
 import { PricingBand } from "@/components/kob-home/pricing-band";
@@ -27,16 +25,10 @@ export function EmployeeHome() {
           <Loop />
         </Reveal>
         <Reveal>
-          <Jobs />
-        </Reveal>
-        <Reveal>
           <Serving />
         </Reveal>
         <Reveal>
           <Connect />
-        </Reveal>
-        <Reveal>
-          <BeforeAfter />
         </Reveal>
         <Reveal>
           <ProductVideo />
