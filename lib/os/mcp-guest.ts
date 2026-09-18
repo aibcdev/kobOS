@@ -1,4 +1,9 @@
-import { allergenAnswer, toolAllowed } from "@/lib/os/phone/agents";
+import {
+  allergenAnswer,
+  escalateInsteadOfAnswer,
+  toolAllowed,
+  type AgentKind,
+} from "@/lib/os/phone/agents";
 
 type Json = Record<string, unknown>;
 
