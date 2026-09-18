@@ -50,7 +50,7 @@ export function SiteNav({ onPhoto = false }: { onPhoto?: boolean; solid?: boolea
           Log in
         </Link>
         <Button size="sm" className="hidden md:inline-flex" asChild>
-          <Link href="/onboard">Try for free</Link>
+          <Link href="/onboard">Try KOB</Link>
         </Button>
 
         <button
@@ -82,7 +82,7 @@ export function SiteNav({ onPhoto = false }: { onPhoto?: boolean; solid?: boolea
             Log in
           </Link>
           <Button className="mt-1 w-full" asChild>
-            <Link href="/onboard">Try for free</Link>
+            <Link href="/onboard">Try KOB</Link>
           </Button>
         </div>
       ) : null}

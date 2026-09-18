@@ -179,18 +179,18 @@ export const marketingCopy = {
     statLine:
       "Most guests decide online before they visit. KOB shows where you lose them—then helps you fill more tables.",
     bullets: [
-      "Free restaurant audit in about a minute",
-      "See where you’re losing customers online",
-      "Daily growth list plus ask KOB for campaigns and fixes",
+      "Open Talk for your restaurant",
+      "Hours, reviews, and invoices in one place",
+      "You choose what KOB can handle automatically",
     ] as const,
-    signInTitle: "Welcome back",
-    signUpTitle: "Create your account",
-    signInBlurb: "We'll email you a secure sign-in link.",
-    signUpBlurb: "No password needed. We create your workspace when you confirm your email.",
+    signInTitle: "Talk to KOB",
+    signUpTitle: "Hire KOB",
+    signInBlurb: "Continue with Google, or we’ll email a one-time code.",
+    signUpBlurb: "Google or email. No password.",
     emailLabel: "Work email",
-    submitSignIn: "Send sign-in link",
-    submitSignUp: "Create account",
-    sent: "Check your email for the magic link.",
+    submitSignIn: "Email me a code",
+    submitSignUp: "Email me a code",
+    sent: "Check your email for the code.",
   },
 
   dashboardOnboarding: {

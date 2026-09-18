@@ -23,7 +23,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
   const plan = params.get("plan");
   const planTier = plan === "flat" ? "pro" : plan === "flex" ? "starter" : null;
   const nextPathRaw = params.get("next")?.trim() ?? params.get("redirect")?.trim();
-  const defaultNext = planTier ? `/dashboard/billing?tier=${planTier}` : "/dashboard";
+  const defaultNext = planTier ? `/dashboard/billing?tier=${planTier}` : "/app";
   const nextPath =
     nextPathRaw && nextPathRaw.startsWith("/") && !nextPathRaw.startsWith("//") ? nextPathRaw : defaultNext;
   const emailFromQuery = params.get("email")?.trim() ?? "";
@@ -53,6 +53,34 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
     if (modeParam === "signup") setMode("signup");
     if (modeParam === "signin") setMode("signin");
   }, [modeParam]);
+
+  async function signInWithGoogle() {
+    setErrorMessage(null);
+    if (!supabaseConfigured) {
+      setStatus("error");
+      setErrorMessage("Supabase keys missing. Add them to .env.local and restart.");
+      return;
+    }
+    if (typeof window !== "undefined") {
+      document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(nextPath)};path=/;max-age=${AUTH_NEXT_MAX_AGE_SEC};SameSite=Lax`;
+    }
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error) {
+      setStatus("error");
+      setErrorMessage(
+        error.message.toLowerCase().includes("provider")
+          ? "Google login is not switched on yet in Supabase Auth. Turn on the Google provider, then try again."
+          : error.message,
+      );
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -238,13 +266,13 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
   const isSignUp = mode === "signup";
 
   return (
-    <div className="rounded-[1.35rem] border border-[#2c2c2c]/08 bg-white p-8 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.35)]">
-      <div className="mb-6 flex rounded-full bg-[#f7f5f2] p-1">
+    <div className="rounded-[1.75rem] border border-line bg-paper p-8 shadow-soft">
+      <div className="mb-6 flex rounded-full bg-cream p-1">
         <button
           type="button"
           onClick={() => setMode("signin")}
           className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
-            !isSignUp ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#2c2c2c]/55"
+            !isSignUp ? "bg-espresso text-paper shadow-sm" : "text-muted"
           }`}
         >
           Login
@@ -253,20 +281,17 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
           type="button"
           onClick={() => setMode("signup")}
           className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
-            isSignUp ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#2c2c2c]/55"
+            isSignUp ? "bg-espresso text-paper shadow-sm" : "text-muted"
           }`}
         >
           Sign up
         </button>
       </div>
 
-      <p className="text-xs font-medium tracking-wide text-[#2c2c2c]/45 uppercase">
-        Supabase secure login
-      </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#1a1a1a]">
+      <h1 className="font-display text-title font-medium tracking-tight text-espresso">
         {isSignUp ? marketingCopy.auth.signUpTitle : marketingCopy.auth.signInTitle}
       </h1>
-      <p className="mt-2 text-sm leading-relaxed text-[#2c2c2c]/65">
+      <p className="mt-2 text-sm leading-relaxed text-ink">
         {isSignUp ? marketingCopy.auth.signUpBlurb : marketingCopy.auth.signInBlurb}
       </p>
 
@@ -315,9 +340,23 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
         <p className="mt-4 text-sm text-red-600">Account could not be created. Check DATABASE_URL.</p>
       ) : null}
 
+      {status === "idle" || status === "error" ? (
+        <>
+          <button
+            type="button"
+            onClick={() => void signInWithGoogle()}
+            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-espresso/15 bg-paper text-sm font-medium text-espresso hover:bg-cream"
+          >
+            <GoogleMark />
+            Continue with Google
+          </button>
+          <p className="mt-4 text-center text-xs text-muted">or use email</p>
+        </>
+      ) : null}
+
       {status === "sent" || status === "verifying" ? (
         <div className="mt-6 space-y-4">
-          <div className="rounded-xl bg-[#f9f3ed] p-4 text-sm text-[#2c2c2c]/80">
+          <div className="rounded-2xl bg-cream p-4 text-sm text-ink">
             <p>{marketingCopy.auth.sent}</p>
             {email.trim() ? (
               <p className="mt-1 text-[#2c2c2c]/65">
@@ -337,7 +376,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#2c2c2c]/15 bg-[#fbf8f5] px-4 py-3 text-sm outline-none focus:border-[#088924] focus:ring-2 focus:ring-[#088924]/20"
+                  className="mt-1.5 w-full rounded-2xl border border-line bg-bone px-4 py-3 text-sm outline-none focus:border-espresso/40 focus:ring-2 focus:ring-espresso/15"
                 />
               </label>
             ) : null}
@@ -352,14 +391,14 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 placeholder="e.g. 33149398"
-                className="mt-1.5 w-full rounded-xl border border-[#2c2c2c]/15 bg-[#fbf8f5] px-4 py-3 text-center font-mono text-lg tracking-widest outline-none focus:border-[#088924] focus:ring-2 focus:ring-[#088924]/20"
+                className="mt-1.5 w-full rounded-2xl border border-line bg-bone px-4 py-3 text-center font-mono text-lg tracking-widest outline-none focus:border-espresso/40 focus:ring-2 focus:ring-espresso/15"
               />
             </label>
             {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
             <button
               type="submit"
               disabled={status === "verifying"}
-              className="h-12 rounded-full bg-[#1a1a1a] text-sm font-semibold text-white transition-colors hover:bg-[#094413] disabled:opacity-60"
+              className="h-12 rounded-full bg-espresso text-sm font-semibold text-paper transition-colors hover:bg-ink disabled:opacity-60"
             >
               {status === "verifying" ? "Signing in…" : "Sign in with code"}
             </button>
@@ -386,7 +425,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-[#2c2c2c]/15 bg-[#fbf8f5] px-4 py-3 text-sm outline-none focus:border-[#088924] focus:ring-2 focus:ring-[#088924]/20"
+              className="mt-1.5 w-full rounded-2xl border border-line bg-bone px-4 py-3 text-sm outline-none focus:border-espresso/40 focus:ring-2 focus:ring-espresso/15"
             />
           </label>
           {status === "error" ? (
@@ -394,12 +433,35 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
           ) : null}
           <button
             type="submit"
-            className="h-12 rounded-full bg-[#1a1a1a] text-sm font-semibold text-white transition-colors hover:bg-[#094413]"
+            className="h-12 rounded-full bg-espresso text-sm font-semibold text-paper transition-colors hover:bg-ink"
           >
             {isSignUp ? marketingCopy.auth.submitSignUp : marketingCopy.auth.submitSignIn}
           </button>
         </form>
       )}
     </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.97 10.71A5.41 5.41 0 0 1 3.68 9c0-.6.1-1.17.26-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.04l3.01-2.33Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z"
+      />
+    </svg>
   );
 }
