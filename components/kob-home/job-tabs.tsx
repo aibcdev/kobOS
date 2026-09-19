@@ -14,7 +14,7 @@ const JOBS = [
       "If they miss it, KOB answers",
       "“Table for four at 7?”",
       "KOB checks the book",
-      "Guest confirms — Coming soon",
+      "Guest confirms — Coming next",
     ],
   },
   {
@@ -45,7 +45,7 @@ const JOBS = [
     id: "prep",
     label: "Prep",
     soon: false,
-    steps: ["Covers + weather", "Prep suggestion", "You approve the change", "Measured waste is Coming soon"],
+    steps: ["Covers + weather", "Prep suggestion", "You approve the change", "Measured waste is Coming next"],
   },
   {
     id: "waste",
@@ -77,7 +77,7 @@ export function JobTabs() {
                 )}
               >
                 {item.label}
-                {item.soon ? <span className="text-xs text-muted">Coming soon</span> : null}
+                {item.soon ? <span className="text-xs text-muted">Coming next</span> : null}
               </button>
             </li>
           ))}

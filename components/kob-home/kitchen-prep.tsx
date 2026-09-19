@@ -22,7 +22,7 @@ export function KitchenPrep() {
             waste prevention — not a measured waste percentage.
           </p>
           <p className="mt-4 text-sm text-muted">
-            Waste Eye (camera + scale) is Coming soon. We will not mix estimates into
+            Waste Eye (camera + scale) is Coming next. We will not mix estimates into
             measured waste.
           </p>
         </div>
