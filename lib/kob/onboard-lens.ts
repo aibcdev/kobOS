@@ -186,7 +186,10 @@ export function buildOnboardLens(
   const priority = rankPriority(answers, profile);
   const first = firstJobLabel(priority);
   const matters = answers.matters ? MATTERS_LABEL[answers.matters] : "the listing";
-  const talkOpener = `I’ll start with ${first} — you said ${matters} matters most. Nothing public goes live without you. Phone and the till are Coming soon.`;
+  const issue = profile.biggestIssue?.label;
+  const talkOpener = issue
+    ? `I found work already — starting with ${issue}. You said ${matters} matters most. Nothing public goes live without you. Phone and the till are Coming next.`
+    : `I’ll start with ${first} — you said ${matters} matters most. Nothing public goes live without you. Phone and the till are Coming next.`;
 
   return {
     ownerType: type,
