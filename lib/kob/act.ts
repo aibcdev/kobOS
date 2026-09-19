@@ -98,8 +98,8 @@ export function doneSummary(findings: Finding[], autonomy: AutonomyRule[]) {
     if (finding.ruleId === "reviews-high") return "Five-star thank-yous drafted. Not posted to Google.";
     return finding.headline;
   });
-  if (!bits.length) return "Done. I'll keep watching.";
-  return `Done.\n${bits.join(".\n")}.\nI'll keep watching.`;
+  if (!bits.length) return "Sent — waiting for confirmation. I'll keep watching.";
+  return `Sent — waiting for confirmation.\n${bits.join(".\n")}.\nI'll keep watching.`;
 }
 
 function askActions(): ChatMessage["actions"] {
@@ -199,7 +199,7 @@ export async function actOnTalk(input: {
         { id: "approve-all", label: "Queue the note", kind: "approve" },
         { id: "ignore", label: "Leave it", kind: "ignore" },
       ],
-      doneText: "Done.\nMaintenance note queued. Not sent.",
+      doneText: "Draft only.\nMaintenance note queued. Not sent.",
       mutations: {},
     };
   }
@@ -404,7 +404,7 @@ export async function actOnTalk(input: {
         ...(askActions() ?? []),
         { id: "nearby-reviews", label: "Check nearby reviews", kind: "yes" },
       ],
-      doneText: "Done.\nFive-star thank-yous drafted in Talk. Not posted to Google.\nI'll keep watching.",
+      doneText: "Draft only.\nFive-star thank-yous drafted in Talk. Not posted to Google.\nI'll keep watching.",
       mutations: {},
     };
   }
@@ -521,7 +521,7 @@ export async function actOnTalk(input: {
         actions: [
           { id: "approve-all", label: "Queue the fix", kind: "approve" },
         ],
-        doneText: "Done.\nWebsite menu queued to the printed one.\nI'll keep watching.",
+        doneText: "Draft only.\nWebsite menu queued to the printed one.\nI'll keep watching.",
         mutations: {},
       };
     }

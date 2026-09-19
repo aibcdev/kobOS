@@ -3,8 +3,8 @@ export function CostWatch() {
     <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-16">
       <h2 className="font-display text-headline max-w-xl font-medium">KOB watches what you’re paying</h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        Supplier invoices should reach KOB by email. KOB tracks price rises and comparable
-        pack cost. A photo of a paper note is a fallback, not the main job.
+        Cost Watch starts with supplier emails into KOB. Photo OCR is the fallback when that is all
+        you have. Unit-cost flags appear when invoice lines exist — never invented savings.
       </p>
       <div className="mt-8 max-w-lg rounded-[1.75rem] bg-cream p-7 sm:p-8">
         <p className="text-xs font-medium uppercase tracking-wider text-muted">Illustration</p>

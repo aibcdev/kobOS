@@ -6,9 +6,9 @@
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const defaultSiteMeta = {
-  title: "KOB | We help independent restaurants get more customers",
+  title: "KOB — The AI Restaurant Manager",
   description:
-    "Restaurant growth software. Free audit shows where you’re losing diners online—Google, reviews, website—then helps you fill more tables.",
+    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. £99/mo founding. 7-day trial, no card.",
 } as const;
 
 export const DEFAULT_HERO_IMAGE =

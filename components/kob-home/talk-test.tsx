@@ -26,7 +26,7 @@ function replyTo(text: string) {
     return "Weather is free. Turn it on in Kitchen with your city. This bubble is only a test.";
   }
   if (/price|cost|£|trial/.test(t)) {
-    return "Founding is £99 a location. Start a 14-day trial, then connect free tools.";
+    return "Founding is £99 a location. Start a 7-day trial, no card, then connect free tools.";
   }
   return "Nice. Start a trial, turn on free tools in Kitchen, then Talk is the manager — not this test.";
 }

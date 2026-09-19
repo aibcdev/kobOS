@@ -11,10 +11,10 @@ const UPDATED = "17 September 2026";
 
 export default function TermsPage() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16 text-[#2c2c2c]">
-      <p className="font-mono-brand text-[11px] font-semibold uppercase tracking-wider text-[#088924]">Legal</p>
-      <h1 className="font-heading mt-2 text-3xl font-semibold tracking-tight">Terms of Service</h1>
-      <p className="mt-2 text-sm text-[#2c2c2c]/55">Last updated: {UPDATED}</p>
+    <main className="mx-auto max-w-2xl px-6 pb-16 pt-28 text-espresso">
+      <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Legal</p>
+      <h1 className="font-display mt-2 text-headline font-medium tracking-tight">Terms of Service</h1>
+      <p className="mt-2 text-sm text-muted">Last updated: {UPDATED}</p>
       <p className="mt-6 text-sm leading-relaxed text-[#2c2c2c]/80">
         These Terms of Service (&quot;Terms&quot;) govern your access to and use of <strong>KOB</strong> at{" "}
         <strong>trykob.com</strong> and related apps, APIs, and services (the &quot;Service&quot;). By using the Service
@@ -23,7 +23,7 @@ export default function TermsPage() {
       </p>
       <p className="mt-3 text-sm leading-relaxed text-[#2c2c2c]/80">
         Questions:{" "}
-        <a href="mailto:hello@trykob.com" className="font-medium text-[#094413] underline underline-offset-2">
+        <a href="mailto:hello@trykob.com" className="font-medium text-espresso underline underline-offset-2">
           hello@trykob.com
         </a>
         .
@@ -35,7 +35,7 @@ export default function TermsPage() {
           <li>Free online scans of public website and listing signals</li>
           <li>Talk: drafts and actions for hours, reviews, invoices, weather prep, and house rules</li>
           <li>Optional credits for human-fulfilled work (website, SEO, brand) as described in-product</li>
-          <li>KOB Phone (guest answering) is Coming soon and is not live until we say so in the product</li>
+          <li>KOB Phone (guest answering) is Coming next and is not live until we say so in the product</li>
         </ul>
         <p className="mt-3">
           Features may change. AI output is not legal, allergen, or financial advice. KOB does not guarantee rankings,
@@ -56,7 +56,7 @@ export default function TermsPage() {
         <p>
           Free scans may require an email and phone number to unlock the full report. You agree we may contact you about
           your report, trial, or plan using those details, consistent with our{" "}
-          <Link href="/privacy" className="font-medium text-[#094413] underline underline-offset-2">
+          <Link href="/privacy" className="font-medium text-espresso underline underline-offset-2">
             Privacy Policy
           </Link>
           . Do not submit personal data you are not authorised to share. You must only scan restaurants or sites you own
@@ -171,13 +171,13 @@ export default function TermsPage() {
       <Section title="16. Contact">
         <p>
           Legal and support:{" "}
-          <a href="mailto:hello@trykob.com" className="font-medium text-[#094413] underline underline-offset-2">
+          <a href="mailto:hello@trykob.com" className="font-medium text-espresso underline underline-offset-2">
             hello@trykob.com
           </a>
         </p>
         <p className="mt-3">
           Privacy details:{" "}
-          <Link href="/privacy" className="font-medium text-[#094413] underline underline-offset-2">
+          <Link href="/privacy" className="font-medium text-espresso underline underline-offset-2">
             Privacy Policy
           </Link>
           .
@@ -185,7 +185,7 @@ export default function TermsPage() {
       </Section>
 
       <p className="mt-12 text-sm">
-        <Link href="/" className="text-[#094413] underline underline-offset-2">
+        <Link href="/" className="text-espresso underline underline-offset-2">
           Back to home
         </Link>
       </p>

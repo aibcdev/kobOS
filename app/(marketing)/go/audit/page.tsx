@@ -91,6 +91,14 @@ export default function GoAuditAdsLandingPage() {
         <p className="mx-auto mt-12 max-w-lg text-center text-base leading-relaxed text-[#2c2c2c]/75 md:text-lg">
           Enter your restaurant name or website above. Results in about a minute.
         </p>
+        <p className="mx-auto mt-6 text-center">
+          <a
+            href="/onboard"
+            className="inline-flex h-12 items-center rounded-full bg-[#094413] px-6 text-sm font-semibold text-white hover:bg-[#088924]"
+          >
+            Or skip ahead — Try KOB free
+          </a>
+        </p>
       </SaasSection>
     </>
   );

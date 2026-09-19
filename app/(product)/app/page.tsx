@@ -175,7 +175,7 @@ function KobChat() {
         { id: "ignore", label: "Leave it", kind: "ignore" },
         { id: "override-invoice", label: "Override today", kind: "yes" },
       ],
-      doneText: "Done.\nSupplier note queued. Not sent.\nI'll keep watching.",
+      doneText: "Draft only.\nSupplier note queued. Not sent.\nI'll keep watching.",
     });
     setOrbMode("alert");
   }
@@ -195,7 +195,7 @@ function KobChat() {
           { id: "approve-all", label: "Tell the kitchen", kind: "approve" },
           { id: "ignore", label: "Leave it", kind: "ignore" },
         ],
-        doneText: "Done.\nPrep note queued. Not sent.\nI'll keep watching.",
+        doneText: "Draft only.\nPrep note queued. Not sent.\nI'll keep watching.",
       });
       setOrbMode("alert");
     }
@@ -220,7 +220,7 @@ function KobChat() {
           { id: "approve-all", label: "Draft a reply plan", kind: "approve" },
           { id: "ignore", label: "Leave it", kind: "ignore" },
         ],
-        doneText: "Done.\nReview watch queued.\nI'll keep watching.",
+        doneText: "Sent — waiting for confirmation.\nReview watch queued.\nI'll keep watching.",
       });
       setOrbMode("alert");
     }
@@ -305,7 +305,7 @@ function KobChat() {
 
     addMessage({
       id: `k-${Date.now()}`,
-      role: reply.startsWith("Done") ? "done" : "kob",
+      role: /^(Done|Sent —|Draft only)/.test(reply) ? "done" : "kob",
       text: reply,
       actions: actions.length ? actions : undefined,
       doneText,

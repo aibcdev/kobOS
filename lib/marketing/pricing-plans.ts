@@ -1,54 +1,37 @@
-/** KOB launch pricing vs Owner.com (Flex $249+5%, Flat $499). */
+/** KOB public pricing — £99 founding manager offer (canonical). */
 
-export type PricingTierId = "flex" | "flat";
+export type PricingTierId = "founding";
 
 export type PricingPlan = {
   id: PricingTierId;
   name: string;
   badge?: string;
   priceMonthly: number;
-  /** Shown as strikethrough when launch pricing is active */
-  regularPriceMonthly?: number;
   priceNote: string;
   description: string;
-  stripeTier: "starter" | "pro";
+  stripeTier: "pro";
   highlight?: boolean;
 };
 
-/** Current list pricing (strikethrough compare prices are internal reference only). */
 export const LAUNCH_PRICING = {
   active: true,
-  label: "Simple pricing",
-  detail: "Month-to-month. Cancel anytime.",
+  label: "Founding price",
+  detail: "Keep £99/mo while you stay subscribed. 7-day trial, no card.",
 } as const;
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: "flex",
-    name: "Flex",
-    badge: "Most popular",
-    priceMonthly: 49,
-    regularPriceMonthly: 125,
-    priceNote: "+ 2.5% platform fee per order",
+    id: "founding",
+    name: "Founding",
+    badge: "AI restaurant manager",
+    priceMonthly: 99,
+    priceNote: "GBP · per location / month · founding",
     description:
-      "Restaurant growth software to get more customers—audit, Google, reviews, and campaigns you approve. Low monthly while you grow.",
-    stripeTier: "starter",
+      "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. You approve before anything public goes live.",
+    stripeTier: "pro",
     highlight: true,
   },
-  {
-    id: "flat",
-    name: "Flat",
-    badge: "Best value",
-    priceMonthly: 99,
-    regularPriceMonthly: 250,
-    priceNote: "No additional order fees",
-    description:
-      "One predictable monthly price. Same growth tools—more customers, keep more customers, ask KOB—without per-order fees.",
-    stripeTier: "pro",
-  },
 ];
-
-export type ComparisonCell = "kob" | "owner" | "both";
 
 export type ComparisonRow = {
   label: string;
@@ -57,56 +40,51 @@ export type ComparisonRow = {
   kobWins?: boolean;
 };
 
-/** Structured KOB vs Owner.com — homepage + pricing reference */
+/** Structured KOB vs Owner.com — honest labels only */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
   eyebrow: "UK independents first.",
   headline: "Lower price. No POS swap.",
   subline:
-    "Owner.com sells a full stack at premium rates. KOB starts with a free scan, a daily list you approve, and credits for website, SEO, and brand requests.",
+    "Owner.com sells a full stack at premium rates. KOB is the AI restaurant manager: Talk, approve, verify — not a till replacement.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
-  footnote: "*Owner.com public pricing as of 2026-06-20 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Guest support fees may apply. Competitor names used for comparison only.",
+  footnote:
+    "*Owner.com public pricing as of 2026-06-20 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only. KOB Phone answering is Coming next.",
   rows: [
     {
-      label: "Monthly (flex-style plan)",
-      kob: "$49/mo",
-      owner: "$249/mo",
+      label: "Monthly",
+      kob: "£99/mo founding",
+      owner: "$249–$499/mo",
       kobWins: true,
     },
     {
-      label: "Daily 24/7 assistance employee",
-      kob: "Yes (included)",
-      owner: "No",
+      label: "AI manager (Talk + approve)",
+      kob: "Yes",
+      owner: "Product modules",
       kobWins: true,
     },
     {
-      label: "Monthly (flat plan)",
-      kob: "$99/mo",
-      owner: "$499/mo",
-      kobWins: true,
+      label: "24/7 phone answering",
+      kob: "Coming next",
+      owner: "Owner product",
+      kobWins: false,
     },
     {
-      label: "Free online scan before you pay",
+      label: "Free public scan before you pay",
       kob: "Yes — about 1 minute",
       owner: "Demo-led sales",
       kobWins: true,
     },
     {
-      label: "Daily task list (reviews, holidays, hours)",
-      kob: "Yes — approve in one tap",
-      owner: "Product modules to manage",
-      kobWins: true,
-    },
-    {
-      label: "Plain English — no agency jargon",
-      kob: "Built in",
-      owner: "Varies",
+      label: "Replace POS / ordering stack",
+      kob: "No — we don’t",
+      owner: "Yes — core offer",
       kobWins: true,
     },
     {
       label: "7-day free trial",
-      kob: "Yes",
+      kob: "Yes — no card",
       owner: "Varies",
       kobWins: true,
     },
@@ -116,55 +94,36 @@ export const OWNER_COMPARISON = {
       owner: "No — month-to-month",
       kobWins: true,
     },
-    {
-      label: "Typical go-live",
-      kob: "Free scan in ~1 min; trial in minutes",
-      owner: "Demo call + ~1 week with specialist",
-      kobWins: true,
-    },
-    {
-      label: "Core offer",
-      kob: "Scan + daily approve list + credit requests",
-      owner: "Full stack: website, ordering, app, marketing",
-      kobWins: false,
-    },
-    {
-      label: "Free online health scan",
-      kob: "Yes — trykob.com/audit",
-      owner: "Yes — grader.owner.com (feeds demo)",
-      kobWins: true,
-    },
   ] satisfies ComparisonRow[],
 } as const;
 
 export const PRICING_INCLUDED_FEATURES = [
-  { title: "Free restaurant audit", detail: "See where you’re losing customers online before you spend." },
-  { title: "Get more customers", detail: "Google presence, website, reviews, local SEO, and social—prioritised by impact." },
-  { title: "Keep more customers", detail: "Review engine, recovery-style follow-ups, and consistent presence." },
-  { title: "Ask KOB", detail: "Campaigns and fixes in plain English—you approve before anything goes live." },
-  { title: "Weekly growth focus", detail: "A short list of what will fill more tables this week." },
-  { title: "Listing & photo checks", detail: "Flags when Google or your site looks off vs competitors." },
-  { title: "Plain-English briefs", detail: "What’s costing you customers, why, and how long to fix." },
-  { title: "7-day free trial", detail: "Start after your audit. Cancel anytime." },
-  { title: "Transparent plans", detail: "Flex from $49/mo or Flat at $99/mo—pick what fits how you take orders." },
+  { title: "Morning brief", detail: "What needs you today — hours, reviews, costs, prep." },
+  { title: "You approve first", detail: "Nothing public until you say yes. Autopilot only where you allow." },
+  { title: "Google & website watch", detail: "Public hours and listing checks. Verified Done only after read-back." },
+  { title: "Cost Watch", detail: "Inbox invoices first; photo OCR as fallback." },
+  { title: "Prep notes", detail: "BETA predictive quantities when weather/bookings exist — not measured waste." },
+  { title: "KOB Phone", detail: "Coming next — join the beta waitlist. Not live answering today." },
+  { title: "7-day free trial", detail: "No card. Cancel before day 7 and you pay nothing." },
+  { title: "Founding price", detail: "£99 per location / month while you stay subscribed." },
 ] as const;
 
 export const PRICING_FAQ = [
   {
     q: "How much does KOB cost?",
-    a: "Flex is $49/mo plus 2.5% on direct orders. Flat is $99/mo with no order fees. Both include the free scan, daily task list, and credits for website, SEO, and brand requests.",
+    a: "£99 per location / month at the founding rate while you stay subscribed. 7-day trial with no card.",
   },
   {
-    q: "What is included with KOB?",
-    a: "Free scan, daily task list, draft replies and posts, holiday reminders, listing checks, and credits to request website, SEO, or brand work. Flex adds 2.5% on direct orders; Flat has no order fees.",
+    q: "What is included?",
+    a: "Talk with KOB, morning brief, drafts for reviews and hours, Cost Watch, Prep BETA, and house-rule memory. Phone answering is Coming next.",
   },
   {
-    q: "What fees do restaurants pay on orders?",
-    a: "On Flat, you pay only your monthly subscription. On Flex, you pay $49/mo plus 2.5% on direct orders—half the typical 5% flex fee on comparable platforms.",
+    q: "Do you replace my till or ordering?",
+    a: "No. KOB is the AI restaurant manager around the tools you already have — not an Owner.com-style POS clone.",
   },
   {
     q: "How is KOB different from Owner.com?",
-    a: "Owner.com sells a full revenue stack—website, ordering, app, and marketing—starting at $249/mo plus fees. KOB is restaurant growth software: get more customers, keep more customers, ask KOB for the rest—starting with a free audit. Lower price, clearer job.",
+    a: "Owner.com sells website, ordering, app, and marketing as a full stack. KOB runs the manager work — Google, reviews, hours, costs, prep — with approve-before-live. Phone answering is Coming next on KOB.",
   },
   {
     q: "Do you require contracts?",
@@ -172,6 +131,6 @@ export const PRICING_FAQ = [
   },
   {
     q: "How long does setup take?",
-    a: "Run a free audit in about a minute. Trial signup takes a few minutes. Your first growth list appears after you connect your restaurant.",
+    a: "Find your restaurant, see public findings in under two minutes, create an account, and land in Talk with prioritized work.",
   },
 ] as const;

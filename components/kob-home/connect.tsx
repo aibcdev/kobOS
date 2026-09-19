@@ -1,38 +1,48 @@
 const ROWS = [
   {
-    name: "Google listing",
+    name: "Google listing (public watch)",
     detail: "Public hours, rating, review count — watched every morning",
-    state: "Live now",
+    state: "LIVE",
   },
   {
-    name: "Website",
-    detail: "Hours and menu on the site you already have",
-    state: "Live now",
+    name: "Website hours / menu check",
+    detail: "Compare public site to Google. Write-back needs reconnect.",
+    state: "BETA",
   },
   {
     name: "Invoices",
-    detail: "Email ingest first. Photo of a paper note if that’s all you have.",
-    state: "Live now",
+    detail: "Email ingest first. Photo OCR fallback when that is all you have.",
+    state: "BETA",
   },
   {
-    name: "Weather",
-    detail: "Prep note when rain or cold will hit covers",
-    state: "Live now",
+    name: "Weather prep",
+    detail: "Prep note when rain or cold will hit covers — if city is set.",
+    state: "BETA",
+  },
+  {
+    name: "Google write (hours / reviews post)",
+    detail: "Needs Google Business reconnect + read-back before Done.",
+    state: "CONNECTING",
   },
   {
     name: "POS",
     detail: "KOB does not replace your till. Connecting when the adapter verifies.",
-    state: "Connecting",
+    state: "CONNECTING",
   },
   {
     name: "Reservations",
     detail: "OpenTable, SevenRooms and the rest — connecting, not a clone.",
-    state: "Connecting",
+    state: "CONNECTING",
   },
   {
     name: "KOB Phone",
-    detail: "When your team can’t answer, KOB can. Keep your number.",
-    state: "Coming soon",
+    detail: "Guest answering. Keep your number. Join beta waitlist.",
+    state: "COMING NEXT",
+  },
+  {
+    name: "Waste Eye",
+    detail: "Measured waste with camera + scale — not live estimates.",
+    state: "COMING NEXT",
   },
 ];
 
@@ -43,8 +53,8 @@ export function Connect() {
         One manager. The tools you already have.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        Free listing and invoice tools work now. Phone answering is Coming soon — not
-        another “Soon” buried with the till.
+        Labels match readiness: LIVE, BETA, CONNECTING, or COMING NEXT. No “Live now”
+        without a real adapter.
       </p>
 
       <div className="mt-8 overflow-hidden rounded-[1.75rem] border border-line bg-cream">
@@ -60,9 +70,11 @@ export function Connect() {
               </div>
               <span
                 className={
-                  row.state === "Live now"
+                  row.state === "LIVE"
                     ? "shrink-0 rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage"
-                    : "shrink-0 rounded-full bg-paper px-3 py-1 text-xs text-subtle"
+                    : row.state === "BETA"
+                      ? "shrink-0 rounded-full bg-paper px-3 py-1 text-xs font-medium text-espresso"
+                      : "shrink-0 rounded-full bg-paper px-3 py-1 text-xs text-subtle"
                 }
               >
                 {row.state}

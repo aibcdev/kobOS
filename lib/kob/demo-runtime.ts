@@ -209,8 +209,8 @@ export function morningMessages(
 
   const handledLine = handled.length
     ? handled.some((f) => f.ruleId === "reviews-high")
-      ? "I already replied to overnight 5-stars in your usual tone."
-      : `I already handled ${handled[0].headline.toLowerCase()} on autopilot.`
+      ? "Overnight 5-stars are drafted in your tone — not posted to Google until verified."
+      : `Queued on autopilot (not verified live): ${handled[0].headline.toLowerCase()}.`
     : `I looked at ${restaurant.name} this morning.`;
 
   const suggestLines: string[] = [];
@@ -270,7 +270,7 @@ export function morningMessages(
         { id: "approve-all", label: "Take them", kind: "approve" },
         { id: "review", label: "Tell me first", kind: "yes" },
       ],
-      doneText: `Done.\n${bits.join(".\n")}.\nI'll keep watching.`,
+      doneText: `Sent — waiting for confirmation.\n${bits.join(".\n")}.\nI'll keep watching.`,
     });
   } else if (locked.length) {
     messages.push({
@@ -411,18 +411,7 @@ export const DEFAULT_AUTONOMY: AutonomyRule[] = [
   },
 ];
 
-export const DEFAULT_MEMORY: MemoryItem[] = [
-  {
-    id: "mem1",
-    text: "Never discount Friday nights.",
-    learned: "Offers only Monday–Thursday, unless you ask.",
-  },
-  {
-    id: "mem2",
-    text: "Shorter, more casual review replies.",
-    learned: "Sign off simply. Use first names when the guest does.",
-  },
-];
+export const DEFAULT_MEMORY: MemoryItem[] = [];
 
 const AREAS = [
   "neighbourhood café",

@@ -17,24 +17,38 @@ export function Hero() {
       <div className="relative mx-auto flex min-h-dvh max-w-7xl flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:justify-center lg:pb-24 lg:pt-32">
         <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="max-w-xl text-paper">
-            <p className="text-sm font-medium text-paper/80">
-              Built for independent restaurants &amp; cafés
+            <p className="text-xs font-medium tracking-[0.14em] text-paper/75 uppercase">
+              The AI restaurant manager
             </p>
             <h1 className="font-display text-display mt-4 font-medium tracking-[-0.05em] text-paper">
-              KOB, the AI
+              KOB runs the work
               <br />
-              restaurant manager
+              around your restaurant.
             </h1>
             <p className="mt-5 max-w-md text-lg text-paper/80">
-              Handles the repetitive work behind your restaurant — so your team
-              can focus on guests.
+              Google, reviews, hours, costs, and prep — you approve before anything
+              public. Example morning brief below, not a named case study.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" variant="cream" asChild>
-                <Link href="/onboard">Try KOB</Link>
+                <Link
+                  href="/onboard"
+                  onClick={() => {
+                    void import("@/lib/kob/analytics").then((m) => m.trackKob("hero_try_clicked"));
+                  }}
+                >
+                  Try KOB free
+                </Link>
               </Button>
               <Button size="lg" variant="frost" asChild>
-                <Link href="/login">Talk to KOB</Link>
+                <Link
+                  href="/login"
+                  onClick={() => {
+                    void import("@/lib/kob/analytics").then((m) => m.trackKob("hero_talk_clicked"));
+                  }}
+                >
+                  Talk to KOB
+                </Link>
               </Button>
             </div>
           </div>

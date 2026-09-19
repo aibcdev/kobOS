@@ -11,29 +11,27 @@ function Check() {
 }
 
 const BENEFITS = [
-  "Daily visibility tasks",
-  "Approve in one tap",
-  "Credits for website & SEO",
-  "7-day free trial",
-  "No long-term contracts",
-  "Plain-English briefs",
+  "Morning brief in Talk",
+  "Approve before anything public",
+  "£99 founding · per location",
+  "7-day free trial · no card",
+  "No POS swap",
+  "Phone answering Coming next",
 ] as const;
 
-/** Compact comparison rows for homepage mock */
 const HOME_ROWS = OWNER_COMPARISON.rows.filter((row) =>
   [
-    "Monthly (flex-style plan)",
-    "Daily 24/7 assistance employee",
-    "Monthly (flat plan)",
-    "Daily task list (reviews, holidays, hours)",
+    "Monthly",
+    "AI manager (Talk + approve)",
+    "24/7 phone answering",
+    "Free public scan before you pay",
     "7-day free trial",
     "Long-term contract",
   ].includes(row.label),
 );
 
 export function SaasOwnerComparison() {
-  const flex = PRICING_PLANS.find((p) => p.id === "flex");
-  const flat = PRICING_PLANS.find((p) => p.id === "flat");
+  const founding = PRICING_PLANS.find((p) => p.id === "founding");
 
   return (
     <section id="compare" className="border-t border-[#2c2c2c]/5 bg-[#f9f6f1] px-6 py-10 md:py-14">
@@ -55,10 +53,10 @@ export function SaasOwnerComparison() {
               ))}
             </ul>
             <Link
-              href="/signup"
+              href="/onboard"
               className="mt-5 inline-flex h-12 items-center justify-center rounded-full bg-[var(--color-forest)] px-6 text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)]"
             >
-              {marketingCopy.cta.startTrial} →
+              Try KOB free →
             </Link>
             <SaasSocialProof className="mt-5" label={marketingCopy.heroSocialProof} />
           </div>
@@ -96,46 +94,26 @@ export function SaasOwnerComparison() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {flex ? (
+            {founding ? (
               <div className="relative rounded-2xl border border-[#2c2c2c]/10 bg-white p-6 shadow-sm">
                 <span className="absolute -top-3 right-5 rounded-full bg-[#c8e6c0] px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-[var(--color-forest)] uppercase">
-                  Most popular
+                  Founding
                 </span>
                 <p className="font-mono-brand text-[10px] font-semibold tracking-wider text-[var(--color-forest-mid)] uppercase">
-                  {flex.name}
+                  {founding.name}
                 </p>
                 <p className="mt-2 flex flex-wrap items-baseline gap-2">
                   <span className="font-heading text-5xl tracking-tight text-[var(--color-forest)]">
-                    ${flex.priceMonthly}
+                    £{founding.priceMonthly}
                   </span>
                   <span className="text-sm text-[#2c2c2c]/55">/mo</span>
                 </p>
-                <p className="mt-1 text-sm text-[var(--color-forest-mid)]">{flex.priceNote}</p>
+                <p className="mt-1 text-sm text-[var(--color-forest-mid)]">{founding.priceNote}</p>
                 <Link
-                  href="/signup"
+                  href="/onboard"
                   className="mt-5 flex h-11 items-center justify-center rounded-full bg-[var(--color-forest)] text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)]"
                 >
-                  {marketingCopy.cta.startTrial} →
-                </Link>
-              </div>
-            ) : null}
-            {flat ? (
-              <div className="rounded-2xl border border-[#2c2c2c]/10 bg-white p-6 shadow-sm">
-                <p className="font-mono-brand text-[10px] font-semibold tracking-wider text-[#2c2c2c]/50 uppercase">
-                  {flat.name}
-                </p>
-                <p className="mt-2 flex flex-wrap items-baseline gap-2">
-                  <span className="font-heading text-5xl tracking-tight text-[var(--color-forest)]">
-                    ${flat.priceMonthly}
-                  </span>
-                  <span className="text-sm text-[#2c2c2c]/55">/mo</span>
-                </p>
-                <p className="mt-1 text-sm text-[#2c2c2c]/60">{flat.priceNote}</p>
-                <Link
-                  href="/signup"
-                  className="mt-5 flex h-11 items-center justify-center rounded-full border border-[var(--color-forest)] text-sm font-semibold text-[var(--color-forest)] hover:bg-[var(--color-forest)] hover:text-white"
-                >
-                  {marketingCopy.cta.startTrial}
+                  Try KOB free →
                 </Link>
               </div>
             ) : null}

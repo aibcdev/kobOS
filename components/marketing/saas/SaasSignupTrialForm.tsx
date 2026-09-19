@@ -44,8 +44,8 @@ export function SaasSignupTrialForm() {
     : nextFromQuery && nextFromQuery.startsWith("/")
       ? nextFromQuery
       : auditFromQuery
-        ? `/audit/${auditFromQuery}`
-        : "/dashboard?welcome=1";
+        ? `/onboard?from=audit&audit=${encodeURIComponent(auditFromQuery)}`
+        : "/app";
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");

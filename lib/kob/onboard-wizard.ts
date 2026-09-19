@@ -31,17 +31,14 @@ export type Chip = {
   soon?: boolean
 };
 
+/** Value-first flow: search → findings → role → matters → autonomy → account */
 export type WizardStepId =
   | "name"
+  | "findings"
   | "role"
   | "matters"
-  | "start"
-  | "scope"
-  | "book"
-  | "chat"
-  | "menu"
-  | "phone"
-  | "run";
+  | "run"
+  | "account";
 
 export type OnboardAnswers = {
   companyName: string
@@ -60,26 +57,22 @@ export const EMPTY_ANSWERS: OnboardAnswers = {
   companyName: "",
   role: "owner",
   matters: null,
-  start: [],
-  scope: null,
-  book: [],
-  chat: [],
-  menu: null,
-  phone: null,
+  start: ["all"],
+  scope: "one_room",
+  book: ["google"],
+  chat: ["email"],
+  menu: "website",
+  phone: "skip",
   run: null,
 };
 
 export const WIZARD_STEPS: WizardStepId[] = [
   "name",
+  "findings",
   "role",
   "matters",
-  "start",
-  "scope",
-  "book",
-  "chat",
-  "menu",
-  "phone",
   "run",
+  "account",
 ];
 
 export const STEP_COPY: Record<
@@ -87,33 +80,17 @@ export const STEP_COPY: Record<
   { title: string; hint?: string; multi?: boolean; skippable?: boolean }
 > = {
   name: { title: "What is your restaurant called?" },
+  findings: {
+    title: "I already see a few things",
+    hint: "From public Google and your site — nothing private yet.",
+  },
   role: { title: "What is your role?" },
-  matters: { title: "What matters more to you at the moment?" },
-  start: {
-    title: "Where should I start?",
-    hint: "Pick the jobs I can do now. Phone answering is Coming soon on KOB.",
-    multi: true,
+  matters: { title: "What matters most right now?" },
+  run: { title: "How much should I run on my own?" },
+  account: {
+    title: "Create your account to keep this trial",
+    hint: "7 days free, no card. Without an account, work stays on this device only.",
   },
-  scope: { title: "Should I start on your whole group, or one room?" },
-  book: {
-    title: "Where do guests book?",
-    hint: "How they book today. We are not connecting those systems yet.",
-    multi: true,
-    skippable: true,
-  },
-  chat: {
-    title: "Where does your team message you?",
-    hint: "How they reach you today — not a KOB integration.",
-    multi: true,
-    skippable: true,
-  },
-  menu: { title: "Where is the live menu kept?", skippable: true },
-  phone: {
-    title: "Want KOB to answer the phone?",
-    hint: "Coming soon on KOB. We will not take calls yet.",
-    skippable: true,
-  },
-  run: { title: "Last one — how much should I run on my own?" },
 };
 
 export const ROLE_CHIPS: Chip[] = [
@@ -135,48 +112,6 @@ export const MATTERS_CHIPS: Chip[] = [
   { id: "brand", label: "Brand / photos" },
 ];
 
-export const START_CHIPS: Chip[] = [
-  { id: "all", label: "All of it" },
-  { id: "reviews", label: "Reviews" },
-  { id: "google", label: "Google listing" },
-  { id: "website", label: "Website" },
-  { id: "kitchen", label: "Kitchen / waste" },
-  { id: "reservations", label: "Reservations", soon: true },
-  { id: "marketing", label: "Marketing", soon: true },
-  { id: "phone", label: "Phone", soon: true },
-];
-
-export const SCOPE_CHIPS: Chip[] = [
-  { id: "whole_group", label: "Whole group" },
-  { id: "one_room", label: "One room first" },
-];
-
-export const BOOK_CHIPS: Chip[] = [
-  { id: "website", label: "Website" },
-  { id: "google", label: "Google" },
-  { id: "walkin", label: "Walk-in" },
-  { id: "opentable", label: "OpenTable / Resy" },
-  { id: "phone", label: "Phone" },
-];
-
-export const CHAT_CHIPS: Chip[] = [
-  { id: "email", label: "Email" },
-  { id: "whatsapp", label: "WhatsApp" },
-  { id: "imessage", label: "iMessage" },
-  { id: "other", label: "Other" },
-];
-
-export const MENU_CHIPS: Chip[] = [
-  { id: "website", label: "On the website" },
-  { id: "printed", label: "Printed only" },
-  { id: "drive", label: "Google Drive" },
-];
-
-export const PHONE_CHIPS: Chip[] = [
-  { id: "soon", label: "Yes — tell me when it lands on KOB" },
-  { id: "skip", label: "Skip for now" },
-];
-
 export const RUN_CHIPS: Chip[] = [
   { id: "supervised", label: "Supervised" },
   { id: "assisted", label: "Assisted" },
@@ -190,11 +125,11 @@ export const RUN_DETAIL: Record<RunLevelId, { see: string; control: string }> = 
   },
   assisted: {
     see: "A morning pass in Talk. Five-stars can go on a rule you set.",
-    control: "You approve hours, complaints, prices, and kitchen notes. KOB handles easy 5-stars.",
+    control: "You approve hours, complaints, prices, and kitchen notes. Drafts only until verified.",
   },
   autonomous: {
     see: "KOB tells you what ran. Complaints and prices stay with you.",
-    control: "Five-stars go out in your tone. Hours wait for Apply. No phone. No till.",
+    control: "Five-star drafts in your tone. Hours wait for Apply. No phone. No till.",
   },
 };
 
@@ -204,18 +139,6 @@ export function chipsFor(step: WizardStepId): Chip[] {
       return ROLE_CHIPS;
     case "matters":
       return MATTERS_CHIPS;
-    case "start":
-      return START_CHIPS;
-    case "scope":
-      return SCOPE_CHIPS;
-    case "book":
-      return BOOK_CHIPS;
-    case "chat":
-      return CHAT_CHIPS;
-    case "menu":
-      return MENU_CHIPS;
-    case "phone":
-      return PHONE_CHIPS;
     case "run":
       return RUN_CHIPS;
     default:
@@ -227,24 +150,16 @@ export function stepComplete(step: WizardStepId, answers: OnboardAnswers): boole
   switch (step) {
     case "name":
       return answers.companyName.trim().length >= 2;
+    case "findings":
+      return true;
     case "role":
       return Boolean(answers.role);
     case "matters":
       return Boolean(answers.matters);
-    case "start":
-      return answers.start.length > 0;
-    case "scope":
-      return Boolean(answers.scope);
-    case "book":
-      return answers.book.length > 0;
-    case "chat":
-      return answers.chat.length > 0;
-    case "menu":
-      return Boolean(answers.menu);
-    case "phone":
-      return Boolean(answers.phone);
     case "run":
       return Boolean(answers.run);
+    case "account":
+      return true;
   }
 }
 
@@ -255,4 +170,30 @@ export function toggleMulti(current: string[], id: string, allId?: string): stri
   const withoutAll = allId ? current.filter((x) => x !== allId) : current;
   if (withoutAll.includes(id)) return withoutAll.filter((x) => x !== id);
   return [...withoutAll, id];
+}
+
+/** Public findings bullets from Places enrich profile */
+export function findingsFromProfile(profile: {
+  biggestIssue?: { label: string; why: string }
+  otherSignals?: string[]
+  googlePerformance?: { summary: string }
+  websiteView?: { hasSite: boolean; summary: string }
+  rating?: number | null
+  reviewCount?: number | null
+}): string[] {
+  const out: string[] = [];
+  if (profile.biggestIssue?.label) {
+    out.push(`${profile.biggestIssue.label} — ${profile.biggestIssue.why}`);
+  }
+  if (profile.googlePerformance?.summary) out.push(profile.googlePerformance.summary);
+  if (profile.websiteView?.summary) out.push(profile.websiteView.summary);
+  if (profile.rating != null && profile.reviewCount != null) {
+    out.push(`Public rating ${profile.rating} from ${profile.reviewCount} reviews.`);
+  }
+  for (const s of profile.otherSignals ?? []) {
+    if (out.length >= 5) break;
+    out.push(s);
+  }
+  if (!out.length) out.push("I found your place. I’ll dig deeper in Talk once you’re in.");
+  return out.slice(0, 5);
 }

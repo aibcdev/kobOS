@@ -141,17 +141,19 @@ export function KitchenSheet() {
                         </div>
                         {tool.free ? (
                           on ? (
-                            <p className="shrink-0 text-xs text-sage">On</p>
+                            <p className="shrink-0 text-xs text-sage">
+                              {tool.id === "google" ? "Watch public" : "Watching"}
+                            </p>
                           ) : tool.id === "google" ||
                             tool.id === "accounting" ||
                             tool.id === "weather" ? (
                             <Button size="sm" onClick={() => connectTool(tool.id)}>
-                              {tool.connect}
+                              {tool.id === "google" ? "Watch public Google" : tool.connect}
                             </Button>
                           ) : null
                         ) : (
                           <p className="shrink-0 text-xs text-subtle">
-                            {tool.soonNote ?? "Soon"}
+                            {tool.soonNote ?? "Reconnect / Coming next"}
                           </p>
                         )}
                       </div>

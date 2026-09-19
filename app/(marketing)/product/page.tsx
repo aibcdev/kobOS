@@ -1,15 +1,40 @@
 import type { Metadata } from "next";
-import { SaasCardGrid } from "@/components/marketing/saas/SaasCardGrid";
+import Link from "next/link";
 import { SaasPageHero, SaasPrimaryCta, SaasSecondaryCta } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
-import { marketingCopy } from "@/lib/marketing/copy";
-import { ownerProductPillars } from "@/lib/marketing/owner-pillars";
 
 export const metadata: Metadata = {
-  title: "Product | KOB",
+  title: "Product | KOB — The AI Restaurant Manager",
   description:
-    "Websites, SEO, and direct ordering for restaurants—plus a free AI report that shows what to fix before you spend on ads.",
+    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. You approve. Nothing public until you say yes.",
 };
+
+const PILLARS = [
+  {
+    title: "Morning brief",
+    description: "Hours mismatches, unanswered reviews, cost flags, and prep notes — ranked for today.",
+  },
+  {
+    title: "Suggest → Approve → Autopilot",
+    description: "You set what KOB may do alone. Public posts and hours only after verify — not fake Done.",
+  },
+  {
+    title: "Cost Watch",
+    description: "Inbox invoices first. Photo OCR when that is all you have. Unit-cost checks when data exists.",
+  },
+  {
+    title: "Prep (BETA)",
+    description: "Predictive quantities from weather and bookings when connected — not measured waste.",
+  },
+  {
+    title: "KOB Phone",
+    description: "Coming next. Join the beta waitlist. We do not claim live guest answering today.",
+  },
+  {
+    title: "Memory & house rules",
+    description: "Structured rules you confirm. No invented Friday discounts or restrictions.",
+  },
+];
 
 export default function ProductHubPage() {
   return (
@@ -17,73 +42,31 @@ export default function ProductHubPage() {
       <SaasPageHero
         variant="inset"
         eyebrow="Product"
-        title="Websites, SEO, and ordering—built for restaurants."
-        description={marketingCopy.productSubline}
+        title="The AI restaurant manager — not another growth stack."
+        description="Talk to KOB. Approve the work. Verify before Done. Built for independents who keep their till."
       >
-        <SaasPrimaryCta href="/audit">{marketingCopy.cta.aiReport}</SaasPrimaryCta>
-        <SaasSecondaryCta href="/demo">{marketingCopy.cta.freeDemo}</SaasSecondaryCta>
+        <SaasPrimaryCta href="/onboard">Try KOB free</SaasPrimaryCta>
+        <SaasSecondaryCta href="/login">Talk to KOB</SaasSecondaryCta>
       </SaasPageHero>
 
-      <SaasSection className="bg-[#fbf8f5]">
+      <SaasSection className="bg-cream">
         <h2 className="font-heading mb-8 text-2xl font-semibold tracking-tight text-[#2c2c2c] md:text-3xl">
-          {marketingCopy.useAiToFix}
+          What KOB takes from you
         </h2>
-        <SaasCardGrid
-          columns={2}
-          items={ownerProductPillars.map((p) => ({
-            title: p.title,
-            description: p.description,
-            href: p.href,
-            image:
-              p.slug === "website"
-                ? "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=85"
-                : p.slug === "online-ordering"
-                  ? "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=85"
-                  : p.slug === "delivery"
-                    ? "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=85"
-                    : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=85",
-            imageAlt: p.title,
-          }))}
-        />
-      </SaasSection>
-
-      <SaasSection className="border-t border-[#2c2c2c]/5 bg-[#f9f3ed]">
-        <SaasCardGrid
-          columns={2}
-          items={[
-            {
-              title: "Growth Agent",
-              description:
-                "A ranked weekly plan across SEO, site, and direct demand—with drafts your team can publish fast.",
-              href: "/login",
-              image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=85",
-              imageAlt: "Restaurant team at service",
-            },
-            {
-              title: "Digital menus & SEO",
-              description:
-                "Structured pages, menus, and neighbourhood intent built for high-converting searches—not vanity traffic.",
-              href: "/features/ai-menu",
-              image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=85",
-              imageAlt: "Menu and search",
-            },
-            {
-              title: "Built for restaurants",
-              description:
-                "From full-service to high-volume daytime, KOB focuses on the guest journey your P&L depends on.",
-              href: "/solutions",
-              image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=85",
-              imageAlt: "Dining experience",
-            },
-            {
-              title: "Brand & guest experience",
-              description: "Keep tone, visuals, and conversion paths coherent from search to booking.",
-              href: "/features/branding",
-              image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=85",
-              imageAlt: "Food photography",
-            },
-          ]}
-        />
+        <ul className="grid gap-6 sm:grid-cols-2">
+          {PILLARS.map((p) => (
+            <li key={p.title} className="rounded-2xl border border-[#2c2c2c]/8 bg-white p-6">
+              <h3 className="font-heading text-lg font-semibold text-[#094413]">{p.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#2c2c2c]/75">{p.description}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-10 text-center text-sm text-[#2c2c2c]/60">
+          £99/mo founding · 7-day trial, no card ·{" "}
+          <Link href="/#pricing" className="font-medium text-[#088924] underline-offset-2 hover:underline">
+            See pricing
+          </Link>
+        </p>
       </SaasSection>
     </>
   );

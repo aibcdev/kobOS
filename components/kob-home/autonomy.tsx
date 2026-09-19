@@ -18,7 +18,7 @@ export function Autonomy() {
       <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
         <div>
           <h2 className="font-display text-headline font-medium">
-            Suggest, then approve, then autopilot
+            Suggest → Ask → Autopilot → Never
           </h2>
           <ul className="mt-8">
             {AUTONOMY_STAGES.map((item) => {
@@ -70,7 +70,7 @@ export function Autonomy() {
                       <p className="text-[0.95rem] text-ink">
                         {stage.id === "approve"
                           ? "Saved to KOB’s autonomy."
-                          : "Waiting on you — then done."}
+                          : "Draft only — waiting for confirmation."}
                       </p>
                     </div>
                   </article>

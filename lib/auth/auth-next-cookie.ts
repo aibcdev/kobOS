@@ -3,8 +3,8 @@ export const AUTH_NEXT_COOKIE = "kob_auth_next";
 export const AUTH_NEXT_MAX_AGE_SEC = 600;
 
 export function safeNextPath(raw: string | null | undefined): string {
-  const next = raw?.trim() || "/dashboard";
-  if (!next.startsWith("/") || next.startsWith("//")) return "/dashboard";
+  const next = raw?.trim() || "/app";
+  if (!next.startsWith("/") || next.startsWith("//")) return "/app";
   return next;
 }
 

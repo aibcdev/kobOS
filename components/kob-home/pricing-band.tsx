@@ -15,12 +15,12 @@ export function PricingBand() {
           approve, then autopilot — you choose what KOB can handle automatically.
         </p>
         <ul className="mt-6 space-y-2 text-ink">
-          <li>3-day trial — no card</li>
+          <li>7-day trial — no card</li>
           <li>Google, reviews, website, invoices, weather prep</li>
           <li>KOB Phone: Coming to founding restaurants</li>
         </ul>
         <Button size="lg" className="mt-8" asChild>
-          <Link href="/onboard">Try KOB</Link>
+          <Link href="/onboard">Try KOB free</Link>
         </Button>
       </div>
     </section>

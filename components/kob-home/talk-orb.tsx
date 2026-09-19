@@ -31,7 +31,7 @@ function replyTo(text: string) {
     return "Send the delivery photo. KOB reads the lines, checks the house rate, and drafts the supplier note. You approve before it leaves.";
   }
   if (/price|cost|£|trial/.test(t)) {
-    return "Founding is £99 a location. Fourteen-day trial. You start it yourself — no demo call.";
+    return "Founding is £99 a location. Seven-day trial, no card. You start it yourself — no demo call.";
   }
   if (/dashboard|tool|platform/.test(t)) {
     return "KOB is not a dashboard. KOB is the manager who uses your tools. You talk. KOB takes the job.";

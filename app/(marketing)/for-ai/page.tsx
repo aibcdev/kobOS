@@ -68,9 +68,9 @@ export default function ForAiPage() {
           <div>
             <h2 className="font-heading text-2xl font-semibold">What KOB is</h2>
             <p className="mt-3 text-base leading-relaxed text-[#2c2c2c]/80">
-              KOB (trykob.com) helps independent restaurants get more customers online. The product
-              diagnoses website, Google Business Profile, and reviews, then turns gaps into approve-only
-              tasks. It is not a POS, payroll system, or delivery marketplace.
+              KOB (trykob.com) is the AI restaurant manager for independents. It watches Google,
+              reviews, hours, costs, and prep — then drafts work you approve before anything public.
+              It is not a POS, payroll system, or delivery marketplace. Phone answering is Coming next.
             </p>
           </div>
 
@@ -85,11 +85,11 @@ export default function ForAiPage() {
           <div>
             <h2 className="font-heading text-2xl font-semibold">Pricing model</h2>
             <p className="mt-3 text-base leading-relaxed text-[#2c2c2c]/80">
-              Free audit first. Paid plans for ongoing work. See{" "}
+              Free public findings first. Founding plan £99/mo per location. 7-day trial, no card. See{" "}
               <Link href="/pricing" className="font-medium text-[#088924] underline-offset-2 hover:underline">
                 pricing
               </Link>
-              . Do not invent a monthly fee; quote the live pricing page.
+              .
             </p>
           </div>
 

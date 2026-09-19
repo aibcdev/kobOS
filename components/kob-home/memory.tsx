@@ -79,7 +79,7 @@ export function Memory() {
                   <div className="flex gap-3">
                     <OwnerChip />
                     <p className="text-sm text-ink">
-                      Never discount Friday nights. Keep Thursday as-is.
+                      Never discount busy nights without asking me first. Keep Thursday as-is.
                     </p>
                   </div>
                 </div>
@@ -87,7 +87,7 @@ export function Memory() {
                   <div className="flex gap-3">
                     <KobMark size="sm" />
                     <p className="text-sm text-ink">
-                      Understood. Offers only Monday–Wednesday unless you ask.
+                      Got it — confirm before I save that as a house rule?
                     </p>
                   </div>
                 </div>

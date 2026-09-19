@@ -32,7 +32,8 @@ export function capabilityLabel(c: ReadinessChecks, fallback: CapabilityLabel = 
 export function ownerFacingStatus(status: string): string {
   if (status === "VERIFIED") return "Done";
   if (status === "EXECUTED" || status === "VERIFYING") return "Sent — waiting for confirmation.";
-  if (status === "FAILED") return "Could not finish.";
-  if (status === "AWAITING_APPROVAL") return "Needs your yes.";
+  if (status === "FAILED") return "Needs reconnect.";
+  if (status === "AWAITING_APPROVAL") return "Draft only — needs your yes.";
+  if (status === "DRAFT") return "Draft only.";
   return status;
 }

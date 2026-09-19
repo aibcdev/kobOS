@@ -59,18 +59,20 @@ export function IntegrationsPane() {
                   </div>
                   {tool.free ? (
                     on ? (
-                      <p className="text-sm text-sage">On</p>
+                      <p className="text-sm text-sage">
+                        {tool.id === "google" ? "Watch public" : "Watching"}
+                      </p>
                     ) : tool.id === "google" ||
                       tool.id === "accounting" ||
                       tool.id === "weather" ? (
                       <Button size="sm" onClick={() => connectTool(tool.id)}>
-                        {tool.connect}
+                        {tool.id === "google" ? "Watch public Google" : tool.connect}
                       </Button>
                     ) : (
                       <p className="text-sm text-muted">Save below</p>
                     )
                   ) : (
-                    <p className="text-sm text-subtle">{tool.soonNote ?? "Soon"}</p>
+                    <p className="text-sm text-subtle">{tool.soonNote ?? "Reconnect / Coming next"}</p>
                   )}
                 </div>
 
@@ -146,7 +148,11 @@ export function IntegrationsPane() {
                   <p className="mt-3 truncate text-sm text-ink">{notifyEmail}</p>
                 ) : null}
                 {on && tool.free && !["website", "weather", "email"].includes(tool.id) ? (
-                  <p className="mt-4 text-sm text-ink">On. You still approve anything public.</p>
+                  <p className="mt-4 text-sm text-ink">
+                    {tool.id === "google"
+                      ? "Watching public Google. Write / post needs reconnect before Done."
+                      : "Watching. You still approve anything public."}
+                  </p>
                 ) : null}
               </article>
             );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { GreenOrb } from "@/components/kob-home/green-orb";
@@ -16,19 +17,14 @@ import {
   STEP_COPY,
   WIZARD_STEPS,
   chipsFor,
+  findingsFromProfile,
   stepComplete,
-  toggleMulti,
-  type BookId,
-  type ChatId,
   type MattersId,
-  type MenuId,
   type OnboardAnswers,
-  type PhoneChoiceId,
   type RunLevelId,
-  type ScopeId,
-  type StartJobId,
 } from "@/lib/kob/onboard-wizard";
 import { useKobStore } from "@/lib/kob/store";
+import { trackKob } from "@/lib/kob/analytics";
 
 export function OnboardWizard() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -37,13 +33,28 @@ export function OnboardWizard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hydrateFromOnboard = useKobStore((s) => s.hydrateFromOnboard);
+  const startNoCardTrial = useKobStore((s) => s.startNoCardTrial);
   const router = useRouter();
+
+  useEffect(() => {
+    trackKob("onboard_view");
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("name")?.trim();
+    if (name) {
+      setAnswers((prev) => ({ ...prev, companyName: name }));
+    }
+    if (params.get("from") === "audit") {
+      trackKob("audit_to_onboard", { audit: params.get("audit") ?? undefined });
+    }
+  }, []);
 
   const step = WIZARD_STEPS[stepIndex];
   const copy = STEP_COPY[step];
   const chips = chipsFor(step);
   const last = stepIndex === WIZARD_STEPS.length - 1;
   const canContinue = stepComplete(step, answers) || Boolean(copy.skippable);
+  const findings = profile ? findingsFromProfile(profile) : [];
 
   function selectedIds(): string[] {
     switch (step) {
@@ -51,18 +62,6 @@ export function OnboardWizard() {
         return [answers.role];
       case "matters":
         return answers.matters ? [answers.matters] : [];
-      case "start":
-        return answers.start;
-      case "scope":
-        return answers.scope ? [answers.scope] : [];
-      case "book":
-        return answers.book;
-      case "chat":
-        return answers.chat;
-      case "menu":
-        return answers.menu ? [answers.menu] : [];
-      case "phone":
-        return answers.phone ? [answers.phone] : [];
       case "run":
         return answers.run ? [answers.run] : [];
       default:
@@ -81,24 +80,6 @@ export function OnboardWizard() {
         case "matters":
           next.matters = id as MattersId;
           break;
-        case "start":
-          next.start = toggleMulti(prev.start, id, "all") as StartJobId[];
-          break;
-        case "scope":
-          next.scope = id as ScopeId;
-          break;
-        case "book":
-          next.book = toggleMulti(prev.book, id) as BookId[];
-          break;
-        case "chat":
-          next.chat = toggleMulti(prev.chat, id) as ChatId[];
-          break;
-        case "menu":
-          next.menu = id as MenuId;
-          break;
-        case "phone":
-          next.phone = id as PhoneChoiceId;
-          break;
         case "run":
           next.run = id as RunLevelId;
           break;
@@ -115,6 +96,7 @@ export function OnboardWizard() {
     }
     setLoading(true);
     setError(null);
+    trackKob("restaurant_search_started", { name });
     try {
       const res = await fetch("/api/kob/onboard", {
         method: "POST",
@@ -127,6 +109,11 @@ export function OnboardWizard() {
         return false;
       }
       setProfile(data.profile);
+      trackKob("restaurant_search_result_selected", {
+        name: data.profile.name,
+        source: data.profile.source,
+      });
+      trackKob("first_finding_viewed", { count: findingsFromProfile(data.profile).length });
       return true;
     } catch {
       setError("Something went wrong. Try again.");
@@ -159,6 +146,9 @@ export function OnboardWizard() {
         return;
       }
       hydrateFromOnboard(data.profile, data.lens);
+      startNoCardTrial();
+      trackKob("trial_started");
+      trackKob("signup_completed");
       router.push("/app");
     } catch {
       setError("Something went wrong. Try again.");
@@ -176,31 +166,33 @@ export function OnboardWizard() {
       return;
     }
 
-    const nextAnswers: OnboardAnswers = { ...answers };
-    if (copy.skippable && !stepComplete(step, nextAnswers)) {
-      if (step === "phone") nextAnswers.phone = "skip";
-      if (step === "book" && nextAnswers.book.length === 0) nextAnswers.book = ["google"];
-      if (step === "chat" && nextAnswers.chat.length === 0) nextAnswers.chat = ["email"];
-      if (step === "menu" && !nextAnswers.menu) nextAnswers.menu = "website";
-      setAnswers(nextAnswers);
-    }
-    if (!copy.skippable && !stepComplete(step, nextAnswers)) {
+    if (!copy.skippable && !stepComplete(step, answers)) {
       setError("Pick one to continue.");
       return;
     }
-    if (last) {
-      if (!nextAnswers.run) nextAnswers.run = "assisted";
-      if (!nextAnswers.phone) nextAnswers.phone = "skip";
-      if (!nextAnswers.matters) nextAnswers.matters = "covers";
+
+    if (step === "account") {
+      const nextAnswers: OnboardAnswers = {
+        ...answers,
+        run: answers.run ?? "assisted",
+        matters: answers.matters ?? "covers",
+        phone: "skip",
+        start: answers.start.length ? answers.start : ["all"],
+        scope: answers.scope ?? "one_room",
+        book: answers.book.length ? answers.book : ["google"],
+        chat: answers.chat.length ? answers.chat : ["email"],
+        menu: answers.menu ?? "website",
+      };
       await finish(nextAnswers);
       return;
     }
+
     setStepIndex((n) => n + 1);
   }
 
   return (
     <div className="kob-employee flex min-h-dvh flex-col bg-bone text-espresso font-sans">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 pb-8 pt-16 sm:px-8 sm:pt-20">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 pb-8 pt-28 sm:px-8 sm:pt-32">
         <div className="flex items-center gap-2">
           <GreenOrb size="sm" />
           <p className="text-sm font-medium text-[#c4a574]">KOB</p>
@@ -236,7 +228,26 @@ export function OnboardWizard() {
           </form>
         ) : null}
 
-        {step !== "name" && step !== "run" ? (
+        {step === "findings" && profile ? (
+          <div className="mt-8 space-y-3">
+            <p className="text-sm font-medium text-espresso">
+              {profile.name}
+              {profile.city ? ` · ${profile.city}` : ""}
+            </p>
+            <ul className="space-y-3">
+              {findings.map((line) => (
+                <li key={line} className="rounded-2xl bg-cream px-4 py-3 text-sm text-ink">
+                  {line}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted">
+              Next: a few preferences, then your account — then Talk with this work ready.
+            </p>
+          </div>
+        ) : null}
+
+        {step === "role" || step === "matters" ? (
           <div className="mt-10 flex flex-wrap gap-3">
             {chips.map((chip) => {
               const on = selectedIds().includes(chip.id);
@@ -250,13 +261,10 @@ export function OnboardWizard() {
                     on
                       ? "border-espresso shadow-[0_8px_24px_-12px_rgba(17,17,17,0.45)]"
                       : "border-line hover:border-espresso/30",
-                    chip.soon && !on ? "text-muted" : "text-espresso",
+                    "text-espresso",
                   )}
                 >
                   <span>{chip.label}</span>
-                  {chip.soon ? (
-                    <span className="text-[0.65rem] font-normal text-subtle">Soon</span>
-                  ) : null}
                 </button>
               );
             })}
@@ -285,6 +293,28 @@ export function OnboardWizard() {
           </div>
         ) : null}
 
+        {step === "account" ? (
+          <div className="mt-8 space-y-4">
+            <Button size="lg" className="w-full sm:w-auto" asChild>
+              <Link
+                href={`/signup?next=${encodeURIComponent("/onboard?resume=1")}`}
+                onClick={() => trackKob("signup_started")}
+              >
+                Continue with email / Google
+              </Link>
+            </Button>
+            <p className="text-sm text-muted">
+              Already have an account?{" "}
+              <Link href={`/login?next=${encodeURIComponent("/app")}`} className="underline">
+                Log in
+              </Link>
+            </p>
+            <p className="text-xs text-muted">
+              Or continue to Talk now — trial sticks on this device until you sign in.
+            </p>
+          </div>
+        ) : null}
+
         {error ? (
           <p className="mt-6 text-sm text-red-700" role="alert">
             {error}
@@ -306,7 +336,11 @@ export function OnboardWizard() {
           {step !== "name" ? (
             <Button size="lg" onClick={() => void goNext()} disabled={loading || !canContinue}>
               {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-              {last ? "Start talking" : copy.skippable && !stepComplete(step, answers) ? "Skip for now" : "Continue"}
+              {step === "findings"
+                ? "Continue"
+                : last
+                  ? "Start talking"
+                  : "Continue"}
             </Button>
           ) : null}
         </div>

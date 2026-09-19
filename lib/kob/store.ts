@@ -289,7 +289,7 @@ export const useKobStore = create<KobStore>()(
       trialEndsAt: null,
       pendingClosureDate: null,
       startNoCardTrial: () => {
-        const ends = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+        const ends = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
         set({ trialEndsAt: ends });
       },
       hydrateRestaurant: (restaurant) => {

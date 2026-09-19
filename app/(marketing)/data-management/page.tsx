@@ -2,16 +2,12 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { SiteFooter } from "@/components/kob-site/site-footer";
-import { SiteNav } from "@/components/kob-site/site-nav";
 
 const UPDATED = "15 September 2026";
 
 export default function DataManagementPage() {
   return (
-    <div className="kob-employee min-h-dvh bg-bone text-espresso">
-      <SiteNav />
-      <main className="mx-auto max-w-2xl px-5 pb-20 pt-28 sm:px-8">
+    <main className="mx-auto max-w-2xl px-5 pb-20 pt-28 sm:px-8">
         <p className="text-sm text-muted">Legal</p>
         <h1 className="font-display text-headline mt-2 font-medium">
           Data management policy
@@ -32,8 +28,8 @@ export default function DataManagementPage() {
         </p>
         <p className="mt-3 text-ink">
           Questions:{" "}
-          <a href="mailto:hello@getkob.com" className="underline">
-            hello@getkob.com
+          <a href="mailto:hello@trykob.com" className="underline">
+            hello@trykob.com
           </a>
           .
         </p>
@@ -88,7 +84,7 @@ export default function DataManagementPage() {
           <p>
             We keep workspace data while the account is active and for a reasonable period after for
             backups and legal needs. You may request export or deletion of restaurant data by
-            emailing hello@getkob.com. Some records may remain where law requires.
+            emailing hello@trykob.com. Some records may remain where law requires.
           </p>
         </Section>
 
@@ -112,8 +108,8 @@ export default function DataManagementPage() {
 
         <Section title="10. Contact">
           <p>
-            <a href="mailto:hello@getkob.com" className="underline">
-              hello@getkob.com
+            <a href="mailto:hello@trykob.com" className="underline">
+              hello@trykob.com
             </a>
           </p>
         </Section>
@@ -124,8 +120,6 @@ export default function DataManagementPage() {
           </Link>
         </p>
       </main>
-      <SiteFooter />
-    </div>
   );
 }
 

@@ -17,19 +17,15 @@ async function findExistingPrice(stripe: Stripe, tier: string, liveOnly: boolean
   return null;
 }
 
-/** Create or reuse KOB Flex + Flat monthly prices in the current Stripe mode (test/live). */
+/** Create or reuse KOB founding monthly price (GBP) in the current Stripe mode. */
 export async function ensureStripeCatalog(stripe: Stripe): Promise<EnsuredStripePrices> {
   const liveOnly = process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_") ?? false;
-  const out: Partial<EnsuredStripePrices> = {};
+  const plan = PRICING_PLANS[0];
+  if (!plan) throw new Error("No pricing plan configured");
 
-  for (const plan of PRICING_PLANS) {
-    const tier = plan.stripeTier;
-    const existing = await findExistingPrice(stripe, tier, Boolean(liveOnly));
-    if (existing) {
-      out[tier === "starter" ? "STRIPE_PRICE_STARTER" : "STRIPE_PRICE_PRO"] = existing;
-      continue;
-    }
-
+  const tier = plan.stripeTier;
+  let existing = await findExistingPrice(stripe, tier, Boolean(liveOnly));
+  if (!existing) {
     const product = await stripe.products.create({
       name: `KOB ${plan.name}`,
       description: plan.description,
@@ -39,17 +35,16 @@ export async function ensureStripeCatalog(stripe: Stripe): Promise<EnsuredStripe
     const price = await stripe.prices.create({
       product: product.id,
       unit_amount: plan.priceMonthly * 100,
-      currency: "usd",
+      currency: "gbp",
       recurring: { interval: "month" },
       metadata: { kob_tier: tier, kob_plan: plan.id },
     });
-
-    out[tier === "starter" ? "STRIPE_PRICE_STARTER" : "STRIPE_PRICE_PRO"] = price.id;
+    existing = price.id;
   }
 
-  if (!out.STRIPE_PRICE_STARTER || !out.STRIPE_PRICE_PRO) {
-    throw new Error("Failed to ensure both Stripe prices");
-  }
-
-  return out as EnsuredStripePrices;
+  // Founding maps to PRO; keep STARTER alias for older env wiring.
+  return {
+    STRIPE_PRICE_PRO: existing,
+    STRIPE_PRICE_STARTER: existing,
+  };
 }

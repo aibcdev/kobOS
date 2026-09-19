@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { EmployeeHome } from "@/components/kob-home/employee-home";
 
 export const metadata: Metadata = {
-  title: { absolute: "KOB — the AI restaurant manager" },
+  title: { absolute: "KOB — The AI Restaurant Manager" },
   description:
-    "You talk on the floor. KOB takes the job in Google, reviews, the site, and the kitchen. Nothing public until you say yes. getkob.com",
+    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. £99/mo founding. 7-day trial, no card. trykob.com",
 };
 
 export default function MarketingHomePage() {

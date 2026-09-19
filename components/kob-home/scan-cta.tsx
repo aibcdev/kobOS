@@ -10,16 +10,16 @@ export function ScanCta() {
         Hire the manager. Keep the restaurant.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        Point KOB at the restaurant. KOB looks at Google, reviews and hours —
-        then takes the job. You stay on the floor.
+        Find your restaurant. See public findings in under two minutes. Create an account.
+        Land in Talk with the work ready — £99 founding, 7-day trial, no card.
       </p>
       <div className="mt-10 max-w-lg rounded-[1.75rem] bg-cream p-6 sm:p-8">
-        <p className="text-sm font-medium">Company name + your role. That&apos;s it.</p>
+        <p className="text-sm font-medium">Try KOB free</p>
         <p className="mt-2 text-sm text-muted">
-          KOB pulls Google, peers, and day focus from your seat.
+          Value first. Optional preferences. Account before the trial sticks.
         </p>
         <Button size="lg" className="mt-4 w-full" asChild>
-          <Link href="/onboard">Hire KOB</Link>
+          <Link href="/onboard">Try KOB free</Link>
         </Button>
       </div>
     </section>
