@@ -1,6 +1,7 @@
 import { Autonomy } from "@/components/kob-home/autonomy";
 import { Connect } from "@/components/kob-home/connect";
 import { CostWatch } from "@/components/kob-home/cost-watch";
+import { HandledToday } from "@/components/kob-home/handled-today";
 import { Hero } from "@/components/kob-home/hero";
 import { JobTabs } from "@/components/kob-home/job-tabs";
 import { KitchenPrep } from "@/components/kob-home/kitchen-prep";
@@ -16,6 +17,9 @@ export function EmployeeHome() {
     <div className="bg-bone text-espresso">
       <main>
         <Hero />
+        <Reveal>
+          <HandledToday />
+        </Reveal>
         <Reveal>
           <JobTabs />
         </Reveal>

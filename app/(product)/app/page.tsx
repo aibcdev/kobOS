@@ -8,6 +8,7 @@ import { WaBubble, WaWorking } from "@/components/kob-chat/wa-thread";
 import { GreenOrb } from "@/components/kob-home/green-orb";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
 import { Button } from "@/components/kob-ui/button";
+import { VoicePill } from "@/components/kob-micro";
 import { actOnTalk } from "@/lib/kob/act";
 import { talkToKob } from "@/lib/kob/ai/kob";
 import { DEMO_RESTAURANTS, type ChatMessage } from "@/lib/kob/demo";
@@ -423,14 +424,22 @@ function KobChat() {
           void send();
         }}
       >
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 rounded-full border border-line bg-cream/60 py-1 pr-1 pl-4">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message"
-            className="h-11 flex-1 rounded-full border-0 bg-paper px-4 text-base text-espresso outline-none"
+            placeholder="Ask KOB anything about your restaurant…"
+            className="h-10 min-w-0 flex-1 border-0 bg-transparent text-base text-espresso outline-none placeholder:text-muted"
+            aria-label="Message KOB"
           />
-          <Button type="submit" disabled={busy || !input.trim()}>
+          <VoicePill
+            onTranscript={(text) => {
+              setInput(text);
+              void send(text);
+            }}
+            demoFallback="Why was food cost high last week?"
+          />
+          <Button type="submit" disabled={busy || !input.trim()} size="sm">
             Send
           </Button>
         </div>
