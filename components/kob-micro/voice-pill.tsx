@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { Mic, X } from "lucide-react";
 import { cn } from "@/lib/kob/utils";
 
@@ -134,16 +134,14 @@ export function VoicePill({
   const ss = String(elapsed % 60).padStart(2, "0");
 
   return (
-    <motion.button
+    <button
       type="button"
       className={cn(
-        "inline-flex h-11 items-center gap-2 rounded-full bg-espresso text-paper shadow-soft select-none",
-        listening ? "px-4" : "w-11 justify-center px-0",
+        "inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-espresso text-paper shadow-soft select-none",
+        listening ? "min-w-[9.5rem] px-3" : "w-11 justify-center px-0",
         className,
       )}
       aria-label={listening ? "Listening — release to send" : "Hold to talk to KOB"}
-      animate={reduce ? undefined : { width: listening ? "auto" : 44 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       onPointerDown={(e) => {
         e.preventDefault();
         (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
@@ -189,6 +187,6 @@ export function VoicePill({
       ) : (
         <Mic className="size-4" />
       )}
-    </motion.button>
+    </button>
   );
 }
