@@ -573,7 +573,8 @@ export async function actOnTalk(input: {
 
   return {
     kind: "chat",
-    reply: `I'll take that. I'll check Google, reviews and the site, do the work, and only stop where you've said I must. Want me to go ahead?`,
+    reply:
+      "I won't invent an answer. Ask about hours, reviews, invoices, prep, or waste — or open Kitchen to connect what's missing.",
     actions: waiting.length
       ? [
           { id: "approve-all", label: "Take the morning jobs", kind: "approve" },

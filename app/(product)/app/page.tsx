@@ -9,8 +9,8 @@ import { GreenOrb } from "@/components/kob-home/green-orb";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
 import { Button } from "@/components/kob-ui/button";
 import { VoicePill } from "@/components/kob-micro";
+import { runKobTurn, turnToChatMessage } from "@/lib/kob/agent";
 import { actOnTalk } from "@/lib/kob/act";
-import { talkToKob } from "@/lib/kob/ai/kob";
 import { DEMO_RESTAURANTS, type ChatMessage } from "@/lib/kob/demo";
 import { parseInvoice, reviewVelocity, weatherPrep } from "@/lib/kob/engines/server";
 import { priceAlerts } from "@/lib/kob/engines/prices";
@@ -60,6 +60,9 @@ function Workspace() {
   const setSheetOpen = useKobStore((s) => s.setSheetOpen);
   const orbMode = useKobStore((s) => s.orbMode);
   const houseRules = useKobStore((s) => s.houseRules);
+  const findings = useKobStore((s) => s.findings);
+  const needs = findings.filter((f) => f.status === "needs").length;
+  const handled = findings.filter((f) => f.status === "done").length;
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[#ecece9]">
@@ -75,7 +78,10 @@ function Workspace() {
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-espresso">{restaurant.name}</p>
-          <p className="text-[0.7rem] text-muted">KOB · Talk</p>
+          <p className="text-[0.7rem] text-muted">
+            {needs ? `${needs} need you` : "Nothing needs you"}
+            {handled ? ` · ${handled} handled` : ""}
+          </p>
         </div>
         <button
           type="button"
@@ -245,6 +251,54 @@ function KobChat() {
     }
 
     setOrbMode("thinking");
+    setBusy(true);
+
+    // Operator agent first — never LLM for grounded restaurant work
+    const kobTurn = await runKobTurn({
+      text,
+      restaurant,
+      connected,
+      autonomy,
+      houseRules,
+      memory,
+      findings,
+      reviews,
+    });
+
+    if (kobTurn.grounded && kobTurn.type !== "UNSUPPORTED") {
+      const mapped = turnToChatMessage(kobTurn);
+      let reply = mapped.text;
+      let actions = mapped.actions ?? [];
+
+      if (kobTurn.actions?.some((a) => a.id === "open-kitchen")) {
+        actions = [
+          ...actions,
+          { id: "open-kitchen", label: "Open kitchen", kind: "yes" as const },
+        ];
+      }
+
+      if (unanswered && !looksLikeRuleAnswer(unanswered, text)) {
+        reply = `${reply}\n\nStill need this house rule: ${QUESTIONS[unanswered].ask}`;
+        const ruleButtons = RULE_CHOICES[unanswered].map((choice) => ({
+          id: choice.id,
+          label: choice.label,
+          kind: "yes" as const,
+        }));
+        actions = [...ruleButtons, ...actions];
+      }
+
+      addMessage({
+        id: `k-${Date.now()}`,
+        role: mapped.role,
+        text: reply,
+        actions: actions.length ? actions : undefined,
+      });
+      setBusy(false);
+      setOrbMode(actions.length ? "alert" : "idle");
+      return;
+    }
+
+    // Narrow legacy path for demo engines still wired to buttons (invoice/weather)
     const acted = await actOnTalk({
       text,
       restaurant,
@@ -259,33 +313,11 @@ function KobChat() {
     });
     applyWork(acted.mutations);
 
+    // Circuit breaker: never use generic chat LLM for operational leftovers
     let reply = acted.reply;
     if (acted.kind === "chat") {
-      setBusy(true);
-      try {
-        const result = await talkToKob({
-          data: {
-            restaurantName: restaurant.name,
-            ownerName: restaurant.ownerFirstName,
-            context: findings
-              .map((f) => `${f.status}: ${f.headline} — ${f.detail}`)
-              .join("\n"),
-            memory: memory.map((m) => m.text),
-            autonomy: autonomy.map((rule) => `${rule.label}: ${rule.level}`),
-            messages: [...messages, ownerMsg]
-              .filter((m) => m.role === "owner" || m.role === "kob")
-              .slice(-8)
-              .map((m) => ({
-                role: m.role === "owner" ? ("owner" as const) : ("kob" as const),
-                text: m.text,
-              })),
-          },
-        });
-        if (result.ok && "text" in result) reply = result.text;
-      } catch {
-        reply = acted.reply;
-      }
-      setBusy(false);
+      reply =
+        "I won't invent an answer for that. Ask about hours, reviews, invoices, prep, or waste — or open Kitchen to connect what's missing.";
     }
 
     const jobActions = acted.actions ?? [];
@@ -299,7 +331,6 @@ function KobChat() {
         label: choice.label,
         kind: "yes" as const,
       }));
-      // Rule answers first — they match the question on screen. Job suggestions stay after.
       actions = [...ruleButtons, ...jobActions];
       doneText = acted.doneText;
     }
@@ -311,6 +342,7 @@ function KobChat() {
       actions: actions.length ? actions : undefined,
       doneText,
     });
+    setBusy(false);
     setOrbMode(actions.length ? "alert" : "idle");
   }
 
@@ -340,6 +372,20 @@ function KobChat() {
   }
 
   function onAction(id: string, actionId: string) {
+    if (actionId === "open-kitchen") {
+      approve(id, { complete: false });
+      setSheetOpen(true);
+      return;
+    }
+    if (actionId === "save-rule") {
+      approve(id, { complete: false });
+      addMessage({
+        id: `rule-saved-${Date.now()}`,
+        role: "done",
+        text: "Rule saved to house memory. I'll enforce it on future procurement / offer jobs.",
+      });
+      return;
+    }
     if (actionId.startsWith("rule-")) {
       const choice = Object.values(RULE_CHOICES)
         .flat()
