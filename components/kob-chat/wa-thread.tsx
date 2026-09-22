@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { GreenOrb } from "@/components/kob-home/green-orb";
 import { Button } from "@/components/kob-ui/button";
-import { ThoughtLine } from "@/components/kob-micro";
+import { SwipeRow, ThoughtLine } from "@/components/kob-micro";
 import type { ChatMessage } from "@/lib/kob/demo";
 import type { OrbMode } from "@/lib/kob/store";
 
@@ -19,7 +19,11 @@ export function WaBubble({
   const mine = message.role === "owner";
   const done = message.role === "done";
 
-  return (
+  const swipeActions = !approved && message.actions?.length && message.actions.length <= 2
+    ? message.actions
+    : null;
+
+  const bubble = (
     <article className="relative z-[1] flex w-full items-start gap-3 rounded-2xl bg-paper px-4 py-3.5 shadow-card">
       {done ? (
         <span className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-sage text-paper">
@@ -42,7 +46,7 @@ export function WaBubble({
           <p className="mb-1 text-xs font-semibold text-[#d85a3a]">KOB · Talk</p>
         ) : null}
         <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-ink">{message.text}</p>
-        {message.actions && !approved ? (
+        {message.actions && !approved && !swipeActions ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {message.actions.map((action) => (
               <Button
@@ -59,6 +63,19 @@ export function WaBubble({
       </div>
     </article>
   );
+
+  return swipeActions ? (
+    <SwipeRow
+      actions={swipeActions.map((action) => ({
+        id: action.id,
+        label: action.label,
+        tone: action.kind === "ignore" ? "muted" : "primary",
+      }))}
+      onAction={(actionId) => onAction?.(message.id, actionId)}
+    >
+      {bubble}
+    </SwipeRow>
+  ) : bubble;
 }
 
 export function WaWorking({ mode }: { mode: OrbMode }) {

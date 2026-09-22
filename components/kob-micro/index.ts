@@ -6,3 +6,4 @@ export { SlideCommit, type SlideCommitStatus } from "./slide-commit";
 export { ThoughtLine, type ThoughtStep } from "./thought-line";
 export { SquishSwitch, WarmTooltip } from "./squish-switch";
 export { useInViewOnce } from "./use-in-view-once";
+export { SwipeRow } from "./swipe-row";
