@@ -5,6 +5,8 @@ type OAuthStatePayload = {
   provider: string;
   userId: string;
   exp: number;
+  returnTo?: "talk";
+  nonce?: string;
 };
 
 function stateSecret(): string | null {
@@ -24,18 +26,26 @@ export function encodeOAuthState(input: {
   provider: string;
   userId: string;
   ttlSec?: number;
+  returnTo?: "talk";
+  nonce?: string;
 }): string {
   const secret = stateSecret();
   if (!secret) {
-    throw new Error("OAuth state signing requires INTEGRATION_ENC_KEY or CRON_SECRET");
+    throw new Error(
+      "OAuth state signing requires INTEGRATION_ENC_KEY or CRON_SECRET",
+    );
   }
   const payload: OAuthStatePayload = {
+    returnTo: input.returnTo,
+    nonce: input.nonce,
     restaurantId: input.restaurantId,
     provider: input.provider,
     userId: input.userId,
     exp: Math.floor(Date.now() / 1000) + (input.ttlSec ?? 60 * 30),
   };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const body = Buffer.from(JSON.stringify(payload), "utf8").toString(
+    "base64url",
+  );
   return `${body}.${sign(body, secret)}`;
 }
 
@@ -53,8 +63,16 @@ export function decodeOAuthState(raw: string): OAuthStatePayload | null {
     return null;
   }
   try {
-    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as OAuthStatePayload;
-    if (!payload.restaurantId || !payload.provider || !payload.userId || !payload.exp) return null;
+    const payload = JSON.parse(
+      Buffer.from(body, "base64url").toString("utf8"),
+    ) as OAuthStatePayload;
+    if (
+      !payload.restaurantId ||
+      !payload.provider ||
+      !payload.userId ||
+      !payload.exp
+    )
+      return null;
     if (payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch {
