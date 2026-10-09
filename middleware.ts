@@ -10,12 +10,16 @@ import { isOpenProductPath } from "@/lib/preview/open-product";
 import { updateSession } from "@/lib/supabase/middleware";
 import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
-/** `?region=gb|us` overrides; otherwise keep the existing cookie or derive from geo. */
+/**
+ * `?region=gb|us` overrides; otherwise keep the existing cookie or derive from geo.
+ * Never stamp a guessed region — server pages fall back to their own geo headers.
+ */
 function withPriceRegion(request: NextRequest, response: NextResponse): NextResponse {
   const override = parsePriceRegion(request.nextUrl.searchParams.get("region"));
   const existing = parsePriceRegion(request.cookies.get(PRICE_REGION_COOKIE)?.value);
-  const region = override ?? existing ?? regionForCountry(countryFromHeaders(request.headers));
-  if (region !== existing) {
+  const country = countryFromHeaders(request.headers);
+  const region = override ?? existing ?? (country ? regionForCountry(country) : null);
+  if (region && region !== existing) {
     response.cookies.set(PRICE_REGION_COOKIE, region, {
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
