@@ -69,23 +69,35 @@ describe("KOB agent grounding", () => {
     expect(turn.actions?.some((a) => a.kind === "approve")).toBe(true);
   });
 
-  it("prep without POS refuses invented quantities", async () => {
+  it("prep without POS offers connect + teach covers — no invented kg", async () => {
     const turn = await runKobTurn({ text: "What should we prep tomorrow?", ...base({ pos: false }) });
     expect(turn.type).toBe("NEEDS_CONNECTION");
-    expect(turn.message).toMatch(/POS|sales/i);
+    expect(turn.message).toMatch(/POS|sales|covers/i);
     expect(turn.message).not.toMatch(/\d+\s*kg/);
+    expect(turn.actions?.some((a) => a.id === "connect-pos" || a.kind === "connect")).toBe(true);
+    expect(turn.actions?.some((a) => a.id.startsWith("teach-prep"))).toBe(true);
   });
 
-  it("waste without Waste Eye never invents kg", async () => {
+  it("waste without Waste Eye never invents kg — offers teach + connect", async () => {
     const turn = await runKobTurn({ text: "How much did we waste yesterday?", ...base() });
     expect(turn.message).toMatch(/Waste Eye|measured/i);
     expect(turn.message).not.toMatch(/\d+\.\d+\s*kg/);
+    expect(turn.actions?.some((a) => a.id.startsWith("teach-waste") || a.id === "connect-waste")).toBe(
+      true,
+    );
   });
 
-  it("never change coffee creates rule candidate", async () => {
-    const turn = await runKobTurn({ text: "Never change our coffee supplier.", ...base() });
+  it("never discount Friday creates rule candidate with save", async () => {
+    const turn = await runKobTurn({ text: "Never discount Friday.", ...base() });
     expect(turn.type).toBe("RULE");
     expect(turn.cards?.[0]?.body).toMatch(/NEVER/);
+    expect(turn.actions?.some((a) => a.id === "save-rule")).toBe(true);
+  });
+
+  it("Do it without pending offers next jobs + talk style", async () => {
+    const turn = await runKobTurn({ text: "Do it.", ...base() });
+    expect(turn.type).toBe("CLARIFICATION");
+    expect(turn.actions?.length).toBeGreaterThan(0);
   });
 
   it("reply to reviews loads reviews or asks for Google", async () => {

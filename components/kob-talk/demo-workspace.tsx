@@ -129,6 +129,7 @@ function KobChat() {
   const setHouseRule = useKobStore((s) => s.setHouseRule);
   const connected = useKobStore((s) => s.connected);
   const connectTool = useKobStore((s) => s.connectTool);
+  const remember = useKobStore((s) => s.remember);
   const overrides = useKobStore((s) => s.overrides);
   const overrideToday = useKobStore((s) => s.overrideToday);
   const setOrbMode = useKobStore((s) => s.setOrbMode);
@@ -272,6 +273,23 @@ function KobChat() {
       return;
     }
 
+    const coversMatch = text.match(/^~?\s*(\d{1,3})\s*(covers?)?$/i);
+    if (coversMatch) {
+      const covers = Number(coversMatch[1]);
+      remember({
+        id: `mem-prep-${Date.now()}`,
+        text: "prep covers",
+        learned: `Usual weekday covers ~${covers} (owner note — not POS).`,
+      });
+      addMessage({
+        id: `prep-${Date.now()}`,
+        role: "done",
+        text: `Saved ~${covers} covers as an owner note. Ask “what should we prep tomorrow?” and I’ll use it until POS is connected.`,
+      });
+      setOrbMode("done");
+      return;
+    }
+
     setOrbMode("thinking");
     setBusy(true);
 
@@ -291,13 +309,6 @@ function KobChat() {
       const mapped = turnToChatMessage(kobTurn);
       let reply = mapped.text;
       let actions = mapped.actions ?? [];
-
-      if (kobTurn.actions?.some((a) => a.id === "open-kitchen")) {
-        actions = [
-          ...actions,
-          { id: "open-kitchen", label: "Open kitchen", kind: "yes" as const },
-        ];
-      }
 
       if (unanswered && !looksLikeRuleAnswer(unanswered, text)) {
         reply = `${reply}\n\nStill need this house rule: ${QUESTIONS[unanswered].ask}`;
@@ -394,9 +405,181 @@ function KobChat() {
   }
 
   function onAction(id: string, actionId: string) {
-    if (actionId === "open-kitchen") {
+    if (
+      actionId === "open-kitchen" ||
+      actionId === "connect-pos" ||
+      actionId === "connect-waste" ||
+      actionId === "connect-invoices" ||
+      actionId === "connect-bookings"
+    ) {
       approve(id, { complete: false });
+      if (actionId === "connect-invoices") connectTool("accounting");
+      if (actionId === "connect-pos") {
+        addMessage({
+          id: `pos-${Date.now()}`,
+          role: "kob",
+          text: "POS partner login is Coming soon. I'll keep using any covers you teach me until then. Open Kitchen to see what's live today.",
+        });
+      }
+      if (actionId === "connect-waste") {
+        addMessage({
+          id: `waste-${Date.now()}`,
+          role: "kob",
+          text: "Waste Eye is Coming next (camera + scale). Until then, teach me what usually wastes — I'll label it OWNER NOTE, never measured kg.",
+        });
+      }
+      if (actionId === "connect-bookings") {
+        addMessage({
+          id: `book-${Date.now()}`,
+          role: "kob",
+          text: "Reservations connect is Coming next. Tell me expected covers and I'll remember them as owner notes.",
+        });
+      }
       setSheetOpen(true);
+      return;
+    }
+    if (actionId === "talk-style-short") {
+      approve(id, { complete: false });
+      remember({
+        id: `mem-talk-${Date.now()}`,
+        text: "talk-style: short",
+        learned: "Owner wants short replies.",
+      });
+      addMessage({
+        id: `ts-${Date.now()}`,
+        role: "done",
+        text: "Got it. I'll keep Talk short.",
+      });
+      return;
+    }
+    if (actionId === "talk-style-guided") {
+      approve(id, { complete: false });
+      remember({
+        id: `mem-talk-${Date.now()}`,
+        text: "talk-style: guided",
+        learned: "Owner wants guided walkthroughs.",
+      });
+      addMessage({
+        id: `ts-${Date.now()}`,
+        role: "done",
+        text: "Got it. I'll walk you through steps.",
+      });
+      return;
+    }
+    if (actionId === "talk-style-propose") {
+      approve(id, { complete: false });
+      remember({
+        id: `mem-talk-${Date.now()}`,
+        text: "talk-style: propose",
+        learned: "Owner wants proposals then approve.",
+      });
+      addMessage({
+        id: `ts-${Date.now()}`,
+        role: "done",
+        text: "Got it. I'll propose — you approve.",
+      });
+      return;
+    }
+    if (actionId === "teach-prep-quiet" || actionId === "teach-prep-busy") {
+      const covers = actionId === "teach-prep-quiet" ? 40 : 80;
+      approve(id, { complete: false });
+      remember({
+        id: `mem-prep-${Date.now()}`,
+        text: "prep covers",
+        learned: `Usual weekday covers ~${covers} (owner note — not POS). Scale pastry/focaccia down on quieter days.`,
+      });
+      addMessage({
+        id: `u-prep-${Date.now()}`,
+        role: "owner",
+        text: `About ${covers} covers`,
+      });
+      addMessage({
+        id: `prep-${Date.now()}`,
+        role: "done",
+        text: `Saved. Until POS is connected I'll plan around ~${covers} covers as an owner note — not measured sales. Ask prep again anytime.`,
+      });
+      return;
+    }
+    if (actionId === "teach-prep-custom") {
+      approve(id, { complete: false });
+      addMessage({
+        id: `prep-ask-${Date.now()}`,
+        role: "kob",
+        text: "Type the covers (e.g. 65) and I'll save it as your usual day.",
+      });
+      return;
+    }
+    if (
+      actionId === "teach-waste-bread" ||
+      actionId === "teach-waste-protein" ||
+      actionId === "teach-waste-produce"
+    ) {
+      const what =
+        actionId === "teach-waste-bread"
+          ? "bread / pastry"
+          : actionId === "teach-waste-protein"
+            ? "protein trim"
+            : "produce";
+      approve(id, { complete: false });
+      remember({
+        id: `mem-waste-${Date.now()}`,
+        text: "waste note",
+        learned: `Usually waste most: ${what}. ESTIMATED / OWNER NOTE — not measured Waste Eye kg.`,
+      });
+      addMessage({
+        id: `u-waste-${Date.now()}`,
+        role: "owner",
+        text: what,
+      });
+      addMessage({
+        id: `waste-ok-${Date.now()}`,
+        role: "done",
+        text: `Saved as owner note: ${what} tends to waste most. I will never call that measured waste.`,
+      });
+      return;
+    }
+    if (actionId === "prompt-close-monday") {
+      approve(id, { complete: false });
+      void send("We're closed Monday.");
+      return;
+    }
+    if (actionId === "prompt-reviews") {
+      approve(id, { complete: false });
+      void send("Reply to today's reviews.");
+      return;
+    }
+    if (actionId === "prompt-costs") {
+      approve(id, { complete: false });
+      void send("Did any supplier prices rise?");
+      return;
+    }
+    if (actionId === "prompt-needs") {
+      approve(id, { complete: false });
+      void send("What needs my attention today?");
+      return;
+    }
+    if (actionId === "hours-everyday" || actionId === "hours-weekdays" || actionId === "hours-weekend") {
+      const range =
+        actionId === "hours-everyday"
+          ? "every day"
+          : actionId === "hours-weekdays"
+            ? "Monday to Friday"
+            : "Saturday and Sunday";
+      approve(id, { complete: false });
+      remember({
+        id: `mem-hours-${Date.now()}`,
+        text: "opening hours",
+        learned: `Owner set hours for ${range} (from Talk snippet). Awaiting Apply before public write.`,
+      });
+      addMessage({
+        id: `hours-${Date.now()}`,
+        role: "kob",
+        text: `Noted for ${range}. When Google write is reconnected I'll propose Apply — nothing public until you approve and I verify.`,
+        actions: [
+          { id: "approve-hours", label: "Queue Apply", kind: "approve" },
+          { id: "ignore", label: "Hold", kind: "ignore" },
+        ],
+      });
       return;
     }
     if (actionId === "save-rule") {
@@ -404,7 +587,7 @@ function KobChat() {
       addMessage({
         id: `rule-saved-${Date.now()}`,
         role: "done",
-        text: "Rule saved to house memory. I'll enforce it on future procurement / offer jobs.",
+        text: "Rule saved to house memory. I'll enforce it on future jobs.",
       });
       return;
     }

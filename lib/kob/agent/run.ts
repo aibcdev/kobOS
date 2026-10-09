@@ -26,6 +26,13 @@ import type { Restaurant } from "@/lib/kob/demo-data";
 import type { AutonomyRule, Finding, MemoryItem, Review } from "@/lib/kob/demo-data";
 import type { ToolId } from "@/lib/kob/integrations";
 import type { HouseRules } from "@/lib/kob/house-rules";
+import {
+  ownerNameLine,
+  shapeForOwner,
+  talkStyleFromMemory,
+  TALK_STYLE_CHIPS,
+  type TalkStyle,
+} from "./voice";
 
 function uid() {
   return `turn-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -48,6 +55,7 @@ function connectionTurn(
   needs: NonNullable<ToolResult["needsConnection"]>,
   tools: ToolCallRecord[],
   intent: KobTurn["intent"],
+  extraActions: KobActionChip[] = [],
 ): KobTurn {
   return turn({
     restaurantId: ctx.restaurant.id,
@@ -59,13 +67,31 @@ function connectionTurn(
     grounded: true,
     actions: [
       {
-        id: "open-kitchen",
+        id: needs.system.toLowerCase().includes("pos")
+          ? "connect-pos"
+          : needs.system.toLowerCase().includes("waste")
+            ? "connect-waste"
+            : needs.system.toLowerCase().includes("invoice")
+              ? "connect-invoices"
+              : needs.system.toLowerCase().includes("book")
+                ? "connect-bookings"
+                : "open-kitchen",
         label: needs.cta,
         kind: "connect",
       },
+      ...extraActions,
     ],
     meta: { genericFallbackBlocked: true, toolsRequired: [needs.system] },
   });
+}
+
+function styleHintActions(style: TalkStyle | null): KobActionChip[] {
+  if (style) return [];
+  return TALK_STYLE_CHIPS.map((c) => ({
+    id: c.id,
+    label: c.label,
+    kind: "yes" as const,
+  }));
 }
 
 function dayFromText(text: string): string | null {
@@ -73,6 +99,41 @@ function dayFromText(text: string): string | null {
     /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
   );
   return m ? m[1]!.replace(/^\w/, (c) => c.toUpperCase()) : null;
+}
+
+/** Parse loose owner hours like "8-8pm", "12–11", "9 to 10pm". */
+function parseHoursSnippet(text: string): { open: string; close: string } | null {
+  const t = text.trim().toLowerCase().replace(/\u2013|\u2014/g, "-");
+  const m = t.match(
+    /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*[-–to]+\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\.?$/i,
+  );
+  if (!m) return null;
+  const fmt = (h: string, min: string | undefined, mer: string | undefined, inherit?: string) => {
+    const mm = min ?? "00";
+    const merUse = (mer || inherit || "").toLowerCase();
+    if (!merUse) return `${h}:${mm}`;
+    return `${h}${min ? `:${mm}` : ""}${merUse}`;
+  };
+  const closeMer = m[6] || m[3] || "pm";
+  const openMer = m[3] || (Number(m[1]) <= 11 ? "am" : closeMer);
+  return {
+    open: fmt(m[1]!, m[2], openMer, closeMer),
+    close: fmt(m[4]!, m[5], closeMer),
+  };
+}
+
+function isGreeting(text: string): boolean {
+  return /^(hi|hey|hello|gm|good\s*(morning|afternoon|evening)|yo|sup|hiya)\b[!?.]*$/i.test(
+    text.trim(),
+  );
+}
+
+function wantsMoreCovers(text: string): boolean {
+  return (
+    /\b(more covers|need covers|need more (guests|customers|covers|bookings)|busier|increase (covers|footfall)|get more (people|guests|covers))\b/i.test(
+      text,
+    ) || /^we need more covers\.?$/i.test(text.trim())
+  );
 }
 
 export async function runKobTurn(input: {
@@ -91,6 +152,115 @@ export async function runKobTurn(input: {
   const intent = classifyIntentSafe(text);
   const tools: ToolCallRecord[] = [];
   const sources: KobTurn["sources"] = [];
+  const style = talkStyleFromMemory(input.memory);
+  const place = ownerNameLine(ctx.restaurant);
+
+  // ——— GREETING ———
+  if (isGreeting(text)) {
+    const needs = ctx.findings.filter((f) => f.status === "needs").length;
+    return turn({
+      restaurantId: ctx.restaurant.id,
+      intent: "GENERAL",
+      type: "ANSWER",
+      message: shapeForOwner(style, {
+        lead:
+          needs > 0
+            ? `Morning. ${needs} thing${needs === 1 ? "" : "s"} need you at ${place}.`
+            : `Morning. Nothing urgent on my list for ${place}.`,
+        detail:
+          needs > 0
+            ? "Say “what needs me” and I’ll show them — or give me a job (hours, reviews, costs)."
+            : "Ask about hours, reviews, costs, or prep — or tell me what you want done.",
+        ask: style ? undefined : "Prefer short replies, or walk-throughs?",
+      }),
+      sources: [],
+      toolCalls: [],
+      grounded: true,
+      actions: [
+        { id: "prompt-needs", label: "What needs me?", kind: "yes" },
+        { id: "prompt-close-monday", label: "Update hours", kind: "yes" },
+        { id: "prompt-reviews", label: "Reviews", kind: "yes" },
+        ...styleHintActions(style).slice(0, 2),
+      ],
+    });
+  }
+
+  // ——— HOURS SNIPPET (owner teaching / quick set) ———
+  const hoursSnippet = parseHoursSnippet(text);
+  if (hoursSnippet) {
+    const day = dayFromText(text);
+    return turn({
+      restaurantId: ctx.restaurant.id,
+      intent: "RESTAURANT_ACTION",
+      type: "ACTION_PROPOSAL",
+      message: shapeForOwner(style, {
+        lead: `Got it — ${hoursSnippet.open}–${hoursSnippet.close}.`,
+        detail: day
+          ? `Apply that for ${day} on Google and the website?`
+          : "Which days? I can set every day, weekdays only, or a single day. Nothing goes live until you approve.",
+        ask: day ? "Approve when ready." : "Pick a range below, or type e.g. “Mon–Thu”.",
+      }),
+      sources: [{ id: "memory", kind: "memory", label: "Owner hours", status: "LIVE" }],
+      toolCalls: [{ name: "parse_hours_snippet", status: "ok", detail: `${hoursSnippet.open}–${hoursSnippet.close}` }],
+      grounded: true,
+      actions: day
+        ? [
+            { id: "approve-hours", label: `Set ${day}`, kind: "approve" },
+            { id: "ignore", label: "Not yet", kind: "ignore" },
+          ]
+        : [
+            { id: "hours-everyday", label: "Every day", kind: "yes" },
+            { id: "hours-weekdays", label: "Mon–Fri", kind: "yes" },
+            { id: "hours-weekend", label: "Sat–Sun", kind: "yes" },
+            { id: "ignore", label: "Cancel", kind: "ignore" },
+          ],
+      meta: { actionVerbDetected: true, genericFallbackBlocked: true },
+    });
+  }
+
+  // ——— GOAL: more covers / footfall ———
+  if (wantsMoreCovers(text)) {
+    const mismatch =
+      ctx.integrations.google &&
+      ctx.integrations.website &&
+      ctx.restaurant.hoursGoogle !== ctx.restaurant.hoursWebsite;
+    const openReviews = ctx.reviews.filter(
+      (x) => x.status === "draft" || x.status === "escalate",
+    ).length;
+    const levers: string[] = [];
+    if (mismatch) levers.push("Fix Google vs website hours (guests trust the listing)");
+    if (openReviews) levers.push(`Clear ${openReviews} open review(s) — reputation moves covers`);
+    if (ctx.findings.some((f) => /menu|price/i.test(f.headline))) {
+      levers.push("Fix stale menu prices guests still see online");
+    }
+    if (!levers.length) {
+      levers.push("Check Google listing + hours are consistent");
+      levers.push("Reply to open reviews");
+      levers.push("Tell me a quiet day and I’ll avoid discounting busy nights");
+    }
+    return turn({
+      restaurantId: ctx.restaurant.id,
+      intent: "RESTAURANT_ACTION",
+      type: "ACTION_PROPOSAL",
+      message: shapeForOwner(style, {
+        lead: `More covers at ${place} — here’s what I can actually work on now.`,
+        detail: levers.map((l, i) => `${i + 1}. ${l}`).join("\n"),
+        ask: "I won’t invent ads or fake bookings. Pick a job and I’ll propose the next step.",
+      }),
+      sources: ctx.findings.length
+        ? [{ id: "findings", kind: "store", label: "Morning findings", status: "DEMO" }]
+        : [],
+      toolCalls: [{ name: "plan_covers_levers", status: "ok", detail: `${levers.length} levers` }],
+      grounded: true,
+      actions: [
+        { id: "prompt-needs", label: "Show what needs me", kind: "yes" },
+        { id: "prompt-reviews", label: "Handle reviews", kind: "yes" },
+        { id: "approve-hours", label: mismatch ? "Fix hours mismatch" : "Check hours", kind: "approve" },
+        { id: "prompt-costs", label: "Watch costs", kind: "yes" },
+      ],
+      meta: { actionVerbDetected: true, genericFallbackBlocked: true },
+    });
+  }
 
   // ——— APPROVAL ———
   if (intent === "APPROVAL") {
@@ -99,19 +269,34 @@ export async function runKobTurn(input: {
         restaurantId: ctx.restaurant.id,
         intent,
         type: "CLARIFICATION",
-        message:
-          "I don't have a pending action to approve. Tell me what to do — for example: close Monday, or reply to today's reviews.",
+        message: shapeForOwner(style, {
+          lead: `Nothing is waiting on your yes at ${place}.`,
+          detail:
+            "Tap a job below, or tell me in your words — hours, reviews, invoices, or a house rule.",
+          ask: style
+            ? undefined
+            : "How do you want me to talk with you day to day?",
+        }),
         sources: [],
         toolCalls: [],
         grounded: true,
+        actions: [
+          { id: "prompt-close-monday", label: "Close a day", kind: "yes" },
+          { id: "prompt-reviews", label: "Handle reviews", kind: "yes" },
+          { id: "prompt-costs", label: "Check costs", kind: "yes" },
+          ...styleHintActions(style),
+        ],
       });
     }
     return turn({
       restaurantId: ctx.restaurant.id,
       intent,
       type: "ACTION_RESULT",
-      message:
-        "Queued for execution. Live Google / website write still needs reconnect before VERIFIED — I'll report Sent — waiting until then.",
+      message: shapeForOwner(style, {
+        lead: "Got it — queued.",
+        detail:
+          "I'll push to the connected systems next. Live Google / website write is Sent — waiting until reconnect verifies. I won't say Done ✓ until I can read it back.",
+      }),
       sources: [],
       toolCalls: [{ name: "approve_pending", status: "ok" }],
       grounded: true,
@@ -132,13 +317,18 @@ export async function runKobTurn(input: {
       restaurantId: ctx.restaurant.id,
       intent,
       type: "RULE",
-      message: `I'll remember: ${subject} are NEVER automatic. Confirm to save as a house rule.`,
+      message: shapeForOwner(style, {
+        lead: `Understood for ${place}.`,
+        detail: `${subject} will never run on autopilot.`,
+        ask: "Save this house rule? And tell me if I should keep Talk short, guided, or just propose.",
+      }),
       sources: [{ id: "memory", kind: "memory", label: "House rules", status: "LIVE" }],
       toolCalls: [{ name: "create_rule_candidate", status: "ok" }],
       grounded: true,
       actions: [
         { id: "save-rule", label: "Save rule", kind: "approve" },
         { id: "ignore", label: "Not now", kind: "ignore" },
+        ...styleHintActions(style),
       ],
       cards: [
         {
@@ -185,8 +375,15 @@ export async function runKobTurn(input: {
       intent: "RESTAURANT_QUESTION",
       type: "FINDING",
       message: needs.length
-        ? `${needs.length} thing${needs.length === 1 ? "" : "s"} need you.\n\n${lines}${done}`
-        : `Nothing needs you. ${handled.length} item(s) already marked handled in this session.${done}`,
+        ? shapeForOwner(style, {
+            lead: `${needs.length} thing${needs.length === 1 ? "" : "s"} need you at ${place}.`,
+            detail: lines + done,
+            ask: style ? undefined : undefined,
+          })
+        : shapeForOwner(style, {
+            lead: `Nothing needs you at ${place}.`,
+            detail: `${handled.length} item(s) already marked handled in this session.${done}`,
+          }),
       sources,
       toolCalls: tools,
       grounded: true,
@@ -376,12 +573,49 @@ export async function runKobTurn(input: {
     tools.push(r.call);
     sources.push(r.source);
     if (r.needsConnection) {
+      const taught = input.memory.find((m) => /prep.?covers|usual covers/i.test(`${m.text} ${m.learned}`));
+      if (taught) {
+        return turn({
+          restaurantId: ctx.restaurant.id,
+          intent: "RESTAURANT_QUESTION",
+          type: "FINDING",
+          message: shapeForOwner(style, {
+            lead: `No POS yet — using what you taught me for ${place}.`,
+            detail: taught.learned,
+            ask: "Connect the till when you can and I'll replace this with real item sales. Adjust covers?",
+          }),
+          sources: [
+            r.source,
+            { id: "memory", kind: "memory", label: "Owner prep notes", status: "LIVE" },
+          ],
+          toolCalls: tools,
+          grounded: true,
+          actions: [
+            { id: "connect-pos", label: "Connect POS", kind: "connect" },
+            { id: "teach-prep-quiet", label: "Quieter (~40)", kind: "yes" },
+            { id: "teach-prep-busy", label: "Busier (~80)", kind: "yes" },
+            { id: "teach-prep-custom", label: "I'll type covers", kind: "yes" },
+          ],
+          meta: { genericFallbackBlocked: true },
+        });
+      }
       return connectionTurn(
         ctx,
-        "I don't have enough sales data for a reliable prep plan yet.\n\nConnect your POS and I'll use historical item sales automatically. I won't invent quantities.",
+        shapeForOwner(style, {
+          lead: `I won't invent tomorrow's prep for ${place} without sales history.`,
+          detail:
+            "Connect POS and I'll build quantities from your real item mix. Or teach me your usual covers now — I'll treat that as owner notes until the till is linked.",
+          ask: "Roughly how many covers on a normal weekday?",
+        }),
         r.needsConnection,
         tools,
         "RESTAURANT_QUESTION",
+        [
+          { id: "teach-prep-quiet", label: "~40 covers", kind: "yes" },
+          { id: "teach-prep-busy", label: "~80 covers", kind: "yes" },
+          { id: "teach-prep-custom", label: "I'll type it", kind: "yes" },
+          ...styleHintActions(style).slice(0, 2),
+        ],
       );
     }
   }
@@ -391,17 +625,36 @@ export async function runKobTurn(input: {
     const r = toolGetMeasuredWaste(ctx);
     tools.push(r.call);
     sources.push(r.source);
+    const taught = input.memory.find((m) => /waste.?note|usually waste/i.test(`${m.text} ${m.learned}`));
     return turn({
       restaurantId: ctx.restaurant.id,
       intent: "RESTAURANT_QUESTION",
       type: "NEEDS_CONNECTION",
-      message:
-        "Waste Eye isn't installed at this location, so I don't have measured food waste.\n\nI can show waste-risk estimates from Prep when POS is connected, but I won't call those measured waste.",
-      sources,
+      message: shapeForOwner(style, {
+        lead: taught
+          ? `No measured waste at ${place} (Waste Eye not installed).`
+          : `Waste Eye isn't at ${place}, so I have no measured kilograms.`,
+        detail: taught
+          ? `Owner note on file: ${taught.learned}\nThat is not measured waste — labelled ESTIMATED / OWNER NOTE.`
+          : "I won't invent a kg figure. You can teach me what usually goes in the bin, or wait for Waste Eye hardware.",
+        ask: taught
+          ? "Update what usually wastes, or open Kitchen for prep estimates?"
+          : "What usually wastes most — bread, protein trim, or produce?",
+      }),
+      sources: taught
+        ? [
+            r.source,
+            { id: "memory", kind: "memory", label: "Owner waste notes", status: "LIVE" },
+          ]
+        : [r.source],
       toolCalls: tools,
       grounded: true,
       actions: [
-        { id: "open-kitchen", label: "View prep estimates", kind: "connect" },
+        { id: "connect-waste", label: "Waste Eye waitlist", kind: "connect" },
+        { id: "connect-pos", label: "Prep estimates (needs POS)", kind: "connect" },
+        { id: "teach-waste-bread", label: "Mostly bread", kind: "yes" },
+        { id: "teach-waste-protein", label: "Protein trim", kind: "yes" },
+        { id: "teach-waste-produce", label: "Produce", kind: "yes" },
       ],
       meta: { genericFallbackBlocked: true },
     });
@@ -415,10 +668,19 @@ export async function runKobTurn(input: {
     if (r.needsConnection) {
       return connectionTurn(
         ctx,
-        "Last reservation sync: never — bookings aren't connected.\n\nConnect OpenTable / Resy / SevenRooms and I'll answer from live covers.",
+        shapeForOwner(style, {
+          lead: `Bookings aren't connected for ${place}.`,
+          detail: "I won't guess covers. Connect OpenTable / Resy / SevenRooms, or tell me expected covers and I'll remember it as an owner note.",
+          ask: "Expected covers tomorrow?",
+        }),
         r.needsConnection,
         tools,
         "RESTAURANT_QUESTION",
+        [
+          { id: "teach-prep-quiet", label: "~40 covers", kind: "yes" },
+          { id: "teach-prep-busy", label: "~80 covers", kind: "yes" },
+          { id: "teach-prep-custom", label: "I'll type it", kind: "yes" },
+        ],
       );
     }
   }
@@ -426,59 +688,89 @@ export async function runKobTurn(input: {
   // ——— ACTION CIRCUIT BREAKER (catch remaining action verbs) ———
   if (isActionRequest(intent, text) || requiresRestaurantGrounding(intent, text)) {
     if (requiresRestaurantGrounding(intent, text) && !tools.some((t) => t.status === "ok")) {
-      // Operational but we didn't match a domain tool — still forbid generic LLM
       return turn({
         restaurantId: ctx.restaurant.id,
         intent,
-        type: isActionRequest(intent, text) ? "UNSUPPORTED" : "NEEDS_CONNECTION",
-        message: isActionRequest(intent, text)
-          ? "I won't pretend I did that. Tell me which system — Google hours, reviews, invoices, or prep — and I'll either propose a real action or say exactly what's missing."
-          : "I need a connected source for that restaurant fact. Open Kitchen and connect Google, website, or invoices — I won't fill the gap with general advice.",
+        type: "CLARIFICATION",
+        message: shapeForOwner(style, {
+          lead: `I heard you — I just need a sharper job for ${place}.`,
+          detail: isActionRequest(intent, text)
+            ? "I won’t pretend I finished something I can’t see. Tell me which: hours, reviews, invoices, or prep."
+            : "I don’t have that number in a connected source yet. I can still take a job or learn from you.",
+          ask: "What should we do first?",
+        }),
         sources,
-        toolCalls: tools.length
-          ? tools
-          : [{ name: "grounding_gate", status: "skipped", detail: "blocked generic fallback" }],
+        toolCalls: [],
         grounded: true,
-        actions: [{ id: "open-kitchen", label: "Open kitchen", kind: "connect" }],
+        actions: [
+          { id: "prompt-needs", label: "What needs me?", kind: "yes" },
+          { id: "prompt-close-monday", label: "Hours", kind: "yes" },
+          { id: "prompt-reviews", label: "Reviews", kind: "yes" },
+          { id: "prompt-costs", label: "Costs", kind: "yes" },
+          { id: "open-kitchen", label: "Open kitchen", kind: "connect" },
+        ],
         meta: { genericFallbackBlocked: true, actionVerbDetected: isActionRequest(intent, text) },
       });
     }
   }
 
-  // ——— GENERAL (definitions only) ———
+  // ——— GENERAL (definitions + soft redirect) ———
   if (intent === "GENERAL") {
     return turn({
       restaurantId: ctx.restaurant.id,
       intent,
       type: "ANSWER",
-      message: generalAnswer(text),
+      message: generalAnswer(text, place, style),
       sources: [],
       toolCalls: [],
       grounded: true,
       confidence: 0.7,
+      actions: [
+        { id: "prompt-needs", label: "What needs me?", kind: "yes" },
+        { id: "prompt-reviews", label: "Reviews", kind: "yes" },
+        { id: "prompt-costs", label: "Costs", kind: "yes" },
+      ],
     });
   }
 
   return turn({
     restaurantId: ctx.restaurant.id,
     intent: "UNSUPPORTED",
-    type: "UNSUPPORTED",
-    message:
-      "I can help with hours, reviews, invoices, prep (when POS is on), and house rules. Ask me about this restaurant — or say what to change.",
+    type: "CLARIFICATION",
+    message: shapeForOwner(style, {
+      lead: `I’m with you on ${place}.`,
+      detail: "I work best on hours, reviews, invoices, prep, and house rules.",
+      ask: "What do you want done — or what’s on your mind?",
+    }),
     sources: [],
     toolCalls: [],
     grounded: true,
+    actions: [
+      { id: "prompt-needs", label: "What needs me?", kind: "yes" },
+      { id: "prompt-close-monday", label: "Hours", kind: "yes" },
+      { id: "prompt-reviews", label: "Reviews", kind: "yes" },
+    ],
   });
 }
 
-function generalAnswer(text: string): string {
+function generalAnswer(text: string, place: string, style: TalkStyle | null): string {
   if (/gross margin|gp\b/i.test(text)) {
-    return "Gross margin is sales minus cost of goods, as a share of sales. Ask about YOUR margin last week only after till and invoices are connected — I won't invent a number.";
+    return shapeForOwner(style, {
+      lead: "Gross margin is sales minus cost of goods, as a share of sales.",
+      detail: `For ${place} last week I need till + invoices — I won’t invent a number.`,
+    });
   }
   if (/food cost/i.test(text)) {
-    return "Food cost is what you spent on ingredients versus what you sold. For YOUR restaurant last week I need POS + invoices — otherwise I'll say I can't calculate it yet.";
+    return shapeForOwner(style, {
+      lead: "Food cost is what you spent on ingredients versus what you sold.",
+      detail: `Ask me about YOUR week once POS and invoices are on.`,
+    });
   }
-  return "Ask me about this restaurant's hours, reviews, costs, or prep — or give me a job to propose.";
+  return shapeForOwner(style, {
+    lead: `I’m here for ${place}.`,
+    detail: "Hours, reviews, costs, prep — or give me a job.",
+    ask: "What’s first?",
+  });
 }
 
 /** Map KobTurn into Talk chat message fields. */
@@ -488,11 +780,23 @@ export function turnToChatMessage(t: KobTurn): {
   actions?: { id: string; label: string; kind: "approve" | "yes" | "ignore" }[]
 } {
   const actions = t.actions
-    ?.filter((a) => a.kind === "approve" || a.kind === "yes" || a.kind === "ignore")
+    ?.filter(
+      (a) =>
+        a.kind === "approve" ||
+        a.kind === "yes" ||
+        a.kind === "ignore" ||
+        a.kind === "connect" ||
+        a.kind === "review",
+    )
     .map((a) => ({
       id: a.id,
       label: a.label,
-      kind: a.kind as "approve" | "yes" | "ignore",
+      // Chat UI historically only knew approve/yes/ignore — map connect/review to yes
+      kind: (a.kind === "approve"
+        ? "approve"
+        : a.kind === "ignore"
+          ? "ignore"
+          : "yes") as "approve" | "yes" | "ignore",
     }));
   let text = t.message;
   if (t.cards?.length) {
@@ -501,14 +805,19 @@ export function turnToChatMessage(t: KobTurn): {
       t.cards.map((c) => `${c.title}\n${c.body}`).join("\n\n");
   }
   if (t.toolCalls.some((c) => c.status === "ok" || c.status === "skipped")) {
+    const OWNER_HIDE =
+      /grounding_gate|parse_hours|plan_covers|create_rule_candidate|approve_pending/i;
     const progress = t.toolCalls
+      .filter((c) => !OWNER_HIDE.test(c.name))
+      .filter((c) => c.status === "ok" || (c.status === "skipped" && c.detail && !/blocked/i.test(c.detail)))
       .map((c) => {
-        if (c.status === "ok") return `✓ ${c.name}${c.detail ? ` — ${c.detail}` : ""}`;
-        if (c.status === "skipped") return `· ${c.name} — ${c.detail ?? "not connected"}`;
-        return `· ${c.name}`;
+        const label = c.name.replace(/_/g, " ");
+        if (c.status === "ok") return `✓ ${label}${c.detail ? ` — ${c.detail}` : ""}`;
+        if (c.status === "skipped") return `· ${label} — ${c.detail ?? "not connected"}`;
+        return `· ${label}`;
       })
       .join("\n");
-    text = `${progress}\n\n${text}`;
+    if (progress) text = `${progress}\n\n${text}`;
   }
   return {
     role: t.type === "ACTION_RESULT" ? "done" : "kob",
