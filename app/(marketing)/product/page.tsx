@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SaasPageHero, SaasPrimaryCta, SaasSecondaryCta } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
+import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 
 export const metadata: Metadata = {
   title: "Product | KOB — The AI Restaurant Manager",
@@ -36,7 +37,8 @@ const PILLARS = [
   },
 ];
 
-export default function ProductHubPage() {
+export default async function ProductHubPage() {
+  const price = await getVisitorFoundingPrice();
   return (
     <>
       <SaasPageHero
@@ -62,7 +64,7 @@ export default function ProductHubPage() {
           ))}
         </ul>
         <p className="mt-10 text-center text-sm text-[#2c2c2c]/60">
-          £99/mo founding · 7-day trial, no card ·{" "}
+          {price.label}/mo founding · 7-day trial, no card ·{" "}
           <Link href="/#pricing" className="font-medium text-[#088924] underline-offset-2 hover:underline">
             See pricing
           </Link>

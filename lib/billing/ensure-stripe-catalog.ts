@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { PRICING_PLANS } from "@/lib/marketing/pricing-plans";
 
 export type EnsuredStripePrices = {
@@ -17,7 +18,7 @@ async function findExistingPrice(stripe: Stripe, tier: string, liveOnly: boolean
   return null;
 }
 
-/** Create or reuse KOB founding monthly price (GBP) in the current Stripe mode. */
+/** Create or reuse KOB founding monthly price (USD + GBP option) in the current Stripe mode. */
 export async function ensureStripeCatalog(stripe: Stripe): Promise<EnsuredStripePrices> {
   const liveOnly = process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_") ?? false;
   const plan = PRICING_PLANS[0];
@@ -34,8 +35,11 @@ export async function ensureStripeCatalog(stripe: Stripe): Promise<EnsuredStripe
 
     const price = await stripe.prices.create({
       product: product.id,
-      unit_amount: plan.priceMonthly * 100,
-      currency: "gbp",
+      unit_amount: FOUNDING_PRICES.US.amount * 100,
+      currency: FOUNDING_PRICES.US.currency,
+      currency_options: {
+        [FOUNDING_PRICES.GB.currency]: { unit_amount: FOUNDING_PRICES.GB.amount * 100 },
+      },
       recurring: { interval: "month" },
       metadata: { kob_tier: tier, kob_plan: plan.id },
     });

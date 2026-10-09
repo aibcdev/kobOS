@@ -8,7 +8,7 @@ import { marketingCopy } from "@/lib/marketing/copy";
 export const defaultSiteMeta = {
   title: "KOB — The AI Restaurant Manager",
   description:
-    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. £99/mo founding. 7-day trial, no card.",
+    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. Founding £79/mo UK, $99/mo US. 7-day trial, no card.",
 } as const;
 
 export const DEFAULT_HERO_IMAGE =

@@ -6,6 +6,7 @@ import { AudioLines, X } from "lucide-react";
 import { KobMark } from "@/components/kob-brand/kob-mark";
 import { Button } from "@/components/kob-ui/button";
 import { Input } from "@/components/kob-ui/input";
+import { useFoundingPrice } from "@/lib/billing/use-founding-price";
 import { speakAsKob } from "@/lib/kob/tts";
 import { cn } from "@/lib/kob/utils";
 
@@ -14,7 +15,7 @@ const OPENING =
 
 type Line = { id: string; role: "kob" | "you"; text: string };
 
-function replyTo(text: string) {
+function replyTo(text: string, priceLabel: string) {
   const t = text.toLowerCase();
   if (/hour|closed|open|google|review/.test(t)) {
     return "In the product, that job runs on your Google listing — not this bubble. Sign in, connect Google in Kitchen, then talk.";
@@ -26,13 +27,14 @@ function replyTo(text: string) {
     return "Weather is free. Turn it on in Kitchen with your city. This bubble is only a test.";
   }
   if (/price|cost|£|trial/.test(t)) {
-    return "Founding is £99 a location. Start a 7-day trial, no card, then connect free tools.";
+    return `Founding is ${priceLabel} a location. Start a 7-day trial, no card, then connect free tools.`;
   }
   return "Nice. Start a trial, turn on free tools in Kitchen, then Talk is the manager — not this test.";
 }
 
 export function TalkTest({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const price = useFoundingPrice();
   const [draft, setDraft] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +56,7 @@ export function TalkTest({ className }: { className?: string }) {
     if (!text) return;
     setDraft("");
     setLines((prev) => [...prev, { id: `you-${Date.now()}`, role: "you", text }]);
-    const answer = replyTo(text);
+    const answer = replyTo(text, price.label);
     window.setTimeout(() => {
       setLines((prev) => [
         ...prev,

@@ -10,6 +10,8 @@ export type CreateSubscriptionCheckoutParams = {
   /** When missing, Stripe creates/links customer from email. */
   existingStripeCustomerId?: string | null;
   priceId: string;
+  /** Required to bill a multi-currency price in a non-default currency. */
+  currency?: "gbp" | "usd";
   origin: string;
   successPath: string;
   cancelPath: string;
@@ -28,22 +30,19 @@ export async function createSubscriptionCheckoutSession(
     customer_email: p.existingStripeCustomerId ? undefined : p.customerEmail,
     client_reference_id: p.restaurantId,
     line_items: [{ price: p.priceId, quantity: 1 }],
+    currency: p.currency,
     success_url: `${base}${p.successPath}`,
     cancel_url: `${base}${p.cancelPath}`,
     metadata: { restaurantId: p.restaurantId },
     subscription_data: {
       metadata: { restaurantId: p.restaurantId },
-      ...(trialDays
-        ? {
-            trial_period_days: trialDays,
-            trial_settings: {
-              end_behavior: { missing_payment_method: "cancel" },
-            },
-          }
-        : {}),
+      trial_period_days: trialDays,
+      trial_settings: {
+        end_behavior: { missing_payment_method: "cancel" },
+      },
     },
-    // Always collect a card for trial (user requirement: free trial with card).
-    payment_method_collection: "always",
+    // 7-day trial: no card required to start.
+    payment_method_collection: "if_required",
     allow_promotion_codes: true,
   });
 }

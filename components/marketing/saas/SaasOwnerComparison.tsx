@@ -13,7 +13,7 @@ function Check() {
 const BENEFITS = [
   "Morning brief in Talk",
   "Approve before anything public",
-  "£99 founding · per location",
+  "$99 founding (£79 UK) · per location",
   "7-day free trial · no card",
   "No POS swap",
   "Phone answering Coming next",

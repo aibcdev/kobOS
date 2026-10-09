@@ -1,4 +1,4 @@
-/** KOB public pricing — £99 founding manager offer (canonical). */
+/** KOB public pricing — founding manager offer (canonical). Amounts by region live in `lib/billing/regional-pricing`. */
 
 export type PricingTierId = "founding";
 
@@ -16,7 +16,7 @@ export type PricingPlan = {
 export const LAUNCH_PRICING = {
   active: true,
   label: "Founding price",
-  detail: "Keep £99/mo while you stay subscribed. 7-day trial, no card.",
+  detail: "Keep your founding rate while you stay subscribed. 7-day trial, no card.",
 } as const;
 
 export const PRICING_PLANS: PricingPlan[] = [
@@ -25,7 +25,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: "Founding",
     badge: "AI restaurant manager",
     priceMonthly: 99,
-    priceNote: "GBP · per location / month · founding",
+    priceNote: "USD · per location / month · founding (£79 in the UK)",
     description:
       "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. You approve before anything public goes live.",
     stripeTier: "pro",
@@ -54,7 +54,7 @@ export const OWNER_COMPARISON = {
   rows: [
     {
       label: "Monthly",
-      kob: "£99/mo founding",
+      kob: "$99/mo founding (£79 UK)",
       owner: "$249–$499/mo",
       kobWins: true,
     },
@@ -97,7 +97,7 @@ export const OWNER_COMPARISON = {
   ] satisfies ComparisonRow[],
 } as const;
 
-export const PRICING_INCLUDED_FEATURES = [
+export const pricingIncludedFeatures = (priceLabel: string) => [
   { title: "Morning brief", detail: "What needs you today — hours, reviews, costs, prep." },
   { title: "You approve first", detail: "Nothing public until you say yes. Autopilot only where you allow." },
   { title: "Google & website watch", detail: "Public hours and listing checks. Verified Done only after read-back." },
@@ -105,13 +105,13 @@ export const PRICING_INCLUDED_FEATURES = [
   { title: "Prep notes", detail: "BETA predictive quantities when weather/bookings exist — not measured waste." },
   { title: "KOB Phone", detail: "Coming next — join the beta waitlist. Not live answering today." },
   { title: "7-day free trial", detail: "No card. Cancel before day 7 and you pay nothing." },
-  { title: "Founding price", detail: "£99 per location / month while you stay subscribed." },
-] as const;
+  { title: "Founding price", detail: `${priceLabel} per location / month while you stay subscribed.` },
+];
 
-export const PRICING_FAQ = [
+export const pricingFaq = (priceLabel: string) => [
   {
     q: "How much does KOB cost?",
-    a: "£99 per location / month at the founding rate while you stay subscribed. 7-day trial with no card.",
+    a: `${priceLabel} per location / month at the founding rate while you stay subscribed. 7-day trial with no card.`,
   },
   {
     q: "What is included?",
@@ -133,4 +133,4 @@ export const PRICING_FAQ = [
     q: "How long does setup take?",
     a: "Find your restaurant, see public findings in under two minutes, create an account, and land in Talk with prioritized work.",
   },
-] as const;
+];

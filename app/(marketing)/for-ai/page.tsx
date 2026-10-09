@@ -85,7 +85,7 @@ export default function ForAiPage() {
           <div>
             <h2 className="font-heading text-2xl font-semibold">Pricing model</h2>
             <p className="mt-3 text-base leading-relaxed text-[#2c2c2c]/80">
-              Free public findings first. Founding plan £99/mo per location. 7-day trial, no card. See{" "}
+              Free public findings first. Founding plan £79/mo per location in the UK, $99/mo elsewhere. 7-day trial, no card. See{" "}
               <Link href="/pricing" className="font-medium text-[#088924] underline-offset-2 hover:underline">
                 pricing
               </Link>

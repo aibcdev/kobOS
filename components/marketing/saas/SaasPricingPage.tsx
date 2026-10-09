@@ -2,10 +2,11 @@ import Link from "next/link";
 
 import {
   LAUNCH_PRICING,
-  PRICING_FAQ,
-  PRICING_INCLUDED_FEATURES,
   PRICING_PLANS,
+  pricingFaq,
+  pricingIncludedFeatures,
 } from "@/lib/marketing/pricing-plans";
+import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { REVIEW_LISTINGS } from "@/lib/marketing/review-listings";
 
@@ -14,7 +15,8 @@ import { SaasIcon } from "./SaasIcon";
 import { SaasOwnerComparison } from "./SaasOwnerComparison";
 import { SaasPageHero } from "./SaasPageHero";
 
-export function SaasPricingPage() {
+export async function SaasPricingPage() {
+  const price = await getVisitorFoundingPrice();
   return (
     <>
       <SaasPageHero
@@ -47,7 +49,7 @@ export function SaasPricingPage() {
               <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">{plan.name}</h2>
               <p className="mt-2 text-sm text-[#2c2c2c]/70">{plan.description}</p>
               <p className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="font-heading text-5xl font-semibold tracking-tight text-[#094413]">${plan.priceMonthly}</span>
+                <span className="font-heading text-5xl font-semibold tracking-tight text-[#094413]">{price.label}</span>
                 <span className="text-sm text-[#2c2c2c]/60">/ month</span>
               </p>
               <p className="mt-2 text-sm font-medium text-[#088924]">{plan.priceNote}</p>
@@ -106,7 +108,7 @@ export function SaasPricingPage() {
             Everything included on both plans
           </h2>
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {PRICING_INCLUDED_FEATURES.map((f) => (
+            {pricingIncludedFeatures(price.label).map((f) => (
               <li key={f.title} className="rounded-2xl border border-[#2c2c2c]/8 bg-white p-5">
                 <div className="mb-2 flex items-center gap-2">
                   <SaasIcon icon="solar:verified-check-linear" className="text-lg text-[#088924]" />
@@ -119,7 +121,7 @@ export function SaasPricingPage() {
         </div>
       </section>
 
-      <SaasFaqAccordion title="Pricing questions" items={PRICING_FAQ} />
+      <SaasFaqAccordion title="Pricing questions" items={pricingFaq(price.label)} />
 
       <section className="px-6 py-20 text-center">
         <p className="font-mono-brand text-xs font-semibold uppercase tracking-wider text-[#088924]">

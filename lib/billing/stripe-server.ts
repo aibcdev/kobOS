@@ -33,12 +33,19 @@ export function getStripeGrowthPriceId(): string | null {
   return process.env.STRIPE_GROWTH_PRICE_ID?.trim() || getStripePriceStarter();
 }
 
+/** Founding price (KOB Flat) — carries USD + GBP via `currency_options`. */
+export function getStripeFoundingPriceId(): string | null {
+  return getStripePricePro() || getStripeGrowthPriceId();
+}
+
+/** Only the founding price has a GBP option; other prices bill in their own currency. */
+export function checkoutCurrencyFor(priceId: string, currency: "gbp" | "usd"): "gbp" | "usd" | undefined {
+  return priceId === getStripePricePro() ? currency : undefined;
+}
+
+/** Every restaurant gets the same 7-day no-card trial. */
 export function getStripeTrialDays(): number {
-  const raw = process.env.STRIPE_TRIAL_DAYS?.trim();
-  if (!raw) return 3;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 1 || n > 90) return 3;
-  return Math.floor(n);
+  return 7;
 }
 
 export function subscriptionPlanFromPriceId(priceId: string | undefined): SubscriptionPlan | null {

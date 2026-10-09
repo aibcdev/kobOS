@@ -150,7 +150,7 @@ export function includedWithPlan(type: ServiceRequestType, plan: SubscriptionPla
   );
 }
 
-/** Fair-use limits keep the £99 PRO plan commercially sustainable. */
+/** Fair-use limits keep the founding PRO plan commercially sustainable. */
 export function monthlyIncludedLimit(type: ServiceRequestType, plan: SubscriptionPlan): number | null {
   if (plan !== "PRO") return null;
   if (type === "SOCIAL_TEXT") return 4;

@@ -9,6 +9,7 @@ import { KobMark } from "@/components/kob-brand/kob-mark";
 import { Button } from "@/components/kob-ui/button";
 import { Input } from "@/components/kob-ui/input";
 import { CORE_BENEFITS } from "@/lib/kob/demo";
+import { useFoundingPrice } from "@/lib/billing/use-founding-price";
 import { speakAsKob } from "@/lib/kob/tts";
 import { cn } from "@/lib/kob/utils";
 
@@ -20,7 +21,7 @@ function speak(text: string) {
   speakAsKob(text);
 }
 
-function replyTo(text: string) {
+function replyTo(text: string, priceLabel: string) {
   const t = text.toLowerCase();
   if (/hour|closed|open/.test(t)) {
     return "KOB will prepare the hours on Google and the site. Nothing goes live until you say Apply hours.";
@@ -32,7 +33,7 @@ function replyTo(text: string) {
     return "Send the delivery photo. KOB reads the lines, checks the house rate, and drafts the supplier note. You approve before it leaves.";
   }
   if (/price|cost|£|trial/.test(t)) {
-    return "Founding is £99 a location. Seven-day trial, no card. You start it yourself — no demo call.";
+    return `Founding is ${priceLabel} a location. Seven-day trial, no card. You start it yourself — no demo call.`;
   }
   if (/dashboard|tool|platform/.test(t)) {
     return "KOB is not a dashboard. KOB is the manager who uses your tools. You talk. KOB takes the job.";
@@ -42,6 +43,7 @@ function replyTo(text: string) {
 
 export function TalkOrb({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const price = useFoundingPrice();
   const [draft, setDraft] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -69,7 +71,7 @@ export function TalkOrb({ className }: { className?: string }) {
     setDraft("");
     const you: Line = { id: `you-${Date.now()}`, role: "you", text };
     setLines((prev) => [...prev, you]);
-    const answer = replyTo(text);
+    const answer = replyTo(text, price.label);
     window.setTimeout(() => {
       setLines((prev) => [
         ...prev,

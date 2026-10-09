@@ -3,7 +3,13 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { createSubscriptionCheckoutSession } from "@/lib/billing/checkout-subscription-session";
-import { getStripePricePro, getStripePriceStarter, requireStripe } from "@/lib/billing/stripe-server";
+import { foundingPrice, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
+import {
+  checkoutCurrencyFor,
+  getStripePricePro,
+  getStripePriceStarter,
+  requireStripe,
+} from "@/lib/billing/stripe-server";
 import { prisma } from "@/lib/db/prisma";
 
 export const runtime = "nodejs";
@@ -72,6 +78,7 @@ export async function POST(req: Request) {
       customerEmail: email,
       existingStripeCustomerId: restaurant.stripeCustomerId,
       priceId,
+      currency: checkoutCurrencyFor(priceId, foundingPrice(regionFromRequestHeaders(req.headers)).currency),
       origin,
       successPath,
       cancelPath,

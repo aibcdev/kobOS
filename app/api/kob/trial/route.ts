@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
-import { getStripe, getStripeGrowthPriceId, getStripeTrialDays } from "@/lib/billing/stripe-server";
+import { foundingPrice, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
+import {
+  checkoutCurrencyFor,
+  getStripe,
+  getStripeFoundingPriceId,
+  getStripeTrialDays,
+} from "@/lib/billing/stripe-server";
 
 export const runtime = "nodejs";
 
-/** Walkthrough: start a 3-day no-card trial. Stripe runs if keys exist; Talk always unlocks locally. */
-export async function POST() {
-  const trialDays = getStripeTrialDays() ?? 3;
+/** Walkthrough: start a 7-day no-card trial. Stripe runs if keys exist; Talk always unlocks locally. */
+export async function POST(req: Request) {
+  const trialDays = getStripeTrialDays();
   const trialEndsAt = new Date(Date.now() + trialDays * 86400000).toISOString();
   const stripe = getStripe();
-  const priceId = getStripeGrowthPriceId();
+  const priceId = getStripeFoundingPriceId();
 
   if (!stripe || !priceId) {
     return NextResponse.json({
@@ -27,6 +33,7 @@ export async function POST() {
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
+      currency: checkoutCurrencyFor(priceId, foundingPrice(regionFromRequestHeaders(req.headers)).currency),
       trial_period_days: trialDays,
       trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
       payment_behavior: "default_incomplete",

@@ -131,7 +131,7 @@ export const PRICING = [
   {
     id: "founding",
     name: "Founding",
-    price: "£99",
+    price: "$99 (£79 UK)",
     period: "per location / month",
     note: "For the first restaurants on KOB.",
     featured: true,

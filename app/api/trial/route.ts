@@ -4,7 +4,13 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { createFreeTrialSubscription } from "@/lib/billing/free-trial-subscription";
 import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
-import { getStripeGrowthPriceId, getStripePricePro, requireStripe } from "@/lib/billing/stripe-server";
+import { foundingPrice, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
+import {
+  checkoutCurrencyFor,
+  getStripeFoundingPriceId,
+  getStripeGrowthPriceId,
+  requireStripe,
+} from "@/lib/billing/stripe-server";
 import { createSubscriptionCheckoutSession } from "@/lib/billing/checkout-subscription-session";
 import { prisma } from "@/lib/db/prisma";
 import { hydrateRestaurantFromLinkedAudit } from "@/lib/restaurant/hydrate-from-audit";
@@ -47,14 +53,15 @@ export async function POST(req: Request) {
 
   const mode = parsed.data.mode ?? "checkout";
 
-  const priceId =
-    parsed.data.tier === "pro" ? getStripePricePro() ?? getStripeGrowthPriceId() : getStripeGrowthPriceId();
+  const priceId = parsed.data.tier === "starter" ? getStripeGrowthPriceId() : getStripeFoundingPriceId();
   if (!priceId) {
     return NextResponse.json(
-      { error: "Set STRIPE_GROWTH_PRICE_ID or STRIPE_PRICE_STARTER (and STRIPE_PRICE_PRO for Pro tier)." },
+      { error: "Set STRIPE_PRICE_PRO (founding) or STRIPE_GROWTH_PRICE_ID." },
       { status: 503 },
     );
   }
+  const regionCurrency = foundingPrice(regionFromRequestHeaders(req.headers)).currency;
+  const currency = checkoutCurrencyFor(priceId, regionCurrency);
 
   let stripe: ReturnType<typeof requireStripe>;
   try {
@@ -120,6 +127,7 @@ export async function POST(req: Request) {
         customerEmail: email,
         existingStripeCustomerId: restaurant.stripeCustomerId,
         priceId,
+        currency,
         origin,
         successPath: `/dashboard?r=${encodeURIComponent(restaurant.id)}&welcome=1`,
         cancelPath: `/dashboard/billing?r=${encodeURIComponent(restaurant.id)}&checkout=cancel`,
@@ -136,7 +144,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const trial = await createFreeTrialSubscription(email, restaurant.id);
+    const trial = await createFreeTrialSubscription(email, restaurant.id, regionCurrency);
     if (parsed.data.visibilityAuditId) {
       void ensureTodayBrief(restaurant.id).catch((e) => console.error("[api/trial] brief", e));
     }
@@ -147,7 +155,7 @@ export async function POST(req: Request) {
       customerId: trial.customerId,
       restaurantId: restaurant.id,
       trialEndsAt: trial.trialEndsAt,
-      message: "7-day free trial activated. Welcome to KOB!",
+      message: "7-day free trial activated. No card. Welcome to KOB.",
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

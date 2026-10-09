@@ -1,20 +1,25 @@
 import { prisma } from "@/lib/db/prisma";
 import {
-  getStripeGrowthPriceId,
+  checkoutCurrencyFor,
+  getStripeFoundingPriceId,
   getStripeTrialDays,
   requireStripe,
 } from "@/lib/billing/stripe-server";
 import { syncRestaurantFromStripeSubscription } from "@/lib/billing/sync-stripe-subscription";
 
 /** Creates or reuses Stripe customer, starts subscription with trial (API path — card optional until trial ends). */
-export async function createFreeTrialSubscription(customerEmail: string, restaurantId: string) {
+export async function createFreeTrialSubscription(
+  customerEmail: string,
+  restaurantId: string,
+  currency: "gbp" | "usd" = "usd",
+) {
   const stripe = requireStripe();
-  const priceId = getStripeGrowthPriceId();
+  const priceId = getStripeFoundingPriceId();
   if (!priceId) {
     throw new Error("Set STRIPE_PRICE_STARTER, STRIPE_GROWTH_PRICE_ID, or STRIPE_PRICE_PRO for trials.");
   }
 
-  const trialPeriodDays = getStripeTrialDays() ?? 7;
+  const trialPeriodDays = getStripeTrialDays();
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
@@ -40,6 +45,7 @@ export async function createFreeTrialSubscription(customerEmail: string, restaur
   const subscription = await stripe.subscriptions.create({
     customer: customerId,
     items: [{ price: priceId }],
+    currency: checkoutCurrencyFor(priceId, currency),
     trial_period_days: trialPeriodDays,
     metadata: { restaurantId },
     trial_settings: {

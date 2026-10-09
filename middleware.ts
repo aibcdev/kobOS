@@ -1,10 +1,35 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import {
+  countryFromHeaders,
+  parsePriceRegion,
+  PRICE_REGION_COOKIE,
+  regionForCountry,
+} from "@/lib/billing/regional-pricing";
 import { isOpenProductPath } from "@/lib/preview/open-product";
 import { updateSession } from "@/lib/supabase/middleware";
 import { readSupabasePublicEnv } from "@/lib/supabase/public-env";
 
+/** `?region=gb|us` overrides; otherwise keep the existing cookie or derive from geo. */
+function withPriceRegion(request: NextRequest, response: NextResponse): NextResponse {
+  const override = parsePriceRegion(request.nextUrl.searchParams.get("region"));
+  const existing = parsePriceRegion(request.cookies.get(PRICE_REGION_COOKIE)?.value);
+  const region = override ?? existing ?? regionForCountry(countryFromHeaders(request.headers));
+  if (region !== existing) {
+    response.cookies.set(PRICE_REGION_COOKIE, region, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+    });
+  }
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
+  return withPriceRegion(request, await route(request));
+}
+
+async function route(request: NextRequest): Promise<NextResponse> {
   const path = request.nextUrl.pathname;
   if (
     path.startsWith("/api/inngest") ||

@@ -2,12 +2,14 @@
 
 import { GreenOrb } from "@/components/kob-home/green-orb";
 import { Button } from "@/components/kob-ui/button";
+import { useFoundingPrice } from "@/lib/billing/use-founding-price";
 import { useKobStore } from "@/lib/kob/store";
 
 export function Paywall() {
   const trialEndsAt = useKobStore((s) => s.trialEndsAt);
   const startNoCardTrial = useKobStore((s) => s.startNoCardTrial);
   const restaurant = useKobStore((s) => s.restaurant);
+  const price = useFoundingPrice();
 
   const live = trialEndsAt && new Date(trialEndsAt).getTime() > Date.now();
   if (live) return null;
@@ -22,7 +24,7 @@ export function Paywall() {
         </h2>
         <p className="mt-3 text-ink">
           Start a 7-day trial with no card. We learn what you need, then we
-          learn with you. After that it is £99 a month per location.
+          learn with you. After that it is {price.label} a month per location.
         </p>
         <ul className="mt-5 space-y-2 text-sm text-ink">
           <li>Onboard in seconds</li>
@@ -40,7 +42,7 @@ export function Paywall() {
           Start 7-day trial — no card
         </Button>
         <p className="mt-3 text-center text-xs text-muted">
-          £99 / location / month after the trial. Founding price.
+          {price.label} / location / month after the trial. Founding price.
         </p>
       </div>
     </div>
