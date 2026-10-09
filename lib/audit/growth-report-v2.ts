@@ -9,6 +9,7 @@ import {
   computeGrowthScore,
   projectedGrowthAfterWins,
 } from "@/lib/audit/audit-opportunity-from-payload";
+import { buildSitePlatformReportLine, type SitePlatformReportLine } from "@/lib/audit/site-platform-report";
 
 export type GrowthPotentialBand = "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH";
 export type ImpactLevel = "High" | "Medium" | "Low" | "Unknown";
@@ -65,6 +66,8 @@ export type GrowthReportV2 = {
     estimatedCustomersPerMonth: number | null;
   }>;
   websiteHealth: Array<{ statement: string; impact: ImpactLevel }>;
+  /** Present only when the site builder was detected with high confidence. */
+  sitePlatform?: SitePlatformReportLine | null;
   googlePresence: {
     rating: number | null;
     reviewCount: number | null;
@@ -513,6 +516,7 @@ export function buildGrowthReportV2(
     competitors: buildCompetitors(payload),
     topImprovements,
     websiteHealth: plainWebsiteStatements(payload.issues ?? []),
+    sitePlatform: buildSitePlatformReportLine(payload),
     googlePresence: {
       rating: gp?.rating ?? null,
       reviewCount: gp?.reviewCount ?? null,

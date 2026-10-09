@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * CLI for ICP Fit Score (icp-fit-v1).
+ * CLI for ICP Fit Score (icp-fit-v2).
  *
  *   npx tsx scripts/score-icp.ts restaurants.json --pretty
  *   npx tsx scripts/score-icp.ts restaurants.json --qualified-only

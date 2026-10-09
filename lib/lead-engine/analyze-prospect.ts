@@ -1,5 +1,6 @@
 import type { UrlSignals } from "@/lib/audit/analyze-url";
 import { analyzeWebsiteFull } from "@/lib/audit/analyze-url";
+import type { SitePlatform } from "@/lib/audit/detect-site-platform";
 import { computeEngagementSignals } from "@/lib/audit/engagement-signals";
 import { detectLocationCount } from "@/lib/lead-engine/detect-location-count";
 import { passesLeadIcpFilters } from "@/lib/lead-engine/icp-filters";
@@ -30,6 +31,8 @@ export type ProspectAnalysis = {
   websiteStale: boolean;
   websiteCopyrightYear: number | null;
   locationCount: number;
+  /** High-confidence site builder (e.g. "owner"), else null. */
+  sitePlatform: string | null;
 };
 
 function baseSignals(partial: Partial<UrlSignals> & Pick<UrlSignals, "fetched">): UrlSignals {
@@ -151,6 +154,7 @@ export async function analyzeProspectWebsite(
   let hasTikTok = false;
   let instagramPostGapDays: number | null = null;
   let instagramFollowers: number | null = null;
+  let sitePlatform: SitePlatform | undefined;
 
   if (fast) {
     const page = await fetchHtml(url, 6_000);
@@ -163,6 +167,7 @@ export async function analyzeProspectWebsite(
   } else {
     const full = await analyzeWebsiteFull(url);
     signals = full.signals;
+    sitePlatform = full.sitePlatform;
     const page = await fetchHtml(url, 8_000);
     htmlStr = page.html;
     const ig = full.pageEvidence.socialLinksFound.find((s) => s.platform === "instagram");
@@ -188,7 +193,7 @@ export async function analyzeProspectWebsite(
   if (locationCount > locationMax) return null;
 
   const qualifyScore = scoreWebsiteSignals(signals);
-  const weakWebsite = isWeakOwnerWebsite(signals, qualifyScore, htmlStr);
+  const weakWebsite = !sitePlatform?.botChallenge && isWeakOwnerWebsite(signals, qualifyScore, htmlStr);
   const weakPhotography = signals.imgCount < 3 || !signals.hasOgImage;
   const engagement = htmlStr ? computeEngagementSignals(htmlStr, signals) : null;
   const { websiteStale, websiteCopyrightYear } = stalenessFromHtml(htmlStr);
@@ -235,5 +240,6 @@ export async function analyzeProspectWebsite(
     websiteStale,
     websiteCopyrightYear,
     locationCount,
+    sitePlatform: sitePlatform?.confidence === "high" ? sitePlatform.platform : null,
   };
 }

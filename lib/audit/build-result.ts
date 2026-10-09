@@ -534,6 +534,7 @@ export function buildAuditPayloadAndRow(
     evidencePack,
     scanStatus,
     ...(options?.browserbaseScan ? { browserbaseScan: options.browserbaseScan } : {}),
+    ...(analysis.sitePlatform ? { sitePlatform: analysis.sitePlatform } : {}),
     ...(options?.visualMetrics ? { visualMetrics: options.visualMetrics } : {}),
     ...(options?.stagehandExtraction ? { stagehandExtraction: options.stagehandExtraction } : {}),
     ...(geminiKey && !deferAi && siteMatched

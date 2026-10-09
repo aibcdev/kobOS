@@ -2,7 +2,7 @@ import type { UrlSignals } from "@/lib/audit/analyze-url";
 
 /**
  * True when a plain HTTP fetch likely returned a JS app shell, not rendered content.
- * Owner.com-style sites need Browserbase before rubric scoring.
+ * Owner.com sites are server-rendered but bot-challenged; `browserbase-policy` handles them via `sitePlatform`.
  */
 export function isLikelySpaShell(signals: UrlSignals, htmlSample?: string): boolean {
   if (!signals.fetched) return false;

@@ -190,6 +190,8 @@ export type AuditResultPayload = {
   /** Deep-render scan (Browserbase) state for polling + support. */
   scanStatus?: AuditScanStatus;
   browserbaseScan?: AuditBrowserbaseScan;
+  /** Website builder detected from fingerprints (see `lib/audit/platform-fingerprints.json`). */
+  sitePlatform?: import("@/lib/audit/detect-site-platform").SitePlatform;
   /** Viewport screenshot heuristics when Browserbase capture ran. */
   visualMetrics?: AuditVisualIntelligenceResult;
   /** Stagehand LLM extraction when AUDIT_STAGEHAND=1 */

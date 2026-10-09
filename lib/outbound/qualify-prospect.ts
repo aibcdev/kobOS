@@ -31,12 +31,14 @@ export async function qualifyProspect(prospect: OutboundProspect): Promise<Quali
     return { ok: false, reason: "no_website" };
   }
 
-  const { signals } = await analyzeWebsiteFull(url);
+  const { signals, sitePlatform } = await analyzeWebsiteFull(url);
+  // A bot-challenged fetch saw nothing; empty signals there are not evidence of a dated site.
   const dated =
-    !signals.hasViewport ||
-    !signals.hasMetaDescription ||
-    !signals.hasJsonLd ||
-    (signals.titleLen > 0 && signals.titleLen < 12);
+    !sitePlatform?.botChallenge &&
+    (!signals.hasViewport ||
+      !signals.hasMetaDescription ||
+      !signals.hasJsonLd ||
+      (signals.titleLen > 0 && signals.titleLen < 12));
 
   const opp = calculateOpportunityScore({
     ...mapProspectToIcpInput({
@@ -50,6 +52,7 @@ export async function qualifyProspect(prospect: OutboundProspect): Promise<Quali
       websiteStale: dated,
       weakWebsite: dated,
       hasGoogleBusinessPosts: null,
+      sitePlatform: sitePlatform?.confidence === "high" ? sitePlatform.platform : null,
     }),
     avg_ticket: 32,
     currency: "GBP",

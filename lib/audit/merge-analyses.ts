@@ -122,6 +122,7 @@ export function mergeWebsiteAnalyses(analyses: WebsiteAnalysis[]): WebsiteAnalys
       imageCandidates,
     },
     engagementSignals: primary.engagementSignals,
+    sitePlatform: primary.sitePlatform,
     guestSignals: mergeOnPageGuestSignals(
       analyses.map((a) => a.guestSignals).filter((g): g is NonNullable<typeof g> => Boolean(g)),
     ),

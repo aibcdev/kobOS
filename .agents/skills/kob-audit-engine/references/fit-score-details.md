@@ -2,7 +2,7 @@
 
 This is the single source of truth for qualifying restaurants for KOB cold email outbound.
 
-**Code:** `lib/outbound/score-icp.ts` · **Version:** `icp-fit-v1`
+**Code:** `lib/outbound/score-icp.ts` · **Version:** `icp-fit-v2`
 
 ## Mandatory Point Table
 

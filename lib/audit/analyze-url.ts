@@ -6,6 +6,7 @@ import {
   type OnPageGuestSignals,
 } from "@/lib/audit/on-page-guest-signals";
 import { discoverSeoCrawlAssets } from "@/lib/audit/seo-discovery";
+import { detectSitePlatform, type SitePlatform } from "@/lib/audit/detect-site-platform";
 
 export type UrlSignals = {
   fetched: boolean;
@@ -226,6 +227,7 @@ export type WebsiteAnalysis = {
   pageEvidence: PageEvidenceExtras;
   engagementSignals?: AuditEngagementSignals;
   guestSignals?: OnPageGuestSignals;
+  sitePlatform?: SitePlatform;
 };
 
 const emptySignals = (): UrlSignals => ({
@@ -313,6 +315,8 @@ function detectRestaurantSchema(html: string): boolean {
 export type AnalyzeHtmlMeta = {
   /** HTTP status from the transport (fetch, Browserbase navigation, etc.). */
   httpStatus?: number;
+  /** Same-origin request paths from a rendered session; sharpens platform detection. */
+  networkPaths?: string[];
 };
 
 /**
@@ -402,6 +406,7 @@ export function analyzeWebsiteFromHtml(
     },
     engagementSignals: computeEngagementSignals(html, signals),
     guestSignals,
+    sitePlatform: detectSitePlatform({ html, finalUrl: resolvedPageUrl, networkPaths: meta.networkPaths }),
   };
 }
 
@@ -514,7 +519,12 @@ export async function analyzeWebsiteFull(rawUrl: string | undefined): Promise<We
     signals.status = res.status;
     if (!res.ok || !res.headers.get("content-type")?.includes("text/html")) {
       signals.fetchError = true;
-      return { signals, pageEvidence: emptyPage };
+      const body = res.headers.get("content-type")?.includes("text/html") ? await res.text().catch(() => "") : "";
+      return {
+        signals,
+        pageEvidence: emptyPage,
+        sitePlatform: detectSitePlatform({ html: body || null, finalUrl: res.url || url.toString() }),
+      };
     }
     const html = await res.text();
     const analysis = analyzeWebsiteFromHtml(html, res.url || url.toString(), {

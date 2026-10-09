@@ -273,6 +273,7 @@ export const auditBrowserbaseScan = inngest.createFunction(
           : await fetchRenderedPageWithRetry(websiteUrl, 2);
         const analysis = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
           httpStatus: page.statusCode ?? undefined,
+          networkPaths: page.networkFacts?.map((f) => f.path),
         });
 
         const userUrls =

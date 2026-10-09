@@ -62,7 +62,7 @@ export async function runAuditWebsitePipeline(
 
   const needsSyncBb =
     bbAlways ||
-    shouldSyncBrowserbaseRender(fetchAnalysis.signals);
+    shouldSyncBrowserbaseRender(fetchAnalysis.signals, undefined, fetchAnalysis.sitePlatform);
 
   if (bbAsync) {
     return {
@@ -86,6 +86,7 @@ export async function runAuditWebsitePipeline(
       const page = await fetchRenderedPageViaStagehandWithRetry(websiteUrl.trim(), meta, 2);
       const rendered = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
         httpStatus: page.statusCode ?? undefined,
+        networkPaths: page.networkFacts?.map((f) => f.path),
       });
       rendered.engagementSignals = computeEngagementSignals(
         page.html,
@@ -118,6 +119,7 @@ export async function runAuditWebsitePipeline(
     const page = await fetchRenderedPageWithRetry(websiteUrl.trim(), 2);
     const rendered = analyzeWebsiteFromHtml(page.html, page.finalUrl, {
       httpStatus: page.statusCode ?? undefined,
+      networkPaths: page.networkFacts?.map((f) => f.path),
     });
     const analysis = await enrichWebsiteAnalysisWithSeoDiscovery(rendered, page.finalUrl);
     return {

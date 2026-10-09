@@ -56,7 +56,25 @@ const bellaNapoli: IcpRestaurantInput = {
   is_competitive_city: true,
 };
 
-describe("scoreIcp (icp-fit-v1)", () => {
+describe("scoreIcp — Owner.com switch segment", () => {
+  it("keeps Owner customers as a switch segment instead of discarding them", () => {
+    const r = scoreIcp({ ...harborHouse, on_major_platform: true, site_platform: "owner" });
+    expect(r.status).toBe("qualified");
+    expect(r.segment).toBe("switch");
+    expect(r.disqualifiers).toEqual([]);
+    expect(r.recommended_email_angle).toBe("platform_switch");
+    expect(r.personalization_hooks[0]).toMatch(/Owner\.com/);
+  });
+
+  it("still discards other visible major-platform customers", () => {
+    const r = scoreIcp({ ...harborHouse, on_major_platform: true, site_platform: "toast" });
+    expect(r.status).toBe("discard");
+    expect(r.disqualifiers).toContain("major_platform_customer");
+    expect(r.segment).toBe("standard");
+  });
+});
+
+describe("scoreIcp (icp-fit-v2)", () => {
   it("qualifies Harbor House as perfect ICP (~155)", () => {
     const r = scoreIcp(harborHouse);
     expect(r.status).toBe("qualified");

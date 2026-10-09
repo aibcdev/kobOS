@@ -42,12 +42,14 @@ export type IcpMapSource = {
   /** 0–1 if known */
   reviewResponseRate?: number | null;
   onMajorPlatform?: boolean | null;
+  /** `sitePlatform.platform` from a high-confidence audit detection. */
+  sitePlatform?: string | null;
   isGhostKitchen?: boolean | null;
   competitorRatingsNearby?: number[] | null;
   websiteNotes?: string | null;
 };
 
-/** Map enriched prospect fields → ICP Fit Score input (icp-fit-v1). */
+/** Map enriched prospect fields → ICP Fit Score input (icp-fit-v2). */
 export function mapProspectToIcpInput(source: IcpMapSource): IcpRestaurantInput {
   const websiteUrl = source.websiteUrl?.trim() || null;
   const chain =
@@ -91,6 +93,7 @@ export function mapProspectToIcpInput(source: IcpMapSource): IcpRestaurantInput 
     active_on_deliveroo_or_uber: onDelivery,
     is_competitive_city: competitive,
     on_major_platform: source.onMajorPlatform ?? false,
+    site_platform: source.sitePlatform ?? null,
     competitor_ratings_nearby: source.competitorRatingsNearby ?? null,
     website_notes: source.websiteNotes ?? null,
   };

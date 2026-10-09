@@ -50,7 +50,11 @@ Use this exact point system. Sum all applicable points.
 - Pure ghost kitchen / delivery-only (no storefront)
 - Google rating below 3.2 (too broken)
 - No website **and** no Google Business Profile
-- Already a major platform customer with heavy investment (Owner.com, Toast suite, etc. if clearly visible)
+- Already a major platform customer with heavy investment (Toast suite, etc. if clearly visible)
+
+### Owner.com switch segment (`icp-fit-v2`)
+
+When the audit detects the site runs on Owner.com (`sitePlatform.platform === "owner"`, high confidence → `site_platform: "owner"`), the lead is **not** discarded. It gets `segment: "switch"`, angle `platform_switch`, and the hook "Site runs on Owner.com (public pricing $249–$499/mo)". Owner sites are fast and well structured (see `docs/research/owner-teardown-2026-10.md`), so pitch the work around the site — never claim their website is weak unless the scan measured it.
 
 ## Decision Logic
 
@@ -125,7 +129,7 @@ For every restaurant return:
 
 Any change to point values or disqualifiers must be versioned so historical lists remain reproducible.
 
-Current version: **`icp-fit-v1`** (see `ICP_SCORE_VERSION` in `lib/outbound/score-icp.ts`).
+Current version: **`icp-fit-v2`** (see `ICP_SCORE_VERSION` in `lib/outbound/score-icp.ts`).
 
 ## CLI
 

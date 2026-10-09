@@ -70,6 +70,14 @@ export function AuditGrowthReport({
               <dd>Analysed {report.hero.analysedAtLabel}</dd>
             </div>
           </dl>
+          {report.sitePlatform ? (
+            <div className="max-w-2xl text-sm leading-relaxed text-[var(--color-muted)]">
+              <p className="font-medium text-[var(--color-ink)]">{report.sitePlatform.line}</p>
+              {report.sitePlatform.gaps.length > 0 ? (
+                <p className="mt-1">Measured on your site: {report.sitePlatform.gaps.join(" · ")}</p>
+              ) : null}
+            </div>
+          ) : null}
         </header>
 
         <section className="mt-14">

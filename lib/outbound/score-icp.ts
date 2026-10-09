@@ -5,16 +5,20 @@
  * Only status === "qualified" (score ≥ 70) should enter the outbound email list.
  */
 
-export const ICP_SCORE_VERSION = "icp-fit-v1" as const;
+export const ICP_SCORE_VERSION = "icp-fit-v2" as const;
 
 export type IcpEmailAngle =
   | "rating_gap"
   | "inactive_social"
   | "dated_website"
   | "local_pack"
-  | "review_response";
+  | "review_response"
+  | "platform_switch";
 
 export type IcpStatus = "qualified" | "park" | "discard";
+
+/** `switch` = already pays Owner.com for their site; pitch the work around it, not a new website. */
+export type IcpSegment = "standard" | "switch";
 
 export type IcpRestaurantInput = {
   place_id?: string | null;
@@ -40,6 +44,8 @@ export type IcpRestaurantInput = {
   is_competitive_city?: boolean | null;
   /** Owner.com / Toast suite / etc. clearly visible. */
   on_major_platform?: boolean | null;
+  /** Website builder from the audit's high-confidence `sitePlatform` detection. */
+  site_platform?: string | null;
   /** Optional — for hooks only. */
   competitor_ratings_nearby?: number[] | null;
   website_notes?: string | null;
@@ -51,6 +57,7 @@ export type IcpScoreResult = {
   name: string;
   fit_score: number;
   status: IcpStatus;
+  segment: IcpSegment;
   matched_factors: string[];
   disqualifiers: string[];
   personalization_hooks: string[];
@@ -84,10 +91,14 @@ function hardDisqualifiers(r: IcpRestaurantInput): string[] {
   // Only DQ on missing presence when both flags are explicitly false (not unknown).
   void hasSite;
   void hasGbp;
-  if (r.on_major_platform === true) {
+  if (r.on_major_platform === true && segmentFor(r) !== "switch") {
     dq.push("major_platform_customer");
   }
   return dq;
+}
+
+function segmentFor(r: IcpRestaurantInput): IcpSegment {
+  return r.site_platform === "owner" ? "switch" : "standard";
 }
 
 function scorePoints(r: IcpRestaurantInput): { score: number; factors: string[] } {
@@ -167,6 +178,10 @@ function scorePoints(r: IcpRestaurantInput): { score: number; factors: string[] 
 function buildHooks(r: IcpRestaurantInput, factors: string[]): string[] {
   const hooks: string[] = [];
 
+  if (segmentFor(r) === "switch") {
+    hooks.push("Site runs on Owner.com (public pricing $249–$499/mo)");
+  }
+
   if (r.rating != null && factors.includes("rating under 4.5")) {
     const comps = r.competitor_ratings_nearby?.filter((n) => Number.isFinite(n));
     if (comps?.length) {
@@ -209,7 +224,9 @@ function buildHooks(r: IcpRestaurantInput, factors: string[]): string[] {
 function recommendAngle(
   factors: string[],
   hooks: string[],
+  segment: IcpSegment,
 ): IcpEmailAngle | null {
+  if (segment === "switch") return "platform_switch";
   if (factors.includes("rating under 4.5") || hooks.some((h) => /rating/i.test(h))) {
     return "rating_gap";
   }
@@ -229,6 +246,7 @@ function decideStatus(score: number, disqualifiers: string[]): IcpStatus {
 
 /** Deterministic ICP fit score — same rules as the kob-audit-engine skill. */
 export function scoreIcp(input: IcpRestaurantInput): IcpScoreResult {
+  const segment = segmentFor(input);
   const disqualifiers = hardDisqualifiers(input);
   if (disqualifiers.length > 0) {
     return {
@@ -237,6 +255,7 @@ export function scoreIcp(input: IcpRestaurantInput): IcpScoreResult {
       name: input.name,
       fit_score: 0,
       status: "discard",
+      segment,
       matched_factors: [],
       disqualifiers,
       personalization_hooks: [],
@@ -247,7 +266,7 @@ export function scoreIcp(input: IcpRestaurantInput): IcpScoreResult {
   const { score, factors } = scorePoints(input);
   const status = decideStatus(score, disqualifiers);
   const hooks = status === "qualified" ? buildHooks(input, factors) : buildHooks(input, factors).slice(0, 2);
-  const angle = status === "qualified" ? recommendAngle(factors, hooks) : null;
+  const angle = status === "qualified" ? recommendAngle(factors, hooks, segment) : null;
 
   return {
     version: ICP_SCORE_VERSION,
@@ -255,6 +274,7 @@ export function scoreIcp(input: IcpRestaurantInput): IcpScoreResult {
     name: input.name,
     fit_score: score,
     status,
+    segment,
     matched_factors: factors,
     disqualifiers: [],
     personalization_hooks: status === "discard" && score < 50 ? [] : hooks,

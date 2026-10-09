@@ -130,6 +130,7 @@ async function analyzeAndPersistProspect(prospect: LeadProspect): Promise<"analy
     hasGoogleBusinessPosts: analysis.hasGoogleBusinessPosts,
     deliveryPlatforms: prospect.deliveryPlatforms,
     platformRankPercentile: prospect.platformRankPercentile,
+    sitePlatform: analysis.sitePlatform,
   });
 
   // Canonical gate: ICP Fit Score ≥70 (kob-audit-engine). Opportunity metrics are enrichment only.

@@ -1,0 +1,85 @@
+{
+  "version": "2026-10-09",
+  "source": "docs/research/owner-teardown-2026-10.md",
+  "platforms": {
+    "owner": {
+      "label": "Owner.com",
+      "fingerprints": [
+        { "kind": "cookie", "pattern": "^owner-(stable-id|brand-id|worker-version)$", "weight": 0.95, "evidence": "Owner session cookie" },
+        { "kind": "host", "pattern": "(^|\\.)static-content\\.owner\\.com$", "weight": 0.9, "evidence": "Assets served from static-content.owner.com" },
+        { "kind": "host", "pattern": "(^|\\.)owner\\.sh$", "weight": 0.85, "evidence": "Assets served from owner.sh" },
+        { "kind": "html", "pattern": "Powered by Owner", "weight": 0.85, "evidence": "Footer reads \"Powered by Owner\"" },
+        { "kind": "html", "pattern": "static-content\\.owner\\.com/funnel/", "weight": 0.85, "evidence": "Logo/images hosted on Owner's funnel CDN" },
+        { "kind": "html", "pattern": "id=com\\.owner\\.[a-z0-9_]+|bundle-id=\"com\\.owner\\.", "weight": 0.8, "evidence": "Branded app bundle id com.owner.*" },
+        { "kind": "html", "pattern": "OwnerAnalytics|owner-analytics-config", "weight": 0.7, "evidence": "Owner analytics component in page" },
+        { "kind": "path", "pattern": "^/api/olympus/", "weight": 0.8, "evidence": "Ordering API under /api/olympus/" },
+        { "kind": "path", "pattern": "^/universal-log-exposure/?$", "weight": 0.6, "evidence": "Owner experiment logging endpoint" }
+      ]
+    },
+    "toast": {
+      "label": "Toast",
+      "fingerprints": [
+        { "kind": "url", "pattern": "\\.toast\\.site(/|$)|order\\.toasttab\\.com/", "weight": 0.95, "evidence": "Site served on a Toast domain" },
+        { "kind": "html", "pattern": "powered-by-toast|toast-logo-filled", "weight": 0.85, "evidence": "\"Powered by Toast\" badge" },
+        { "kind": "host", "pattern": "(^|\\.)ws-api\\.toasttab\\.com$", "weight": 0.8, "evidence": "Calls Toast web-services API" }
+      ]
+    },
+    "square": {
+      "label": "Square Online",
+      "fingerprints": [
+        { "kind": "generator", "pattern": "^Square Online", "weight": 0.95, "evidence": "Generator meta tag: Square Online" },
+        { "kind": "url", "pattern": "\\.square\\.site(/|$)", "weight": 0.9, "evidence": "Site served on square.site" },
+        { "kind": "host", "pattern": "(^|\\.)editmysite\\.com$", "weight": 0.8, "evidence": "Assets from editmysite.com (Square Online)" }
+      ]
+    },
+    "bentobox": {
+      "label": "BentoBox",
+      "fingerprints": [
+        { "kind": "host", "pattern": "(^|\\.)(theme-assets|images)\\.getbento\\.com$", "weight": 0.9, "evidence": "Assets from getbento.com" },
+        { "kind": "html", "pattern": "Powered by BentoBox|getbento\\.com/\\?utm", "weight": 0.85, "evidence": "\"Powered by BentoBox\" credit" }
+      ]
+    },
+    "wix": {
+      "label": "Wix",
+      "fingerprints": [
+        { "kind": "generator", "pattern": "^Wix\\.com", "weight": 0.95, "evidence": "Generator meta tag: Wix.com" },
+        { "kind": "host", "pattern": "(^|\\.)(parastorage|wixstatic)\\.com$", "weight": 0.85, "evidence": "Assets from Wix CDNs" }
+      ]
+    },
+    "squarespace": {
+      "label": "Squarespace",
+      "fingerprints": [
+        { "kind": "host", "pattern": "(^|\\.)(squarespace|squarespace-cdn|sqspcdn)\\.com$", "weight": 0.9, "evidence": "Assets from Squarespace CDNs" },
+        { "kind": "html", "pattern": "Static\\.SQUARESPACE_CONTEXT", "weight": 0.9, "evidence": "Squarespace page context script" }
+      ]
+    },
+    "webflow": {
+      "label": "Webflow",
+      "fingerprints": [
+        { "kind": "html", "pattern": "data-wf-site=", "weight": 0.9, "evidence": "Webflow site attribute" },
+        { "kind": "host", "pattern": "(^|\\.)website-files\\.com$", "weight": 0.75, "evidence": "Assets from Webflow CDN" }
+      ]
+    },
+    "wordpress": {
+      "label": "WordPress",
+      "fingerprints": [
+        { "kind": "generator", "pattern": "^(WordPress|Elementor)", "weight": 0.9, "evidence": "Generator meta tag: WordPress/Elementor" },
+        { "kind": "html", "pattern": "/wp-content/|/wp-includes/", "weight": 0.85, "evidence": "WordPress asset paths" }
+      ]
+    }
+  },
+  "orderingProviders": {
+    "owner": { "label": "Owner.com", "pattern": "/api/olympus/carts|dialogState=orderDetails" },
+    "toast": { "label": "Toast", "pattern": "order\\.toasttab\\.com|\\.toast\\.site/order" },
+    "square": { "label": "Square", "pattern": "\\.square\\.site|squareup\\.com/store" },
+    "chownow": { "label": "ChowNow", "pattern": "(direct|order)\\.chownow\\.com" },
+    "spoton": { "label": "SpotOn", "pattern": "order\\.spoton\\.com|o\\.spoton\\.com" },
+    "clover": { "label": "Clover", "pattern": "clover\\.com/online-ordering|cloverstatic\\.com" },
+    "slice": { "label": "Slice", "pattern": "slicelife\\.com" },
+    "doordash": { "label": "DoorDash Storefront", "pattern": "order\\.online/|doordash\\.com/store" },
+    "ubereats": { "label": "Uber Eats", "pattern": "ubereats\\.com/store" },
+    "justeat": { "label": "Just Eat", "pattern": "just-eat\\.co\\.uk/restaurants" },
+    "deliveroo": { "label": "Deliveroo", "pattern": "deliveroo\\.co\\.uk/menu" },
+    "flipdish": { "label": "Flipdish", "pattern": "flipdish\\.(com|co)" }
+  }
+}

@@ -1,6 +1,7 @@
 import { isBrowserbaseConfigured } from "@/lib/browserbase/browserbase-config";
 import type { UrlSignals } from "@/lib/audit/analyze-url";
 import { isLikelySpaShell } from "@/lib/audit/detect-spa-shell";
+import type { SitePlatform } from "@/lib/audit/detect-site-platform";
 
 export type AuditBrowserbaseMode = "always" | "fallback";
 
@@ -15,8 +16,11 @@ export function getAuditBrowserbaseMode(): AuditBrowserbaseMode {
 export function shouldSyncBrowserbaseRender(
   fetchSignals: UrlSignals,
   htmlSample?: string,
+  sitePlatform?: SitePlatform,
 ): boolean {
   if (getAuditBrowserbaseMode() === "always") return true;
+  // Owner sites sit behind a Cloudflare bot challenge; plain fetch never sees the real page.
+  if (sitePlatform?.platform === "owner" || sitePlatform?.botChallenge) return true;
   if (!fetchSignals.fetched) return true;
   if (fetchSignals.status != null && fetchSignals.status >= 400) return true;
   if (isLikelySpaShell(fetchSignals, htmlSample)) return true;
