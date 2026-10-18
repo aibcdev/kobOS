@@ -15,7 +15,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   const ip = clientIpFromHeaders(req.headers) ?? "unknown";
-  const rl = checkSimpleRateLimit(`heard-from:${ip}`, { windowMs: 60 * 60 * 1000, max: 40 });
+  const rl = await checkSimpleRateLimit(`heard-from:${ip}`, { windowMs: 60 * 60 * 1000, max: 40 });
   if (!rl.ok) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

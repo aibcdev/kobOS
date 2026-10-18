@@ -1,10 +1,17 @@
 import type { User } from "@supabase/supabase-js";
 import type { Prisma, Restaurant } from "@prisma/client";
 
-/** Set `NEXT_PUBLIC_UI_PREVIEW=1` in `.env.local` to browse the dashboard without Supabase or Postgres. */
+/**
+ * Set `NEXT_PUBLIC_UI_PREVIEW=1` in `.env.local` to browse the dashboard without Supabase or Postgres.
+ * Preview skips auth, so it is always off on Netlify production and in production builds unless
+ * `ALLOW_UI_PREVIEW_IN_PROD=1` (never set that on trykob.com).
+ */
 export function isUiPreviewEnabled(): boolean {
   const v = process.env.NEXT_PUBLIC_UI_PREVIEW;
-  return v === "1" || v === "true";
+  if (v !== "1" && v !== "true") return false;
+  if (process.env.CONTEXT === "production") return false;
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_UI_PREVIEW_IN_PROD !== "1") return false;
+  return true;
 }
 
 /** Must be a valid UUID (TeamMember.userId is @db.Uuid). */

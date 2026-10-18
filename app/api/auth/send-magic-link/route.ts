@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const ip = clientIpFromHeaders(request.headers) ?? "unknown";
-  const rlIp = checkSimpleRateLimit(`magic-link:ip:${ip}`, {
+  const rlIp = await checkSimpleRateLimit(`magic-link:ip:${ip}`, {
     windowMs: 60 * 60 * 1000,
     max: 10,
   });
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
 
-  const rlEmail = checkSimpleRateLimit(`magic-link:email:${email.toLowerCase()}`, {
+  const rlEmail = await checkSimpleRateLimit(`magic-link:email:${email.toLowerCase()}`, {
     windowMs: 60 * 60 * 1000,
     max: 5,
   });

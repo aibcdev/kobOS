@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
+import { clientIpFromHeaders, limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 const demoRequestSchema = z.object({
   firstName: z.string().trim().min(1).max(120),
@@ -20,6 +21,8 @@ function emptyToUndefined(s: string | undefined) {
 }
 
 export async function POST(req: Request) {
+  const rl = await limit(`demo-request:${clientIpFromHeaders(req.headers) ?? "unknown"}`, { windowSec: 3600, max: 10 });
+  if (!rl.ok) return tooManyRequests(rl);
   let body: unknown;
   try {
     body = await req.json();
