@@ -19,7 +19,7 @@
 - **No long-term contracts** — month-to-month, cancel anytime (Owner FAQ).
 - **Guests pay 5% order support fee** on both plans (fulfillment + CS) — separate from restaurant fee on Flex.
 - **Multi-location:** special rates available (Flex).
-- **KOB founding anchor:** $49 Flex / $99 Flat — still ~5× cheaper on monthly.
+- **KOB founding anchor:** one price, $99/mo (£79 UK), no order fees — ~2.5–5× cheaper on monthly.
 
 ---
 
@@ -198,13 +198,13 @@ Full token doc: **`downloads/owner.com-DESIGN.md`** (801 lines). KOB already map
 ## KOB talk tracks (vs Owner)
 
 **When they say “Owner does everything”**  
-Owner replaces your website, ordering, app, and marketing stack for $249–$499/mo. KOB is your **daily helper** — reviews, holidays, hours, listings — for **$49–$99 founding**. Different job, much lower price.
+Owner replaces your website, ordering, app, and marketing stack for $249–$499/mo. KOB is your **daily helper** — reviews, holidays, hours, listings — for **$99 founding (£79 UK)**. Different job, much lower price.
 
 **When they mention the grader / free scan**  
 Owner’s grader feeds the **demo funnel**. KOB’s scan feeds a **trial you start yourself** — no sales call required.
 
 **When they cite 5% flex fee**  
-Owner Flex is **$249 + 5%** on your orders. KOB Flex founding is **$49 + 2.5%** — half the per-order fee, ~5× lower monthly.
+Owner Flex is **$249 + 5%** on your orders. KOB is **$99/mo (£79 UK) with no per-order fee**.
 
 **When they say “no contracts”**  
 Match that — KOB is also month-to-month. Win on price + simplicity, not lock-in.

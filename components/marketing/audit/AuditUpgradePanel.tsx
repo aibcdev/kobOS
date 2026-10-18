@@ -1,3 +1,4 @@
+import { START_FREE_TRIAL } from "@/lib/billing/offer";
 import Link from "next/link";
 import { ownerBtnPrimary, ownerBtnSecondary } from "@/lib/marketing/owner-ui-classes";
 import { marketingCopy } from "@/lib/marketing/copy";
@@ -9,7 +10,7 @@ export function AuditUpgradePanel({
   restaurantName,
   leadEmail,
   primaryHref,
-  primaryLabel = "Start 7-day free trial",
+  primaryLabel = START_FREE_TRIAL,
 }: {
   auditId: string;
   restaurantName: string;

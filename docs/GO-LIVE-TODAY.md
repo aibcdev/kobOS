@@ -25,8 +25,7 @@ Powers: Today brief, Chat, content drafts, audit summaries.
 
 | Name | Price | Billing |
 |------|-------|---------|
-| KOB Flex | $49 | Recurring monthly |
-| KOB Flat | $99 | Recurring monthly |
+| KOB Founding | $99 (GBP option £79 via `currency_options`) | Recurring monthly |
 
 Copy each **Price ID** (`price_...`) — you need both.
 
@@ -49,8 +48,7 @@ Copy into Netlify:
 STRIPE_SECRET_KEY=sk_live_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_STARTER=price_...        ← KOB Flex $49
-STRIPE_PRICE_PRO=price_...            ← KOB Flat $99
+STRIPE_PRICE_PRO=price_...            ← KOB Founding $99 / £79 (STRIPE_PRICE_STARTER resolves to the same price)
 STRIPE_GROWTH_PRICE_ID=price_...      ← same as STRIPE_PRICE_STARTER
 STRIPE_TRIAL_DAYS=7
 ```
@@ -90,7 +88,7 @@ After any env change: **Deploys → Trigger deploy**
 
 1. https://trykob.com/audit → UK restaurant → wait for report
 2. Unlock with your email
-3. Start trial → Stripe shows **$49/mo** + 7-day trial
+3. Start trial → Stripe shows **$99/mo (£79 UK)** + 7-day trial, no card
 4. Land on dashboard → see task list
 
 If audit stays “pending” → Inngest not synced.

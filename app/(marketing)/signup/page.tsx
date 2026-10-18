@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 
 import { SaasSignupPage } from "@/components/marketing/saas/SaasSignupPage";
+import { FREE_TRIAL_LABEL } from "@/lib/billing/offer";
 
 export const metadata: Metadata = {
   title: "Start free trial | KOB",
   description:
-    "Start your free 7-day trial. See what’s holding your restaurant back — opportunity report in minutes. No card required.",
+    `Start your ${FREE_TRIAL_LABEL}. See what’s holding your restaurant back — opportunity report in minutes. No card required.`,
 };
 
 export default function MarketingSignupPage() {

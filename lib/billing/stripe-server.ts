@@ -1,5 +1,6 @@
 import type { SubscriptionPlan } from "@prisma/client";
 import Stripe from "stripe";
+import { TRIAL_DAYS } from "@/lib/billing/offer";
 
 let stripeSingleton: Stripe | null = null;
 
@@ -43,9 +44,9 @@ export function checkoutCurrencyFor(priceId: string, currency: "gbp" | "usd"): "
   return priceId === getStripePricePro() ? currency : undefined;
 }
 
-/** Every restaurant gets the same 7-day no-card trial. */
+/** Every restaurant gets the same no-card trial (`TRIAL_DAYS` in `lib/billing/offer.ts`). */
 export function getStripeTrialDays(): number {
-  return 7;
+  return TRIAL_DAYS;
 }
 
 export function subscriptionPlanFromPriceId(priceId: string | undefined): SubscriptionPlan | null {

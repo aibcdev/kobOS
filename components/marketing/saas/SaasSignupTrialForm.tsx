@@ -10,6 +10,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { createMagicLinkAuthClient } from "@/lib/supabase/magic-link-auth";
 import { HeardFromFields } from "@/components/marketing/HeardFromFields";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { FREE_TRIAL_LABEL, TRIAL_LABEL } from "@/lib/billing/offer";
 import { storeHeardFrom, type HeardFromPayload } from "@/lib/marketing/heard-from";
 
 import { SaasIcon } from "./SaasIcon";
@@ -229,7 +230,7 @@ export function SaasSignupTrialForm() {
   return (
     <div className="rounded-[1.5rem] border border-[#2c2c2c]/08 bg-white p-6 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.35)] sm:p-8">
       <h2 className="font-heading text-[1.75rem] tracking-tight text-[#1a1a1a] md:text-[1.85rem]">
-        Start your free 7-day trial
+        Start your {FREE_TRIAL_LABEL}
       </h2>
 
       {status === "sent" || status === "verifying" ? (
@@ -398,7 +399,7 @@ export function SaasSignupTrialForm() {
 
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-[#2c2c2c]/50">
             <SaasIcon icon="solar:lock-keyhole-linear" className="text-sm" />
-            No card to create your account · Card required when you start the 7-day trial
+            No card to create your account or start the {TRIAL_LABEL}
           </p>
         </form>
       )}
