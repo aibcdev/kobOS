@@ -101,7 +101,7 @@ export function AuditRecoveryWins({ restaurantId }: { restaurantId: string }) {
               error?: string;
             };
             if (checkout.ok && checkoutData.url) {
-              window.location.href = checkoutData.url;
+              window.location.assign(checkoutData.url);
               return;
             }
             setError(checkoutData.error ?? "Start a free trial to request fixes.");
