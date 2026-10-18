@@ -26,6 +26,7 @@ const Body = z.object({
   profile: z.unknown().optional(),
 });
 
+// DECISION: stays public — last step of the anonymous /onboard funnel. Rate-limited in T-05.
 export async function POST(req: Request) {
   let json: unknown;
   try {
