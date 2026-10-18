@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
 import { GreenOrb } from "@/components/kob-home/green-orb";
+import { TodayHome } from "@/components/kob-talk/today-home";
+import type { HomeData } from "@/lib/kob/home/load-home";
 import type {
   TalkConnector,
   TalkMessage,
@@ -31,7 +33,9 @@ export function LiveWorkspace({
   initialConnectors,
   connectionResult,
   connectionError,
+  home,
 }: {
+  home: HomeData;
   restaurant: { id: string; name: string };
   restaurants: { id: string; name: string }[];
   conversationId: string;
@@ -47,6 +51,9 @@ export function LiveWorkspace({
   );
   const [connectionNotice, setConnectionNotice] = useState(
     Boolean(connectionResult),
+  );
+  const [view, setView] = useState<"today" | "talk">(
+    connectionResult || connectionError ? "talk" : "today",
   );
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,16 +98,18 @@ export function LiveWorkspace({
         ?.scrollIntoView({ block: "start" });
       return;
     }
+    if (view === "today") return;
     end.current?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "instant"
         : "smooth",
       block: "end",
     });
-  }, [messages, busy, connectionsOpen]);
+  }, [messages, busy, connectionsOpen, view]);
 
   async function send(text: string) {
     if (!text.trim() || sending.current) return;
+    setView("talk");
     sending.current = true;
     setBusy(true);
     setConnectionNotice(false);
@@ -174,23 +183,41 @@ export function LiveWorkspace({
   return (
     <div className="flex h-dvh flex-col bg-bone text-espresso">
       <header className="flex shrink-0 items-center gap-3 border-b border-line bg-paper px-4 py-3">
-        <Link href="/" aria-label="KOB home">
+        <Link href="/" aria-label="KOB home" className="hidden sm:block">
           <KobWordmark />
         </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{restaurant.name}</p>
-          <p className="text-xs text-muted">
+          <p className="hidden truncate text-xs text-muted sm:block">
             {activeCount
               ? `${activeCount} account${activeCount === 1 ? "" : "s"} connected`
               : "Your restaurant assistant"}
           </p>
         </div>
+        <nav aria-label="Views" className="flex rounded-full border border-line p-0.5 text-sm">
+          {(
+            [
+              ["today", "Today"],
+              ["talk", "Talk"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={view === id}
+              onClick={() => setView(id)}
+              className={`min-h-10 rounded-full px-3 ${view === id ? "bg-espresso text-paper" : ""}`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <button
           type="button"
           aria-expanded={connectionsOpen}
           aria-controls="talk-connections"
           onClick={() => setConnectionsOpen(!connectionsOpen)}
-          className="min-h-11 rounded-full border border-line px-4 text-sm"
+          className="min-h-11 rounded-full border border-line px-3 text-sm sm:px-4"
         >
           Connections
         </button>
@@ -322,7 +349,15 @@ export function LiveWorkspace({
               ) : null}
             </div>
           ) : null}
-          {!messages.length ? (
+          {view === "today" && !connectionsOpen ? (
+            <TodayHome
+              restaurant={restaurant}
+              audit={home.audit}
+              initialBrief={home.brief}
+              onAsk={(text) => void send(text)}
+            />
+          ) : null}
+          {view === "talk" && !messages.length ? (
             <section className="space-y-5 py-8">
               <GreenOrb size="sm" />
               <h1 className="font-display text-3xl sm:text-4xl">
@@ -347,7 +382,7 @@ export function LiveWorkspace({
               </div>
             </section>
           ) : null}
-          {messages.map((message) => (
+          {(view === "talk" ? messages : []).map((message) => (
             <article
               key={message.id}
               aria-label={
@@ -449,7 +484,7 @@ export function LiveWorkspace({
             rows={2}
             maxLength={8000}
             aria-label="Message KOB"
-            placeholder="Ask about your restaurant…"
+            placeholder="Ask KOB anything…"
             className="min-w-0 flex-1 resize-none bg-transparent py-2 text-base outline-none"
             onKeyDown={(event) => {
               if (
