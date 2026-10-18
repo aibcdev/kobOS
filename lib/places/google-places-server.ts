@@ -16,6 +16,11 @@ export type PlaceDetailsResult = {
   phoneNumber: string | null;
   lat: number | null;
   lng: number | null;
+  /** ISO alpha-2 from `addressComponents` (GB, US…). */
+  countryCode: string | null;
+  /** First-level admin area short name (TX, England…). */
+  region: string | null;
+  utcOffsetMinutes: number | null;
 };
 
 /** Fields needed by the restaurant classifier (categories + dine-in). */
@@ -104,7 +109,8 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     method: "GET",
     headers: {
       "X-Goog-Api-Key": key,
-      "X-Goog-FieldMask": "id,displayName,formattedAddress,websiteUri,location,nationalPhoneNumber",
+      "X-Goog-FieldMask":
+        "id,displayName,formattedAddress,websiteUri,location,nationalPhoneNumber,addressComponents,utcOffsetMinutes",
     },
   });
 
@@ -121,8 +127,12 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     websiteUri?: string;
     location?: { latitude?: number; longitude?: number };
     nationalPhoneNumber?: string;
+    addressComponents?: { shortText?: string; types?: string[] }[];
+    utcOffsetMinutes?: number;
   };
 
+  const component = (type: string) =>
+    json.addressComponents?.find((c) => c.types?.includes(type))?.shortText?.trim() || null;
   const lat = json.location?.latitude ?? null;
   const lng = json.location?.longitude ?? null;
 
@@ -134,6 +144,9 @@ export async function placesPlaceDetailsNew(placeId: string): Promise<PlaceDetai
     phoneNumber: json.nationalPhoneNumber?.trim() ? json.nationalPhoneNumber.trim() : null,
     lat,
     lng,
+    countryCode: component("country"),
+    region: component("administrative_area_level_1"),
+    utcOffsetMinutes: typeof json.utcOffsetMinutes === "number" ? json.utcOffsetMinutes : null,
   };
 }
 

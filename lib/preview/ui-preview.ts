@@ -46,6 +46,8 @@ export function getPreviewRestaurant(): Restaurant {
     city: "Austin",
     state: "TX",
     timezone: "America/Chicago",
+    countryCode: "US",
+    locale: "en-US",
     website: "https://example.com",
     logo: null,
     subscriptionPlan: "PRO",

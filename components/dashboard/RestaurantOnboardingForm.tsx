@@ -56,6 +56,7 @@ export function RestaurantOnboardingForm() {
           cuisineType: cuisineType.trim() || undefined,
           website: website.trim() || undefined,
           auditId: auditId || undefined,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
