@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { requireApiUser } from "@/lib/auth/api-session";
 import { InvoiceInput, parseInvoiceData } from "@/lib/kob/engines/server-logic";
 
 export async function POST(request: Request) {
+  const session = await requireApiUser();
+  if (!session.ok) return NextResponse.json({ error: session.message }, { status: session.status });
   try {
     const data = InvoiceInput.parse(await request.json());
     const result = await parseInvoiceData(data);

@@ -9,6 +9,7 @@ const Body = z.object({
   role: z.string().max(40).optional(),
 });
 
+// DECISION: stays public — /onboard is the anonymous "Try KOB" funnel (hero, nav, /trial). Rate-limited in T-05.
 export async function POST(req: Request) {
   let json: unknown;
   try {
