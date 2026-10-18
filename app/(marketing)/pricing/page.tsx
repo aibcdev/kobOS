@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { FOUNDING_PRICE_LINE, TRIAL_DAYS_FREE, TRIAL_LABEL } from "@/lib/billing/offer";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import {
   LAUNCH_PRICING,
@@ -14,7 +15,7 @@ import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 export const metadata: Metadata = {
   title: "Pricing | KOB — The AI Restaurant Manager",
   description:
-    "Founding price per location — £79/mo in the UK, $99/mo elsewhere. 7-day trial, no card. KOB runs the work around your restaurant.",
+    `Founding price per location — ${FOUNDING_PRICE_LINE}. ${TRIAL_LABEL}, no card. KOB runs the work around your restaurant.`,
 };
 
 export default async function PricingPage() {
@@ -47,9 +48,9 @@ export default async function PricingPage() {
           >
             Try KOB free
           </Link>
-          <p className="mt-3 text-center text-xs text-[#2c2c2c]/50">7 days free · no card · cancel anytime</p>
+          <p className="mt-3 text-center text-xs text-[#2c2c2c]/50">{TRIAL_DAYS_FREE} · no card · cancel anytime</p>
         </div>
-        <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-[#2c2c2c]/55]">
+        <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-[#2c2c2c]/55">
           Built for independents who do not want an Owner.com-style POS swap. Owner public pricing as of
           2026-06-20: {OWNER_COMPARISON.ownerFlexNote}; {OWNER_COMPARISON.ownerFlatNote}.
         </p>

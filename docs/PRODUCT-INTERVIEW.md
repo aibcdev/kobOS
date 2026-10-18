@@ -23,7 +23,7 @@ KOB is an outcome service, not a complex dashboard. The restaurant should do alm
 
 **Project:** KOB (trykob.com) — restaurant visibility operating system for independents
 
-**Summary:** Free food-context audit (identity → discovery survey → scan → email unlock) that surfaces Google/listing/review/website leaks, then a paid approve-only daily list ($49 / $99) without replacing POS, kitchen tablet, or branded guest app. Compete with Owner.com on clarity, price, UK independents, and honesty — not on ordering suite depth.
+**Summary:** Free food-context audit (identity → discovery survey → scan → email unlock) that surfaces Google/listing/review/website leaks, then a paid approve-only daily list (founding £79/mo UK, $99/mo elsewhere, 7-day no-card trial; source of truth `lib/billing/regional-pricing.ts` + `lib/billing/offer.ts`) without replacing POS, kitchen tablet, or branded guest app. Compete with Owner.com on clarity, price, UK independents, and honesty — not on ordering suite depth.
 
 **Scope (near-term product):**
 - Audit funnel with required food discovery (budget, leaks, systems, decision, timeline)
@@ -57,7 +57,7 @@ KOB is an outcome service, not a complex dashboard. The restaurant should do alm
 
 **Constraints:**
 - UK-first independents; US Owner-conquest via `/demo` (“we don’t replace your POS”)
-- Price anchor $49 / $99 vs Owner $249 / $499 (dated 2026-06-20)
+- Price anchor: one founding price, £79/mo UK / $99/mo elsewhere, vs Owner $249 / $499 (dated 2026-06-20). No Flex/Flat tiers.
 - Discovery optional on API/MCP; required on marketing UI
 - Preserve `resultPayload.discovery` across pipeline overwrites
 

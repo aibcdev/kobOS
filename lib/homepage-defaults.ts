@@ -3,12 +3,14 @@
  * Published `homepage` in Sanity overrides these for production.
  */
 
+import { TRIAL_LABEL } from "@/lib/billing/offer";
+import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const defaultSiteMeta = {
   title: "KOB — The AI Restaurant Manager",
   description:
-    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. Founding £79/mo UK, $99/mo US. 7-day trial, no card.",
+    `KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. Founding ${FOUNDING_PRICES.GB.label}/mo UK, ${FOUNDING_PRICES.US.label}/mo US. ${TRIAL_LABEL}, no card.`,
 } as const;
 
 export const DEFAULT_HERO_IMAGE =
@@ -94,7 +96,7 @@ export const homepageDefaults = {
   stats: [
     { value: "Free", label: "online scan before you pay" },
     { value: "~1 min", label: "to see guest-facing gaps" },
-    { value: "$49", label: "Flex plan / mo" },
+    { value: FOUNDING_PRICES.US.label, label: `founding / mo (${FOUNDING_PRICES.GB.label} UK)` },
   ],
   leadBand: {
     headline: "See where covers leak before you spend another month guessing.",
