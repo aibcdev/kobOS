@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { enrichOnboardInput } from "@/lib/kob/onboard-enrich";
-import { clientIpFromHeaders, limit, tooManyRequests } from "@/lib/security/rate-limit";
+import { clientIpFromHeaders, dailyBudget, limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -14,6 +14,8 @@ const Body = z.object({
 export async function POST(req: Request) {
   const rl = await limit(`kob-onboard:${clientIpFromHeaders(req.headers) ?? "unknown"}`, { windowSec: 3600, max: 20 });
   if (!rl.ok) return tooManyRequests(rl);
+  const budget = await dailyBudget("kob-onboard", "KOB_ONBOARD_DAILY_MAX", 2000);
+  if (!budget.ok) return tooManyRequests(budget, "Setup is busy right now. Please try again later.");
   let json: unknown;
   try {
     json = await req.json();
