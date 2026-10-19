@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export type OwnerContext =
   | { kind: "signed-out" }
   | { kind: "no-restaurant" }
-  | { kind: "ok"; userId: string; role: Role; restaurant: { id: string; name: string; timezone: string } };
+  | { kind: "ok"; userId: string; role: Role; restaurant: { id: string; name: string; timezone: string; locale: string } };
 
 /** Signed-in user and the restaurant they picked (`?r=`), for product pages. Preview mode uses the preview user. */
 export async function loadOwnerContext(requested?: string | string[]): Promise<OwnerContext> {
@@ -25,7 +25,7 @@ export async function loadOwnerContext(requested?: string | string[]): Promise<O
 
   const memberships = await prisma.teamMember.findMany({
     where: { userId },
-    include: { restaurant: { select: { id: true, name: true, timezone: true } } },
+    include: { restaurant: { select: { id: true, name: true, timezone: true, locale: true } } },
     orderBy: { createdAt: "asc" },
   });
   const selected = typeof requested === "string" ? memberships.find((m) => m.restaurantId === requested) : memberships[0];

@@ -117,6 +117,26 @@ export function snapshotOf(row: RoiWeek): WeekSnapshot {
   };
 }
 
+/** The saved snapshot when there is one (what the email said); otherwise computed now and not saved. */
+export async function weekView(restaurantId: string, weekStart: string): Promise<{ snapshot: WeekSnapshot; saved: RoiWeek | null }> {
+  const saved = await prisma.roiWeek.findUnique({ where: { restaurantId_weekStart: { restaurantId, weekStart: new Date(`${weekStart}T00:00:00Z`) } } });
+  return saved ? { snapshot: snapshotOf(saved), saved } : { snapshot: await computeWeek(restaurantId, weekStart), saved: null };
+}
+
+/** Saved weeks plus the last completed one, newest first. */
+export async function recentWeeks(restaurantId: string, timeZone: string, now = new Date(), take = 12): Promise<string[]> {
+  const rows = await prisma.roiWeek.findMany({ where: { restaurantId }, orderBy: { weekStart: "desc" }, take, select: { weekStart: true } });
+  const weeks = new Set([lastCompletedWeek(now, timeZone), ...rows.map((r) => r.weekStart.toISOString().slice(0, 10))]);
+  return [...weeks].sort().reverse().slice(0, take);
+}
+
+/** Click-through check: do today's rows still add up to what the report said? */
+export function reconcile(stored: StoredMetric | undefined, rows: EvidenceRow[]): { total: number; count: number; reported: number | null; changed: boolean } {
+  const { value, count } = sumRows(rows);
+  const reported = stored?.state === "LIVE" ? stored.value : null;
+  return { total: value, count, reported, changed: reported !== null && (reported !== value || stored!.count !== count) };
+}
+
 export function sourceNames(m: StoredMetric): string[] {
   return m.sources.map(providerName);
 }
