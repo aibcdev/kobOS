@@ -2,7 +2,6 @@
 
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
 import { marketingCopy } from "@/lib/marketing/copy";
-import { industryStatsBand } from "@/lib/marketing/industry-stats";
 
 const FOOD_BG =
   "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80";
@@ -20,14 +19,10 @@ export function SaasIndustryStatsBand() {
             {marketingCopy.midCtaHeadline}
           </h2>
           <ul className="mt-10 space-y-6">
-            {industryStatsBand.stats.map((s) => (
-              <li key={s.label} className="border-l-2 border-[var(--color-bright-green)] pl-5">
-                <p className="font-heading text-3xl font-semibold text-white md:text-4xl">{s.value}</p>
-                <p className="mt-1 text-sm text-white/70">{s.label}</p>
-              </li>
-            ))}
+            <li className="border-l-2 border-white/30 pl-5">
+              <p className="text-sm text-white/80">Wrong hours, unanswered reviews, a website that does not match Google.</p>
+            </li>
           </ul>
-          <p className="mt-8 text-xs text-white/40">{industryStatsBand.footnote}</p>
         </div>
 
         <div className="rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">

@@ -4,7 +4,7 @@ import { DemoPage } from "@/components/marketing/demo/DemoPage";
 export const metadata: Metadata = {
   title: "Book a demo · KOB",
   description:
-    "Talk to KOB about a free restaurant audit and approve-only daily list. We do not replace your POS. For Owner.com shoppers and UK independents.",
+    "Book a call about reviews, your Google listing, website mistakes and supplier prices. KOB does not replace your till.",
 };
 
 export default function MarketingDemoPage() {

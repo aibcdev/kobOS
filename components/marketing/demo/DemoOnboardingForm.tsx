@@ -19,11 +19,10 @@ type PlaceDetails = {
 
 const GOALS = [
   { value: "", label: "Select one…" },
-  { value: "visibility", label: "More guests from Google & search" },
-  { value: "website", label: "Fix our website & mobile ordering" },
-  { value: "photos", label: "Better food photos online" },
-  { value: "reviews", label: "Reviews & reputation" },
-  { value: "all", label: "All of the above" },
+  { value: "reviews", label: "Reviews" },
+  { value: "listing", label: "Google listing" },
+  { value: "website", label: "Website mistakes" },
+  { value: "prices", label: "Supplier prices" },
 ] as const;
 
 const inputClass =

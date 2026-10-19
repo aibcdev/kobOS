@@ -8,7 +8,7 @@ import { marketingCopy } from "@/lib/marketing/copy";
 export const defaultSiteMeta = {
   title: "KOB — The AI Restaurant Manager",
   description:
-    "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. Nothing public until you say yes. Founding £79/mo UK, $99/mo US. 7-day trial, no card.",
+    "Every review answered. Every listing right. You just tap approve. KOB checks your Google listing, reviews and website, then checks the change went live. £79/mo UK, $99/mo elsewhere. 7 days free, no card.",
 } as const;
 
 export const DEFAULT_HERO_IMAGE =
@@ -51,20 +51,7 @@ export const suiteFourthPillar = {
   copy: "Fewer dead ends to third-party apps—and clearer paths to book, order, and come back. Margin stays yours when the experience is yours.",
 } as const;
 
-export const homepageQuotesExtra = [
-  {
-    quote:
-      "We stopped debating what was wrong. The list was short, we fixed hours and reviews first.",
-    name: "Independent owner",
-    role: "Neighbourhood restaurant, UK",
-  },
-  {
-    quote:
-      "Search and the listing finally match the room. We did not need a new app to start.",
-    name: "Operator",
-    role: "Café, UK",
-  },
-] as const;
+export const homepageQuotesExtra: { quote: string; name: string; role: string }[] = [];
 
 export const homepageDefaults = {
   hero: {
@@ -241,9 +228,9 @@ export const homepageDefaults = {
     afterAlt: "After website design",
   },
   testimonial: {
-    quote: "We finally saw what was costing covers. Fixed hours and reviews first—not another strategy deck.",
-    name: "Independent owner",
-    role: "Single-site restaurant, UK",
+    quote: "",
+    name: "",
+    role: "",
   },
   caseStudies: [
     {

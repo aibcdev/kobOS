@@ -73,9 +73,9 @@ export default function DataManagementPage() {
           </ul>
         </Section>
 
-        <Section title="5. Approvals and truth log">
+        <Section title="5. Approvals">
           <p>
-            Drafts stay in Holding until you approve or leave them. The truth log records jobs you
+            Drafts stay private until you approve them or leave them. We record the jobs you
             approved. We do not invent savings figures or claim work went live without your action.
           </p>
         </Section>

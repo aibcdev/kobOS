@@ -27,7 +27,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceMonthly: 99,
     priceNote: "USD · per location / month · founding (£79 in the UK)",
     description:
-      "KOB runs the work around your restaurant — Google, reviews, hours, costs, and prep. You approve before anything public goes live.",
+      "KOB checks your Google listing, reviews and website, drafts the fixes, and waits for your yes.",
     stripeTier: "pro",
     highlight: true,
   },
@@ -43,14 +43,14 @@ export type ComparisonRow = {
 /** Structured KOB vs Owner.com — honest labels only */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
-  eyebrow: "UK independents first.",
-  headline: "Lower price. No POS swap.",
+  eyebrow: "Keep your website and your till.",
+  headline: "Keep your website and your till.",
   subline:
-    "Owner.com sells a full stack at premium rates. KOB is the AI restaurant manager: Talk, approve, verify — not a till replacement.",
+    "KOB is the AI restaurant manager around the tools you already have. Owner.com sells a full stack. You do not have to swap your till to get a morning list.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   footnote:
-    "*Owner.com public pricing as of 2026-06-20 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only. KOB Phone answering is Coming next.",
+    "*Owner.com public pricing as of 19 Oct 2026 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only. Guest phone answering is on the roadmap, not in the founding plan.",
   rows: [
     {
       label: "Monthly",
@@ -65,8 +65,8 @@ export const OWNER_COMPARISON = {
       kobWins: true,
     },
     {
-      label: "24/7 phone answering",
-      kob: "Coming next",
+      label: "Guest phone answering",
+      kob: "On the roadmap",
       owner: "Owner product",
       kobWins: false,
     },
@@ -98,39 +98,72 @@ export const OWNER_COMPARISON = {
 } as const;
 
 export const pricingIncludedFeatures = (priceLabel: string) => [
-  { title: "Morning brief", detail: "What needs you today — hours, reviews, costs, prep." },
-  { title: "You approve first", detail: "Nothing public until you say yes. Autopilot only where you allow." },
-  { title: "Google & website watch", detail: "Public hours and listing checks. Verified Done only after read-back." },
-  { title: "Cost Watch", detail: "Inbox invoices first; photo OCR as fallback." },
-  { title: "Prep notes", detail: "BETA predictive quantities when weather/bookings exist — not measured waste." },
-  { title: "KOB Phone", detail: "Coming next — join the beta waitlist. Not live answering today." },
-  { title: "7-day free trial", detail: "No card. Cancel before day 7 and you pay nothing." },
-  { title: "Founding price", detail: `${priceLabel} per location / month while you stay subscribed.` },
+  {
+    title: "Reviews, drafted in your voice",
+    detail:
+      "A reply for each new Google review. Bad, sensitive or legal-sounding reviews always wait for you. You copy the reply into Google until posting is live.",
+  },
+  {
+    title: "Google listing, kept right",
+    detail: "Hours and holiday closures checked against your website. One tap when they disagree.",
+  },
+  {
+    title: "Website, checked like a guest",
+    detail: "Wrong hours, broken booking buttons, placeholder text, dead menu links. In beta.",
+  },
+  {
+    title: "Supplier prices",
+    detail: "Flags a real price change when you forward invoices. In beta. KOB never invents a saving.",
+  },
+  {
+    title: "You approve first",
+    detail: "Nothing goes public without your yes. KOB only marks a job done after it can see the change.",
+  },
+  {
+    title: "7-day free trial",
+    detail: "No card. Cancel anytime. If you never add a card, the trial ends.",
+  },
+  {
+    title: "Founding price",
+    detail: `${priceLabel} per location / month while you stay subscribed. £79 in the UK, $99 elsewhere.`,
+  },
 ];
 
 export const pricingFaq = (priceLabel: string) => [
   {
-    q: "How much does KOB cost?",
-    a: `${priceLabel} per location / month at the founding rate while you stay subscribed. 7-day trial with no card.`,
+    q: "Will KOB post anything without me?",
+    a: "No. Everything starts on Ask me. Refunds, discounts and replies to bad reviews always wait for you.",
   },
   {
-    q: "What is included?",
-    a: "Talk with KOB, morning brief, drafts for reviews and hours, Cost Watch, Prep BETA, and house-rule memory. Phone answering is Coming next.",
+    q: "What if the AI writes something wrong?",
+    a: "Every draft is editable. KOB does not promise refunds, admit fault, or mention health or legal issues in a reply.",
   },
   {
-    q: "Do you replace my till or ordering?",
-    a: "No. KOB is the AI restaurant manager around the tools you already have — not an Owner.com-style POS clone.",
+    q: "How does KOB know it worked?",
+    a: "After you approve, KOB re-reads Google or your website. It marks the job done only when it can see the change.",
+  },
+  {
+    q: "Do I need to change my website, till or booking system?",
+    a: "No. KOB works with what you have.",
+  },
+  {
+    q: "What do I need to connect?",
+    a: "Nothing, to see the first findings. To fix Google, connect your Google Business Profile. Invoices are optional.",
+  },
+  {
+    q: "Which countries?",
+    a: "The UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa.",
+  },
+  {
+    q: "What does it cost after the trial?",
+    a: `${priceLabel} per location per month at the founding rate (£79 UK, $99 elsewhere). No contract. If you do not add a card, the trial ends.`,
+  },
+  {
+    q: "Who is behind KOB?",
+    a: "Email hello@trykob.com.",
   },
   {
     q: "How is KOB different from Owner.com?",
-    a: "Owner.com sells website, ordering, app, and marketing as a full stack. KOB runs the manager work — Google, reviews, hours, costs, prep — with approve-before-live. Phone answering is Coming next on KOB.",
-  },
-  {
-    q: "Do you require contracts?",
-    a: "No long-term contracts. Month-to-month. Cancel when you want.",
-  },
-  {
-    q: "How long does setup take?",
-    a: "Find your restaurant, see public findings in under two minutes, create an account, and land in Talk with prioritized work.",
+    a: "Owner.com sells website, ordering, app and marketing as a full stack. KOB keeps your website and your till, and checks the change went live after you approve.",
   },
 ];

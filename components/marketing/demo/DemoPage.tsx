@@ -1,76 +1,61 @@
-import { DemoOnboardingForm } from "@/components/marketing/demo/DemoOnboardingForm";
 import {
   SaasPageHero,
   SaasPrimaryCta,
   SaasSecondaryCta,
 } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
-import { marketingCopy } from "@/lib/marketing/copy";
+import { trialPromise } from "@/lib/billing/trial-days";
+
+import { DemoOnboardingForm } from "@/components/marketing/demo/DemoOnboardingForm";
 
 const DEMO_FEATURES = [
   {
-    title: "Free scan",
-    desc: "Website, Google listing, photos, and reviews — about a minute. No card.",
+    title: "Reviews",
+    desc: "Draft replies in your voice. Bad reviews always wait for you.",
   },
   {
-    title: "Daily approve list",
-    desc: "Hours, holidays, review replies, posts — nothing publishes without you.",
+    title: "Google listing",
+    desc: "Hours and holiday closures checked against your website.",
   },
   {
-    title: "We do not replace your POS",
-    desc: "No kitchen tablet, branded guest app, or marketplace. Owner.com does that stack; we don’t.",
+    title: "Website mistakes",
+    desc: "Wrong hours, broken booking buttons, placeholder text, dead links.",
   },
   {
-    title: "UK independents",
-    desc: "Built for single-site owners who want tables from Google and reviews, not a US-only suite.",
+    title: "Supplier prices",
+    desc: "Price changes on invoices you forward. In beta. No invented savings.",
   },
 ] as const;
 
 export function DemoPage() {
+  const trial = trialPromise();
   return (
-    <div className="min-h-screen bg-[#fbf8f5]">
+    <div className="bg-bone">
       <SaasPageHero
-        eyebrow={marketingCopy.trustLine}
+        eyebrow="Book a call"
         variant="inset"
-        title={marketingCopy.losingSalesOnline}
-        description={
-          `${marketingCopy.useAiToFix} Talk through your Google listing, reviews, and daily approve list. We do not replace your POS or launch a branded app. Self-serve scan stays on /audit — this call is for Owner.com-comparison shoppers and multi-site questions.`
-        }
+        title="See the morning list on your restaurant."
+        description="We walk through reviews, your Google listing, website mistakes and supplier prices. KOB does not replace your till. The self-serve scan is on the audit page if you would rather start alone."
       >
-        <SaasPrimaryCta href="#demo-form">Get started</SaasPrimaryCta>
+        <SaasPrimaryCta href="#demo-form">Book a call</SaasPrimaryCta>
         <SaasSecondaryCta href="/audit">Free scan</SaasSecondaryCta>
       </SaasPageHero>
 
-      <SaasSection className="bg-[#fbf8f5] pb-12 pt-0 md:pb-16 md:pt-0 lg:pb-20">
+      <SaasSection className="bg-bone pb-12 pt-0 md:pb-16 md:pt-0">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
-          <div className="flex flex-col gap-8 lg:sticky lg:top-24">
-            <div>
-              <p className="text-sm font-semibold text-[#2c2c2c]">On your demo journey, we cover</p>
-              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                {DEMO_FEATURES.map((f) => (
-                  <li
-                    key={f.title}
-                    className="rounded-2xl border border-[#2c2c2c]/10 bg-white/80 p-4 text-sm shadow-sm"
-                  >
-                    <span className="text-[#088924]" aria-hidden>
-                      ⚡
-                    </span>
-                    <p className="mt-2 font-semibold text-[#2c2c2c]">{f.title}</p>
-                    <p className="mt-1 text-[#2c2c2c]/70">{f.desc}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex flex-wrap gap-4 text-xs text-[#2c2c2c]/65">
-              <span className="rounded-lg border border-[#2c2c2c]/10 bg-white px-3 py-2">Free AI report · No card</span>
-              <span className="rounded-lg border border-[#2c2c2c]/10 bg-white px-3 py-2">
-                7-day trial available
-              </span>
-            </div>
+          <div>
+            <p className="text-sm font-medium text-espresso">On the call we cover</p>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {DEMO_FEATURES.map((item) => (
+                <li key={item.title} className="rounded-[1.75rem] border border-line bg-paper p-4 text-sm">
+                  <p className="font-medium text-espresso">{item.title}</p>
+                  <p className="mt-1 text-ink">{item.desc}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-sm text-muted">{trial}</p>
           </div>
-
-          <div id="demo-form" className="flex scroll-mt-28 justify-center lg:justify-end">
+          <div id="demo-form" className="scroll-mt-28">
             <DemoOnboardingForm />
           </div>
         </div>

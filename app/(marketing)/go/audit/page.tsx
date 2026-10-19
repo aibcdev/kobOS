@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: "https://trykob.com/go/audit",
   },
   alternates: {
-    canonical: "https://trykob.com/go/audit",
+    canonical: "https://trykob.com/audit",
   },
   robots: { index: true, follow: true },
 };

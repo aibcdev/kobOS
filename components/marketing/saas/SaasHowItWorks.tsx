@@ -1,9 +1,6 @@
 import { MARKETING_HERO } from "@/lib/marketing/assets";
-import { industryStatsBand } from "@/lib/marketing/industry-stats";
 import { marketingCopy } from "@/lib/marketing/copy";
 import { WEBSITE_GROWTH_TABS } from "@/lib/marketing/pillar-benefit-tabs";
-
-import { SaasIcon } from "./SaasIcon";
 
 const STEP_VISUALS = [
   {
@@ -30,12 +27,6 @@ const STEP_VISUALS = [
   },
 ] as const;
 
-const PROOF_ICONS = [
-  "solar:eye-linear",
-  "solar:check-circle-linear",
-  "solar:camera-linear",
-] as const;
-
 export function SaasHowItWorks() {
   const steps = WEBSITE_GROWTH_TABS.map((tab, i) => ({
     n: String(i + 1),
@@ -56,7 +47,7 @@ export function SaasHowItWorks() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:gap-8">
+        <div className="mt-10">
           <div className="relative grid gap-8 md:grid-cols-3 md:gap-5">
             {steps.map((step, index) => (
               <article key={step.n} className="relative flex flex-col pt-5">
@@ -131,31 +122,6 @@ export function SaasHowItWorks() {
               </article>
             ))}
           </div>
-
-          <aside className="rounded-[1.75rem] border border-[#2c2c2c]/6 bg-white px-6 py-8 shadow-sm sm:px-8">
-            <p className="font-mono-brand text-[11px] font-semibold tracking-[0.16em] text-[var(--color-forest-mid)] uppercase">
-              The proof
-            </p>
-            <h3 className="font-heading mt-3 text-[1.75rem] leading-tight tracking-tight text-[#1a1a1a] md:text-[2.1rem]">
-              {industryStatsBand.title}.
-            </h3>
-            <ul className="mt-6 space-y-5">
-              {industryStatsBand.stats.map((stat, i) => (
-                <li key={stat.label} className="flex gap-4">
-                  <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eef6ef] text-[var(--color-forest)]">
-                    <SaasIcon icon={PROOF_ICONS[i] ?? PROOF_ICONS[0]} />
-                  </span>
-                  <div>
-                    <p className="font-heading text-4xl tracking-tight text-[var(--color-forest)] md:text-5xl">
-                      {stat.value}
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-[#2c2c2c]/70">{stat.label}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 text-xs text-[#2c2c2c]/40">{industryStatsBand.footnote}</p>
-          </aside>
         </div>
       </div>
     </section>

@@ -13,6 +13,7 @@ import { marketingCopy } from "@/lib/marketing/copy";
 import { storeHeardFrom, type HeardFromPayload } from "@/lib/marketing/heard-from";
 
 import { SaasIcon } from "./SaasIcon";
+import { trialPromise } from "@/lib/billing/trial-days";
 
 const inputClass =
   "mt-1.5 w-full rounded-xl border border-[#2c2c2c]/12 bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none placeholder:text-[#2c2c2c]/35 focus:border-[var(--color-forest)] focus:ring-2 focus:ring-[var(--color-forest)]/15";
@@ -398,7 +399,7 @@ export function SaasSignupTrialForm() {
 
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-[#2c2c2c]/50">
             <SaasIcon icon="solar:lock-keyhole-linear" className="text-sm" />
-            No card to create your account · Card required when you start the 7-day trial
+            {trialPromise()}
           </p>
         </form>
       )}
