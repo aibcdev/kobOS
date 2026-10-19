@@ -509,6 +509,7 @@ model Restaurant {
   osCapabilities        OsCapability[]
   osFacts               OsFact[]
   featureFlagOverrides  FeatureFlagOverride[]
+  roiWeeks              RoiWeek[]
 
   @@index([organizationId])
   @@schema("public")
@@ -630,6 +631,29 @@ model ImportJob {
 
   @@unique([restaurantId, fileSha256])
   @@index([restaurantId, createdAt])
+  @@schema("public")
+}
+
+/// Spec 2 Phase 9: one row per restaurant per local week (Monday start). Totals are snapshotted here so the email,
+/// page and print view agree; every total is a sum of rows that each carry a SourceRef (lib/roi/metrics.ts).
+model RoiWeek {
+  id                     String     @id @default(cuid())
+  restaurantId           String
+  /// Local Monday of the week, in `timezone`.
+  weekStart              DateTime   @db.Date
+  timezone               String
+  /// ISO 4217 for money metrics (minor units).
+  currency               String
+  /// MetricKey → { state, value, unit, count, sources, connect }
+  metricsJson            Json       @default("{}")
+  standardMinutesVersion String
+  computedAt             DateTime
+  /// When the weekly email went out (T-92).
+  sentAt                 DateTime?
+  createdAt              DateTime   @default(now())
+  restaurant             Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, weekStart])
   @@schema("public")
 }
 

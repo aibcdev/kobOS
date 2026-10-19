@@ -180,6 +180,7 @@ export function capabilityHint(c: Capability, displayName: (provider: string) =>
 }
 
 const NAMES: Record<string, string> = {
+  KOB: "KOB",
   GBP: "Google Business Profile",
   DELIVERY_CSV: "a delivery-app statement",
   INVOICE_EMAIL: "invoice forwarding",
@@ -237,15 +238,11 @@ export async function importSources(restaurantId: string): Promise<DataSource[]>
 const SUPPLYING = new Set(["CONNECTED", "DEGRADED"]);
 
 /**
- * Loads a restaurant's sources and evaluates its features. A connector counts only when its manifest exists, its
- * rollout flag is on and the integration is supplying data; completed imports count for what they contain; KOB
- * platform keys count when their env is set.
- * Exported for the agent context pack (wired in when the Spec 1 agent-runtime ticket lands).
+ * What feeds a restaurant now. A connector counts only when its manifest exists, its rollout flag is on and the
+ * integration is supplying data; completed imports count for what they contain; KOB platform keys count when their
+ * env is set.
  */
-export async function capabilitiesFor(
-  restaurantId: string,
-  opts: { entitlements?: Entitlements; extraSources?: DataSource[] } = {},
-): Promise<Capability[]> {
+export async function dataSourcesFor(restaurantId: string): Promise<{ region: Region; sources: DataSource[] }> {
   const [restaurant, integrations, imports] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { countryCode: true } }),
     prisma.integration.findMany({ where: { restaurantId } }),
@@ -263,10 +260,18 @@ export async function capabilitiesFor(
     if (m.auth.kind !== "PLATFORM_KEY") continue;
     if ((m.auth.platformEnv ?? []).every((k) => process.env[k])) sources.push({ provider: m.provider, contracts: m.dataContracts });
   }
-  sources.push(...(opts.extraSources ?? []));
+  return { region: regionFor(restaurant?.countryCode), sources };
+}
+
+/** Evaluates a restaurant's features. Exported for the agent context pack (wired in with the Spec 1 agent runtime). */
+export async function capabilitiesFor(
+  restaurantId: string,
+  opts: { entitlements?: Entitlements; extraSources?: DataSource[] } = {},
+): Promise<Capability[]> {
+  const { region, sources } = await dataSourcesFor(restaurantId);
   return evaluateCapabilities({
-    region: regionFor(restaurant?.countryCode),
-    sources,
+    region,
+    sources: [...sources, ...(opts.extraSources ?? [])],
     entitlements: opts.entitlements ?? coreEntitlements(),
   });
 }
