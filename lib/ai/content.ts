@@ -1,7 +1,8 @@
 import { ContentType } from "@prisma/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { geminiConfigError, getGeminiModelName, isGeminiConfigured } from "@/lib/ai/gemini-config";
+import { geminiConfigError, getGeminiImageModelName, getGeminiModelName, isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { generateImage } from "@/lib/ai/generate-image";
+import { recordImageUsage, recordLlmUsage } from "@/lib/billing/usage";
 import { prisma } from "@/lib/db/prisma";
 
 const typeLabels: Record<ContentType, string> = {
@@ -28,7 +29,7 @@ const IMAGE_TYPES: ContentType[] = [
   ContentType.EVENT_PAGE,
 ];
 
-async function generateTextWithGemini(prompt: string): Promise<string | null> {
+async function generateTextWithGemini(prompt: string, usage: { restaurantId: string; source: string }): Promise<string | null> {
   if (!isGeminiConfigured()) return null;
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!.trim());
@@ -37,6 +38,8 @@ async function generateTextWithGemini(prompt: string): Promise<string | null> {
       generationConfig: { temperature: 0.7 },
     });
     const res = await model.generateContent(prompt);
+    const meta = res.response.usageMetadata;
+    await recordLlmUsage(usage.restaurantId, getGeminiModelName(), { inputTokens: meta?.promptTokenCount, outputTokens: meta?.candidatesTokenCount }, usage.source);
     const text = res.response.text()?.trim();
     return text || null;
   } catch {
@@ -71,7 +74,7 @@ export async function generateAndStoreContent(args: {
     .filter(Boolean)
     .join("\n");
 
-  const output = await generateTextWithGemini(prompt);
+  const output = await generateTextWithGemini(prompt, { restaurantId: args.restaurantId, source: `content:${args.type}` });
 
   if (!output) {
     const row = await prisma.generatedContent.create({
@@ -91,7 +94,10 @@ export async function generateAndStoreContent(args: {
   if (shouldGenerateImage) {
     const imagePrompt = `${restaurant.name} restaurant — ${args.extraPrompt?.trim() || typeLabels[args.type]}`;
     const imgResult = await generateImage(imagePrompt);
-    if (imgResult.ok) imageUrl = imgResult.url;
+    if (imgResult.ok) {
+      imageUrl = imgResult.url;
+      await recordImageUsage(args.restaurantId, getGeminiImageModelName(), `content:${args.type}`);
+    }
   }
 
   const row = await prisma.generatedContent.create({

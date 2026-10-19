@@ -1,7 +1,9 @@
 import { Prisma, type RoiWeek } from "@prisma/client";
 import { restaurantContext, utcToZoned, zonedToUtc } from "@/lib/connectors/shared";
+import { reportWeeklyUsage } from "@/lib/billing/meters";
 import { prisma } from "@/lib/db/prisma";
 import { dataSourcesFor, providerName, recommendedFor } from "@/lib/hub/capabilities";
+import { costBetween } from "@/lib/roi/cost";
 import { METRIC_KEYS, METRICS, sumRows, type EvidenceRow, type MetricKey, type RoiUnit } from "@/lib/roi/metrics";
 import { STANDARD_MINUTES_VERSION } from "@/lib/roi/standard-minutes";
 
@@ -93,18 +95,23 @@ export async function computeWeek(restaurantId: string, weekStart: string): Prom
 
 export async function saveWeek(restaurantId: string, weekStart: string, now = new Date()): Promise<RoiWeek> {
   const snap = await computeWeek(restaurantId, weekStart);
+  const { start, end } = weekBounds(weekStart, snap.timezone);
+  const cost = await costBetween(restaurantId, start, end);
   const data = {
     timezone: snap.timezone,
     currency: snap.currency,
     metricsJson: snap.metrics as unknown as Prisma.InputJsonValue,
     standardMinutesVersion: snap.standardMinutesVersion,
     computedAt: now,
+    costMicros: cost.costMicros,
   };
-  return prisma.roiWeek.upsert({
+  const row = await prisma.roiWeek.upsert({
     where: { restaurantId_weekStart: { restaurantId, weekStart: new Date(`${weekStart}T00:00:00Z`) } },
     create: { restaurantId, weekStart: new Date(`${weekStart}T00:00:00Z`), ...data },
     update: data,
   });
+  await reportWeeklyUsage({ restaurantId, weekStart, costMicros: cost.costMicros });
+  return row;
 }
 
 export function snapshotOf(row: RoiWeek): WeekSnapshot {

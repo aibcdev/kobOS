@@ -510,6 +510,7 @@ model Restaurant {
   osFacts               OsFact[]
   featureFlagOverrides  FeatureFlagOverride[]
   roiWeeks              RoiWeek[]
+  usageEvents           UsageEvent[]
 
   @@index([organizationId])
   @@schema("public")
@@ -650,10 +651,35 @@ model RoiWeek {
   computedAt             DateTime
   /// When the weekly email went out (T-92).
   sentAt                 DateTime?
+  /// What KOB spent serving this restaurant this week, USD micros, from UsageEvent (T-93). Internal; never shown to the owner.
+  costMicros             BigInt?
   createdAt              DateTime   @default(now())
   restaurant             Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@unique([restaurantId, weekStart])
+  @@schema("public")
+}
+
+/// One metered call KOB paid for on a restaurant's behalf (LLM tokens, image, SMS, voice minutes). Spec 2 Phase 9.
+model UsageEvent {
+  id           String     @id @default(cuid())
+  restaurantId String
+  /// "LLM" | "IMAGE" | "SMS" | "VOICE"
+  kind         String
+  /// "GEMINI" | "TWILIO" …
+  provider     String
+  model        String?
+  inputUnits   Int        @default(0)
+  outputUnits  Int        @default(0)
+  /// USD micros (1 USD = 1,000,000), priced at record time with `priceVersion`.
+  costMicros   BigInt
+  priceVersion String
+  /// What triggered it: "talk", "chat", "content:INSTAGRAM_CAPTION" …
+  source       String
+  occurredAt   DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, occurredAt])
   @@schema("public")
 }
 
