@@ -55,7 +55,8 @@ describeDb("POS read connectors on Postgres (T-88)", () => {
       { method: "POST", match: /\/v2\/customers\/search$/, reply: { json: fixture("square", "customers-search.json") } },
       { match: /\/v2\/orders\/tKqcPnGmDXAMPLE$/, reply: { json: fixture("square", "order-retrieve.json") } },
     ]);
-    const ctx = ctxFor(fetch);
+    const integration = await prisma.integration.create({ data: { restaurantId, provider: "SQUARE" } });
+    const ctx = ctxFor(fetch, { integrationId: integration.id });
 
     expect(await squareConnector.sync(ctx, "catalog", null)).toEqual({ rows: 3, nextCursor: null, done: true });
     const links = await prisma.menuItemLink.findMany({ where: { restaurantId }, orderBy: { externalId: "asc" } });
@@ -100,7 +101,9 @@ describeDb("POS read connectors on Postgres (T-88)", () => {
       ["Bob", "PROVIDER_CUSTOMER", 0],
     ]);
 
-    await squareConnector.handleWebhook!(ctx, {
+    // One active location: picked automatically, and webhooks are filtered to it.
+    expect((await prisma.integration.findUniqueOrThrow({ where: { id: integration.id } })).metadata).toMatchObject({ locationIds: ["L8EXAMPLE"] });
+    await squareConnector.handleWebhook!({ ...ctx, locationIds: ["L8EXAMPLE"] }, {
       id: "evt",
       provider: "square",
       externalId: "evt",
@@ -135,6 +138,50 @@ describeDb("POS read connectors on Postgres (T-88)", () => {
     const cursor = await prisma.syncCursor.findUniqueOrThrow({ where: { integrationId_stream: { integrationId: integration.id, stream: "orders" } } });
     expect(cursor).toMatchObject({ backfillDone: true, failureCount: 0, cursor: JSON.stringify({ since: "2026-10-16T09:00:00.000Z" }) });
     expect(await prisma.order.count({ where: { restaurantId } })).toBe(3);
+  });
+
+  it("Square with two locations waits for the owner's pick, then syncs only the picked venue (review H-8)", async () => {
+    const { squareConnector } = await import("@/lib/connectors/square/connector");
+    const twoLocations = {
+      locations: [
+        { id: "L8EXAMPLE", name: "Shoreditch", status: "ACTIVE" },
+        { id: "LSOHO", name: "Soho", status: "ACTIVE" },
+      ],
+    };
+    const { fetch, calls } = fakeFetch([
+      { match: /\/v2\/locations$/, reply: { json: twoLocations } },
+      { method: "POST", match: /\/v2\/orders\/search$/, reply: { json: fixture("square", "orders-search-page2.json") } },
+      { match: /\/v2\/orders\/tKqcPnGmDXAMPLE$/, reply: { json: { order: { ...(fixture("square", "order-retrieve.json") as { order: object }).order, location_id: "LSOHO" } } } },
+    ]);
+    const integration = await prisma.integration.create({ data: { restaurantId, provider: "SQUARE" } });
+    const ctx = ctxFor(fetch, { integrationId: integration.id });
+
+    expect(await squareConnector.sync(ctx, "orders", null)).toEqual({ rows: 0, nextCursor: null, done: true });
+    expect((await prisma.integration.findUniqueOrThrow({ where: { id: integration.id } })).status).toBe("PENDING_SETUP");
+    expect(calls.some((c) => c.url.endsWith("/v2/orders/search"))).toBe(false);
+
+    const { saveLocationChoice } = await import("@/lib/hub/locations");
+    await saveLocationChoice(integration.id, ["L8EXAMPLE"]);
+    const row = await prisma.integration.findUniqueOrThrow({ where: { id: integration.id } });
+    expect(row.status).toBe("CONNECTED");
+    const { connectorCtx } = await import("@/lib/hub/ctx");
+    const picked = { ...ctx, locationIds: connectorCtx(row).locationIds };
+    expect(picked.locationIds).toEqual(["L8EXAMPLE"]);
+
+    await squareConnector.sync(picked, "orders", null);
+    expect(calls.find((c) => c.url.endsWith("/v2/orders/search"))!.body).toMatchObject({ location_ids: ["L8EXAMPLE"] });
+
+    // A Soho order arriving by webhook isn't this restaurant's.
+    await squareConnector.handleWebhook!(picked, {
+      id: "evt2",
+      provider: "square",
+      externalId: "evt2",
+      type: "order.updated",
+      payloadJson: JSON.parse(JSON.stringify((await import("@/lib/hub/webhooks/fixtures/square-order-updated.json")).default)),
+      restaurantId,
+      integrationId: integration.id,
+    });
+    expect(await prisma.order.count({ where: { restaurantId, sourceExternalId: "tKqcPnGmDXAMPLE" } })).toBe(0);
   });
 
   it("Square 401 surfaces as AUTH so the runner flags REAUTH", async () => {

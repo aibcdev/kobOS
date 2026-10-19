@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CapabilityView, CardState, ConnectorCard } from "@/lib/hub/connections";
 
 const CAP_CHIP: Record<CapabilityView["state"], { text: string; className: string }> = {
@@ -15,6 +15,7 @@ const CARD_CHIP: Record<CardState, { text: string; className: string }> = {
   DEGRADED: { text: "Having trouble", className: "bg-amber-100 text-amber-900" },
   REAUTH: { text: "Reconnect needed", className: "bg-red-100 text-red-900" },
   PENDING_APPROVAL: { text: "Waiting on approval", className: "bg-line text-muted" },
+  PENDING_SETUP: { text: "Needs you: pick locations", className: "bg-amber-100 text-amber-900" },
   AVAILABLE: { text: "Not connected", className: "bg-line text-muted" },
   COMING_SOON: { text: "Coming soon", className: "bg-line text-muted" },
 };
@@ -89,6 +90,78 @@ function KeyForm({ card, restaurantId, onDone }: { card: ConnectorCard; restaura
   );
 }
 
+type LocationOption = { externalId: string; name: string; address?: string };
+
+function LocationPicker({ card, restaurantId, onDone }: { card: ConnectorCard; restaurantId: string; onDone: () => void }) {
+  const [locations, setLocations] = useState<LocationOption[] | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const res = await fetch(`/api/hub/connections/${card.provider}/locations?restaurantId=${encodeURIComponent(restaurantId)}`);
+      const body = (await res.json().catch(() => ({}))) as { locations?: LocationOption[]; selected?: string[]; error?: string };
+      if (!live) return;
+      if (!res.ok || !body.locations) return setError(body.error ?? "Couldn't load your locations");
+      setLocations(body.locations);
+      setPicked(new Set(body.selected ?? []));
+    })();
+    return () => {
+      live = false;
+    };
+  }, [card.provider, restaurantId]);
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/hub/connections/${card.provider}/locations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId, locationIds: [...picked] }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    setBusy(false);
+    if (!res.ok) return setError(body.error ?? "Couldn't save that");
+    onDone();
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-line p-4 text-sm">
+      <p>Your {card.displayName} account has more than one location. Which ones are this restaurant? KOB only counts sales from the ones you tick.</p>
+      {locations === null && !error ? <p className="mt-2 text-muted">Loading…</p> : null}
+      {locations?.map((l) => (
+        <label key={l.externalId} className="mt-2 flex items-start gap-2">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={picked.has(l.externalId)}
+            onChange={(e) =>
+              setPicked((p) => {
+                const n = new Set(p);
+                if (e.target.checked) n.add(l.externalId);
+                else n.delete(l.externalId);
+                return n;
+              })
+            }
+          />
+          <span>
+            {l.name}
+            {l.address ? <span className="text-muted"> · {l.address}</span> : null}
+          </span>
+        </label>
+      ))}
+      {error ? <p className="mt-2 text-red-700">{error}</p> : null}
+      {locations?.length ? (
+        <button type="button" disabled={busy || !picked.size} onClick={() => void save()} className="mt-3 rounded-full bg-espresso px-4 py-2 text-paper disabled:opacity-50">
+          {busy ? "Saving…" : "Use these locations"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function ConnectorItem({
   card,
   restaurantId,
@@ -104,7 +177,8 @@ function ConnectorItem({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chip = CARD_CHIP[card.state];
-  const connected = card.state === "CONNECTED" || card.state === "DEGRADED" || card.state === "REAUTH" || card.state === "PENDING_APPROVAL";
+  const connected =
+    card.state === "CONNECTED" || card.state === "DEGRADED" || card.state === "REAUTH" || card.state === "PENDING_APPROVAL" || card.state === "PENDING_SETUP";
   const fmt = new Intl.DateTimeFormat("en-GB", { timeZone, dateStyle: "medium", timeStyle: "short" });
   const failing = card.streams.filter((s) => s.failing);
   const backfilling = card.state === "CONNECTED" && card.streams.some((s) => !s.backfillDone);
@@ -155,6 +229,13 @@ function ConnectorItem({
         </div>
       ) : null}
       {open ? <KeyForm card={card} restaurantId={restaurantId} onDone={() => (setOpen(false), router.refresh())} /> : null}
+      {card.state === "PENDING_SETUP" ? (
+        canManage ? (
+          <LocationPicker card={card} restaurantId={restaurantId} onDone={() => router.refresh()} />
+        ) : (
+          <p className="mt-2 text-sm text-muted">An owner or admin needs to pick which locations belong to this restaurant.</p>
+        )
+      ) : null}
       {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
     </li>
   );

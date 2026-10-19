@@ -9,6 +9,8 @@ export type ConnectorCtx = {
   /** External account (merchant_id, tenantId, realmId…) when known. */
   externalAccountId?: string | null;
   region?: string | null;
+  /** Provider locations the owner picked for this restaurant (null: not chosen yet). */
+  locationIds?: string[] | null;
   getAccessToken(): Promise<string>;
   /** API_KEY / BASIC_KEY_SECRET connectors: decrypted key fields. */
   getCredentials?(): Promise<Record<string, string>>;

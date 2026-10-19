@@ -12,7 +12,7 @@ import { connectorEnabled } from "@/lib/hub/sync/scheduler";
 
 /** Spec 2 §3.12: the owner's Connections page and the ops view read this; the UI never inspects raw rows. */
 
-export type CardState = "CONNECTED" | "DEGRADED" | "REAUTH" | "PENDING_APPROVAL" | "AVAILABLE" | "COMING_SOON";
+export type CardState = "CONNECTED" | "DEGRADED" | "REAUTH" | "PENDING_APPROVAL" | "PENDING_SETUP" | "AVAILABLE" | "COMING_SOON";
 
 export type ConnectMethod =
   | { kind: "oauth"; href: string }
@@ -42,6 +42,7 @@ const INTEGRATION_STATE: Record<string, CardState> = {
   DEGRADED: "DEGRADED",
   REAUTH: "REAUTH",
   PENDING_APPROVAL: "PENDING_APPROVAL",
+  PENDING_SETUP: "PENDING_SETUP",
 };
 
 const KEY_KINDS = new Set(["API_KEY", "BASIC_KEY_SECRET", "JWT_BEARER"]);

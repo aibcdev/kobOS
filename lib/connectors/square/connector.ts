@@ -11,6 +11,7 @@ import {
   type SquareOrder,
 } from "@/lib/connectors/square/map";
 import type { Connector, ConnectorCtx, ConnectorEventRow, ExternalLocation, SyncPage } from "@/lib/hub/connector";
+import { requireLocationChoice, saveLocationChoice } from "@/lib/hub/locations";
 
 const SQUARE_VERSION = "2025-01-23";
 
@@ -49,9 +50,22 @@ async function listLocations(ctx: ConnectorCtx): Promise<ExternalLocation[]> {
 
 const backfillDays = (stream: string) => squareManifest.streams.find((s) => s.name === stream)?.backfillDays ?? 1;
 
+/** The owner's pick; a single-location merchant is picked automatically; several with no pick pauses the sync. */
+async function orderLocations(ctx: ConnectorCtx): Promise<string[] | "needs_choice"> {
+  if (ctx.locationIds?.length) return ctx.locationIds;
+  const all = await listLocations(ctx);
+  if (all.length > 1) return "needs_choice";
+  if (all.length === 1) await saveLocationChoice(ctx.integrationId, [all[0].externalId]);
+  return all.map((l) => l.externalId);
+}
+
 async function syncOrders(ctx: ConnectorCtx, raw: string | null): Promise<SyncPage> {
   const c = readCursor(raw, backfillDays("orders"), ctx.now?.() ?? new Date());
-  const locationIds = (await listLocations(ctx)).map((l) => l.externalId).slice(0, 10);
+  const locationIds = await orderLocations(ctx);
+  if (locationIds === "needs_choice") {
+    await requireLocationChoice(ctx.integrationId);
+    return { rows: 0, nextCursor: raw, done: true };
+  }
   if (!locationIds.length) return { rows: 0, nextCursor: JSON.stringify({ since: c.since }), done: true };
   const res = await call<{ orders?: SquareOrder[]; cursor?: string }>(ctx, "/v2/orders/search", {
     location_ids: locationIds,
@@ -104,8 +118,11 @@ async function handleWebhook(ctx: ConnectorCtx, event: ConnectorEventRow): Promi
   if (event.type === "order.created" || event.type === "order.updated") {
     const id = body.data?.object?.order_updated?.order_id ?? body.data?.object?.order_created?.order_id ?? body.data?.id;
     if (!id) return;
+    // Other venues on the same merchant account aren't this restaurant's sales.
+    if (!ctx.locationIds?.length) return;
     const res = await call<{ order?: SquareOrder }>(ctx, `/v2/orders/${encodeURIComponent(id)}`);
-    const mapped = res.order ? mapSquareOrder(res.order) : null;
+    if (!res.order?.location_id || !ctx.locationIds.includes(res.order.location_id)) return;
+    const mapped = mapSquareOrder(res.order);
     if (mapped) await ingestOrders(ctx.restaurantId, [mapped]);
     return;
   }
