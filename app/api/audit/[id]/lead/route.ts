@@ -29,7 +29,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   const ip = clientIpFromHeaders(req.headers) ?? "unknown";
-  const rl = checkSimpleRateLimit(`audit-lead:${ip}`, {
+  const rl = await checkSimpleRateLimit(`audit-lead:${ip}`, {
     windowMs: 60 * 60 * 1000,
     max: 20,
   });

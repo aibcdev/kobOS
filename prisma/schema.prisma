@@ -1035,6 +1035,17 @@ model StripeWebhookEvent {
   @@schema("public")
 }
 
+/// Fixed-window counters for `lib/security/rate-limit.ts`; rows older than 2 days are swept.
+model RateLimitHit {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
+  @@index([windowStart])
+  @@schema("public")
+}
+
 /**
  * Pre-scanned KOB scores for restaurants we have not audited, used to show a
  * prospect three real, named local peers who score at or above them.
