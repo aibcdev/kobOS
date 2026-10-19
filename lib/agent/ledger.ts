@@ -62,6 +62,8 @@ export type ProposalInput = {
   agentRunId?: string | null;
   confidence?: number;
   evidence?: { type: string; source: string; sourceId?: string; note?: string }[];
+  /** What the action is about (review rating/severity, safety topic); read by the policy engine. */
+  subject?: { rating?: number; severity?: number; safety?: boolean };
   rollbackPayload?: Record<string, unknown> | null;
   /** Dedup window; proposing the same change in the same window returns the existing row. Defaults to the UTC day. */
   window?: string;
@@ -117,17 +119,23 @@ export async function createProposal(input: ProposalInput): Promise<OsAction> {
           expiresAt: new Date(now.getTime() + spec.expiresHours * 3_600_000),
         },
       });
-      if (input.evidence?.length) {
-        await tx.osDecisionEvidence.createMany({
-          data: input.evidence.map((e) => ({
-            actionId: action.id,
-            evidenceType: e.type,
-            source: e.source,
-            sourceId: e.sourceId,
-            valueJson: e.note ? { note: e.note } : {},
-          })),
+      const evidence = (input.evidence ?? []).map((e) => ({
+        actionId: action.id,
+        evidenceType: e.type,
+        source: e.source,
+        sourceId: e.sourceId,
+        valueJson: (e.note ? { note: e.note } : {}) as Prisma.InputJsonValue,
+      }));
+      if (input.subject) {
+        evidence.push({
+          actionId: action.id,
+          evidenceType: "policy.subject",
+          source: "proposal",
+          sourceId: undefined,
+          valueJson: input.subject as Prisma.InputJsonValue,
         });
       }
+      if (evidence.length) await tx.osDecisionEvidence.createMany({ data: evidence });
       await audit(tx, action, "action.proposed", { actionType, risk: action.riskScore, taskKey: action.taskKey });
       return action;
     });
