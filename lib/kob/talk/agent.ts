@@ -1,5 +1,6 @@
 import { generateText, stepCountIs, type ModelMessage } from "ai";
-import { getChatLanguageModel } from "@/lib/ai/gemini-config";
+import { getChatLanguageModel, getGeminiModelName } from "@/lib/ai/gemini-config";
+import { recordLlmUsage } from "@/lib/billing/usage";
 import { buildTalkTools } from "./tools";
 
 export async function runLiveTalk(
@@ -22,6 +23,7 @@ Keep replies concise and human. Show the useful answer or draft, not tool names 
     maxOutputTokens: 1800,
     abortSignal: AbortSignal.timeout(45_000),
   });
+  await recordLlmUsage(restaurant.id, getGeminiModelName(), result.totalUsage, "talk");
   return {
     text:
       result.text.trim() ||
