@@ -911,6 +911,11 @@ export const integrationSyncDaily = inngest.createFunction(
       await step.run(`sync-${row.id}`, async () => {
         const integration = await prisma.integration.findUnique({ where: { id: row.id } });
         if (!integration) return 0;
+        if (integration.provider === "SQUARE" || integration.provider === "TOAST") {
+          // Once the hub connector is live for this restaurant it owns Order + SalesSnapshot (inngest/hub.ts).
+          const { flag } = await import("@/lib/flags");
+          if (await flag(integration.provider === "SQUARE" ? "SQUARE_LIVE" : "TOAST_LIVE", integration.restaurantId)) return 0;
+        }
         if (integration.provider === "SQUARE") {
           const { syncSquareSales } = await import("@/lib/integrations/providers/square");
           return syncSquareSales(integration.restaurantId, integration);

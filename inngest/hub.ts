@@ -1,5 +1,6 @@
 import { cron } from "inngest";
 import { inngest } from "@/inngest/client";
+import { registerAllConnectors } from "@/lib/connectors";
 import { prisma } from "@/lib/db/prisma";
 import { refreshHealth } from "@/lib/hub/health";
 import { getManifest } from "@/lib/hub/manifest";
@@ -8,6 +9,8 @@ import { dueStreams, ensureCursors } from "@/lib/hub/sync/scheduler";
 import { dueForRefresh, refreshAccessToken } from "@/lib/hub/tokens";
 import { processConnectorEvent, staleEventIds } from "@/lib/hub/webhooks/process";
 import { WEBHOOK_EVENT } from "@/lib/hub/webhooks/router";
+
+registerAllConnectors();
 
 export const STREAM_RUN_EVENT = "hub/stream.run";
 export const INTEGRATION_CONNECTED_EVENT = "hub/integration.connected";
