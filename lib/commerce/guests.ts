@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { encryptSecret } from "@/lib/crypto/tokens";
-import { piiHash } from "@/lib/hub/webhooks/minimise";
+import { isPiiHash, legacyHashIfUpgraded, piiHash } from "@/lib/hub/webhooks/minimise";
 
 type Tx = Prisma.TransactionClient;
 
@@ -9,7 +9,7 @@ export type IdentityKind = "EMAIL" | "PHONE" | "PROVIDER_CUSTOMER";
 
 export type GuestIdentityInput = {
   kind: IdentityKind;
-  /** Raw email / phone / provider customer id, or an already-hashed `sha256:` value from a minimised payload. */
+  /** Raw email / phone / provider customer id, or an already-hashed `hmac:` / `sha256:` value from a minimised payload. */
   value: string;
   provider?: string;
 };
@@ -22,17 +22,24 @@ function normalisePhone(value: string): string {
   return digits.startsWith("+") ? `+${digits.slice(1).replace(/\+/g, "")}` : digits;
 }
 
+const piiValue = (input: GuestIdentityInput) => (input.kind === "PHONE" ? normalisePhone(input.value) : input.value);
+
 export function identityHash(input: GuestIdentityInput): string {
   if (input.kind === "PROVIDER_CUSTOMER") {
     if (!input.provider) throw new Error("PROVIDER_CUSTOMER identities need a provider");
     return `${input.provider}:${input.value}`;
   }
-  if (input.value.startsWith("sha256:")) return input.value;
-  return piiHash(input.kind === "PHONE" ? normalisePhone(input.value) : input.value);
+  if (isPiiHash(input.value)) return input.value;
+  return piiHash(piiValue(input));
+}
+
+/** The unkeyed hash this identity was stored under before PII_HASH_KEY, so old rows still match and get upgraded. */
+function legacyHash(input: GuestIdentityInput): string | null {
+  return input.kind === "PROVIDER_CUSTOMER" ? null : legacyHashIfUpgraded(piiValue(input));
 }
 
 function maybeEncrypt(input: GuestIdentityInput): string | null {
-  if (input.kind === "PROVIDER_CUSTOMER" || input.value.startsWith("sha256:") || !process.env.INTEGRATION_ENC_KEY) return null;
+  if (input.kind === "PROVIDER_CUSTOMER" || isPiiHash(input.value) || !process.env.INTEGRATION_ENC_KEY) return null;
   return encryptSecret(input.kind === "PHONE" ? normalisePhone(input.value) : input.value.trim());
 }
 
@@ -67,9 +74,13 @@ export async function resolveGuest(tx: Tx, restaurantId: string, input: GuestInp
   const identities = usable(input.identities);
   if (!identities.length) return null;
   const rows = identities.map((i) => ({ kind: i.kind, provider: i.provider ?? null, valueHash: identityHash(i), encryptedValue: maybeEncrypt(i) }));
+  const legacy = identities.flatMap((i) => {
+    const valueHash = legacyHash(i);
+    return valueHash ? [{ kind: i.kind, valueHash }] : [];
+  });
   const match = () =>
     tx.guestIdentity.findMany({
-      where: { restaurantId, OR: rows.map((r) => ({ kind: r.kind, valueHash: r.valueHash })) },
+      where: { restaurantId, OR: [...rows.map((r) => ({ kind: r.kind, valueHash: r.valueHash })), ...legacy] },
       select: { guestId: true },
     });
 
@@ -84,7 +95,10 @@ export async function resolveGuest(tx: Tx, restaurantId: string, input: GuestInp
 
   // A concurrent writer may have claimed one of these identities for a different guest between the read and the insert.
   guestIds = [...new Set((await match()).map((m) => m.guestId))];
-  return guestIds.length > 1 ? mergeGuests(tx, guestIds) : guestId;
+  const resolved = guestIds.length > 1 ? await mergeGuests(tx, guestIds) : guestId;
+  // The keyed row now exists on the same guest, so the unkeyed copy can go.
+  if (legacy.length) await tx.guestIdentity.deleteMany({ where: { restaurantId, OR: legacy } });
+  return resolved;
 }
 
 const SPEND_STATUSES = ["COMPLETED", "REFUNDED"];

@@ -36,14 +36,16 @@ export async function weeklyCandidates(): Promise<{ id: string; timezone: string
 
 export type DeliverResult = { status: "sent" | "already_sent" | "flag_off" | "no_recipients" | "empty_week" | "guard_failed"; weekStart: string; stray?: string[]; whatsapp?: "flag_off" | "no_channel" };
 
-export type Sender = (msg: { to: string[]; subject: string; html: string; text: string }) => Promise<void>;
+/** One recipient per message, so owners and admins never see each other's addresses. */
+export type Sender = (msg: { to: string; subject: string; html: string; text: string; idempotencyKey: string }) => Promise<void>;
 
 export const resendSender: Sender = async (msg) => {
   const key = process.env.RESEND_API_KEY?.trim();
   if (!key) throw new Error("RESEND_API_KEY missing");
   const from = process.env.ROI_FROM_EMAIL?.trim() || process.env.RESEND_FROM_EMAIL?.trim() || "KOB <hello@trykob.com>";
   const { Resend } = await import("resend");
-  const { error } = await new Resend(key).emails.send({ from, ...msg });
+  const { idempotencyKey, ...email } = msg;
+  const { error } = await new Resend(key).emails.send({ from, ...email }, { idempotencyKey });
   if (error) throw new Error(`Resend: ${error.message}`);
 };
 
@@ -83,8 +85,12 @@ export async function deliverWeek(restaurantId: string, weekStart?: string, opts
 
   const claim = await prisma.roiWeek.updateMany({ where: { id: row.id, sentAt: null }, data: { sentAt: now } });
   if (claim.count === 0) return { status: "already_sent", weekStart: week };
+  // If one recipient fails the claim is released and the retry sends to everyone again; the per-recipient
+  // idempotency key makes Resend drop the copies that already went out.
   try {
-    await (opts.send ?? resendSender)({ to, subject: email.subject, html: email.html, text: email.text });
+    for (const recipient of to) {
+      await (opts.send ?? resendSender)({ to: recipient, subject: email.subject, html: email.html, text: email.text, idempotencyKey: `roi-week/${row.id}/${recipient}` });
+    }
   } catch (err) {
     await prisma.roiWeek.updateMany({ where: { id: row.id, sentAt: now }, data: { sentAt: null } });
     throw err;

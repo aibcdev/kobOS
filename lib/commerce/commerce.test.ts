@@ -106,6 +106,21 @@ describeDb("unified commerce on Postgres (T-87)", () => {
     expect(decryptSecret(phone.encryptedValue!)).toBe("+447700900123");
   });
 
+  it("keys contact hashes with PII_HASH_KEY and upgrades unkeyed ones the next time the guest is seen", async () => {
+    await ingest.ingestOrders(restaurantId, [order("h1", { guest: { displayName: "Lee", identities: [{ kind: "PHONE", value: "07700 900789" }] } })]);
+    const before = await prisma.guestIdentity.findFirstOrThrow({ where: { restaurantId, kind: "PHONE" } });
+    expect(before.valueHash).toMatch(/^sha256:/);
+
+    vi.stubEnv("PII_HASH_KEY", "test-pii-key");
+    await ingest.ingestOrders(restaurantId, [order("h2", { guest: { identities: [{ kind: "PHONE", value: "07700900789" }, { kind: "EMAIL", value: "lee@example.com" }] } })]);
+    const guests = await prisma.guest.findMany({ where: { restaurantId, mergedIntoId: null }, include: { identities: true } });
+    expect(guests).toHaveLength(1);
+    expect(guests[0].id).toBe(before.guestId);
+    expect(guests[0].identities.map((i) => i.valueHash.split(":")[0]).sort()).toEqual(["hmac", "hmac"]);
+    const { piiHash } = await import("@/lib/hub/webhooks/minimise");
+    expect(guests[0].identities.find((i) => i.kind === "PHONE")?.valueHash).toBe(piiHash("07700900789"));
+  });
+
   it("merges guests that turn out to be the same person and recomputes their stats", async () => {
     await ingest.ingestOrders(restaurantId, [order("p1", { guest: { identities: [{ kind: "EMAIL", value: "sam@example.com" }] } })]);
     await ingest.ingestBookings(restaurantId, [
