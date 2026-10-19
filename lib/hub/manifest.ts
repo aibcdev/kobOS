@@ -84,6 +84,8 @@ export type ConnectorManifest = {
     helpUrl?: string;
     /** PLATFORM_KEY: env vars that must be set for the source to be available. */
     platformEnv?: string[];
+    /** Send an S256 PKCE challenge on authorize and the verifier on code exchange. */
+    pkce?: boolean;
     /** Token endpoint body encoding (default form) and where client credentials go (default body). */
     tokenBody?: "form" | "json";
     clientAuth?: "body" | "basic";

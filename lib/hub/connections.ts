@@ -1,4 +1,4 @@
-import type { Integration, IntegrationProvider, SyncCursor } from "@prisma/client";
+import { Prisma, type Integration, type IntegrationProvider, type SyncCursor } from "@prisma/client";
 import { inngest } from "@/inngest/client";
 import { registerAllConnectors } from "@/lib/connectors";
 import { prisma } from "@/lib/db/prisma";
@@ -162,11 +162,19 @@ export async function connectWithKeys(input: { restaurantId: string; provider: s
     lastErrorCode: null,
     lastErrorAt: null,
   };
-  const integration = await prisma.integration.upsert({
-    where: { restaurantId_provider: { restaurantId: input.restaurantId, provider } },
-    create: { restaurantId: input.restaurantId, provider, ...data },
-    update: data,
-  });
+  let integration: Integration;
+  try {
+    integration = await prisma.integration.upsert({
+      where: { restaurantId_provider: { restaurantId: input.restaurantId, provider } },
+      create: { restaurantId: input.restaurantId, provider, ...data },
+      update: data,
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { ok: false, status: 409, error: `That ${manifest.displayName} account is already connected to another restaurant in KOB. Disconnect it there first.` };
+    }
+    throw err;
+  }
   await inngest.send({ name: "hub/integration.connected", data: { integrationId: integration.id } }).catch(() => undefined);
   return { ok: true, integration };
 }

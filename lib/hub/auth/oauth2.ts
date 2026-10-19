@@ -85,8 +85,8 @@ async function tokenCall(ep: TokenEndpoint, params: Record<string, string>): Pro
   return tokenSetFrom(body, ep.now?.() ?? new Date());
 }
 
-export function exchangeCode(ep: TokenEndpoint, code: string, redirectUri: string): Promise<TokenSet> {
-  return tokenCall(ep, { grant_type: "authorization_code", code, redirect_uri: redirectUri });
+export function exchangeCode(ep: TokenEndpoint, code: string, redirectUri: string, codeVerifier?: string): Promise<TokenSet> {
+  return tokenCall(ep, { grant_type: "authorization_code", code, redirect_uri: redirectUri, ...(codeVerifier ? { code_verifier: codeVerifier } : {}) });
 }
 
 export function refreshGrant(ep: TokenEndpoint, refreshToken: string): Promise<TokenSet> {
