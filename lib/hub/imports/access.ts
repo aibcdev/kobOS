@@ -1,7 +1,7 @@
 import type { ImportJob, TeamMember } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { filenameOf, mappingStateOf } from "@/lib/hub/imports/pipeline";
-import { importSource } from "@/lib/hub/imports/sources";
+import { consentSummaryOf, filenameOf, mappingStateOf } from "@/lib/hub/imports/pipeline";
+import { importSource, type ConsentChannel } from "@/lib/hub/imports/sources";
 
 /** The job if the user is on its restaurant's team; null otherwise (callers return 404, never 403). */
 export async function loadImportForUser(userId: string, id: string): Promise<{ job: ImportJob; member: TeamMember } | null> {
@@ -26,6 +26,10 @@ export type ImportView = {
   periodEnd: string | null;
   createdAt: string;
   mapping: { headers: string[]; mapping: Record<string, string>; missing: { key: string; label: string }[]; fields: { key: string; label: string; required: boolean }[] } | null;
+  /** Opt-in columns waiting for (or given) owner attestation. */
+  consent: { field: string; column: string; channel: ConsentChannel | null; pending: number; attested: { channel: ConsentChannel; at: string } | null }[];
+  /** NEEDS_REVIEW: the columns an emailed file has, so the owner can see what it is before letting it in. */
+  reviewColumns: string[] | null;
 };
 
 /** What the UI and API show: no storage path or file hash. */
@@ -50,5 +54,7 @@ export function importView(job: ImportJob): ImportView {
       state && job.status === "NEEDS_MAPPING"
         ? { ...state, fields: (spec?.fields ?? []).map(({ key, label, required }) => ({ key, label, required })) }
         : null,
+    consent: Object.entries(consentSummaryOf(job)).map(([field, c]) => ({ field, column: c!.column, channel: c!.channel, pending: c!.pending, attested: c!.attested ?? null })),
+    reviewColumns: job.status === "NEEDS_REVIEW" ? (state?.headers ?? []).slice(0, 30) : null,
   };
 }

@@ -6,7 +6,17 @@ import { recomputeGuestStats, resolveGuest } from "@/lib/commerce/guests";
 import { restaurantContext } from "@/lib/connectors/shared";
 import { prisma } from "@/lib/db/prisma";
 import { csvRecords } from "@/lib/hub/imports/csv";
-import { autoMapping, detectSource, importSource, mapRecords, missingFields, type Mapping } from "@/lib/hub/imports/sources";
+import {
+  autoMapping,
+  CONSENT_FIELDS,
+  detectSource,
+  importSource,
+  mapRecords,
+  missingFields,
+  type ConsentChannel,
+  type ConsentField,
+  type Mapping,
+} from "@/lib/hub/imports/sources";
 import { importStorage } from "@/lib/hub/imports/storage";
 
 export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
@@ -125,6 +135,14 @@ export async function runImport(jobId: string, opts: { mapping?: Mapping } = {})
       });
     }
 
+    // Emailed files carrying guest details wait for the owner: anyone who learns the address could send one.
+    if (job.origin === "EMAIL" && (spec.kind === "GUESTS" || spec.kind === "BOOKINGS") && !meta(job).reviewedByUserId) {
+      return prisma.importJob.update({
+        where: { id: job.id },
+        data: { status: "NEEDS_REVIEW", source: spec.source, rowsTotal: records.length, mappingJson: { ...meta(job), filename, headers, mapping, missing: [] } as Prisma.InputJsonValue },
+      });
+    }
+
     const r = await prisma.restaurant.findUniqueOrThrow({ where: { id: job.restaurantId }, select: { countryCode: true } });
     const { timezone, currency } = await restaurantContext(job.restaurantId);
     const rows = mapRecords(records, {
@@ -139,7 +157,7 @@ export async function runImport(jobId: string, opts: { mapping?: Mapping } = {})
 
     if (rows.orders.length) await ingestOrders(job.restaurantId, rows.orders);
     if (rows.bookings.length) await ingestBookings(job.restaurantId, rows.bookings);
-    if (rows.guests.length) await importGuests(job, spec.source, mapping, rows.guests);
+    const consent = rows.guests.length ? await importGuests(job, spec.source, mapping, rows.guests) : {};
 
     const dates = [...rows.orders.map((o) => o.placedAt), ...rows.bookings.map((b) => b.startsAt)].sort((a, b) => a.getTime() - b.getTime());
     return prisma.importJob.update({
@@ -153,7 +171,7 @@ export async function runImport(jobId: string, opts: { mapping?: Mapping } = {})
         errorsJson: rows.errors as Prisma.InputJsonValue,
         periodStart: dates[0] ?? null,
         periodEnd: dates[dates.length - 1] ?? null,
-        mappingJson: { filename, headers, mapping, missing: [] },
+        mappingJson: { ...meta(job), filename, headers, mapping, missing: [], consent } as Prisma.InputJsonValue,
       },
     });
   } catch (e) {
@@ -163,32 +181,63 @@ export async function runImport(jobId: string, opts: { mapping?: Mapping } = {})
   }
 }
 
-/** Guest lists also carry marketing consent; each opt-in/opt-out column value becomes a GuestConsent row with evidence. */
-async function importGuests(job: ImportJob, source: string, mapping: Mapping, guests: ReturnType<typeof mapRecords>["guests"]) {
+export type ConsentSummary = Partial<Record<ConsentField, { column: string; channel: ConsentChannel | null; pending: number; attested?: { channel: ConsentChannel; at: string } }>>;
+
+/**
+ * Guest lists carry opt-in columns, but a "yes" in an export isn't consent to this restaurant's marketing until the
+ * owner says so (an OpenTable opt-in is often OpenTable's own). Opt-ins land UNKNOWN for attestation; opt-outs are
+ * recorded WITHDRAWN at once, on the stated channel or on every channel when the column doesn't say.
+ */
+async function importGuests(job: ImportJob, source: string, mapping: Mapping, guests: ReturnType<typeof mapRecords>["guests"]): Promise<ConsentSummary> {
   const sourceKind = job.origin === "EMAIL" ? "EMAIL_INGEST" : "FILE_IMPORT";
   const now = new Date();
+  const summary: ConsentSummary = {};
   for (const g of guests) {
     await prisma.$transaction(async (tx) => {
       const guestId = await resolveGuest(tx, job.restaurantId, g);
-      if (!guestId || g.optIn === null) return;
-      const channel = g.identities.some((i) => i.kind === "EMAIL") ? "EMAIL" : "SMS";
-      await tx.guestConsent.create({
-        data: {
-          restaurantId: job.restaurantId,
-          guestId,
-          channel,
-          purpose: "MARKETING",
-          status: g.optIn ? "GRANTED" : "WITHDRAWN",
-          capturedAt: now,
-          sourceKind,
-          sourceProvider: source,
-          sourceExternalId: g.rowId,
-          sourceImportJobId: job.id,
-          evidenceJson: { column: mapping.optIn ?? null, importedFrom: filenameOf(job) },
-        },
-      });
+      if (!guestId) return;
+      for (const c of g.consent) {
+        const stated = CONSENT_FIELDS[c.field];
+        const channels: string[] = c.value ? [stated ?? "UNSPECIFIED"] : stated ? [stated] : ["EMAIL", "SMS", "WHATSAPP"];
+        for (const channel of channels) {
+          await tx.guestConsent.create({
+            data: {
+              restaurantId: job.restaurantId,
+              guestId,
+              channel,
+              purpose: "MARKETING",
+              status: c.value ? "UNKNOWN" : "WITHDRAWN",
+              capturedAt: now,
+              sourceKind,
+              sourceProvider: source,
+              sourceExternalId: g.rowId,
+              sourceImportJobId: job.id,
+              evidenceJson: { field: c.field, column: mapping[c.field] ?? null, value: c.raw, importedFrom: filenameOf(job) },
+            },
+          });
+        }
+        if (c.value) {
+          const s = (summary[c.field] ??= { column: mapping[c.field] ?? c.field, channel: stated, pending: 0 });
+          s.pending += 1;
+        }
+      }
     });
   }
+  return summary;
+}
+
+export function consentSummaryOf(job: ImportJob): ConsentSummary {
+  const c = meta(job).consent;
+  return c && typeof c === "object" && !Array.isArray(c) ? (c as ConsentSummary) : {};
+}
+
+/** Owner allowed an emailed guest/bookings file in: re-run it without the review hold. */
+export async function approveEmailedImport(jobId: string, userId: string): Promise<ImportJob> {
+  const job = await prisma.importJob.findUniqueOrThrow({ where: { id: jobId } });
+  return prisma.importJob.update({
+    where: { id: job.id },
+    data: { status: "PENDING", mappingJson: { ...meta(job), reviewedByUserId: userId, reviewedAt: new Date().toISOString() } as Prisma.InputJsonValue },
+  });
 }
 
 /** Owner picked the missing columns: keep only real headers, save, and put the job back to PENDING for a re-run. */

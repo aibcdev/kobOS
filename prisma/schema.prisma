@@ -618,7 +618,7 @@ model ImportJob {
   origin       String
   storagePath  String
   fileSha256   String
-  /// PENDING | PARSING | NEEDS_MAPPING | IMPORTED | STORED (PDF kept for a later parser) | FAILED
+  /// PENDING | PARSING | NEEDS_MAPPING | NEEDS_REVIEW (emailed guest data) | IMPORTED | STORED (PDF kept for a later parser) | FAILED
   status       String     @default("PENDING")
   mappingJson  Json       @default("{}")
   rowsTotal    Int        @default(0)
@@ -739,7 +739,7 @@ model GuestConsent {
   channel           String
   /// MARKETING | SERVICE
   purpose           String
-  /// GRANTED | WITHDRAWN
+  /// UNKNOWN (imported, awaiting owner attestation) | GRANTED | WITHDRAWN
   status            String
   capturedAt        DateTime
   sourceKind        String

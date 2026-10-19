@@ -29,9 +29,11 @@ export default async function ImportsPage({ searchParams }: { searchParams: Prom
     <AppPageShell title="Imports" subtitle={ctx.restaurant.name} restaurantQuery={restaurantQuery} active="/app/imports">
       <ImportsPanel
         restaurantId={restaurantId}
+        restaurantName={ctx.restaurant.name}
         imports={jobs.map(importView)}
         inboundAddresses={inbound}
         canUndo={ctx.role === "OWNER" || ctx.role === "ADMIN"}
+        isOwner={ctx.role === "OWNER"}
         timeZone={ctx.restaurant.timezone}
       />
     </AppPageShell>

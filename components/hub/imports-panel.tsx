@@ -3,11 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ImportView } from "@/lib/hub/imports/access";
+import { attestationText, CHANNEL_LABEL } from "@/lib/hub/imports/consent-text";
+import type { ConsentChannel } from "@/lib/hub/imports/sources";
 
 const STATUS_TEXT: Record<string, string> = {
   PENDING: "Queued",
   PARSING: "Reading…",
   NEEDS_MAPPING: "Needs you: match the columns",
+  NEEDS_REVIEW: "Needs you: emailed file waiting",
   IMPORTED: "Imported",
   STORED: "Saved; KOB will read PDFs soon",
   FAILED: "Couldn't import",
@@ -72,17 +75,78 @@ function MappingForm({ view, onDone }: { view: ImportView; onDone: (v: ImportVie
   );
 }
 
+function ConsentAttest({ view, item, restaurantName, onDone }: { view: ImportView; item: ImportView["consent"][number]; restaurantName: string; onDone: (v: ImportView) => void }) {
+  const [channel, setChannel] = useState<ConsentChannel | "">(item.channel ?? "");
+  const [ticked, setTicked] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/imports/${view.id}/consent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ field: item.field, channel, attest: true }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { import?: ImportView; error?: string };
+    setBusy(false);
+    if (!res.ok || !body.import) return setError(body.error ?? "Couldn't save that");
+    onDone(body.import);
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-line p-4 text-sm">
+      <p>
+        {item.pending} guest{item.pending === 1 ? "" : "s"} marked opted in under &ldquo;{item.column}&rdquo;. KOB won&apos;t market to them until you confirm.
+      </p>
+      {item.channel ? null : (
+        <label className="mt-2 flex items-center gap-2">
+          <span className="text-muted">Which channel did they agree to?</span>
+          <select className="rounded-xl border border-line bg-paper px-2 py-1" value={channel} onChange={(e) => setChannel(e.target.value as ConsentChannel | "")}>
+            <option value="">Choose</option>
+            {(Object.keys(CHANNEL_LABEL) as ConsentChannel[]).map((c) => (
+              <option key={c} value={c}>
+                {CHANNEL_LABEL[c]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {channel ? (
+        <label className="mt-3 flex items-start gap-2">
+          <input type="checkbox" className="mt-1" checked={ticked} onChange={(e) => setTicked(e.target.checked)} />
+          <span>{attestationText({ restaurantName, channel, filename: view.filename, column: item.column })}</span>
+        </label>
+      ) : null}
+      {error ? <p className="mt-2 text-red-700">{error}</p> : null}
+      <button
+        type="button"
+        disabled={busy || !ticked || !channel}
+        onClick={() => void submit()}
+        className="mt-3 rounded-full bg-espresso px-4 py-2 text-paper disabled:opacity-50"
+      >
+        {busy ? "Saving…" : "Confirm consent"}
+      </button>
+    </div>
+  );
+}
+
 export function ImportsPanel({
   restaurantId,
+  restaurantName,
   imports,
   inboundAddresses,
   canUndo,
+  isOwner,
   timeZone,
 }: {
   restaurantId: string;
+  restaurantName: string;
   imports: ImportView[];
   inboundAddresses: { label: string; address: string }[];
   canUndo: boolean;
+  isOwner: boolean;
   timeZone: string;
 }) {
   const router = useRouter();
@@ -117,6 +181,15 @@ export function ImportsPanel({
     if (!res.ok || !body.import) return setMessage(body.error ?? "Upload failed");
     if (body.duplicate) setMessage("You've already imported that file.");
     setItems((all) => [body.import!, ...all.filter((i) => i.id !== body.import!.id)]);
+  }
+
+  const replace = (nv: ImportView) => setItems((all) => all.map((i) => (i.id === nv.id ? nv : i)));
+
+  async function approve(id: string) {
+    const res = await fetch(`/api/imports/${id}/review`, { method: "POST" });
+    const body = (await res.json().catch(() => ({}))) as { import?: ImportView; error?: string };
+    if (res.ok && body.import) replace(body.import);
+    else setMessage(body.error ?? "Couldn't import that");
   }
 
   async function undo(id: string) {
@@ -181,7 +254,38 @@ export function ImportsPanel({
                   ))}
                 </ul>
               ) : null}
-              {v.status === "NEEDS_MAPPING" && v.mapping ? <MappingForm view={v} onDone={(nv) => setItems((all) => all.map((i) => (i.id === nv.id ? nv : i)))} /> : null}
+              {v.status === "NEEDS_MAPPING" && v.mapping ? <MappingForm view={v} onDone={replace} /> : null}
+              {v.status === "NEEDS_REVIEW" ? (
+                <div className="mt-3 text-sm">
+                  <p className="text-muted">
+                    This file was emailed to your KOB address and has guest details ({v.rowsTotal} rows; columns: {(v.reviewColumns ?? []).join(", ")}). Only import it if you or your
+                    booking system sent it.
+                  </p>
+                  {canUndo ? (
+                    <button type="button" onClick={() => void approve(v.id)} className="mt-2 rounded-full bg-espresso px-4 py-2 text-paper">
+                      Import this file
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+              {v.consent
+                .filter((c) => !c.attested && c.pending > 0)
+                .map((c) =>
+                  isOwner ? (
+                    <ConsentAttest key={c.field} view={v} item={c} restaurantName={restaurantName} onDone={replace} />
+                  ) : (
+                    <p key={c.field} className="mt-2 text-sm text-muted">
+                      {c.pending} opt-ins under &ldquo;{c.column}&rdquo; are waiting for the owner to confirm.
+                    </p>
+                  ),
+                )}
+              {v.consent
+                .filter((c) => c.attested)
+                .map((c) => (
+                  <p key={c.field} className="mt-2 text-sm text-muted">
+                    Consent confirmed for &ldquo;{c.column}&rdquo; ({CHANNEL_LABEL[c.attested!.channel]}).
+                  </p>
+                ))}
               {canUndo && v.status !== "PARSING" ? (
                 <button type="button" onClick={() => void undo(v.id)} className="mt-3 text-sm text-muted underline">
                   Undo this import
