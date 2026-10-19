@@ -5,7 +5,7 @@ type OAuthStatePayload = {
   provider: string;
   userId: string;
   exp: number;
-  returnTo?: "talk";
+  returnTo?: "talk" | "connections";
   nonce?: string;
 };
 
@@ -26,7 +26,7 @@ export function encodeOAuthState(input: {
   provider: string;
   userId: string;
   ttlSec?: number;
-  returnTo?: "talk";
+  returnTo?: "talk" | "connections";
   nonce?: string;
 }): string {
   const secret = stateSecret();

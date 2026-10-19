@@ -24,10 +24,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const provider = providerRaw as IntegrationProvider;
+  const returnTo = new URL(req.url).searchParams.get("returnTo") === "connections" ? "connections" : undefined;
 
   if (!isOAuthConfigured(provider)) {
+    const fallback = returnTo ? "/app/settings/connections" : "/dashboard/settings";
     return NextResponse.redirect(
-      `${new URL(req.url).origin}/dashboard/settings?r=${encodeURIComponent(restaurantId)}`,
+      `${new URL(req.url).origin}${fallback}?r=${encodeURIComponent(restaurantId)}`,
     );
   }
 
@@ -39,6 +41,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
       restaurantId,
       provider,
       userId: session.userId,
+      returnTo,
     });
   } catch {
     return NextResponse.json({ error: "OAuth state signing unavailable" }, { status: 503 });

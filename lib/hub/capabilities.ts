@@ -1,6 +1,7 @@
 import { coreEntitlements, hasAddon, type Addon, type Entitlements } from "@/lib/billing/entitlements";
 import { prisma } from "@/lib/db/prisma";
 import { flag, FLAGS, type FlagName } from "@/lib/flags";
+import { importSource } from "@/lib/hub/imports/sources";
 import { allManifests, getManifest, REGIONS, type DataContract, type Region } from "@/lib/hub/manifest";
 
 /**
@@ -214,23 +215,43 @@ function isFlagName(name: string): name is FlagName {
   return (FLAGS as readonly string[]).includes(name);
 }
 
+/** What a completed import supplies. Stored-only files (invoice/menu PDFs) feed nothing until a parser lands. */
+export function importContracts(source: string): DataContract[] {
+  const spec = importSource(source);
+  if (!spec) return [];
+  if (spec.kind === "SALES") return spec.channel === "DELIVERY" ? ["delivery_sales"] : ["sales"];
+  if (spec.kind === "GUESTS") return ["guests"];
+  if (spec.kind === "BOOKINGS") return ["bookings"];
+  return [];
+}
+
+export async function importSources(restaurantId: string): Promise<DataSource[]> {
+  const rows = await prisma.importJob.groupBy({ by: ["source"], where: { restaurantId, status: "IMPORTED", rowsImported: { gt: 0 } } });
+  return rows.flatMap((r) => {
+    const contracts = importContracts(r.source);
+    return contracts.length ? [{ provider: r.source, contracts }] : [];
+  });
+}
+
 /** Integration statuses that still supply data. */
 const SUPPLYING = new Set(["CONNECTED", "DEGRADED"]);
 
 /**
  * Loads a restaurant's sources and evaluates its features. A connector counts only when its manifest exists, its
- * rollout flag is on and the integration is supplying data; KOB platform keys count when their env is set.
+ * rollout flag is on and the integration is supplying data; completed imports count for what they contain; KOB
+ * platform keys count when their env is set.
  * Exported for the agent context pack (wired in when the Spec 1 agent-runtime ticket lands).
  */
 export async function capabilitiesFor(
   restaurantId: string,
   opts: { entitlements?: Entitlements; extraSources?: DataSource[] } = {},
 ): Promise<Capability[]> {
-  const [restaurant, integrations] = await Promise.all([
+  const [restaurant, integrations, imports] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { countryCode: true } }),
     prisma.integration.findMany({ where: { restaurantId } }),
+    importSources(restaurantId),
   ]);
-  const sources: DataSource[] = [];
+  const sources: DataSource[] = [...imports];
   for (const row of integrations) {
     const manifest = getManifest(row.provider);
     if (!manifest) continue;
