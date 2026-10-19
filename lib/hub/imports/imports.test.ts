@@ -14,6 +14,7 @@ describeDb("import framework on Postgres (T-86)", () => {
   let inbound: typeof import("@/lib/hub/imports/inbound");
   let storage: ReturnType<typeof import("@/lib/hub/imports/storage").memoryStorage>;
   let restaurantId: string;
+  let ownerId: string;
 
   const upload = (filename: string, body = file(filename), origin: "UPLOAD" | "EMAIL" = "UPLOAD") => pipeline.createImport({ restaurantId, filename, body, origin });
   const snapshots = async () =>
@@ -23,7 +24,9 @@ describeDb("import framework on Postgres (T-86)", () => {
     prisma = (await import("@/lib/db/prisma")).prisma;
     pipeline = await import("@/lib/hub/imports/pipeline");
     inbound = await import("@/lib/hub/imports/inbound");
-    restaurantId = (await seedRestaurant(prisma)).restaurant.id;
+    const seeded = await seedRestaurant(prisma);
+    restaurantId = seeded.restaurant.id;
+    ownerId = seeded.userId;
     await prisma.restaurant.update({ where: { id: restaurantId }, data: { timezone: "Europe/London", countryCode: "GB" } });
   });
   afterAll(async () => {
@@ -100,10 +103,22 @@ describeDb("import framework on Postgres (T-86)", () => {
     const guests = await pipeline.runImport((await upload("guest-list.csv")).job.id);
     expect(guests).toMatchObject({ status: "IMPORTED", source: "GUESTS_CSV", rowsImported: 2, rowsSkipped: 1 });
     const consents = await prisma.guestConsent.findMany({ where: { restaurantId }, orderBy: { channel: "asc" } });
+    // "Marketing Opt In" names no channel: Ada's yes waits for the owner; Bob's no is honoured on every channel.
     expect(consents.map((c) => [c.channel, c.purpose, c.status, c.sourceKind, c.sourceProvider, c.sourceImportJobId])).toEqual([
-      ["EMAIL", "MARKETING", "GRANTED", "FILE_IMPORT", "GUESTS_CSV", guests.id],
+      ["EMAIL", "MARKETING", "WITHDRAWN", "FILE_IMPORT", "GUESTS_CSV", guests.id],
       ["SMS", "MARKETING", "WITHDRAWN", "FILE_IMPORT", "GUESTS_CSV", guests.id],
+      ["UNSPECIFIED", "MARKETING", "UNKNOWN", "FILE_IMPORT", "GUESTS_CSV", guests.id],
+      ["WHATSAPP", "MARKETING", "WITHDRAWN", "FILE_IMPORT", "GUESTS_CSV", guests.id],
     ]);
+    expect(await prisma.guestConsent.count({ where: { restaurantId, status: "GRANTED" } })).toBe(0);
+
+    const consent = await import("@/lib/hub/imports/consent");
+    expect(await consent.attestImportConsent({ jobId: guests.id, userId: ownerId, field: "optIn", channel: "SMS" })).toEqual({ ok: true, granted: 1 });
+    const granted = await prisma.guestConsent.findFirstOrThrow({ where: { restaurantId, status: "GRANTED" } });
+    expect(granted.channel).toBe("SMS");
+    expect(granted.evidenceJson).toMatchObject({ field: "optIn", column: "Marketing Opt In", attestedByUserId: ownerId, textVersion: "2026-10-19" });
+    expect((granted.evidenceJson as { text: string }).text).toMatch(/agreed to receive marketing from .* by text message/);
+    expect(await consent.attestImportConsent({ jobId: guests.id, userId: ownerId, field: "optIn", channel: "SMS" })).toMatchObject({ ok: false, status: 409 });
 
     const bookings = await pipeline.runImport((await upload("bookings.csv")).job.id);
     expect(bookings).toMatchObject({ status: "IMPORTED", source: "BOOKINGS_CSV", rowsImported: 2, rowsSkipped: 1 });
@@ -113,6 +128,30 @@ describeDb("import framework on Postgres (T-86)", () => {
       ["R-2", "NO_SHOW", 2, null],
     ]);
     expect(await prisma.guest.count({ where: { restaurantId } })).toBe(2);
+  });
+
+  it("never turns an email-only opt-in column into SMS consent, and only the owner can attest", async () => {
+    const csv = Buffer.from("Name,Email,Phone,Email Opt In\nGrace,grace@example.com,+44 7700 900009,yes\n");
+    const job = await pipeline.runImport((await upload("guests-email-optin.csv", csv)).job.id);
+    const consent = await import("@/lib/hub/imports/consent");
+    expect(await consent.attestImportConsent({ jobId: job.id, userId: ownerId, field: "emailOptIn", channel: "SMS" })).toMatchObject({ ok: false, status: 422 });
+    const admin = (await seedRestaurant(prisma)).userId;
+    await prisma.teamMember.create({ data: { userId: admin, restaurantId, role: "ADMIN" } });
+    expect(await consent.attestImportConsent({ jobId: job.id, userId: admin, field: "emailOptIn", channel: "EMAIL" })).toMatchObject({ ok: false, status: 403 });
+    expect(await consent.attestImportConsent({ jobId: job.id, userId: ownerId, field: "emailOptIn", channel: "EMAIL" })).toEqual({ ok: true, granted: 1 });
+    const rows = await prisma.guestConsent.findMany({ where: { sourceImportJobId: job.id } });
+    expect(rows.map((r) => [r.channel, r.status])).toEqual([["EMAIL", "GRANTED"]]);
+  });
+
+  it("holds emailed guest files for owner review before any guest is created", async () => {
+    const before = await prisma.guest.count({ where: { restaurantId } });
+    const csv = Buffer.from("Name,Email,Phone\nMallory,mallory@example.com,\n");
+    const held = await pipeline.runImport((await upload("emailed-guests.csv", csv, "EMAIL")).job.id);
+    expect(held).toMatchObject({ status: "NEEDS_REVIEW", source: "GUESTS_CSV", rowsTotal: 1 });
+    expect(await prisma.guest.count({ where: { restaurantId } })).toBe(before);
+    await pipeline.approveEmailedImport(held.id, ownerId);
+    expect(await pipeline.runImport(held.id)).toMatchObject({ status: "IMPORTED", rowsImported: 1 });
+    expect(await prisma.guest.count({ where: { restaurantId } })).toBe(before + 1);
   });
 
   it("keeps PDFs for the parser that will read them", async () => {

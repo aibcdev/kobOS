@@ -38,8 +38,18 @@ const GUEST_FIELDS: ImportField[] = [
   { key: "lastName", label: "Last name", required: false, aliases: ["last name", "lastname", "surname", "family name"] },
   { key: "email", label: "Email", required: false, aliases: ["email", "email address", "e-mail", "guest email"] },
   { key: "phone", label: "Phone", required: false, aliases: ["phone", "phone number", "mobile", "telephone", "guest phone", "contact number"] },
-  { key: "optIn", label: "Marketing opt-in", required: false, aliases: ["opt in", "opt-in", "marketing opt in", "email opt in", "marketing", "subscribed", "accepts marketing", "restaurant marketing opt in"] },
+  { key: "emailOptIn", label: "Email marketing opt-in", required: false, aliases: ["email opt in", "email marketing", "email marketing opt in", "accepts email marketing", "email subscribed", "email consent"] },
+  { key: "smsOptIn", label: "SMS marketing opt-in", required: false, aliases: ["sms opt in", "text opt in", "sms marketing", "accepts sms marketing", "sms consent", "text message opt in"] },
+  { key: "whatsappOptIn", label: "WhatsApp marketing opt-in", required: false, aliases: ["whatsapp opt in", "whatsapp marketing", "whatsapp consent"] },
+  /** Says nothing about the channel; the owner names it when attesting. */
+  { key: "optIn", label: "Marketing opt-in (channel not stated)", required: false, aliases: ["opt in", "opt-in", "marketing opt in", "marketing", "subscribed", "accepts marketing", "restaurant marketing opt in"] },
 ];
+
+/** Consent columns and the channel each one speaks for (null: the owner must say). */
+export const CONSENT_FIELDS = { emailOptIn: "EMAIL", smsOptIn: "SMS", whatsappOptIn: "WHATSAPP", optIn: null } as const;
+export type ConsentField = keyof typeof CONSENT_FIELDS;
+export type ConsentChannel = "EMAIL" | "SMS" | "WHATSAPP";
+const CONSENT_KEYS = Object.keys(CONSENT_FIELDS) as ConsentField[];
 
 const BOOKING_FIELDS: ImportField[] = [
   { key: "bookingId", label: "Booking ID", required: false, aliases: ["booking id", "reservation id", "confirmation number", "booking reference", "reference", "conf #"] },
@@ -47,7 +57,7 @@ const BOOKING_FIELDS: ImportField[] = [
   { key: "time", label: "Time", required: false, aliases: ["time", "booking time", "reservation time"] },
   { key: "partySize", label: "Party size", required: true, aliases: ["party size", "covers", "guests", "size", "pax", "people"] },
   { key: "status", label: "Status", required: false, aliases: ["status", "booking status", "reservation status", "state"] },
-  ...GUEST_FIELDS.filter((f) => f.key !== "optIn"),
+  ...GUEST_FIELDS.filter((f) => !(f.key in CONSENT_FIELDS)),
 ];
 
 export const IMPORT_SOURCES: readonly ImportSourceSpec[] = [
@@ -128,7 +138,7 @@ export type RowContext = {
 export type MappedRows = {
   orders: OrderInput[];
   bookings: BookingInput[];
-  guests: (GuestInput & { optIn: boolean | null; rowId: string })[];
+  guests: (GuestInput & { consent: { field: ConsentField; value: boolean; raw: string }[]; rowId: string })[];
   skipped: number;
   errors: { row: number; message: string }[];
 };
@@ -155,10 +165,12 @@ function bookingStatus(raw: string | undefined): BookingStatus {
   return "BOOKED";
 }
 
-const truthy = (raw: string | undefined): boolean | null => {
+/** Yes / no for a consent cell; anything else (blank, "unknown", "pending") says nothing. */
+const consentValue = (raw: string | undefined): boolean | null => {
   const s = (raw ?? "").trim().toLowerCase();
-  if (!s) return null;
-  return ["y", "yes", "true", "1", "opted in", "subscribed", "x"].includes(s);
+  if (["y", "yes", "true", "1", "opted in", "opted-in", "subscribed", "x"].includes(s)) return true;
+  if (["n", "no", "false", "0", "opted out", "opted-out", "unsubscribed"].includes(s)) return false;
+  return null;
 };
 
 function guestOf(get: (k: string) => string | undefined, provider: string): GuestInput | null {
@@ -220,7 +232,12 @@ export function mapRecords(records: Record<string, string>[], ctx: RowContext): 
     if (spec.kind === "GUESTS") {
       const guest = guestOf(get, spec.source);
       if (!guest) return fail("No usable email or phone");
-      out.guests.push({ ...guest, optIn: truthy(get("optIn")), rowId: id });
+      const consent = CONSENT_KEYS.flatMap((field) => {
+        const raw = get(field);
+        const value = consentValue(raw);
+        return value === null ? [] : [{ field, value, raw: raw!.slice(0, 40) }];
+      });
+      out.guests.push({ ...guest, consent, rowId: id });
     }
   });
   return out;
