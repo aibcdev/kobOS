@@ -214,7 +214,7 @@ function isFlagName(name: string): name is FlagName {
   return (FLAGS as readonly string[]).includes(name);
 }
 
-/** Integration statuses that still supply data (T-81 adds the column; rows without it count as CONNECTED). */
+/** Integration statuses that still supply data. */
 const SUPPLYING = new Set(["CONNECTED", "DEGRADED"]);
 
 /**
@@ -234,8 +234,7 @@ export async function capabilitiesFor(
   for (const row of integrations) {
     const manifest = getManifest(row.provider);
     if (!manifest) continue;
-    const status = (row as { status?: string }).status ?? "CONNECTED";
-    if (!SUPPLYING.has(status)) continue;
+    if (!SUPPLYING.has(row.status)) continue;
     if (!isFlagName(manifest.approval.flag) || !(await flag(manifest.approval.flag, restaurantId))) continue;
     sources.push({ provider: manifest.provider, contracts: manifest.dataContracts });
   }

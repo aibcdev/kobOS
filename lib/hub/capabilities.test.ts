@@ -85,7 +85,7 @@ describe("capabilitiesFor", () => {
     vi.doMock("@/lib/db/prisma", () => ({
       prisma: {
         restaurant: { findUnique: async () => ({ countryCode: "GB" }) },
-        integration: { findMany: async () => [{ provider: "SQUARE" }, { provider: "GMAIL" }] },
+        integration: { findMany: async () => [{ provider: "SQUARE", status: "CONNECTED" }, { provider: "GMAIL", status: "CONNECTED" }] },
         featureFlagOverride: { findUnique: async () => null },
       },
     }));
