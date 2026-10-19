@@ -111,15 +111,19 @@ export async function getAccessToken(integrationId: string, deps: TokenDeps = {}
 /**
  * Single-flight refresh. The winner of `pg_try_advisory_xact_lock(hashtext(id))` calls the provider and writes the new
  * tokens before releasing the lock; everyone else waits for the row to turn fresh. Pass `rejectedAccessToken` after a
- * provider 401 to force a refresh unless someone already replaced that token.
+ * provider 401 to force a refresh unless someone already replaced that token. `horizonMs` refreshes tokens that would
+ * enter their refresh window within that time (the daily cron).
  */
-export async function refreshAccessToken(integrationId: string, deps: TokenDeps & { rejectedAccessToken?: string } = {}): Promise<string> {
+export async function refreshAccessToken(
+  integrationId: string,
+  deps: TokenDeps & { rejectedAccessToken?: string; horizonMs?: number } = {},
+): Promise<string> {
   const nowFn = deps.now ?? (() => new Date());
   const usable = (row: Integration): string | null => {
     const { accessToken } = decryptTokens(row);
     if (!accessToken) return null;
     if (deps.rejectedAccessToken) return accessToken !== deps.rejectedAccessToken ? accessToken : null;
-    return isFresh(row, nowFn()) ? accessToken : null;
+    return isFresh(row, new Date(nowFn().getTime() + (deps.horizonMs ?? 0))) ? accessToken : null;
   };
 
   const outcome = await prisma.$transaction(

@@ -7,6 +7,8 @@ export class ConnectorError extends Error {
     message: string,
     readonly status?: number,
     readonly providerCode?: string,
+    /** RATE_LIMIT: how long the provider asked us to wait (Retry-After). */
+    readonly retryAfterMs?: number,
   ) {
     super(message);
     this.name = "ConnectorError";

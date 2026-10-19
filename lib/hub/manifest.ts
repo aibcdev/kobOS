@@ -87,7 +87,14 @@ export type ConnectorManifest = {
     refreshAheadSeconds?: number;
   };
   streams: StreamSpec[];
-  webhooks?: { path: string; verifier: string; events: string[]; subscribe?: "API" | "MANUAL" };
+  webhooks?: {
+    path: string;
+    verifier: string;
+    events: string[];
+    subscribe?: "API" | "MANUAL";
+    /** DEGRADED when no webhook arrives for this long (only set for providers that send steadily). */
+    expectedSilenceHours?: number;
+  };
   /** Ledger action types it can execute (lib/agent/action-types.ts). */
   actions: string[];
   rateLimit: { rps?: number; rpm?: number; daily?: number; concurrency?: number };

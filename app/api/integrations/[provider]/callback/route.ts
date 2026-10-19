@@ -3,7 +3,9 @@ import { IntegrationProvider, Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { encryptSecret } from "@/lib/crypto/tokens";
+import { inngest } from "@/inngest/client";
 import { tokenSetFrom } from "@/lib/hub/auth/oauth2";
+import { getManifest } from "@/lib/hub/manifest";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
 import { decodeOAuthState } from "@/lib/integrations/oauth-state";
 import { prisma } from "@/lib/db/prisma";
@@ -139,6 +141,11 @@ export async function GET(
         ...hub,
       },
     });
+    if (getManifest(provider)) {
+      await inngest
+        .send({ name: "hub/integration.connected", data: { integrationId: integration.id } })
+        .catch(() => undefined);
+    }
     if (!talk) {
       try {
         if (provider === "GOOGLE_CALENDAR") {
