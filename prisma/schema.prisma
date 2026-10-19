@@ -191,6 +191,26 @@ enum IntegrationProvider {
   TOAST
   SQUARE
   SHOPIFY
+  STRIPE_CONNECT
+  CLOVER
+  LIGHTSPEED_K
+  EPOS_NOW
+  ZETTLE
+  RESDIARY
+  SEVENROOMS
+  TOCK
+  XERO
+  QUICKBOOKS
+  KLAVIYO
+  MAILCHIMP
+  PURPLE_WIFI
+  BEAMBOX
+  DEPUTY
+  SEVENSHIFTS
+  PLANDAY
+  ROTAREADY
+  TRIPADVISOR
+  YELP
 
   @@schema("public")
 }
@@ -464,6 +484,7 @@ model Restaurant {
   osRules               OsRestaurantRule[]
   osPermissions         OsActionPermission[]
   osGrants              OsPermissionGrant[]
+  importJobs            ImportJob[]
   osAudits              OsAuditEvent[]
   osReliability         OsWorkflowReliability[]
   osInvoices            OsInvoice[]
@@ -503,10 +524,101 @@ model Integration {
   metadata              Json                @default("{}")
   connectedAt           DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
+  /// Integration Hub (Spec 2 §3.5). OAUTH2_CODE | API_KEY | BASIC_KEY_SECRET | JWT_BEARER | …
+  authKind              String              @default("OAUTH2_CODE")
+  /// CONNECTED | DEGRADED | REAUTH | DISCONNECTED | PENDING_APPROVAL | ERROR
+  status                String              @default("CONNECTED")
+  /// merchant_id / tenantId / companyId / realmId
+  externalAccountId     String?
+  scopesGranted         String[]            @default([])
+  accessTokenExpiresAt  DateTime?
+  /// API_KEY / BASIC_KEY_SECRET: encrypted JSON of the key fields.
+  encryptedApiKey       String?
+  /// Provider data region (Clover NA/EU/LA, Xero region…).
+  region                String?
+  lastHealthAt          DateTime?
+  lastSuccessAt         DateTime?
+  lastErrorCode         String?
+  lastErrorAt           DateTime?
+  connectedByUserId     String?             @db.Uuid
+  disconnectedAt        DateTime?
   restaurant            Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  syncCursors           SyncCursor[]
 
   @@unique([restaurantId, provider])
   @@index([restaurantId])
+  @@index([provider, externalAccountId])
+  @@index([status])
+  @@schema("public")
+}
+
+/// Per-stream sync position for an integration; checkpointed after every page.
+model SyncCursor {
+  id            String      @id @default(cuid())
+  integrationId String
+  /// orders | catalog | customers | shifts | bills …
+  stream        String
+  cursor        String?
+  backfillDone  Boolean     @default(false)
+  lastRunAt     DateTime?
+  lastSuccessAt DateTime?
+  lastError     String?
+  rowsLastRun   Int         @default(0)
+  /// Consecutive failed runs; health goes DEGRADED at 3.
+  failureCount  Int         @default(0)
+  nextRunAt     DateTime?
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, stream])
+  @@index([nextRunAt])
+  @@schema("public")
+}
+
+/// Raw webhook inbox (replayable). PII-minimised payloads; dedupe on (provider, externalId).
+model ConnectorEvent {
+  id            String    @id @default(cuid())
+  provider      String
+  restaurantId  String?
+  integrationId String?
+  externalId    String
+  type          String
+  payloadJson   Json
+  receivedAt    DateTime  @default(now())
+  processedAt   DateTime?
+  /// RECEIVED | PROCESSED | IGNORED | FAILED
+  status        String    @default("RECEIVED")
+  error         String?
+
+  @@unique([provider, externalId])
+  @@index([restaurantId, receivedAt])
+  @@index([status, receivedAt])
+  @@schema("public")
+}
+
+/// A file or emailed statement being imported (Spec 2 §3.7). Deduped per restaurant by sha256.
+model ImportJob {
+  id           String     @id @default(cuid())
+  restaurantId String
+  /// DELIVEROO_CSV | UBER_EATS_CSV | DOORDASH_CSV | JUST_EAT_CSV | OPENTABLE_GUESTS_CSV | GENERIC_SALES_CSV | INVOICE_PDF | MENU_PDF | EMAIL_STATEMENT …
+  source       String
+  /// UPLOAD | EMAIL | WHATSAPP
+  origin       String
+  storagePath  String
+  fileSha256   String
+  /// PENDING | PARSING | NEEDS_MAPPING | IMPORTED | FAILED | DUPLICATE
+  status       String     @default("PENDING")
+  mappingJson  Json       @default("{}")
+  rowsTotal    Int        @default(0)
+  rowsImported Int        @default(0)
+  rowsSkipped  Int        @default(0)
+  errorsJson   Json       @default("[]")
+  periodStart  DateTime?
+  periodEnd    DateTime?
+  createdAt    DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, fileSha256])
+  @@index([restaurantId, createdAt])
   @@schema("public")
 }
 
