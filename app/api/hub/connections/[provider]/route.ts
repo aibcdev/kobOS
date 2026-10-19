@@ -21,8 +21,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ provider: stri
 export async function DELETE(req: Request, ctx: { params: Promise<{ provider: string }> }) {
   const { provider } = await ctx.params;
   if (!getManifest(provider)) return NextResponse.json({ error: "Unknown provider" }, { status: 404 });
-  const auth = await authorize(req, new URL(req.url).searchParams.get("restaurantId"));
+  const url = new URL(req.url);
+  const auth = await authorize(req, url.searchParams.get("restaurantId"));
   if (!auth.ok) return auth.res;
-  const done = await disconnectIntegration(auth.restaurantId, provider);
+  const mode = url.searchParams.get("data") === "delete" ? "DELETE_ALL" : "KEEP_TOTALS";
+  const done = await disconnectIntegration(auth.restaurantId, provider, mode);
   return NextResponse.json({ disconnected: done });
 }
