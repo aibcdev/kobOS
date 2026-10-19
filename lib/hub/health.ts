@@ -3,8 +3,11 @@ import { prisma } from "@/lib/db/prisma";
 import { getManifest } from "@/lib/hub/manifest";
 import { connectorEnabled } from "@/lib/hub/sync/scheduler";
 
-/** Spec 2 §3.11. REAUTH and DISCONNECTED are set by the token service / owner and only cleared by reconnecting. */
-export type HealthStatus = "CONNECTED" | "DEGRADED" | "REAUTH" | "DISCONNECTED" | "PENDING_APPROVAL";
+/**
+ * Spec 2 §3.11. REAUTH and DISCONNECTED are set by the token service / owner and only cleared by reconnecting;
+ * PENDING_SETUP (pick locations) is only cleared by the owner's choice.
+ */
+export type HealthStatus = "CONNECTED" | "DEGRADED" | "REAUTH" | "DISCONNECTED" | "PENDING_APPROVAL" | "PENDING_SETUP";
 
 export const DEGRADED_AFTER_FAILURES = 3;
 
@@ -17,7 +20,7 @@ export function computeHealth(input: {
   now: Date;
 }): HealthStatus {
   const s = input.integration.status;
-  if (s === "REAUTH" || s === "DISCONNECTED") return s;
+  if (s === "REAUTH" || s === "DISCONNECTED" || s === "PENDING_SETUP") return s;
   if (!input.enabled) return "PENDING_APPROVAL";
   if (input.cursors.some((c) => c.failureCount >= DEGRADED_AFTER_FAILURES)) return "DEGRADED";
   if (input.expectedSilenceHours && input.lastWebhookAt && input.now.getTime() - input.lastWebhookAt.getTime() > input.expectedSilenceHours * 3_600_000) {
