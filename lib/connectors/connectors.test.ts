@@ -315,10 +315,16 @@ describeDb("POS read connectors on Postgres (T-88)", () => {
     const { CONNECTORS } = await import("@/lib/connectors");
     const { FLAGS } = await import("@/lib/flags");
     const { getManifest } = await import("@/lib/hub/manifest");
+    const { registerAllConnectors } = await import("@/lib/connectors");
+    const { actionAdapterFor } = await import("@/lib/agent/verify");
+    const actions: Record<string, string[]> = { SQUARE: ["pos.item.86", "pos.item.price.update"], GBP: ["gbp.review.reply"] };
+    registerAllConnectors();
     for (const c of CONNECTORS) {
       expect(getManifest(c.manifest.provider)).toBe(c.manifest);
       expect(FLAGS).toContain(c.manifest.approval.flag);
-      expect(c.manifest.actions).toEqual(c.manifest.provider === "SQUARE" ? ["pos.item.86", "pos.item.price.update"] : []);
+      expect(c.manifest.actions).toEqual(actions[c.manifest.provider] ?? []);
+      // A connector with a ledger adapter is what the executor runs; without one every approval would fail.
+      if (c.actions) expect(actionAdapterFor(c.manifest.provider)).toBe(c.actions);
     }
   });
 });

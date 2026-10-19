@@ -2,6 +2,10 @@ import { cron } from "inngest";
 import { inngest } from "@/inngest/client";
 import { ACTION_APPROVED_EVENT, ACTION_VERIFY_LATER_EVENT, type ActionApprovedData } from "@/lib/agent/events";
 import { executeApprovedAction, failAfterRetries, verifyPending, type ExecStep } from "@/lib/agent/executor";
+import { registerAllConnectors } from "@/lib/connectors";
+
+// Ledger adapters (GBP review replies, …) must be registered before any approved action runs.
+registerAllConnectors();
 
 export const actionExecute = inngest.createFunction(
   {

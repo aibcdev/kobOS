@@ -97,6 +97,8 @@ function LocationPicker({ card, restaurantId, onDone }: { card: ConnectorCard; r
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // A Google listing is one venue: GBP answers reviews for exactly one.
+  const single = card.provider === "GBP";
 
   useEffect(() => {
     let live = true;
@@ -129,16 +131,22 @@ function LocationPicker({ card, restaurantId, onDone }: { card: ConnectorCard; r
 
   return (
     <div className="mt-3 rounded-2xl border border-line p-4 text-sm">
-      <p>Your {card.displayName} account has more than one location. Which ones are this restaurant? KOB only counts sales from the ones you tick.</p>
+      <p>
+        {single
+          ? `Your ${card.displayName} account has more than one listing. Which one is this restaurant? KOB only answers reviews on that one.`
+          : `Your ${card.displayName} account has more than one location. Which ones are this restaurant? KOB only counts sales from the ones you tick.`}
+      </p>
       {locations === null && !error ? <p className="mt-2 text-muted">Loading…</p> : null}
       {locations?.map((l) => (
         <label key={l.externalId} className="mt-2 flex items-start gap-2">
           <input
-            type="checkbox"
+            type={single ? "radio" : "checkbox"}
+            name={single ? `${card.provider}-location` : undefined}
             className="mt-1"
             checked={picked.has(l.externalId)}
             onChange={(e) =>
               setPicked((p) => {
+                if (single) return new Set([l.externalId]);
                 const n = new Set(p);
                 if (e.target.checked) n.add(l.externalId);
                 else n.delete(l.externalId);
@@ -155,7 +163,7 @@ function LocationPicker({ card, restaurantId, onDone }: { card: ConnectorCard; r
       {error ? <p className="mt-2 text-red-700">{error}</p> : null}
       {locations?.length ? (
         <button type="button" disabled={busy || !picked.size} onClick={() => void save()} className="mt-3 rounded-full bg-espresso px-4 py-2 text-paper disabled:opacity-50">
-          {busy ? "Saving…" : "Use these locations"}
+          {busy ? "Saving…" : single ? "Use this listing" : "Use these locations"}
         </button>
       ) : null}
     </div>

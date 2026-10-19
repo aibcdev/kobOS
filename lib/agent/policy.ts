@@ -132,8 +132,12 @@ export async function connectorHealthy(restaurantId: string, connector: Connecto
       return provider === "SQUARE" || provider === "TOAST" ? integration(provider) : false;
     }
     case "GBP":
+      // A listing must be picked (PENDING_SETUP otherwise) before anything can be posted to it.
+      return (
+        (await flag("GBP_LIVE", restaurantId)) &&
+        (await prisma.integration.count({ where: { restaurantId, provider: "GBP", status: { in: ["CONNECTED", "DEGRADED"] }, externalAccountId: { not: null } } })) > 0
+      );
     case "FACEBOOK":
-      // No Integration provider yet (GBP lands in Spec 1 T-20); treat as not connected.
       return false;
   }
 }
