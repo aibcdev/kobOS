@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { enrichOnboardInput } from "@/lib/kob/onboard-enrich";
+import { clientIpFromHeaders, limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -9,8 +10,10 @@ const Body = z.object({
   role: z.string().max(40).optional(),
 });
 
-// DECISION: stays public — /onboard is the anonymous "Try KOB" funnel (hero, nav, /trial). Rate-limited in T-05.
+// DECISION: stays public — /onboard is the anonymous "Try KOB" funnel (hero, nav, /trial). Rate-limited per IP instead.
 export async function POST(req: Request) {
+  const rl = await limit(`kob-onboard:${clientIpFromHeaders(req.headers) ?? "unknown"}`, { windowSec: 3600, max: 20 });
+  if (!rl.ok) return tooManyRequests(rl);
   let json: unknown;
   try {
     json = await req.json();

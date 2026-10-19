@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { User } from "@supabase/supabase-js";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -24,6 +25,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     user = authed;
   } catch {
     user = null;
+  }
+
+  if (!user && !isUiPreviewEnabled()) {
+    redirect(`/login?next=${encodeURIComponent("/dashboard")}`);
   }
 
   if (isUiPreviewEnabled() || !user) {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { sameOrigin, talkAccess } from "@/lib/kob/talk/access";
 import { runLiveTalk } from "@/lib/kob/talk/agent";
+import { limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 export const maxDuration = 60;
 const inputSchema = z.object({
@@ -34,6 +35,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: access.error },
         { status: access.status },
+      );
+    const rl = await limit(`talk:${access.userId}`, { windowSec: 60, max: 10 });
+    if (!rl.ok)
+      return tooManyRequests(
+        rl,
+        "Please wait a moment before sending another request.",
       );
     const conversation = await prisma.conversation.findFirst({
       where: { id: input.conversationId, restaurantId: input.restaurantId },
