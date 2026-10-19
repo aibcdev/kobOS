@@ -1,10 +1,10 @@
 import type { Integration } from "@prisma/client";
-import { decryptIntegrationToken } from "@/lib/integrations/get-integration-token";
+import { getIntegrationAccessToken } from "@/lib/integrations/get-integration-token";
 import { prisma } from "@/lib/db/prisma";
 
 /** Pull GA4 page views into WebsiteEvent rows (proxy traffic). */
 export async function syncGa4Traffic(restaurantId: string, integration: Integration): Promise<number> {
-  const { accessToken } = decryptIntegrationToken(integration);
+  const accessToken = await getIntegrationAccessToken(integration);
   const metadata = integration.metadata as { propertyId?: string };
   const propertyId = metadata.propertyId;
   if (!accessToken || !propertyId) return 0;
