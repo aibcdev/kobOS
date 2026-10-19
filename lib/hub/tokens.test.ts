@@ -132,6 +132,30 @@ describeDb("hub token service on Postgres", () => {
     expect(after.scopesGranted).toEqual(["a", "b"]);
   });
 
+  it("Clover refreshes at its regional /oauth/v2/refresh and reads access_token_expiration", async () => {
+    vi.stubEnv("CLOVER_APP_ID", "cl-app");
+    vi.stubEnv("CLOVER_APP_SECRET", "cl-secret");
+    const row = await prisma.integration.create({
+      data: {
+        restaurantId,
+        provider: "CLOVER",
+        region: "EU",
+        encryptedAccessToken: crypto.encryptSecret("cl-old"),
+        encryptedRefreshToken: crypto.encryptSecret("cl-refresh"),
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+      },
+    });
+    const exp = Math.floor(Date.now() / 1000) + 1800;
+    const ep = tokenEndpoint({ body: { access_token: "cl-new", refresh_token: "cl-refresh-2", access_token_expiration: exp } });
+    expect(await tokens.getAccessToken(row.id, { fetch: ep.fetch })).toBe("cl-new");
+    expect(ep.calls[0].url).toBe("https://eu.clover.com/oauth/v2/refresh");
+    expect(JSON.parse(String(ep.calls[0].init.body))).toMatchObject({ client_id: "cl-app", refresh_token: "cl-refresh" });
+    const after = await prisma.integration.findUniqueOrThrow({ where: { id: row.id } });
+    expect(after.accessTokenExpiresAt).toEqual(new Date(exp * 1000));
+    expect(tokens.decryptTokens(after).refreshToken).toBe("cl-refresh-2");
+    vi.unstubAllEnvs();
+  });
+
   it("dueForRefresh lists tokens entering their window", async () => {
     const due = await square(23 * DAY + 3_600_000);
     const notDue = await prisma.integration.create({
@@ -153,6 +177,7 @@ describe("hub auth helpers", () => {
       scopes: ["x", "y"],
     });
     expect(tokenSetFrom({ access_token: "a", expires_at: "2026-11-18T00:00:00Z" }).expiresAt).toEqual(new Date("2026-11-18T00:00:00Z"));
+    expect(tokenSetFrom({ access_token: "a", access_token_expiration: 1_792_368_000 }).expiresAt).toEqual(new Date(1_792_368_000_000));
     expect(() => tokenSetFrom({})).toThrow();
   });
 

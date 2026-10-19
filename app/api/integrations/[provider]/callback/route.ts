@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { encryptSecret } from "@/lib/crypto/tokens";
 import { inngest } from "@/inngest/client";
 import { exchangeCode, tokenSetFrom } from "@/lib/hub/auth/oauth2";
+import { oauthUrls, providerRegion } from "@/lib/hub/auth/oauth-urls";
 import { getManifest } from "@/lib/hub/manifest";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
 import { decodeOAuthState } from "@/lib/integrations/oauth-state";
@@ -73,12 +74,17 @@ export async function GET(
     const manifest = getManifest(provider);
     const redirectUri = `${url.origin}/api/integrations/${provider}/callback`;
     let tokenJson: Record<string, unknown>;
+    let region: string | null = null;
     if (manifest) {
+      if (manifest.auth.regionOrigins) {
+        const r = await prisma.restaurant.findUnique({ where: { id: state.restaurantId }, select: { countryCode: true } });
+        region = providerRegion(manifest, r?.countryCode);
+      }
       try {
         tokenJson = (
           await exchangeCode(
             {
-              tokenUrl: cfg.tokenUrl,
+              tokenUrl: oauthUrls(manifest, region).tokenUrl ?? cfg.tokenUrl,
               clientId,
               clientSecret,
               body: manifest.auth.tokenBody,
@@ -141,7 +147,13 @@ export async function GET(
       connectedByUserId: state.userId,
       disconnectedAt: null,
       lastErrorCode: null,
-      ...(typeof tokenJson.merchant_id === "string" ? { externalAccountId: tokenJson.merchant_id } : {}),
+      ...(region ? { region } : {}),
+      // Square returns merchant_id with the token; Clover appends it to the redirect.
+      ...(typeof tokenJson.merchant_id === "string"
+        ? { externalAccountId: tokenJson.merchant_id }
+        : manifest && url.searchParams.get("merchant_id")
+          ? { externalAccountId: url.searchParams.get("merchant_id") }
+          : {}),
     };
     const integration = await prisma.integration.upsert({
       where: {
