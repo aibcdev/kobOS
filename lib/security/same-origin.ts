@@ -9,7 +9,11 @@ export function isSameOrigin(req: Request): boolean {
     return !site || site === "same-origin" || site === "none";
   }
   const allowed = new Set<string>();
-  for (const raw of [req.url, process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_SITE_URL]) {
+  // req.url may not carry the public host (dev server, proxies); the Host the browser used does.
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  const proto = req.headers.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
+  const fromHost = host ? `${proto}://${host}` : null;
+  for (const raw of [req.url, fromHost, process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_SITE_URL]) {
     if (!raw?.trim()) continue;
     try {
       allowed.add(new URL(raw).origin);

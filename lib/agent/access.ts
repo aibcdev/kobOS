@@ -35,6 +35,8 @@ export type ActionView = {
   expiresAt: string | null;
   verifiedAt: string | null;
   undoUntil: string | null;
+  /** VERIFIED, inside the undo window, with an inverse to run. */
+  undoable: boolean;
   failureReason: string | null;
 };
 
@@ -46,7 +48,7 @@ export function actionView(a: OsAction): ActionView {
     title: a.title,
     summary: a.ownerFacingSummary || a.description,
     status: a.status,
-    ownerStatus: ownerFacingStatus(a.status),
+    ownerStatus: ownerFacingStatus(a.status, a.failureCode),
     risk: a.riskScore,
     requiresSlide: a.riskScore >= SLIDE_RISK,
     alwaysEligible: isActionType(a.actionType) && ACTION_TYPE_SPECS[a.actionType].alwaysEligible,
@@ -55,6 +57,7 @@ export function actionView(a: OsAction): ActionView {
     expiresAt: a.expiresAt?.toISOString() ?? null,
     verifiedAt: a.verifiedAt?.toISOString() ?? null,
     undoUntil: a.undoUntil?.toISOString() ?? null,
+    undoable: a.status === "VERIFIED" && !!a.undoUntil && a.undoUntil > new Date() && a.rollbackPayload != null,
     failureReason: a.failureReason,
   };
 }
