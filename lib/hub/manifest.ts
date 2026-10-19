@@ -1,0 +1,111 @@
+import { squareManifest } from "@/lib/connectors/square/manifest";
+
+/** Spec 2 §3.3. Every connector describes itself once; the hub, capabilities and UI read only this. */
+export type AuthKind =
+  | "OAUTH2_CODE"
+  | "OAUTH2_CLIENT_CREDENTIALS"
+  | "API_KEY"
+  | "BASIC_KEY_SECRET"
+  | "JWT_BEARER"
+  | "WEBHOOK_ONLY"
+  | "FILE_IMPORT"
+  | "EMAIL_INGEST"
+  | "PLATFORM_KEY";
+
+export type ConnectorCategory =
+  | "POS"
+  | "PAYMENTS"
+  | "BOOKINGS"
+  | "DELIVERY"
+  | "MARKETING"
+  | "ACCOUNTING"
+  | "REVIEWS"
+  | "SOCIAL"
+  | "LABOUR"
+  | "PHONE"
+  | "WIFI"
+  | "SIGNALS";
+
+export const REGIONS = ["GB", "IE", "US", "CA", "AU", "NZ"] as const;
+export type Region = (typeof REGIONS)[number];
+
+/** Kinds of rows a connector can supply. Features (lib/hub/capabilities.ts) are defined in terms of these. */
+export const DATA_CONTRACTS = [
+  "sales",
+  "menu",
+  "guests",
+  "bookings",
+  "payments",
+  "delivery_sales",
+  "reviews",
+  "review_replies",
+  "social_publish",
+  "messaging",
+  "supplier_bills",
+  "shifts",
+  "calls",
+  "weather",
+  "events",
+  "places",
+  "wifi_guests",
+] as const;
+export type DataContract = (typeof DATA_CONTRACTS)[number];
+
+export type StreamSpec = {
+  name: string;
+  mode: "INCREMENTAL" | "FULL" | "WEBHOOK_DRIVEN";
+  /** Cron for the polling safety net. */
+  schedule: string;
+  backfillDays: number;
+  cursorField?: string;
+};
+
+export type KeyField = { name: string; label: string; secret: boolean };
+
+export type ConnectorManifest = {
+  /** `IntegrationProvider` value (or import source for file/email connectors). */
+  provider: string;
+  displayName: string;
+  category: ConnectorCategory;
+  regions: Region[];
+  auth: {
+    kind: AuthKind;
+    scopes?: string[];
+    authorizeUrl?: string;
+    tokenUrl?: string;
+    clientIdEnv?: string;
+    clientSecretEnv?: string;
+    keyFields?: KeyField[];
+    /** "Where to find your API key" deep link. */
+    helpUrl?: string;
+    /** PLATFORM_KEY: env vars that must be set for the source to be available. */
+    platformEnv?: string[];
+  };
+  streams: StreamSpec[];
+  webhooks?: { path: string; verifier: string; events: string[]; subscribe?: "API" | "MANUAL" };
+  /** Ledger action types it can execute (lib/agent/action-types.ts). */
+  actions: string[];
+  rateLimit: { rps?: number; rpm?: number; daily?: number; concurrency?: number };
+  /** `flag` gates the connector until it is approved/rolled out (lib/flags.ts). */
+  approval: { selfServe: boolean; partnerRequired: boolean; notes: string; flag: string };
+  dataContracts: DataContract[];
+  costNote?: string;
+};
+
+const REGISTRY: readonly ConnectorManifest[] = [squareManifest];
+
+const byProvider = new Map(REGISTRY.map((m) => [m.provider, m]));
+if (byProvider.size !== REGISTRY.length) throw new Error("Duplicate connector manifest provider");
+
+export function allManifests(): readonly ConnectorManifest[] {
+  return REGISTRY;
+}
+
+export function getManifest(provider: string): ConnectorManifest | undefined {
+  return byProvider.get(provider);
+}
+
+/** Manifests that can supply a data contract, optionally limited to a region. */
+export function manifestsFor(contract: DataContract, region?: Region): ConnectorManifest[] {
+  return REGISTRY.filter((m) => m.dataContracts.includes(contract) && (!region || m.regions.includes(region)));
+}

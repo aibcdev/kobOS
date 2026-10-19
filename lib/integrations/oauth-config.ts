@@ -1,4 +1,5 @@
 import type { IntegrationProvider } from "@prisma/client";
+import { squareManifest } from "@/lib/connectors/square/manifest";
 
 type OAuthConfig = {
   authUrl: string;
@@ -38,11 +39,11 @@ const CONFIG: Partial<Record<IntegrationProvider, OAuthConfig>> = {
     clientSecretEnv: "GOOGLE_OAUTH_CLIENT_SECRET",
   },
   SQUARE: {
-    authUrl: "https://connect.squareup.com/oauth2/authorize",
-    tokenUrl: "https://connect.squareup.com/oauth2/token",
-    scopes: ["ORDERS_READ", "MERCHANT_PROFILE_READ"],
-    clientIdEnv: "SQUARE_APPLICATION_ID",
-    clientSecretEnv: "SQUARE_APPLICATION_SECRET",
+    authUrl: squareManifest.auth.authorizeUrl!,
+    tokenUrl: squareManifest.auth.tokenUrl!,
+    scopes: squareManifest.auth.scopes!,
+    clientIdEnv: squareManifest.auth.clientIdEnv!,
+    clientSecretEnv: squareManifest.auth.clientSecretEnv!,
   },
 };
 

@@ -14,6 +14,7 @@ export const FLAGS = [
   "GUEST_INBOX_ENABLED",
   "CREATIVES_ENABLED",
   "STREAMING_TALK",
+  "SQUARE_LIVE",
 ] as const;
 
 export type FlagName = (typeof FLAGS)[number];
