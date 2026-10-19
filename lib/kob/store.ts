@@ -1,3 +1,7 @@
+/**
+ * @deprecated localStorage walkthrough state for the demo, /onboard wizard and marketing previews. Not a source
+ * of truth for real restaurants; do not import from API routes.
+ */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type WorkMutations } from "@/lib/kob/act";
