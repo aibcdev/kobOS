@@ -1,3 +1,4 @@
+import { currencyForCountry } from "@/lib/commerce/currency";
 import { ConnectorError } from "@/lib/connectors/errors";
 import { prisma } from "@/lib/db/prisma";
 import type { ConnectorCtx } from "@/lib/hub/connector";
@@ -57,13 +58,11 @@ export function incrementalPage(c: IncrementalCursor, rows: number, nextPage: st
   return { rows, nextCursor: JSON.stringify({ since: seen ?? c.since }), done: true };
 }
 
-const COUNTRY_CURRENCY: Record<string, string> = { US: "USD", CA: "CAD", GB: "GBP", IE: "EUR", AU: "AUD", NZ: "NZD", MX: "MXN" };
-
-/** For providers whose payloads carry wall-clock times or no currency (Toast, Epos Now). */
+/** For providers whose payloads carry wall-clock times or no currency (Toast, Epos Now), and for reporting. */
 export async function restaurantContext(restaurantId: string): Promise<{ timezone: string; currency: string }> {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { timezone: true, countryCode: true, locale: true } });
-  const country = r?.countryCode?.toUpperCase() ?? r?.locale.split("-")[1]?.toUpperCase() ?? "GB";
-  return { timezone: r?.timezone ?? "Europe/London", currency: COUNTRY_CURRENCY[country] ?? "GBP" };
+  const country = r?.countryCode?.toUpperCase() ?? r?.locale.split("-")[1]?.toUpperCase() ?? null;
+  return { timezone: r?.timezone ?? "Europe/London", currency: currencyForCountry(country) };
 }
 
 /** "2026-10-14T19:42:00" in `timeZone` → UTC Date (for providers that report wall-clock time, e.g. Epos Now). */
