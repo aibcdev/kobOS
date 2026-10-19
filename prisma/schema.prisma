@@ -463,6 +463,7 @@ model Restaurant {
   osActions             OsAction[]
   osRules               OsRestaurantRule[]
   osPermissions         OsActionPermission[]
+  osGrants              OsPermissionGrant[]
   osAudits              OsAuditEvent[]
   osReliability         OsWorkflowReliability[]
   osInvoices            OsInvoice[]
@@ -1463,6 +1464,38 @@ enum OsActionStatus {
   @@schema("public")
 }
 
+enum OsGrantScope {
+  ONCE
+  TASK
+  ALWAYS
+
+  @@schema("public")
+}
+
+model OsPermissionGrant {
+  id              String       @id @default(cuid())
+  restaurantId    String
+  /// Dotted action type, e.g. "gbp.review.reply".
+  actionType      String
+  connector       String
+  scope           OsGrantScope
+  /// Required when scope=TASK.
+  taskKey         String?
+  /// Set when scope=ONCE.
+  actionId        String?
+  /// e.g. {"minRating":4,"maxPerDay":20,"excludeSeverityGte":2}
+  limitsJson      Json         @default("{}")
+  grantedByUserId String       @db.Uuid
+  grantedAt       DateTime     @default(now())
+  /// TASK grants default to 24h.
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  restaurant      Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, actionType, scope])
+  @@schema("public")
+}
+
 enum OsPermissionMode {
   NEVER
   ASK
@@ -1565,6 +1598,19 @@ model OsAction {
   rollbackSupported     Boolean        @default(false)
   rollbackPayload       Json?
   idempotencyKey        String?
+  /// Groups actions from one owner request ("fix Xmas hours"); TASK grants match on it.
+  taskKey               String?
+  /// "GBP" | "INSTAGRAM" | "SQUARE" | "EMAIL" | "WHATSAPP" …
+  connector             String?
+  /// "WEB" | "WHATSAPP" | "SCHEDULE" | "EVENT"
+  channelOrigin         String?
+  requestedByUserId     String?        @db.Uuid
+  agentRunId            String?
+  attempt               Int            @default(0)
+  nextAttemptAt         DateTime?
+  expiresAt             DateTime?
+  ownerFacingSummary    String         @default("")
+  undoUntil             DateTime?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   restaurant            Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
@@ -1574,6 +1620,8 @@ model OsAction {
 
   @@unique([restaurantId, idempotencyKey])
   @@index([restaurantId, status, createdAt])
+  @@index([restaurantId, taskKey])
+  @@index([status, nextAttemptAt])
   @@schema("public")
 }
 

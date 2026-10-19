@@ -12,19 +12,54 @@ export type Role =
   | "STAFF"
   | "READ_ONLY";
 
-export function roleAllows(role: Role, actionType: string): boolean {
+/** `TeamMember.role` (Prisma `Role`) → OS role. */
+export function osRoleFor(teamRole: "OWNER" | "ADMIN" | "MEMBER" | string): Role {
+  if (teamRole === "OWNER") return "OWNER";
+  if (teamRole === "ADMIN") return "GENERAL_MANAGER";
+  return "STAFF";
+}
+
+/** Dotted ledger action types → the legacy keys the role table below understands. */
+export const LEGACY_ACTION_KEY: Record<string, string> = {
+  "gbp.review.reply": "REVIEW_REPLY",
+  "gbp.review.reply.update": "REVIEW_REPLY",
+  "gbp.review.reply.delete": "REVIEW_REPLY",
+  "gbp.hours.regular.update": "HOURS_UPDATE",
+  "gbp.hours.special.set": "HOURS_UPDATE",
+  "gbp.attribute.chat.set": "PROFILE_UPDATE",
+  "gbp.profile.description.update": "PROFILE_UPDATE",
+  "gbp.post.create": "SOCIAL_POST",
+  "ig.post.publish": "SOCIAL_POST",
+  "fb.post.publish": "SOCIAL_POST",
+  "email.send.supplier": "SUPPLIER_EMAIL",
+  "guest.reply.send": "GUEST_REPLY",
+  "pos.item.86": "MENU_86",
+  "pos.item.price.update": "PRICE_UPDATE",
+  "calendar.event.create": "CALENDAR_EVENT",
+};
+
+export function roleAllows(role: Role, rawActionType: string): boolean {
+  const actionType = LEGACY_ACTION_KEY[rawActionType] ?? rawActionType;
   if (role === "READ_ONLY") return false;
   if (role === "STAFF") return actionType === "REVIEW_THANK_YOU";
   if (role === "MARKETING") {
-    return ["REVIEW_REPLY", "REVIEW_THANK_YOU", "HOURS_UPDATE", "TEMPORARY_CLOSURE"].includes(
+    return [
+      "REVIEW_REPLY",
+      "REVIEW_THANK_YOU",
+      "HOURS_UPDATE",
+      "TEMPORARY_CLOSURE",
+      "SOCIAL_POST",
+      "PROFILE_UPDATE",
+      "GUEST_REPLY",
+    ].includes(actionType);
+  }
+  if (role === "CHEF") {
+    return ["PREP_ADJUST", "SUPPLIER_SUBSTITUTION", "INVOICE_FLAG", "MENU_86", "SUPPLIER_EMAIL"].includes(
       actionType,
     );
   }
-  if (role === "CHEF") {
-    return ["PREP_ADJUST", "SUPPLIER_SUBSTITUTION", "INVOICE_FLAG"].includes(actionType);
-  }
   if (role === "FINANCE") {
-    return ["INVOICE_FLAG", "SUPPLIER_SUBSTITUTION", "REFUND"].includes(actionType);
+    return ["INVOICE_FLAG", "SUPPLIER_SUBSTITUTION", "REFUND", "SUPPLIER_EMAIL"].includes(actionType);
   }
   return true;
 }
