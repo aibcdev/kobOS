@@ -29,9 +29,10 @@ type DayRow = { day: Date; sourceKind: string; sourceProvider: string; revenue: 
  * Rebuilds SalesSnapshot rows from Order for every local day touched by [from, to]. Revenue is total minus refunds of
  * paid orders (COMPLETED / REFUNDED); open and cancelled orders are not sales. Stand-alone refund rows (total 0, POSes
  * that record a refund as its own transaction) reduce revenue but are not counted as orders. Only sources that have orders are
- * rewritten, so legacy SAMPLE / MANUAL rows and pre-hub provider rows for untouched days are left alone.
+ * rewritten, so legacy SAMPLE / MANUAL rows and pre-hub provider rows for untouched days are left alone. `alsoClear`
+ * covers a source whose last orders were just deleted (undoing an import).
  */
-export async function rebuildSalesSnapshots(restaurantId: string, from: Date, to: Date): Promise<number> {
+export async function rebuildSalesSnapshots(restaurantId: string, from: Date, to: Date, alsoClear: SalesSnapshotSource[] = []): Promise<number> {
   const { timezone } = await prisma.restaurant.findUniqueOrThrow({ where: { id: restaurantId }, select: { timezone: true } });
   const fromDay = localDay(from, timezone);
   const toDay = localDay(to, timezone);
@@ -67,7 +68,7 @@ export async function rebuildSalesSnapshots(restaurantId: string, from: Date, to
 
   await prisma.$transaction([
     prisma.salesSnapshot.deleteMany({
-      where: { restaurantId, source: { in: [...new Set(sourcesWithOrders)] }, date: { gte: new Date(fromDay), lte: new Date(toDay) } },
+      where: { restaurantId, source: { in: [...new Set([...sourcesWithOrders, ...alsoClear])] }, date: { gte: new Date(fromDay), lte: new Date(toDay) } },
     }),
     prisma.salesSnapshot.createMany({ data: [...totals.values()].map((t) => ({ restaurantId, ...t })) }),
   ]);

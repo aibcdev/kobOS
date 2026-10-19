@@ -5,6 +5,7 @@ const NAV = [
   { href: "/app", label: "Talk" },
   { href: "/app/needs-you", label: "Needs you" },
   { href: "/app/activity", label: "Activity" },
+  { href: "/app/imports", label: "Imports" },
   { href: "/app/settings/permissions", label: "Settings" },
 ];
 
