@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ApprovalCard } from "@/components/kob-talk/cards/approval-card";
+import type { ActionView } from "@/lib/agent/access";
 import type { ChiefOfStaffTaskDto, TodayBriefPayload } from "@/lib/chief-of-staff/types";
 import type { HomeAudit } from "@/lib/kob/home/load-home";
 import { displayImpact, pickBriefTasks } from "@/lib/kob/home/pick-brief-tasks";
@@ -28,6 +30,21 @@ export function TodayHome({
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [pending, setPending] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [replies, setReplies] = useState<ActionView[]>([]);
+
+  // Review replies go through the action ledger (approve → post → read back), not the chief-of-staff task API.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/actions?restaurantId=${encodeURIComponent(restaurant.id)}&status=needs_you&limit=20`, { cache: "no-store" })
+      .then((res) => (res.ok ? (res.json() as Promise<{ actions: ActionView[] }>) : { actions: [] }))
+      .then((data) => {
+        if (!cancelled) setReplies(data.actions.filter((a) => a.actionType.startsWith("gbp.review.")));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurant.id]);
 
   useEffect(() => {
     if (brief) return;
@@ -47,8 +64,12 @@ export function TodayHome({
   }, [brief, restaurant.id]);
 
   // `brief` isn't mutated on approve/skip, so acted-on items stay put instead of jumping under the thumb.
-  const shown = useMemo(() => (brief ? pickBriefTasks(brief.tasks) : []), [brief]);
-  const remaining = shown.filter((t) => !outcomes[t.id]).length;
+  const shown = useMemo(
+    () => (brief ? pickBriefTasks(replies.length ? brief.tasks.filter((t) => t.category !== "REVIEWS") : brief.tasks) : []),
+    [brief, replies.length],
+  );
+  const repliesWaiting = replies.filter((a) => a.status === "AWAITING_APPROVAL").length;
+  const remaining = shown.filter((t) => !outcomes[t.id]).length + repliesWaiting;
   const approvedToday = brief
     ? brief.tasks.filter((t) => t.status === "APPROVED").length +
       Object.values(outcomes).filter((o) => o.kind === "approved").length
@@ -146,6 +167,25 @@ export function TodayHome({
             <li key={i} className="h-24 animate-pulse rounded-2xl bg-paper" />
           ))}
         </ul>
+      ) : null}
+
+      {replies.length > 0 ? (
+        <section aria-labelledby="today-replies" className="space-y-3">
+          <h2 id="today-replies" className="text-sm font-medium">
+            Google review replies
+          </h2>
+          <ul className="space-y-3">
+            {replies.map((a) => (
+              <li key={a.id}>
+                <ApprovalCard
+                  action={a}
+                  detailHref={`/app/actions/${a.id}?r=${encodeURIComponent(restaurant.id)}`}
+                  onSettled={(view) => setReplies((all) => all.map((x) => (x.id === view.id ? view : x)))}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {shown.length > 0 ? (

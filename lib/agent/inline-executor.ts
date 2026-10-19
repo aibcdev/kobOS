@@ -1,6 +1,7 @@
 import type { ActionApprovedData } from "@/lib/agent/events";
 import { executeApprovedAction, failAfterRetries, type ExecStep } from "@/lib/agent/executor";
 import { actionAdapterFor, type ActionAdapter } from "@/lib/agent/verify";
+import { registerAllConnectors } from "@/lib/connectors";
 import { createMemoryActionAdapter } from "@/lib/connectors/memory/adapter";
 
 /**
@@ -32,6 +33,7 @@ export function runActionInline(data: ActionApprovedData): void {
   };
   void (async () => {
     await sleep(delay);
+    registerAllConnectors();
     try {
       await executeApprovedAction(data, step, (connector) => actionAdapterFor(connector) ?? memoryAdapter());
     } catch (e) {

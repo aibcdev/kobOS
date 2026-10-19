@@ -1,5 +1,6 @@
 import { cloverManifest } from "@/lib/connectors/clover/manifest";
 import { eposNowManifest } from "@/lib/connectors/epos-now/manifest";
+import { gbpManifest } from "@/lib/connectors/gbp/manifest";
 import { squareManifest } from "@/lib/connectors/square/manifest";
 import { toastManifest } from "@/lib/connectors/toast/manifest";
 import { zettleManifest } from "@/lib/connectors/zettle/manifest";
@@ -120,7 +121,7 @@ export type ConnectorManifest = {
   costNote?: string;
 };
 
-const REGISTRY: readonly ConnectorManifest[] = [squareManifest, toastManifest, eposNowManifest, zettleManifest, cloverManifest];
+const REGISTRY: readonly ConnectorManifest[] = [squareManifest, toastManifest, eposNowManifest, zettleManifest, cloverManifest, gbpManifest];
 
 const byProvider = new Map(REGISTRY.map((m) => [m.provider, m]));
 if (byProvider.size !== REGISTRY.length) throw new Error("Duplicate connector manifest provider");

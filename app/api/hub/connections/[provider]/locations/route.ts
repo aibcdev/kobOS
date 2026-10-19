@@ -1,8 +1,9 @@
-import type { IntegrationProvider } from "@prisma/client";
+import { Prisma, type IntegrationProvider } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { inngest } from "@/inngest/client";
 import { registerAllConnectors } from "@/lib/connectors";
+import { chooseGbpLocation } from "@/lib/connectors/gbp/connector";
 import { prisma } from "@/lib/db/prisma";
 import { authorizeConnectionChange } from "@/lib/hub/connection-auth";
 import { connectorFor } from "@/lib/hub/connector";
@@ -53,7 +54,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ provider: stri
     return NextResponse.json({ error: "Couldn't check your locations. Please retry." }, { status: 502 });
   }
   if (!parsed.data.locationIds.every((id) => known.has(id))) return NextResponse.json({ error: "That location isn't on this account." }, { status: 422 });
-  await saveLocationChoice(found.integration.id, parsed.data.locationIds);
+  if (provider === "GBP") {
+    if (parsed.data.locationIds.length !== 1) return NextResponse.json({ error: "Pick the one Google listing for this restaurant." }, { status: 422 });
+    try {
+      await chooseGbpLocation(found.integration.id, parsed.data.locationIds[0]);
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
+        return NextResponse.json({ error: "That Google listing is already connected to another restaurant in KOB." }, { status: 409 });
+      throw e;
+    }
+  } else {
+    await saveLocationChoice(found.integration.id, parsed.data.locationIds);
+  }
   await inngest.send({ name: "hub/integration.connected", data: { integrationId: found.integration.id } }).catch(() => undefined);
   return NextResponse.json({ saved: true });
 }

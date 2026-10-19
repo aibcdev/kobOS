@@ -211,6 +211,7 @@ enum IntegrationProvider {
   ROTAREADY
   TRIPADVISOR
   YELP
+  GBP
 
   @@schema("public")
 }

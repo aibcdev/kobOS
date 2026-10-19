@@ -1,0 +1,6 @@
+{
+  "accounts": [
+    { "name": "accounts/1088820000000000001", "accountName": "Nonna's Kitchen", "type": "PERSONAL", "verificationState": "UNVERIFIED" },
+    { "name": "accounts/1088820000000000002", "accountName": "Nonna's Group", "type": "LOCATION_GROUP", "role": "OWNER" }
+  ]
+}
