@@ -470,8 +470,21 @@ model Restaurant {
   osForecasts           OsForecast[]
   osCapabilities        OsCapability[]
   osFacts               OsFact[]
+  featureFlagOverrides  FeatureFlagOverride[]
 
   @@index([organizationId])
+  @@schema("public")
+}
+
+/// Per-restaurant override of an env-default feature flag (`lib/flags.ts`).
+model FeatureFlagOverride {
+  restaurantId String
+  name         String
+  enabled      Boolean
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@id([restaurantId, name])
   @@schema("public")
 }
 
