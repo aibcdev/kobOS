@@ -10,13 +10,14 @@ function pooledDatabaseUrl(raw: string | undefined): string | undefined {
   return `${raw}${sep}connection_limit=5&pool_timeout=30&connect_timeout=30`;
 }
 
+const databaseUrl = pooledDatabaseUrl(process.env.DATABASE_URL);
+
+/** Without a URL, Prisma fails on first query instead of at import (tests import routes freely). */
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-    datasources: {
-      db: { url: pooledDatabaseUrl(process.env.DATABASE_URL) },
-    },
+    ...(databaseUrl ? { datasources: { db: { url: databaseUrl } } } : {}),
   });
 
 if (process.env.NODE_ENV !== "production") {
