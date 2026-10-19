@@ -15,7 +15,36 @@ Owner for all items: **Akeem** unless noted. Update the table when anything chan
 | 4 | Instagram App Review (`instagram_business_content_publish`) | Direct Instagram publishing (`INSTAGRAM_PUBLISH_LIVE`) | — | Not started |
 | 5 | Toast partner application | Toast writes beyond today's read access | — | Not started |
 | 6 | ICO data protection fee | UK GDPR registration | — | Not started |
-| 7 | US A2P 10DLC | US SMS only | — | Not needed in v1 (decision 8) |
+| 7 | US A2P 10DLC | US SMS only | — | Start now for Spec 2 phone host (see §S2-1); US SMS stays off until approved |
+
+### Spec 2 (connected features) day-1 items
+
+Source: `KOB_BUILD_SPEC_2_FEATURES.md` §2 and §16.1 (also kept out of this repo). Connectors ship behind
+`<NAME>_LIVE` flags with recorded fixtures; each flag flips only after its row says Approved.
+
+| # | Item | Gates | Lead time | Status |
+|---|------|-------|-----------|--------|
+| S2-1 | Twilio regulatory bundles (UK, IE, AU, NZ, CA) + US A2P 10DLC brand and campaign | Phone host numbers (`TWILIO_LIVE`); US order-link SMS | UK 1–3 days; 10DLC 1–3 weeks | Not started |
+| S2-2 | Stripe Connect platform profile | Direct ordering for non-Square venues (`STRIPE_CONNECT_LIVE`) | Days | Not started |
+| S2-3 | ResDiary API access (`consumer_api`) | Live bookings from the phone host (`RESDIARY_LIVE`) | Days–weeks | Not started |
+| S2-4 | Tock API request (US venues, read only) | Booking/guest import (`TOCK_LIVE`) | Weeks | Not started |
+| S2-5 | Klaviyo app (optional) | CRM sync (`KLAVIYO_LIVE`) | Self-serve; review only for listing | Optional |
+| S2-6 | Xero app, Plus tier budget (AUD 245/mo for up to 1,000 connections) | Supplier bills (`XERO_LIVE`) | Self-serve | Not started |
+| S2-7 | QuickBooks Online production keys questionnaire | Supplier bills (`QBO_LIVE`) | Days | Not started |
+| S2-8 | TikTok Content Posting API audit | Public TikTok posts (`TIKTOK_LIVE`); private-only until then | Weeks | Not started |
+| S2-9 | Clover developer account + app approval | Clover POS read (`CLOVER_LIVE`) | Weeks | Not started |
+| S2-10 | Toast partner application (writes) | Toast price/86 writes; until then price changes are an owner checklist | Months | Later (row 5 covers read) |
+| S2-11 | Lightspeed K-Series partner application | Lightspeed POS (`LIGHTSPEED_LIVE`) | Months | Later |
+| S2-12 | OpenTable, SevenRooms, Resy partner forms | Live bookings on those platforms; until then request-to-book + guest CSV import | Months; low odds | Later |
+| S2-13 | Ticketmaster Discovery key; Met Office DataHub; Open-Meteo commercial plan | Quiet-night filler signals | Self-serve | Not started |
+| S2-14 | Tripadvisor Content API key; Yelp Places paid plan | Review read for Tripadvisor/Yelp (no reply API on either) | Self-serve | Not started |
+
+Self-serve now with no KOB approval (owner pastes a key or does OAuth): Square (incl. Bookings), Epos Now, Zettle,
+Toast Standard API Access (read only), Deputy, Planday, 7shifts company token, Purple WiFi, Mailchimp.
+
+Partner-only, so imports first: Deliveroo, Uber Eats, DoorDash Marketplace and Just Eat (owner uploads statements
+for the "saved vs delivery apps" figure); OpenTable, SevenRooms and Resy (booking request + guest CSV); Dext (read
+bills from Xero/QBO instead).
 
 ---
 
