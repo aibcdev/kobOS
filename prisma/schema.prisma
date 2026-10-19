@@ -355,6 +355,10 @@ enum SalesSnapshotSource {
   TOAST
   MANUAL
   SAMPLE
+  EPOS_NOW
+  ZETTLE
+  CLOVER
+  IMPORT
 
   @@schema("public")
 }
@@ -416,22 +420,22 @@ model TeamMember {
 }
 
 model Restaurant {
-  id                    String                 @id @default(cuid())
+  id                    String                  @id @default(cuid())
   organizationId        String?
   name                  String
-  slug                  String                 @unique
+  slug                  String                  @unique
   cuisineType           String?
   city                  String?
   state                 String?
-  timezone              String                 @default("America/Chicago")
+  timezone              String                  @default("America/Chicago")
   /**
    * ISO 3166-1 alpha-2 (GB, US…). Set at onboarding from Places, then CDN geo.
    */
   countryCode           String?
-  locale                String                 @default("en-GB")
+  locale                String                  @default("en-GB")
   website               String?
   logo                  String?
-  subscriptionPlan      SubscriptionPlan       @default(FREE)
+  subscriptionPlan      SubscriptionPlan        @default(FREE)
   stripeCustomerId      String?
   stripeSubscriptionId  String?
   /**
@@ -441,15 +445,15 @@ model Restaurant {
   /**
    * Credits available for human-fulfilled service requests (website, logo, SEO, etc.).
    */
-  creditBalance         Int                    @default(0)
+  creditBalance         Int                     @default(0)
   creditsRefreshedAt    DateTime?
   vibe                  String?
   googleBusinessUrl     String?
-  aiPersonality         AiPersonality          @default(BALANCED)
-  useSampleData         Boolean                @default(false)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  organization          Organization?          @relation(fields: [organizationId], references: [id])
+  aiPersonality         AiPersonality           @default(BALANCED)
+  useSampleData         Boolean                 @default(false)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  organization          Organization?           @relation(fields: [organizationId], references: [id])
   visibilityAudits      VisibilityAudit[]
   members               TeamMember[]
   integrations          Integration[]
@@ -485,6 +489,13 @@ model Restaurant {
   osPermissions         OsActionPermission[]
   osGrants              OsPermissionGrant[]
   importJobs            ImportJob[]
+  guests                Guest[]
+  guestIdentities       GuestIdentity[]
+  guestConsents         GuestConsent[]
+  orders                Order[]
+  orderLines            OrderLine[]
+  bookings              Booking[]
+  menuItemLinks         MenuItemLink[]
   osAudits              OsAuditEvent[]
   osReliability         OsWorkflowReliability[]
   osInvoices            OsInvoice[]
@@ -619,6 +630,187 @@ model ImportJob {
 
   @@unique([restaurantId, fileSha256])
   @@index([restaurantId, createdAt])
+  @@schema("public")
+}
+
+/// Unified commerce (Spec 2 §4). One person per restaurant, resolved from POS customers, bookings and imports.
+/// Contact details live only on GuestIdentity (hashed for matching, optionally encrypted for sending).
+model Guest {
+  id              String          @id @default(cuid())
+  restaurantId    String
+  displayName     String?
+  firstSeenAt     DateTime?
+  lastSeenAt      DateTime?
+  visitCount      Int             @default(0)
+  /// Lifetime spend in minor units of `currency`, net of refunds.
+  totalSpendMinor Int             @default(0)
+  currency        String?
+  /// Set when two guests are merged; the survivor keeps identities, orders and bookings.
+  mergedIntoId    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  restaurant      Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  identities      GuestIdentity[]
+  consents        GuestConsent[]
+  orders          Order[]
+  bookings        Booking[]
+
+  @@index([restaurantId, lastSeenAt])
+  @@schema("public")
+}
+
+model GuestIdentity {
+  id             String     @id @default(cuid())
+  restaurantId   String
+  guestId        String
+  /// EMAIL | PHONE | PROVIDER_CUSTOMER
+  kind           String
+  /// SQUARE, TOAST, RESDIARY … (PROVIDER_CUSTOMER), or where the email/phone was first seen.
+  provider       String?
+  /// piiHash() of the email / E.164 phone, or "<PROVIDER>:<customerId>" for PROVIDER_CUSTOMER.
+  valueHash      String
+  /// encryptSecret() of the raw value; null when only the hash was received.
+  encryptedValue String?
+  createdAt      DateTime   @default(now())
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  guest          Guest      @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, kind, valueHash])
+  @@index([guestId])
+  @@schema("public")
+}
+
+/// Append-only consent log; the latest row per (guest, channel, purpose) wins.
+model GuestConsent {
+  id                String     @id @default(cuid())
+  restaurantId      String
+  guestId           String
+  /// EMAIL | SMS | WHATSAPP
+  channel           String
+  /// MARKETING | SERVICE
+  purpose           String
+  /// GRANTED | WITHDRAWN
+  status            String
+  capturedAt        DateTime
+  sourceKind        String
+  sourceProvider    String
+  sourceExternalId  String
+  sourceImportJobId String?
+  /// Wording shown, form URL, IP hash … whatever proves the consent.
+  evidenceJson      Json       @default("{}")
+  createdAt         DateTime   @default(now())
+  restaurant        Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  guest             Guest      @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([guestId, channel, purpose, capturedAt])
+  @@index([restaurantId])
+  @@schema("public")
+}
+
+model Order {
+  id                 String      @id @default(cuid())
+  restaurantId       String
+  guestId            String?
+  /// DINE_IN | TAKEAWAY | DELIVERY | ONLINE | UNKNOWN
+  channel            String      @default("UNKNOWN")
+  /// OPEN | COMPLETED | CANCELLED | REFUNDED
+  status             String
+  placedAt           DateTime
+  closedAt           DateTime?
+  /// ISO 4217; all *Minor columns are in this currency's minor unit.
+  currency           String
+  subtotalMinor      Int         @default(0)
+  discountMinor      Int         @default(0)
+  taxMinor           Int         @default(0)
+  tipMinor           Int         @default(0)
+  serviceChargeMinor Int         @default(0)
+  totalMinor         Int
+  refundedMinor      Int         @default(0)
+  /// Provider location id (Square location, Toast restaurant guid …).
+  externalLocationId String?
+  sourceKind         String
+  sourceProvider     String
+  sourceExternalId   String
+  sourceImportJobId  String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  restaurant         Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  guest              Guest?      @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  lines              OrderLine[]
+
+  @@unique([restaurantId, sourceProvider, sourceExternalId])
+  @@index([restaurantId, placedAt])
+  @@index([guestId])
+  @@schema("public")
+}
+
+model OrderLine {
+  id             String        @id @default(cuid())
+  restaurantId   String
+  orderId        String
+  menuItemLinkId String?
+  externalId     String?
+  name           String
+  quantity       Decimal       @db.Decimal(12, 3)
+  unitPriceMinor Int
+  totalMinor     Int
+  modifiersJson  Json          @default("[]")
+  restaurant     Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemLink   MenuItemLink? @relation(fields: [menuItemLinkId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([menuItemLinkId])
+  @@schema("public")
+}
+
+model Booking {
+  id                 String     @id @default(cuid())
+  restaurantId       String
+  guestId            String?
+  startsAt           DateTime
+  partySize          Int
+  /// BOOKED | SEATED | COMPLETED | CANCELLED | NO_SHOW
+  status             String
+  /// PHONE | WEB | WALK_IN | THIRD_PARTY | UNKNOWN
+  channel            String     @default("UNKNOWN")
+  depositMinor       Int?
+  currency           String?
+  externalLocationId String?
+  sourceKind         String
+  sourceProvider     String
+  sourceExternalId   String
+  sourceImportJobId  String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  restaurant         Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  guest              Guest?     @relation(fields: [guestId], references: [id], onDelete: SetNull)
+
+  @@unique([restaurantId, sourceProvider, sourceExternalId])
+  @@index([restaurantId, startsAt])
+  @@index([guestId])
+  @@schema("public")
+}
+
+/// A provider catalog item, optionally matched to KOB's menu item.
+model MenuItemLink {
+  id           String      @id @default(cuid())
+  restaurantId String
+  menuItemId   String?
+  provider     String
+  externalId   String
+  externalName String
+  category     String?
+  priceMinor   Int?
+  currency     String?
+  active       Boolean     @default(true)
+  lastSeenAt   DateTime    @default(now())
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuItem     OsMenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  orderLines   OrderLine[]
+
+  @@unique([restaurantId, provider, externalId])
+  @@index([menuItemId])
   @@schema("public")
 }
 
@@ -1668,12 +1860,12 @@ enum OsWasteType {
 }
 
 model OsLocation {
-  id           String   @id @default(cuid())
+  id           String             @id @default(cuid())
   restaurantId String
   name         String
-  isPrimary    Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  isPrimary    Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   actions      OsAction[]
   rules        OsRestaurantRule[]
   facts        OsFact[]
@@ -1685,20 +1877,20 @@ model OsLocation {
 }
 
 model OsAction {
-  id                    String         @id @default(cuid())
+  id                    String               @id @default(cuid())
   restaurantId          String
   locationId            String?
   actionType            String
   sourceEventId         String?
-  status                OsActionStatus @default(DETECTED)
+  status                OsActionStatus       @default(DETECTED)
   title                 String
-  description           String         @default("")
-  proposedPayload       Json           @default("{}")
-  executedPayload       Json           @default("{}")
-  verificationPayload   Json           @default("{}")
-  riskScore             Float          @default(0)
-  confidenceScore       Float          @default(0)
-  requiresApproval      Boolean        @default(true)
+  description           String               @default("")
+  proposedPayload       Json                 @default("{}")
+  executedPayload       Json                 @default("{}")
+  verificationPayload   Json                 @default("{}")
+  riskScore             Float                @default(0)
+  confidenceScore       Float                @default(0)
+  requiresApproval      Boolean              @default(true)
   approvedBy            String?
   approvedAt            DateTime?
   executionStartedAt    DateTime?
@@ -1707,7 +1899,7 @@ model OsAction {
   verifiedAt            DateTime?
   failureCode           String?
   failureReason         String?
-  rollbackSupported     Boolean        @default(false)
+  rollbackSupported     Boolean              @default(false)
   rollbackPayload       Json?
   idempotencyKey        String?
   /// Groups actions from one owner request ("fix Xmas hours"); TASK grants match on it.
@@ -1716,17 +1908,17 @@ model OsAction {
   connector             String?
   /// "WEB" | "WHATSAPP" | "SCHEDULE" | "EVENT"
   channelOrigin         String?
-  requestedByUserId     String?        @db.Uuid
+  requestedByUserId     String?              @db.Uuid
   agentRunId            String?
-  attempt               Int            @default(0)
+  attempt               Int                  @default(0)
   nextAttemptAt         DateTime?
   expiresAt             DateTime?
-  ownerFacingSummary    String         @default("")
+  ownerFacingSummary    String               @default("")
   undoUntil             DateTime?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  restaurant            Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  location              OsLocation?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  restaurant            Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  location              OsLocation?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
   evidence              OsDecisionEvidence[]
   audits                OsAuditEvent[]
 
@@ -1738,67 +1930,67 @@ model OsAction {
 }
 
 model OsRestaurantRule {
-  id               String      @id @default(cuid())
-  restaurantId     String
-  locationId       String?
-  scope            String
-  subjectType      String      @default("")
-  subjectId        String?
-  ruleType         String
-  conditionJson    Json        @default("{}")
-  actionJson       Json        @default("{}")
-  permissionLevel  OsPermissionMode @default(ASK)
-  source           String      @default("owner")
-  createdBy        String?
-  active           Boolean     @default(true)
-  confidence       Float       @default(1)
-  createdAt        DateTime    @default(now())
-  lastConfirmedAt  DateTime?
-  restaurant       Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  location         OsLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  id              String           @id @default(cuid())
+  restaurantId    String
+  locationId      String?
+  scope           String
+  subjectType     String           @default("")
+  subjectId       String?
+  ruleType        String
+  conditionJson   Json             @default("{}")
+  actionJson      Json             @default("{}")
+  permissionLevel OsPermissionMode @default(ASK)
+  source          String           @default("owner")
+  createdBy       String?
+  active          Boolean          @default(true)
+  confidence      Float            @default(1)
+  createdAt       DateTime         @default(now())
+  lastConfirmedAt DateTime?
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  location        OsLocation?      @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, scope, ruleType])
   @@schema("public")
 }
 
 model OsActionPermission {
-  id              String           @id @default(cuid())
-  restaurantId    String
-  actionType      String
-  category        String           @default("")
-  mode            OsPermissionMode @default(ASK)
-  maxOrderValue   Float?
+  id               String           @id @default(cuid())
+  restaurantId     String
+  actionType       String
+  category         String           @default("")
+  mode             OsPermissionMode @default(ASK)
+  maxOrderValue    Float?
   maxPriceVariance Float?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  restaurant       Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@unique([restaurantId, actionType, category])
   @@schema("public")
 }
 
 model OsDecisionEvidence {
-  id         String   @id @default(cuid())
-  actionId   String
+  id           String   @id @default(cuid())
+  actionId     String
   evidenceType String
-  source     String
-  sourceId   String?
-  valueJson  Json     @default("{}")
-  weight     Float    @default(1)
-  createdAt  DateTime @default(now())
-  action     OsAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  source       String
+  sourceId     String?
+  valueJson    Json     @default("{}")
+  weight       Float    @default(1)
+  createdAt    DateTime @default(now())
+  action       OsAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
 
   @@index([actionId])
   @@schema("public")
 }
 
 model OsAuditEvent {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   restaurantId String
   actionId     String?
   kind         String
-  payload      Json     @default("{}")
-  createdAt    DateTime @default(now())
+  payload      Json       @default("{}")
+  createdAt    DateTime   @default(now())
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   action       OsAction?  @relation(fields: [actionId], references: [id], onDelete: SetNull)
 
@@ -1807,18 +1999,18 @@ model OsAuditEvent {
 }
 
 model OsWorkflowReliability {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   restaurantId String
   workflowId   String
-  d            Float    @default(0)
-  e            Float    @default(0)
-  v            Float    @default(0)
-  c            Float    @default(0)
-  f            Float    @default(0)
-  u            Float    @default(0)
-  score        Float    @default(0)
-  sampleN      Int      @default(0)
-  updatedAt    DateTime @updatedAt
+  d            Float      @default(0)
+  e            Float      @default(0)
+  v            Float      @default(0)
+  c            Float      @default(0)
+  f            Float      @default(0)
+  u            Float      @default(0)
+  score        Float      @default(0)
+  sampleN      Int        @default(0)
+  updatedAt    DateTime   @updatedAt
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@unique([restaurantId, workflowId])
@@ -1826,42 +2018,42 @@ model OsWorkflowReliability {
 }
 
 model OsFact {
-  id           String      @id @default(cuid())
-  restaurantId String
-  locationId   String?
-  key          String
-  valueJson    Json
-  source       String
+  id            String      @id @default(cuid())
+  restaurantId  String
+  locationId    String?
+  key           String
+  valueJson     Json
+  source        String
   lastUpdatedAt DateTime
-  freshness    OsFreshness @default(UNKNOWN)
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  location     OsLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  freshness     OsFreshness @default(UNKNOWN)
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  location      OsLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, key])
   @@schema("public")
 }
 
 model OsCapability {
-  id           String             @id @default(cuid())
+  id           String            @id @default(cuid())
   restaurantId String
   workflowId   String
-  label        OsCapabilityLabel  @default(COMING_SOON)
-  gateJson     Json               @default("{}")
-  updatedAt    DateTime           @updatedAt
-  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  label        OsCapabilityLabel @default(COMING_SOON)
+  gateJson     Json              @default("{}")
+  updatedAt    DateTime          @updatedAt
+  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@unique([restaurantId, workflowId])
   @@schema("public")
 }
 
 model OsInvoice {
-  id           String   @id @default(cuid())
+  id           String          @id @default(cuid())
   restaurantId String
   vendorName   String
-  receivedAt   DateTime @default(now())
-  source       String   @default("email")
-  headerJson   Json     @default("{}")
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  receivedAt   DateTime        @default(now())
+  source       String          @default("email")
+  headerJson   Json            @default("{}")
+  restaurant   Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   lines        OsInvoiceLine[]
 
   @@index([restaurantId, receivedAt])
@@ -1869,64 +2061,65 @@ model OsInvoice {
 }
 
 model OsInvoiceLine {
-  id                 String    @id @default(cuid())
-  invoiceId          String
-  descriptionRaw     String
-  productId          String?
-  quantity           Float
-  packCount          Float?
-  packSize           Float?
-  unit               String
-  totalBaseQuantity  Float
-  unitPrice          Float
-  lineTotal          Float
-  invoice            OsInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  invoiceId         String
+  descriptionRaw    String
+  productId         String?
+  quantity          Float
+  packCount         Float?
+  packSize          Float?
+  unit              String
+  totalBaseQuantity Float
+  unitPrice         Float
+  lineTotal         Float
+  invoice           OsInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@schema("public")
 }
 
 model OsIngredient {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String
-  substitutionPolicy String @default("ASK")
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  recipeLines  OsRecipeIngredient[]
-  supplierProducts OsSupplierProduct[]
+  id                 String               @id @default(cuid())
+  restaurantId       String
+  name               String
+  substitutionPolicy String               @default("ASK")
+  restaurant         Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  recipeLines        OsRecipeIngredient[]
+  supplierProducts   OsSupplierProduct[]
 
   @@index([restaurantId])
   @@schema("public")
 }
 
 model OsMenuItem {
-  id                 String   @id @default(cuid())
-  restaurantId       String
-  locationId         String?
-  name               String
-  category           String   @default("")
-  sellingPrice       Float    @default(0)
-  active             Boolean  @default(true)
-  posExternalId      String?
-  recipeId           String?
-  estimatedFoodCost  Float?
-  grossMargin        Float?
-  prepStation        String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  restaurant         Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  recipe             OsRecipe?  @relation(fields: [recipeId], references: [id], onDelete: SetNull)
-  forecasts          OsForecast[]
+  id                String         @id @default(cuid())
+  restaurantId      String
+  locationId        String?
+  name              String
+  category          String         @default("")
+  sellingPrice      Float          @default(0)
+  active            Boolean        @default(true)
+  posExternalId     String?
+  recipeId          String?
+  estimatedFoodCost Float?
+  grossMargin       Float?
+  prepStation       String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  restaurant        Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  recipe            OsRecipe?      @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  forecasts         OsForecast[]
+  links             MenuItemLink[]
 
   @@index([restaurantId])
   @@schema("public")
 }
 
 model OsRecipe {
-  id           String   @id @default(cuid())
+  id           String               @id @default(cuid())
   restaurantId String
   name         String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   ingredients  OsRecipeIngredient[]
   menuItems    OsMenuItem[]
 
@@ -1953,10 +2146,10 @@ model OsRecipeIngredient {
 }
 
 model OsSupplier {
-  id           String   @id @default(cuid())
+  id           String              @id @default(cuid())
   restaurantId String
   name         String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   products     OsSupplierProduct[]
 
   @@index([restaurantId])
@@ -1964,73 +2157,73 @@ model OsSupplier {
 }
 
 model OsSupplierProduct {
-  id           String       @id @default(cuid())
-  supplierId   String
-  ingredientId String?
-  sku          String       @default("")
-  packQty      Float        @default(1)
-  packUnit     String       @default("unit")
-  price        Float        @default(0)
-  deliveryCharge Float      @default(0)
-  yieldPercentage Float     @default(1)
-  supplier     OsSupplier   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  ingredient   OsIngredient? @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  id              String        @id @default(cuid())
+  supplierId      String
+  ingredientId    String?
+  sku             String        @default("")
+  packQty         Float         @default(1)
+  packUnit        String        @default("unit")
+  price           Float         @default(0)
+  deliveryCharge  Float         @default(0)
+  yieldPercentage Float         @default(1)
+  supplier        OsSupplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  ingredient      OsIngredient? @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
 
   @@index([supplierId])
   @@schema("public")
 }
 
 model OsWasteEvent {
-  id                 String               @id @default(cuid())
+  id                 String              @id @default(cuid())
   restaurantId       String
   locationId         String?
-  timestamp          DateTime             @default(now())
+  timestamp          DateTime            @default(now())
   stationId          String?
   grossWeight        Float
-  tareWeight         Float                @default(0)
+  tareWeight         Float               @default(0)
   netWeight          Float
   predictedFoodId    String?
-  classification     String               @default("")
+  classification     String              @default("")
   visionConfidence   Float?
   combinedConfidence Float?
-  wasteType          OsWasteType          @default(UNKNOWN)
+  wasteType          OsWasteType         @default(UNKNOWN)
   reasonPredicted    String?
-  costPerUnit        Float                @default(0)
-  estimatedCost      Float                @default(0)
+  costPerUnit        Float               @default(0)
+  estimatedCost      Float               @default(0)
   measurementMethod  OsMeasurementMethod
   sensorId           String?
   imageReference     String?
-  createdAt          DateTime             @default(now())
-  restaurant         Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  location           OsLocation?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdAt          DateTime            @default(now())
+  restaurant         Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  location           OsLocation?         @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, timestamp])
   @@schema("public")
 }
 
 model OsSensorHealth {
-  id                      String         @id @default(cuid())
-  restaurantId            String
-  sensorId                String
-  timestamp               DateTime       @default(now())
-  cameraOnline            Boolean        @default(false)
-  scaleOnline             Boolean        @default(false)
-  lastWeightEventAt       DateTime?
-  lastImageAt             DateTime?
-  lightingScore           Float?
-  cameraObstructionScore  Float?
-  scaleDriftScore         Float?
-  networkStatus           String         @default("unknown")
-  storageRemaining        Float?
-  healthStatus            OsSensorStatus @default(OFFLINE)
-  restaurant              Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  id                     String         @id @default(cuid())
+  restaurantId           String
+  sensorId               String
+  timestamp              DateTime       @default(now())
+  cameraOnline           Boolean        @default(false)
+  scaleOnline            Boolean        @default(false)
+  lastWeightEventAt      DateTime?
+  lastImageAt            DateTime?
+  lightingScore          Float?
+  cameraObstructionScore Float?
+  scaleDriftScore        Float?
+  networkStatus          String         @default("unknown")
+  storageRemaining       Float?
+  healthStatus           OsSensorStatus @default(OFFLINE)
+  restaurant             Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId, sensorId, timestamp])
   @@schema("public")
 }
 
 model OsForecast {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   restaurantId String
   locationId   String?
   menuItemId   String?
@@ -2039,7 +2232,7 @@ model OsForecast {
   p10          Float
   p90          Float
   confidence   Float
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   location     OsLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   menuItem     OsMenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
 
