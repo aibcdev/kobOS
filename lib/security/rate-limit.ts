@@ -62,10 +62,22 @@ export async function limit(rawKey: string, opts: { windowSec: number; max: numb
   };
 }
 
+/**
+ * The client can put anything in X-Forwarded-For, so the first entry is never trusted. Netlify's edge sets
+ * x-nf-client-connection-ip itself; otherwise the last XFF hop is the one our nearest proxy appended.
+ */
 export function clientIpFromHeaders(h: Headers): string | null {
-  const xf = h.get("x-forwarded-for");
-  if (xf) return xf.split(",")[0]?.trim() || null;
-  return h.get("x-real-ip")?.trim() || h.get("x-nf-client-connection-ip")?.trim() || null;
+  const nf = h.get("x-nf-client-connection-ip")?.trim();
+  if (nf) return nf;
+  const hops = (h.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (hops.length) return hops[hops.length - 1];
+  return h.get("x-real-ip")?.trim() || null;
+}
+
+/** Fleet-wide cap per UTC day for endpoints that spend money on anonymous traffic (Google Places). */
+export function dailyBudget(name: string, envVar: string, fallbackMax: number): Promise<LimitResult> {
+  const max = Math.max(1, Number(process.env[envVar]) || fallbackMax);
+  return limit(`budget:${name}`, { windowSec: 86_400, max });
 }
 
 /** 429 body + Retry-After for a failed `limit()` result. */

@@ -55,10 +55,13 @@ export function AuditUpgradeCheckout({
             city: city || null,
             visibilityAuditId: auditId,
             mode: "checkout",
-            tier: "starter",
           }),
         });
-        const body = (await res.json()) as { checkoutUrl?: string; error?: string };
+        const body = (await res.json()) as { checkoutUrl?: string; error?: string; mode?: string; restaurantId?: string };
+        if (res.ok && body.mode === "existing" && body.restaurantId) {
+          window.location.href = `/dashboard?r=${encodeURIComponent(body.restaurantId)}`;
+          return;
+        }
         if (!res.ok || !body.checkoutUrl) {
           setError(body.error ?? "Could not start checkout. Check Stripe configuration.");
           setStatus("failed");
