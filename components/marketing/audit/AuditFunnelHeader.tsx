@@ -1,10 +1,11 @@
+import { START_FREE_TRIAL } from "@/lib/billing/offer";
 import { AuditGraderHeader } from "@/components/marketing/audit/AuditGraderHeader";
 
 /** Owner grader header — logo + Log in; trial / unlock pill. */
 export function AuditFunnelHeader({
   showTrialCta = false,
   ctaHref = "/pricing",
-  ctaLabel = "Start 7-day free trial",
+  ctaLabel = START_FREE_TRIAL,
   onCtaClick,
 }: {
   ctaHref?: string;

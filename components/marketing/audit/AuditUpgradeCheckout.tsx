@@ -1,5 +1,6 @@
 "use client";
 
+import { FREE_TRIAL_LABEL } from "@/lib/billing/offer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -82,7 +83,7 @@ export function AuditUpgradeCheckout({
           <p className="mt-6 text-lg font-medium text-[#2c2c2c]">
             {status === "checking" ? "Confirming your account…" : "Opening secure checkout…"}
           </p>
-          <p className="mt-2 text-sm text-[#666666]">7-day free trial for {restaurantName}</p>
+          <p className="mt-2 text-sm text-[#666666]">{FREE_TRIAL_LABEL} for {restaurantName}</p>
         </>
       ) : null}
       {error ? (

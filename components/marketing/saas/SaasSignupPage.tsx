@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { TRIAL_LABEL } from "@/lib/billing/offer";
 import { MARKETING_HERO } from "@/lib/marketing/assets";
 import { marketingCopy } from "@/lib/marketing/copy";
 
@@ -166,7 +167,7 @@ export function SaasSignupPage() {
             Ready to see your full report?
           </h2>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#2c2c2c]/75">
-            {["Free email signup", "Browse dashboard free", "7-day trial when you request"].map((item) => (
+            {["Free email signup", "Browse dashboard free", `${TRIAL_LABEL} when you request`].map((item) => (
               <li key={item} className="flex items-center gap-1.5">
                 <SaasIcon icon="solar:check-circle-bold" className="text-[var(--color-forest-mid)]" />
                 {item}
