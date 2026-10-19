@@ -13,6 +13,7 @@ describe("health and backoff (pure)", () => {
     const base = { cursors: [{ failureCount: 0 }], enabled: true, now };
     expect(computeHealth({ ...base, integration: { status: "CONNECTED" } })).toBe("CONNECTED");
     expect(computeHealth({ ...base, integration: { status: "REAUTH" } })).toBe("REAUTH");
+    expect(computeHealth({ ...base, integration: { status: "PENDING_SETUP" } })).toBe("PENDING_SETUP");
     expect(computeHealth({ ...base, integration: { status: "CONNECTED" }, enabled: false })).toBe("PENDING_APPROVAL");
     expect(computeHealth({ ...base, integration: { status: "CONNECTED" }, cursors: [{ failureCount: 3 }] })).toBe("DEGRADED");
     expect(computeHealth({ ...base, integration: { status: "DEGRADED" } })).toBe("CONNECTED");
