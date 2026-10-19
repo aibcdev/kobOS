@@ -87,6 +87,7 @@ describe("capabilitiesFor", () => {
         restaurant: { findUnique: async () => ({ countryCode: "GB" }) },
         integration: { findMany: async () => [{ provider: "SQUARE", status: "CONNECTED" }, { provider: "GMAIL", status: "CONNECTED" }] },
         featureFlagOverride: { findUnique: async () => null },
+        importJob: { groupBy: async () => [] },
       },
     }));
     const { capabilitiesFor } = await import("@/lib/hub/capabilities");
