@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 import type { DataContract } from "@/lib/hub/manifest";
 import { sourceRefFromRow, type SourceRef } from "@/lib/hub/source-ref";
-import { standardMinutes } from "@/lib/roi/standard-minutes";
+import type { ActionType } from "@/lib/agent/action-types";
+import { STANDARD_MINUTES, standardMinutes } from "@/lib/roi/standard-minutes";
 
 /**
  * Spec 2 Phase 9. Each ROI metric is a sum over stored rows, and every row carries the SourceRef it came from, so any
@@ -23,6 +24,8 @@ export type EvidenceRow = {
   label: string;
   at: Date;
   ref: SourceRef;
+  /** How the value was arrived at, when it isn't read straight off the record (standard minutes). */
+  note?: string;
 };
 
 type MetricSpec = {
@@ -193,7 +196,9 @@ export const METRICS: Record<MetricKey, MetricSpec> = {
     rows: async (w) =>
       (await verifiedActions(w)).flatMap((a) => {
         const minutes = standardMinutes(a.actionType);
-        return minutes ? [{ id: a.id, value: minutes, label: a.ownerFacingSummary || a.title, at: a.verifiedAt!, ref: actionRef(a) }] : [];
+        if (!minutes) return [];
+        const basis = STANDARD_MINUTES[a.actionType as ActionType].basis;
+        return [{ id: a.id, value: minutes, label: a.ownerFacingSummary || a.title, at: a.verifiedAt!, ref: actionRef(a), note: `${minutes} min by hand: ${basis.charAt(0).toLowerCase()}${basis.slice(1)}` }];
       }),
   },
 };
