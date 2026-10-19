@@ -23,6 +23,7 @@ const snapshot: WeekSnapshot = {
     bookings: off("count"),
     kob_actions: live(9, "count", 9),
     time_saved: live(79, "minutes", 9),
+    kob_value: live(0, "money", 0),
   },
 };
 
@@ -30,13 +31,40 @@ describe("weekly email and number guard (T-92)", () => {
   const email = weeklyEmail({ restaurantName: "Pizza 4 You", restaurantId: "r_1", snapshot, locale: "en-GB", appUrl: "https://trykob.com" });
 
   it("renders snapshot values, OFF hints and click-through links", () => {
-    expect(email.subject).toBe("Your week at Pizza 4 You: £12,345.67 in sales, 9 jobs done by KOB");
+    expect(email.subject).toBe("Your week at Pizza 4 You");
     expect(email.text).toContain("Sales: £12,345.67");
     expect(email.text).toContain("1 h 19 min");
     expect(email.text).toContain("Bookings: off. Connect OpenTable or Resy");
     expect(email.html).toContain("https://trykob.com/app/roi/2026-10-12/net_sales?r=r_1");
     expect(email.html).toContain("/app/roi/2026-10-12/print?r=r_1");
     expect(email.allowed).toContain("12 – 18 Oct 2026");
+  });
+
+  it("separates what happened from what KOB did, and shows no number for unearned value", () => {
+    const order = ["YOUR WEEK", "KOB'S WORK", "VALUE FROM KOB (VERIFIED)"].map((h) => email.text.indexOf(h));
+    expect(order.every((i, n) => i > -1 && (n === 0 || i > order[n - 1]))).toBe(true);
+    expect(email.text.indexOf("Sales: £12,345.67")).toBeLessThan(order[1]);
+    expect(email.text.slice(order[2])).toContain("Nothing yet. This fills in when KOB's phone, ordering or win-back are on.");
+    expect(email.text).not.toMatch(/Value from KOB: /);
+    expect(email.html).toContain("Value from KOB (verified)");
+    expect(email.html).not.toContain("/app/roi/2026-10-12/kob_value");
+    expect(email.allowed).not.toContain("£0.00");
+  });
+
+  it("treats a week saved before verified value existed as empty", () => {
+    const older: Partial<WeekSnapshot["metrics"]> = { ...snapshot.metrics };
+    delete older.kob_value;
+    const old = weeklyEmail({ restaurantName: "Pizza 4 You", restaurantId: "r_1", snapshot: { ...snapshot, metrics: older as WeekSnapshot["metrics"] }, locale: "en-GB", appUrl: "https://trykob.com" });
+    expect(old.text).toContain("Nothing yet.");
+    expect(guardEmail(old, "Pizza 4 You").ok).toBe(true);
+  });
+
+  it("leads with verified value once KOB has earned some", () => {
+    const earned = weeklyEmail({ restaurantName: "Pizza 4 You", restaurantId: "r_1", snapshot: { ...snapshot, metrics: { ...snapshot.metrics, kob_value: live(4200, "money", 3) } }, locale: "en-GB", appUrl: "https://trykob.com" });
+    expect(earned.subject).toBe("Your week at Pizza 4 You: £42.00 verified from KOB");
+    expect(earned.text).toContain("Value from KOB: £42.00");
+    expect(earned.text).not.toContain("Nothing yet.");
+    expect(guardEmail(earned, "Pizza 4 You").ok).toBe(true);
   });
 
   it("passes a clean render, including a name with digits", () => {

@@ -128,6 +128,7 @@ describeDb("ROI ledger on Postgres (T-90)", () => {
     expect(snap.metrics.bookings).toMatchObject({ state: "LIVE", value: 1 });
     expect(snap.metrics.kob_actions).toMatchObject({ state: "LIVE", value: 2 });
     expect(snap.metrics.time_saved).toMatchObject({ state: "LIVE", value: 4 + 15, unit: "minutes" });
+    expect(snap.metrics.kob_value).toMatchObject({ state: "LIVE", value: 0, count: 0, sources: [] });
 
     const { rows } = await ledger.metricRows(restaurantId, "2026-10-12", "delivery_sales");
     expect(rows).toHaveLength(1);
@@ -148,6 +149,22 @@ describeDb("ROI ledger on Postgres (T-90)", () => {
     const fed = await ledger.computeWeek(restaurantId, "2026-10-12");
     expect(fed.metrics.delivery_sales).toMatchObject({ state: "LIVE", value: 0 });
     expect(fed.metrics.net_sales).toMatchObject({ state: "LIVE", value: 0 });
+  });
+
+  it("verified value counts only registered verified sources", async () => {
+    await seedWeek();
+    const { VERIFIED_VALUE_SOURCES } = await import("@/lib/roi/metrics");
+    const source = async () => [
+      { id: "promo_1", value: 1500, label: "KOB10 redeemed", at: new Date("2026-10-14T12:00:00Z"), ref: { kind: "API" as const, provider: "SQUARE" as const, externalId: "promo_1", noun: "order" } },
+    ];
+    VERIFIED_VALUE_SOURCES.push(source);
+    try {
+      const snap = await ledger.computeWeek(restaurantId, "2026-10-12");
+      expect(snap.metrics.kob_value).toMatchObject({ state: "LIVE", value: 1500, count: 1, sources: ["SQUARE"] });
+      expect(snap.metrics.net_sales.value).toBe(2000 + 1000 + 3000 + 700);
+    } finally {
+      VERIFIED_VALUE_SOURCES.splice(VERIFIED_VALUE_SOURCES.indexOf(source), 1);
+    }
   });
 
   it("saveWeek snapshots once per restaurant-week and recomputes in place", async () => {

@@ -14,11 +14,12 @@ export function weeklyReceiptParams(input: { restaurantName: string; snapshot: W
   const sales = s.metrics.net_sales?.state === "LIVE" ? formatMetric(s.metrics.net_sales, s.currency, locale) : null;
   const jobs = s.metrics.kob_actions?.state === "LIVE" && s.metrics.kob_actions.count ? formatMetric(s.metrics.kob_actions, s.currency, locale) : null;
   const saved = s.metrics.time_saved?.state === "LIVE" && s.metrics.time_saved.count ? formatMetric(s.metrics.time_saved, s.currency, locale) : null;
-  const parts = [sales && `${sales} in sales`, jobs && `${jobs} jobs done by KOB`, saved && `about ${saved} saved`].filter((p): p is string => Boolean(p));
+  const value = s.metrics.kob_value?.state === "LIVE" && s.metrics.kob_value.count ? formatMetric(s.metrics.kob_value, s.currency, locale) : null;
+  const parts = [value && `${value} verified from KOB`, sales && `${sales} in sales`, jobs && `${jobs} jobs done by KOB`, saved && `about ${saved} saved`].filter((p): p is string => Boolean(p));
   if (!parts.length) return null;
   const label = weekLabel(s.weekStart, locale);
   const summary = parts.join(", ");
-  if (!numberGuard(summary, [sales, jobs, saved].filter((v): v is string => Boolean(v))).ok) return null;
+  if (!numberGuard(summary, [value, sales, jobs, saved].filter((v): v is string => Boolean(v))).ok) return null;
   return [input.restaurantName, label, summary, input.link];
 }
 

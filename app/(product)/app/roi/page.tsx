@@ -5,7 +5,7 @@ import { loadOwnerContext } from "@/lib/agent/owner-context";
 import { providerName } from "@/lib/hub/capabilities";
 import { formatMetric, weekLabel } from "@/lib/roi/format";
 import { isWeekStart, lastCompletedWeek, recentWeeks, sourceNames, weekView } from "@/lib/roi/ledger";
-import { METRIC_KEYS, METRICS } from "@/lib/roi/metrics";
+import { KOB_VALUE_EMPTY, METRIC_GROUPS, METRICS, showsAsEmpty } from "@/lib/roi/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ export default async function RoiPage({ searchParams }: { searchParams: Promise<
   const sentFmt = new Intl.DateTimeFormat(locale, { timeZone: timezone, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <AppPageShell title="Your week" subtitle={`${ctx.restaurant.name} · ${weekLabel(week, locale)}`} restaurantQuery={restaurantQuery} active="/app/roi">
+    <AppPageShell title={`Your week at ${ctx.restaurant.name}`} subtitle={`${weekLabel(week, locale)}`} restaurantQuery={restaurantQuery} active="/app/roi">
       <nav aria-label="Weeks" className="flex flex-wrap gap-2 text-sm">
         {weeks.map((w) => (
           <Link
@@ -46,40 +46,57 @@ export default async function RoiPage({ searchParams }: { searchParams: Promise<
             : "This week hasn't been sent yet; these numbers are as of now. Every number links to the records behind it."}
       </p>
 
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {METRIC_KEYS.map((key) => {
-          const spec = METRICS[key];
-          const m = snapshot.metrics[key];
-          if (!m) return null;
-          const value = formatMetric(m, snapshot.currency, locale);
-          if (m.state === "OFF") {
-            return (
-              <li key={key} className="rounded-3xl border border-dashed border-line p-5">
-                <p className="text-sm text-muted">{spec.label}</p>
-                <p className="mt-2 text-sm">
-                  Off: connect {m.connect.slice(0, 2).map(providerName).join(" or ")} to see this.
-                </p>
-                <Link href={withR("/app/settings/connections")} className="mt-3 inline-block text-sm underline">
-                  Connections
-                </Link>
-              </li>
-            );
-          }
-          return (
-            <li key={key}>
-              <Link href={withR(`/app/roi/${week}/${key}`)} className="block rounded-3xl border border-line bg-paper p-5 hover:border-espresso">
-                <p className="text-sm text-muted">{spec.label}</p>
-                <p className="mt-1 font-display text-3xl tabular-nums">{value}</p>
-                <p className="mt-2 text-sm text-muted">{spec.explain}</p>
-                <p className="mt-1 text-xs text-muted">
-                  {m.count} record{m.count === 1 ? "" : "s"}
-                  {m.sources.length ? ` · from ${sourceNames(m).join(", ")}` : ""}
-                </p>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {METRIC_GROUPS.map((group) => (
+        <section key={group.key} aria-labelledby={`roi-${group.key}`} className="space-y-3">
+          <div>
+            <h2 id={`roi-${group.key}`} className="font-display text-xl">
+              {group.title}
+            </h2>
+            <p className="text-sm text-muted">{group.blurb}</p>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {group.metrics.map((key) => {
+              const spec = METRICS[key];
+              const m = snapshot.metrics[key];
+              if (showsAsEmpty(key, m)) {
+                return (
+                  <li key={key} className="rounded-3xl border border-dashed border-line p-5 sm:col-span-2">
+                    <p className="text-sm">{KOB_VALUE_EMPTY}</p>
+                  </li>
+                );
+              }
+              if (!m) return null;
+              const value = formatMetric(m, snapshot.currency, locale);
+              if (m.state === "OFF") {
+                return (
+                  <li key={key} className="rounded-3xl border border-dashed border-line p-5">
+                    <p className="text-sm text-muted">{spec.label}</p>
+                    <p className="mt-2 text-sm">
+                      Off: connect {m.connect.slice(0, 2).map(providerName).join(" or ")} to see this.
+                    </p>
+                    <Link href={withR("/app/settings/connections")} className="mt-3 inline-block text-sm underline">
+                      Connections
+                    </Link>
+                  </li>
+                );
+              }
+              return (
+                <li key={key}>
+                  <Link href={withR(`/app/roi/${week}/${key}`)} className="block rounded-3xl border border-line bg-paper p-5 hover:border-espresso">
+                    <p className="text-sm text-muted">{spec.label}</p>
+                    <p className="mt-1 font-display text-3xl tabular-nums">{value}</p>
+                    <p className="mt-2 text-sm text-muted">{spec.explain}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {m.count} record{m.count === 1 ? "" : "s"}
+                      {m.sources.length ? ` · from ${sourceNames(m).join(", ")}` : ""}
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
 
       <Link href={withR(`/app/roi/${week}/print`)} className="text-sm text-muted underline">
         Printable version

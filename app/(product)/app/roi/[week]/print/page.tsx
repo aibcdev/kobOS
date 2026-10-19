@@ -5,7 +5,7 @@ import { loadOwnerContext } from "@/lib/agent/owner-context";
 import { providerName } from "@/lib/hub/capabilities";
 import { formatMetric, weekLabel } from "@/lib/roi/format";
 import { isWeekStart, sourceNames, weekView } from "@/lib/roi/ledger";
-import { METRIC_KEYS, METRICS } from "@/lib/roi/metrics";
+import { KOB_VALUE_EMPTY, METRIC_GROUPS, METRICS, showsAsEmpty } from "@/lib/roi/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -44,26 +44,43 @@ export default async function RoiPrintPage({ params, searchParams }: { params: P
             <th className="py-2 pl-4 font-normal">Records and sources</th>
           </tr>
         </thead>
-        <tbody>
-          {METRIC_KEYS.map((key) => {
-            const m = snapshot.metrics[key];
-            if (!m) return null;
-            return (
-              <tr key={key} className="border-b border-line align-top">
-                <td className="py-3">
-                  <p className="font-medium">{METRICS[key].label}</p>
-                  <p className="text-xs text-muted">{METRICS[key].explain}</p>
-                </td>
-                <td className="py-3 text-right font-display text-lg tabular-nums">{m.state === "OFF" ? "Off" : formatMetric(m, snapshot.currency, locale)}</td>
-                <td className="py-3 pl-4 text-xs text-muted">
-                  {m.state === "OFF"
-                    ? `Connect ${m.connect.slice(0, 2).map(providerName).join(" or ")} to see this.`
-                    : `${m.count} record${m.count === 1 ? "" : "s"}${m.sources.length ? ` from ${sourceNames(m).join(", ")}` : ""}`}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
+        {METRIC_GROUPS.map((group) => (
+          <tbody key={group.key}>
+            <tr>
+              <th colSpan={3} className="pt-6 pb-1 text-left">
+                <p className="font-display text-lg font-normal">{group.title}</p>
+                <p className="text-xs font-normal text-muted">{group.blurb}</p>
+              </th>
+            </tr>
+            {group.metrics.map((key) => {
+              const m = snapshot.metrics[key];
+              if (showsAsEmpty(key, m)) {
+                return (
+                  <tr key={key} className="border-b border-line">
+                    <td colSpan={3} className="py-3 text-sm">
+                      {KOB_VALUE_EMPTY}
+                    </td>
+                  </tr>
+                );
+              }
+              if (!m) return null;
+              return (
+                <tr key={key} className="border-b border-line align-top">
+                  <td className="py-3">
+                    <p className="font-medium">{METRICS[key].label}</p>
+                    <p className="text-xs text-muted">{METRICS[key].explain}</p>
+                  </td>
+                  <td className="py-3 text-right font-display text-lg tabular-nums">{m.state === "OFF" ? "Off" : formatMetric(m, snapshot.currency, locale)}</td>
+                  <td className="py-3 pl-4 text-xs text-muted">
+                    {m.state === "OFF"
+                      ? `Connect ${m.connect.slice(0, 2).map(providerName).join(" or ")} to see this.`
+                      : `${m.count} record${m.count === 1 ? "" : "s"}${m.sources.length ? ` from ${sourceNames(m).join(", ")}` : ""}`}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        ))}
       </table>
 
       <p className="mt-6 text-xs text-muted">
