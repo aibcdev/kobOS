@@ -17,6 +17,7 @@ export const squareManifest: ConnectorManifest = {
     clientIdEnv: "SQUARE_APPLICATION_ID",
     clientSecretEnv: "SQUARE_APPLICATION_SECRET",
     tokenBody: "json",
+    pkce: true,
     refreshAheadSeconds: 23 * 86_400,
   },
   streams: [

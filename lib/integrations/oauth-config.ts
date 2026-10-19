@@ -65,7 +65,7 @@ export function isOAuthConfigured(provider: IntegrationProvider): boolean {
 }
 
 /** `authUrl` overrides the configured one (regional data centres, see lib/hub/auth/oauth-urls.ts). */
-export function buildOAuthUrl(provider: IntegrationProvider, state: string, redirectUri: string, authUrl?: string): string | null {
+export function buildOAuthUrl(provider: IntegrationProvider, state: string, redirectUri: string, authUrl?: string, codeChallenge?: string): string | null {
   const cfg = getOAuthConfig(provider);
   if (!cfg) return null;
   const clientId = process.env[cfg.clientIdEnv];
@@ -80,5 +80,9 @@ export function buildOAuthUrl(provider: IntegrationProvider, state: string, redi
     prompt: "consent",
   });
   if (!cfg.scopes.length) params.delete("scope");
+  if (codeChallenge) {
+    params.set("code_challenge", codeChallenge);
+    params.set("code_challenge_method", "S256");
+  }
   return `${authUrl ?? cfg.authUrl}?${params.toString()}`;
 }

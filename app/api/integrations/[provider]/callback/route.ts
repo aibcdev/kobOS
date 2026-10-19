@@ -1,16 +1,19 @@
-import { createHash } from "node:crypto";
 import { IntegrationProvider, Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { canManageConnections } from "@/lib/api/restaurant-access";
+import { requireApiUser } from "@/lib/auth/api-session";
+import { registerAllConnectors } from "@/lib/connectors";
 import { encryptSecret } from "@/lib/crypto/tokens";
 import { inngest } from "@/inngest/client";
 import { exchangeCode, tokenSetFrom } from "@/lib/hub/auth/oauth2";
 import { oauthUrls, providerRegion } from "@/lib/hub/auth/oauth-urls";
+import { connectorFor } from "@/lib/hub/connector";
 import { getManifest } from "@/lib/hub/manifest";
+import { bindingMatches, clearBindingCookie, OAUTH_COOKIE, pkceVerifier } from "@/lib/integrations/oauth-binding";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
 import { decodeOAuthState } from "@/lib/integrations/oauth-state";
 import { prisma } from "@/lib/db/prisma";
-import { talkAccess } from "@/lib/kob/talk/access";
 
 export async function GET(
   req: Request,
@@ -28,11 +31,7 @@ export async function GET(
     if (error) back.searchParams.set(talk || connections ? "connectionError" : "error", error);
     else back.searchParams.set("connected", providerRaw);
     const response = NextResponse.redirect(back);
-    if (talk)
-      response.cookies.set("kob-talk-oauth", "", {
-        maxAge: 0,
-        path: "/api/integrations",
-      });
+    clearBindingCookie(response);
     return response;
   };
   if (!state || state.provider !== providerRaw)
@@ -41,29 +40,14 @@ export async function GET(
   if (!code)
     return redirect("Connection cancelled. Your account was not connected.");
   try {
-    if (talk) {
-      const cookie = (await cookies()).get("kob-talk-oauth")?.value;
-      if (
-        !state.nonce ||
-        cookie !== createHash("sha256").update(stateRaw).digest("hex")
-      )
-        return redirect("Connection expired. Start again from Talk.");
-      const access = await talkAccess(state.restaurantId);
-      if (!access.ok || access.userId !== state.userId)
-        return redirect(
-          "Sign in with the account that started this connection.",
-        );
-    }
-    const member = await prisma.teamMember.findUnique({
-      where: {
-        userId_restaurantId: {
-          userId: state.userId,
-          restaurantId: state.restaurantId,
-        },
-      },
-      select: { id: true },
-    });
-    if (!member) return redirect("Restaurant access is no longer available.");
+    if (!state.nonce || !bindingMatches(stateRaw, (await cookies()).get(OAUTH_COOKIE)?.value))
+      return redirect(talk ? "Connection expired. Start again from Talk." : "Connection expired. Start again from this browser.");
+    const session = await requireApiUser();
+    if (!session.ok || session.userId !== state.userId)
+      return redirect("Sign in with the account that started this connection.");
+    const access = await canManageConnections(state.userId, state.restaurantId);
+    if (access === "not_member") return redirect("Restaurant access is no longer available.");
+    if (access === "forbidden") return redirect("Only owners and admins can connect accounts.");
     const provider = providerRaw as IntegrationProvider;
     const cfg = getOAuthConfig(provider);
     if (!cfg) return redirect("Unsupported connection.");
@@ -92,6 +76,7 @@ export async function GET(
             },
             code,
             redirectUri,
+            manifest.auth.pkce ? pkceVerifier(state.nonce) : undefined,
           )
         ).raw;
       } catch {
@@ -139,6 +124,12 @@ export async function GET(
       ...(talk ? { talkStatus: "unverified", talkCheckedAt: null } : {}),
     } as Prisma.InputJsonValue;
     const granted = tokenSetFrom(tokenJson);
+    let externalAccountId: string | null = null;
+    if (manifest) {
+      const verified = await verifiedAccountId(provider, tokens.access_token, url.searchParams.get("merchant_id"), region);
+      if (!verified.ok) return redirect(`${manifest.displayName} couldn't confirm which account you connected. Please retry.`);
+      externalAccountId = verified.id;
+    }
     const hub = {
       authKind: "OAUTH2_CODE",
       status: "CONNECTED",
@@ -148,12 +139,7 @@ export async function GET(
       disconnectedAt: null,
       lastErrorCode: null,
       ...(region ? { region } : {}),
-      // Square returns merchant_id with the token; Clover appends it to the redirect.
-      ...(typeof tokenJson.merchant_id === "string"
-        ? { externalAccountId: tokenJson.merchant_id }
-        : manifest && url.searchParams.get("merchant_id")
-          ? { externalAccountId: url.searchParams.get("merchant_id") }
-          : {}),
+      ...(externalAccountId ? { externalAccountId } : {}),
     };
     const integration = await prisma.integration.upsert({
       where: {
@@ -199,7 +185,24 @@ export async function GET(
       }
     }
     return redirect();
-  } catch {
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002")
+      return redirect("That account is already connected to another restaurant in KOB. Disconnect it there first.");
     return redirect("Couldn't save the connection. Please retry.");
   }
+}
+
+/**
+ * The account id comes from the provider's API, never from the redirect URL. Clover tokens are merchant-scoped, so
+ * reading /v3/merchants/{id} with the new token proves the merchant in the query string is the one that authorised.
+ */
+async function verifiedAccountId(provider: string, accessToken: string, merchantParam: string | null, region: string | null): Promise<{ ok: true; id: string | null } | { ok: false }> {
+  registerAllConnectors();
+  const connector = connectorFor(provider);
+  if (!connector) return { ok: true, id: null };
+  const check = await connector.validateCredentials({ accessToken, ...(merchantParam ? { merchantId: merchantParam } : {}) }, { region }).catch(() => ({ ok: false as const }));
+  if (!check.ok) return { ok: false };
+  const id = "externalAccountId" in check ? (check.externalAccountId ?? null) : null;
+  if (merchantParam && id && id !== merchantParam) return { ok: false };
+  return { ok: true, id };
 }
