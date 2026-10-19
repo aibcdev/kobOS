@@ -81,3 +81,49 @@ export async function grantFromApproval(
     return grant;
   });
 }
+
+/** Grants still in force: not revoked, and (TASK) not expired. ONCE grants are spent by their action, so excluded. */
+export async function activeGrants(restaurantId: string, now = new Date()): Promise<OsPermissionGrant[]> {
+  return prisma.osPermissionGrant.findMany({
+    where: {
+      restaurantId,
+      revokedAt: null,
+      scope: { in: ["TASK", "ALWAYS"] },
+      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+    },
+    orderBy: { grantedAt: "desc" },
+  });
+}
+
+/**
+ * Revokes a grant. Revoking the last ALWAYS grant for an action type puts its OsActionPermission back to ASK, so the
+ * next proposal of that type waits for the owner again. Idempotent: a revoked grant is returned unchanged.
+ */
+export async function revokeGrant(grantId: string, userId: string, now = new Date()): Promise<OsPermissionGrant> {
+  return prisma.$transaction(async (tx) => {
+    const grant = await tx.osPermissionGrant.findUniqueOrThrow({ where: { id: grantId } });
+    if (grant.revokedAt) return grant;
+    const revoked = await tx.osPermissionGrant.update({ where: { id: grantId }, data: { revokedAt: now } });
+    let permissionReset = false;
+    if (grant.scope === "ALWAYS") {
+      const stillAlways = await tx.osPermissionGrant.count({
+        where: { restaurantId: grant.restaurantId, actionType: grant.actionType, scope: "ALWAYS", revokedAt: null },
+      });
+      if (stillAlways === 0) {
+        const reset = await tx.osActionPermission.updateMany({
+          where: { restaurantId: grant.restaurantId, actionType: grant.actionType, category: "", mode: { in: ["AUTO_WITH_LIMITS", "AUTOPILOT"] } },
+          data: { mode: "ASK" },
+        });
+        permissionReset = reset.count > 0;
+      }
+    }
+    await tx.osAuditEvent.create({
+      data: {
+        restaurantId: grant.restaurantId,
+        kind: "grant.revoked",
+        payload: { grantId, scope: grant.scope, actionType: grant.actionType, taskKey: grant.taskKey, byUserId: userId, permissionReset },
+      },
+    });
+    return revoked;
+  });
+}
