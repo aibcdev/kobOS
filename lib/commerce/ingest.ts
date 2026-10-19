@@ -174,6 +174,16 @@ export async function ingestBookings(restaurantId: string, bookings: BookingInpu
   return { upserted: bookings.length, guestIds: [...guestIds], from, to };
 }
 
+/** POS customer lists: creates or enriches guests without touching orders. */
+export async function ingestGuests(restaurantId: string, guests: GuestInput[]): Promise<number> {
+  let n = 0;
+  for (const g of guests) {
+    const id = await prisma.$transaction((tx) => resolveGuest(tx, restaurantId, g));
+    if (id) n += 1;
+  }
+  return n;
+}
+
 /**
  * Upserts a provider's catalog. New links are matched to an existing menu item by exact (case-insensitive) name;
  * links an owner has already matched keep their match.

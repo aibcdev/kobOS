@@ -27,7 +27,8 @@ type DayRow = { day: Date; sourceKind: string; sourceProvider: string; revenue: 
 
 /**
  * Rebuilds SalesSnapshot rows from Order for every local day touched by [from, to]. Revenue is total minus refunds of
- * paid orders (COMPLETED / REFUNDED); open and cancelled orders are not sales. Only sources that have orders are
+ * paid orders (COMPLETED / REFUNDED); open and cancelled orders are not sales. Stand-alone refund rows (total 0, POSes
+ * that record a refund as its own transaction) reduce revenue but are not counted as orders. Only sources that have orders are
  * rewritten, so legacy SAMPLE / MANUAL rows and pre-hub provider rows for untouched days are left alone.
  */
 export async function rebuildSalesSnapshots(restaurantId: string, from: Date, to: Date): Promise<number> {
@@ -39,7 +40,7 @@ export async function rebuildSalesSnapshots(restaurantId: string, from: Date, to
     SELECT ("placedAt" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date AS day,
            "sourceKind", "sourceProvider",
            SUM("totalMinor" - "refundedMinor")::bigint AS revenue,
-           COUNT(*)::int AS orders
+           (COUNT(*) FILTER (WHERE "totalMinor" > 0))::int AS orders
     FROM "Order"
     WHERE "restaurantId" = ${restaurantId}
       AND "status" IN ('COMPLETED', 'REFUNDED')

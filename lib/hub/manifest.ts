@@ -1,4 +1,7 @@
+import { eposNowManifest } from "@/lib/connectors/epos-now/manifest";
 import { squareManifest } from "@/lib/connectors/square/manifest";
+import { toastManifest } from "@/lib/connectors/toast/manifest";
+import { zettleManifest } from "@/lib/connectors/zettle/manifest";
 
 /** Spec 2 §3.3. Every connector describes itself once; the hub, capabilities and UI read only this. */
 export type AuthKind =
@@ -104,7 +107,7 @@ export type ConnectorManifest = {
   costNote?: string;
 };
 
-const REGISTRY: readonly ConnectorManifest[] = [squareManifest];
+const REGISTRY: readonly ConnectorManifest[] = [squareManifest, toastManifest, eposNowManifest, zettleManifest];
 
 const byProvider = new Map(REGISTRY.map((m) => [m.provider, m]));
 if (byProvider.size !== REGISTRY.length) throw new Error("Duplicate connector manifest provider");

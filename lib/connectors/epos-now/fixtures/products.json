@@ -1,0 +1,4 @@
+[
+  { "Id": 501, "Name": "Fish & chips", "SalePrice": 9.8, "CategoryId": 10 },
+  { "Id": 502, "Name": "Mushy peas", "SalePrice": 2.5, "CategoryId": 11, "IsArchived": true }
+]
