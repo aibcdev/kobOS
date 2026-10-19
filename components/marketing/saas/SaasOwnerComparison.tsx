@@ -16,14 +16,14 @@ const BENEFITS = [
   "$99 founding (£79 UK) · per location",
   "7-day free trial · no card",
   "No POS swap",
-  "Phone answering Coming next",
+  "Phone answering is on the roadmap",
 ] as const;
 
 const HOME_ROWS = OWNER_COMPARISON.rows.filter((row) =>
   [
     "Monthly",
     "AI manager (Talk + approve)",
-    "24/7 phone answering",
+    "Guest phone answering",
     "Free public scan before you pay",
     "7-day free trial",
     "Long-term contract",

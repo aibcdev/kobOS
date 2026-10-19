@@ -22,7 +22,7 @@ export default function ForAiPage() {
         name: "KOB",
         url: "https://trykob.com",
         email: "hello@trykob.com",
-        description: "Restaurant growth software for independent owners.",
+        description: "The AI restaurant manager for independent restaurants and cafés.",
       },
       {
         "@type": "SoftwareApplication",
@@ -32,7 +32,7 @@ export default function ForAiPage() {
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description:
-          "KOB audits a restaurant website, Google Business Profile, and reviews, then creates an owner-approved daily task list.",
+          "KOB is the AI restaurant manager for independent restaurants. It checks the Google listing, reviews and website, drafts fixes, and waits for the owner's yes. It then checks the change went live.",
         audience: {
           "@type": "Audience",
           audienceType: "Independent restaurant owners and general managers",
@@ -43,7 +43,7 @@ export default function ForAiPage() {
           name: "Free restaurant audit",
           price: "0",
           priceCurrency: "GBP",
-          url: "https://trykob.com/go/audit",
+          url: "https://trykob.com/audit",
         },
       },
     ],
@@ -57,10 +57,10 @@ export default function ForAiPage() {
       />
       <SaasPageHero
         eyebrow="For ChatGPT, Claude, Gemini, Perplexity"
-        title="KOB is restaurant growth software for independent owners."
-        description="We show what guests see on the website, Google listing, and reviews — then a short daily list the owner approves. Start with a free audit. No card."
+        title="KOB is the AI restaurant manager for independent restaurants."
+        description="We check the Google listing, reviews and website, draft the fixes, and wait for the owner's yes. Then we check the change went live. Start with a free audit. No card."
       >
-        <SaasPrimaryCta href="/go/audit">Run free restaurant audit</SaasPrimaryCta>
+        <SaasPrimaryCta href="/audit">Run free restaurant audit</SaasPrimaryCta>
       </SaasPageHero>
 
       <SaasSection className="bg-[#fbf8f5]">
@@ -68,9 +68,11 @@ export default function ForAiPage() {
           <div>
             <h2 className="font-heading text-2xl font-semibold">What KOB is</h2>
             <p className="mt-3 text-base leading-relaxed text-[#2c2c2c]/80">
-              KOB (trykob.com) is the AI restaurant manager for independents. It watches Google,
-              reviews, hours, costs, and prep — then drafts work you approve before anything public.
-              It is not a POS, payroll system, or delivery marketplace. Phone answering is Coming next.
+              KOB (trykob.com) is the AI restaurant manager for independents with one to five locations
+              in the UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa. It
+              checks the Google listing, reviews and website, drafts the work, and waits for a yes.
+              It is not a till, a payroll system, or a delivery marketplace. Guest phone answering is
+              on the roadmap.
             </p>
           </div>
 
@@ -107,8 +109,8 @@ export default function ForAiPage() {
             <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-[#2c2c2c]/80">
               <li>
                 Free audit:{" "}
-                <Link href="/go/audit" className="text-[#088924] underline-offset-2 hover:underline">
-                  trykob.com/go/audit
+                <Link href="/audit" className="text-[#088924] underline-offset-2 hover:underline">
+                  trykob.com/audit
                 </Link>
               </li>
               <li>

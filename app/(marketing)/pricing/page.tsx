@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
+import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
+import { trialPromise } from "@/lib/billing/trial-days";
 import {
   LAUNCH_PRICING,
   OWNER_COMPARISON,
@@ -14,7 +16,7 @@ import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 export const metadata: Metadata = {
   title: "Pricing | KOB — The AI Restaurant Manager",
   description:
-    "Founding price per location — £79/mo in the UK, $99/mo elsewhere. 7-day trial, no card. KOB runs the work around your restaurant.",
+    "Founding price per location — £79/mo in the UK, $99/mo elsewhere. 7 days free, no card. You approve. KOB checks it is live.",
 };
 
 export default async function PricingPage() {
@@ -23,8 +25,8 @@ export default async function PricingPage() {
     <>
       <SaasPageHero
         eyebrow="Pricing"
-        title="One manager. One founding price."
-        description={`${LAUNCH_PRICING.label}: ${LAUNCH_PRICING.detail}`}
+        title="One price. One manager. Per location."
+        description={`${LAUNCH_PRICING.label}. ${trialPromise()}. ${FOUNDING_PRICES.GB.label} in the UK, ${FOUNDING_PRICES.US.label} elsewhere.`}
       />
 
       <section className="px-6 pb-4">
@@ -33,8 +35,8 @@ export default async function PricingPage() {
             Founding
           </span>
           <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">AI restaurant manager</h2>
-          <p className="mt-2 text-sm text-[#2c2c2c]/70">
-            Google, reviews, hours, costs, and prep — you approve before anything public.
+          <p className="mt-2 text-sm text-ink">
+            Reviews, your Google listing and your website. You tap approve. KOB checks the change went live.
           </p>
           <p className="mt-6 flex flex-wrap items-baseline gap-x-2">
             <span className="font-heading text-5xl font-semibold tracking-tight text-[#094413]">{price.label}</span>
@@ -47,11 +49,14 @@ export default async function PricingPage() {
           >
             Try KOB free
           </Link>
-          <p className="mt-3 text-center text-xs text-[#2c2c2c]/50">7 days free · no card · cancel anytime</p>
+          <p className="mt-3 text-center text-xs text-muted">{trialPromise()}</p>
+          <p className="mt-2 text-center text-sm text-ink">
+            {FOUNDING_PRICES.GB.label} in the UK · {FOUNDING_PRICES.US.label} elsewhere
+          </p>
         </div>
-        <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-[#2c2c2c]/55]">
-          Built for independents who do not want an Owner.com-style POS swap. Owner public pricing as of
-          2026-06-20: {OWNER_COMPARISON.ownerFlexNote}; {OWNER_COMPARISON.ownerFlatNote}.
+        <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-muted">
+          Keep your website and your till. Owner.com public pricing as of 19 Oct 2026:{" "}
+          {OWNER_COMPARISON.ownerFlexNote}; {OWNER_COMPARISON.ownerFlatNote}.
         </p>
       </section>
 

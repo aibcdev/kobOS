@@ -10,6 +10,7 @@ import { cn } from "@/lib/kob/utils";
 const links = [
   { href: "/#how", label: "How it works" },
   { href: "/#pricing", label: "Pricing" },
+  { href: "/product", label: "Product" },
 ];
 
 export function SiteNav({ onPhoto = false }: { onPhoto?: boolean; solid?: boolean }) {
@@ -50,7 +51,7 @@ export function SiteNav({ onPhoto = false }: { onPhoto?: boolean; solid?: boolea
           Log in
         </Link>
         <Button size="sm" className="hidden md:inline-flex" asChild>
-          <Link href="/onboard">Try KOB</Link>
+          <Link href="/onboard">Find my restaurant</Link>
         </Button>
 
         <button
@@ -82,7 +83,7 @@ export function SiteNav({ onPhoto = false }: { onPhoto?: boolean; solid?: boolea
             Log in
           </Link>
           <Button className="mt-1 w-full" asChild>
-            <Link href="/onboard">Try KOB</Link>
+            <Link href="/onboard">Find my restaurant</Link>
           </Button>
         </div>
       ) : null}

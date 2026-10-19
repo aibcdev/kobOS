@@ -43,10 +43,7 @@ export function checkoutCurrencyFor(priceId: string, currency: "gbp" | "usd"): "
   return priceId === getStripePricePro() ? currency : undefined;
 }
 
-/** Every restaurant gets the same 7-day no-card trial. */
-export function getStripeTrialDays(): number {
-  return 7;
-}
+export { getStripeTrialDays } from "@/lib/billing/trial-days";
 
 export function subscriptionPlanFromPriceId(priceId: string | undefined): SubscriptionPlan | null {
   if (!priceId) return null;

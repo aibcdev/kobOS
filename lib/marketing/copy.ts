@@ -2,7 +2,7 @@
  * KOB public marketing copy — restaurant growth: get more customers.
  * AI is how we deliver; customers are the promise.
  */
-import { industryStats, industryStatsFootnote } from "@/lib/marketing/industry-stats";
+import { industryStatsFootnote } from "@/lib/marketing/industry-stats";
 
 export const marketingCopy = {
   tagline: "Your restaurant's ultimate employee.",
@@ -132,16 +132,16 @@ export const marketingCopy = {
 
   auditInsights: [
     {
-      quote: `${industryStats.websiteBeforeVisit.value} of guests check you online first—weak presence loses bookings before they call.`,
-      tag: "Discovery",
+      quote: "Wrong hours on Google, or a website that does not match them.",
+      tag: "Listing",
     },
     {
-      quote: `${industryStats.deterredByWeakSite.value} are put off by a weak website—that’s lost covers, not “SEO jargon.”`,
+      quote: "A new review with no reply.",
+      tag: "Reviews",
+    },
+    {
+      quote: "A booking button, menu link, or hours line a guest cannot use.",
       tag: "Website",
-    },
-    {
-      quote: `Menus with great photos see ${industryStats.menuPhotoOrders.value} more orders—your audit flags what guests actually see.`,
-      tag: "Menu",
     },
   ] as const,
 
@@ -168,10 +168,10 @@ export const marketingCopy = {
   },
 
   demo: {
-    step1Headline: `Tell us about your restaurant—${industryStats.websiteBeforeVisit.value} of guests check you online first`,
-    step1Hint: "We'll audit where you're losing customers before they book.",
-    step2Subline: "Your audit shows what’s costing you covers.",
-    photosFeatureDesc: `Menus with great photos see ${industryStats.menuPhotoOrders.value} more orders—your audit flags photo gaps.`,
+    step1Headline: "Tell us about your restaurant",
+    step1Hint: "We'll look at reviews, your Google listing and the website.",
+    step2Subline: "Your scan shows what to fix first.",
+    photosFeatureDesc: "The scan flags what guests actually see.",
   },
 
   auth: {
@@ -197,7 +197,7 @@ export const marketingCopy = {
     /** One-line product promise — match empty Today / signup UI */
     promise: "Add your restaurant once. We show where guests drop off — and what to do next.",
     body: "Add your restaurant once. We show where guests drop off — and what to do next.",
-    websiteHint: `${industryStats.websiteBeforeVisit.value} of guests check this before they visit. We'll score it in your first audit.`,
+    websiteHint: "We'll score the public website in your first scan.",
   },
 
   /** Competitive / product positioning — not a cheaper Owner, not a discount app */

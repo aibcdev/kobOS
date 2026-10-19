@@ -3,10 +3,12 @@ import { GreenOrb } from "@/components/kob-home/green-orb";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
 
 const PRODUCT = [
+  { href: "/product", label: "Product" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/#how", label: "How it works" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/onboard", label: "Try KOB" },
-  { href: "/login", label: "Log in" },
+  { href: "/roadmap", label: "Roadmap" },
+  { href: "/about", label: "About" },
+  { href: "/resources", label: "Resources" },
 ];
 
 const LEGAL = [
@@ -25,24 +27,21 @@ export function SiteFooter() {
             <KobWordmark />
           </Link>
           <p className="mt-5 text-[1.05rem] font-medium leading-snug">
-            The AI restaurant manager for independent restaurants and cafés.
+            You approve. KOB checks it is live.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            Handles the repetitive work behind the restaurant — so the team can
-            focus on guests. You choose what KOB can handle automatically.
+            The AI restaurant manager for independent restaurants and cafés. One to five locations.
           </p>
           <Link
             href="/onboard"
             className="mt-6 inline-flex h-11 items-center rounded-full bg-espresso px-5 text-sm font-medium text-paper hover:bg-espresso/90"
           >
-            Try KOB
+            Find my restaurant
           </Link>
         </div>
 
         <div>
-          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">
-            Product
-          </p>
+          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Product</p>
           <ul className="mt-4 space-y-3 text-sm">
             {PRODUCT.map((item) => (
               <li key={item.href}>
@@ -55,21 +54,17 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">
-            Built for
-          </p>
+          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Built for</p>
           <p className="mt-4 text-sm leading-relaxed">
             Independent restaurants and cafés. One to five locations.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            Less admin. Lower costs. Fewer missed guests.
+            The UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa.
           </p>
         </div>
 
         <div>
-          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">
-            Legal
-          </p>
+          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Legal</p>
           <ul className="mt-4 space-y-3 text-sm">
             {LEGAL.map((item) => (
               <li key={item.href}>
@@ -79,13 +74,23 @@ export function SiteFooter() {
               </li>
             ))}
           </ul>
+          <p className="mt-6 text-sm">
+            <a href="mailto:hello@trykob.com" className="underline underline-offset-2">
+              hello@trykob.com
+            </a>
+          </p>
         </div>
       </div>
 
       <div className="border-t border-line/80">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© {new Date().getFullYear()} KOB · trykob.com</p>
-          <p>You approve. Then it goes live.</p>
+          <p>
+            You approve. KOB checks it is live.{" "}
+            <Link href="/roadmap" className="underline underline-offset-2">
+              KOB Phone is on the roadmap.
+            </Link>
+          </p>
         </div>
       </div>
     </footer>
