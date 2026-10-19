@@ -2,6 +2,7 @@ import { cron } from "inngest";
 import { actionFunctions } from "@/inngest/actions";
 import { hubFunctions } from "@/inngest/hub";
 import { importFunctions } from "@/inngest/imports";
+import { roiFunctions } from "@/inngest/roi";
 import { persistAiRecommendations } from "@/lib/ai/recommendations";
 import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
@@ -1050,4 +1051,5 @@ export const functions = [
   ...actionFunctions,
   ...hubFunctions,
   ...importFunctions,
+  ...roiFunctions,
 ];
