@@ -1,0 +1,1 @@
+{"object":"event","id":"evt_685343a1381c819085d44c354e1b330e","type":"realtime.call.incoming","created_at":1760436000,"data":{"call_id":"rtc_abc123","sip_headers":[{"name":"From","value":"sip:+447700900123@sip.example"}]}}

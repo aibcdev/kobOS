@@ -1,0 +1,1 @@
+{"message":{"type":"end-of-call-report","timestamp":1760436000000,"call":{"id":"vapi-call-1","customer":{"number":"+447700900123"}},"endedReason":"customer-ended-call"}}

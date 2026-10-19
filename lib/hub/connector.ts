@@ -51,3 +51,18 @@ export interface Connector {
   /** Called on disconnect, before synced data is deleted. */
   revoke?(ctx: ConnectorCtx): Promise<void>;
 }
+
+const connectors = new Map<string, Connector>();
+
+/** Connector implementations register by manifest provider (T-88 Square/Toast/Epos Now/Zettle, T-89 Clover). */
+export function registerConnector(connector: Connector): void {
+  connectors.set(connector.manifest.provider, connector);
+}
+
+export function connectorFor(provider: string): Connector | undefined {
+  return connectors.get(provider);
+}
+
+export function clearConnectors(): void {
+  connectors.clear();
+}

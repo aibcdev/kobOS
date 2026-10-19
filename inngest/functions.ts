@@ -1,5 +1,6 @@
 import { cron } from "inngest";
 import { actionFunctions } from "@/inngest/actions";
+import { hubFunctions } from "@/inngest/hub";
 import { persistAiRecommendations } from "@/lib/ai/recommendations";
 import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
@@ -1041,4 +1042,5 @@ export const functions = [
   cosGenerateDraftsOnApprove,
   creativeAgentPackRequested,
   ...actionFunctions,
+  ...hubFunctions,
 ];
