@@ -1,10 +1,10 @@
 import type { Integration } from "@prisma/client";
-import { decryptIntegrationToken } from "@/lib/integrations/get-integration-token";
+import { getIntegrationAccessToken } from "@/lib/integrations/get-integration-token";
 import { prisma } from "@/lib/db/prisma";
 
 /** Refresh keyword rows from Search Console queries. */
 export async function syncGscKeywords(restaurantId: string, integration: Integration): Promise<number> {
-  const { accessToken } = decryptIntegrationToken(integration);
+  const accessToken = await getIntegrationAccessToken(integration);
   const metadata = integration.metadata as { siteUrl?: string };
   const siteUrl = metadata.siteUrl;
   if (!accessToken || !siteUrl) return 0;

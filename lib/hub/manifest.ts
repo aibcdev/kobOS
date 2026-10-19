@@ -80,6 +80,11 @@ export type ConnectorManifest = {
     helpUrl?: string;
     /** PLATFORM_KEY: env vars that must be set for the source to be available. */
     platformEnv?: string[];
+    /** Token endpoint body encoding (default form) and where client credentials go (default body). */
+    tokenBody?: "form" | "json";
+    clientAuth?: "body" | "basic";
+    /** Refresh this long before expiry (default 300 s). Square: tokens last 30 days, refreshed at day 7. */
+    refreshAheadSeconds?: number;
   };
   streams: StreamSpec[];
   webhooks?: { path: string; verifier: string; events: string[]; subscribe?: "API" | "MANUAL" };

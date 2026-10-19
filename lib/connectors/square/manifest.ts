@@ -16,6 +16,8 @@ export const squareManifest: ConnectorManifest = {
     tokenUrl: "https://connect.squareup.com/oauth2/token",
     clientIdEnv: "SQUARE_APPLICATION_ID",
     clientSecretEnv: "SQUARE_APPLICATION_SECRET",
+    tokenBody: "json",
+    refreshAheadSeconds: 23 * 86_400,
   },
   streams: [
     { name: "orders", mode: "WEBHOOK_DRIVEN", schedule: "0 */6 * * *", backfillDays: 400, cursorField: "updated_at" },

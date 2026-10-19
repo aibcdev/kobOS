@@ -3,6 +3,7 @@ import { IntegrationProvider, Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { encryptSecret } from "@/lib/crypto/tokens";
+import { tokenSetFrom } from "@/lib/hub/auth/oauth2";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
 import { decodeOAuthState } from "@/lib/integrations/oauth-state";
 import { prisma } from "@/lib/db/prisma";
@@ -80,7 +81,8 @@ export async function GET(
     });
     if (!tokenRes.ok)
       return redirect("Google couldn't complete the connection. Please retry.");
-    const tokens = (await tokenRes.json()) as {
+    const tokenJson = (await tokenRes.json()) as Record<string, unknown>;
+    const tokens = tokenJson as {
       access_token?: string;
       refresh_token?: string;
       scope?: string;
@@ -104,6 +106,16 @@ export async function GET(
       ...((existing?.metadata ?? {}) as Record<string, unknown>),
       ...(talk ? { talkStatus: "unverified", talkCheckedAt: null } : {}),
     } as Prisma.InputJsonValue;
+    const granted = tokenSetFrom(tokenJson);
+    const hub = {
+      authKind: "OAUTH2_CODE",
+      status: "CONNECTED",
+      accessTokenExpiresAt: granted.expiresAt ?? null,
+      scopesGranted: granted.scopes ?? cfg.scopes,
+      connectedByUserId: state.userId,
+      disconnectedAt: null,
+      lastErrorCode: null,
+    };
     const integration = await prisma.integration.upsert({
       where: {
         restaurantId_provider: { restaurantId: state.restaurantId, provider },
@@ -116,6 +128,7 @@ export async function GET(
           ? encryptSecret(tokens.refresh_token)
           : null,
         metadata,
+        ...hub,
       },
       update: {
         encryptedAccessToken: encryptSecret(tokens.access_token),
@@ -123,6 +136,7 @@ export async function GET(
           ? { encryptedRefreshToken: encryptSecret(tokens.refresh_token) }
           : {}),
         metadata,
+        ...hub,
       },
     });
     if (!talk) {
