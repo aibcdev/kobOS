@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavailable";
 import { AuditPlainDocument } from "@/components/marketing/audit/AuditPlainDocument";
@@ -68,9 +69,9 @@ export default async function AuditPlainPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-[var(--color-surface-cream,#f9f3ed)]">
       <div className="border-b border-[var(--color-hairline)] bg-white px-5 py-4 md:px-8">
-        <a href="/" className="font-head text-lg font-semibold text-[var(--color-ink)] no-underline">
+        <Link href="/" className="font-head text-lg font-semibold text-[var(--color-ink)] no-underline">
           KOB
-        </a>
+        </Link>
       </div>
       <AuditPlainDocument
         restaurantName={audit.restaurantName}

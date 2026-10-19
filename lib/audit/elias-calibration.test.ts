@@ -12,6 +12,7 @@ import {
   scoreIdentityFromEvidence,
   scoreWebsiteFromEvidence,
 } from "@/lib/audit/evidence-score";
+import { testAuditPayload } from "@/lib/audit/test-payload";
 import type { AuditResultPayload } from "@/lib/audit/types";
 
 /** Elias-shaped elite evidence — identity, visuals, menu, booking, mobile, brand+social. No hostname floor. */
@@ -209,19 +210,7 @@ describe("Elias calibration (no hostname floors)", () => {
   it("keeps weak sites at or below 55", () => {
     const pack = weakPack();
     const rubric = computeRubricV2({ evidencePack: pack });
-    const payload = applyRubricV2ToPayload(
-      {
-        id: "weak",
-        restaurantName: "Weak Cafe",
-        city: "Nowhere",
-        websiteUrl: "https://weak-local.example",
-        competitors: [],
-        opportunities: [],
-        scores: { overall: 0, seo: 0, design: 0, mobile: 0, conversion: 0 },
-        evidencePack: pack,
-      } as AuditResultPayload,
-      rubric,
-    );
+    const payload = applyRubricV2ToPayload(testAuditPayload({ evidencePack: pack }), rubric);
     const restaurant = computeRestaurantScores(payload);
     expect(restaurant.overall).toBeLessThanOrEqual(55);
   });

@@ -2,6 +2,8 @@
 /**
  * KOB production is Git-only. CLI --prod overwrote trykob.com with BELLY.
  */
+import { spawnSync } from "node:child_process";
+
 const args = process.argv.slice(2);
 if (args.includes("--prod") || args.includes("--production")) {
   console.error(
@@ -11,7 +13,6 @@ if (args.includes("--prod") || args.includes("--production")) {
   process.exit(1);
 }
 
-const { spawnSync } = require("child_process");
 const r = spawnSync("npx", ["netlify-cli", "deploy", ...args], {
   stdio: "inherit",
   cwd: process.cwd(),

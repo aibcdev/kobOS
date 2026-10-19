@@ -240,8 +240,8 @@ async function httpCheckAuditUrl(url: string): Promise<{ ok: boolean; status: nu
       text.length > 5000;
     const soft404 = /not found|doesn.t exist/i.test(text.slice(0, 2000)) && res.status === 200;
     return { ok: res.status === 200 && hasContent && !soft404, status: res.status };
-  } catch (e: any) {
-    return { ok: false, status: 0, error: e?.message };
+  } catch (e: unknown) {
+    return { ok: false, status: 0, error: e instanceof Error ? e.message : undefined };
   }
 }
 

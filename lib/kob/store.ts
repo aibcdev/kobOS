@@ -159,8 +159,8 @@ function applyMutations(
   },
   mutations: WorkMutations,
 ) {
-  let { restaurant, findings, reviews, memory, autonomy, googleConnected, connected } =
-    state;
+  let { restaurant, findings, reviews, memory, autonomy } = state;
+  const { googleConnected, connected } = state;
 
   if (mutations.setAutonomy?.length) {
     autonomy = autonomy.map((rule) => {
