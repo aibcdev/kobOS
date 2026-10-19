@@ -16,9 +16,12 @@ export class GrantError extends Error {
 
 /** Registry defaults overlaid with the owner's choices from the "Always do this" sheet. */
 export function alwaysLimits(actionType: string, requested: Record<string, unknown> = {}): GrantLimits {
-  const base: GrantLimits = isActionType(actionType) ? { ...ACTION_TYPE_SPECS[actionType].alwaysLimits } : {};
+  const defaults = isActionType(actionType) ? (ACTION_TYPE_SPECS[actionType].alwaysLimits ?? {}) : {};
+  const base: GrantLimits = { ...defaults };
   for (const key of LIMIT_KEYS) {
     const v = requested[key];
+    // Rating/severity limits only apply to action types that define them (reviews); maxPerDay applies to all.
+    if (key !== "maxPerDay" && !(key in defaults)) continue;
     if (typeof v === "number" && Number.isFinite(v)) base[key] = v;
   }
   return base;

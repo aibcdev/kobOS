@@ -29,11 +29,25 @@ export function capabilityLabel(c: ReadinessChecks, fallback: CapabilityLabel = 
   return fallback;
 }
 
-export function ownerFacingStatus(status: string): string {
+/**
+ * The only source of owner-facing action status text. "Done" appears here and nowhere else, and only for VERIFIED
+ * (tests/ui/done-source.test.ts enforces it).
+ */
+export function ownerFacingStatus(status: string, failureCode?: string | null): string {
   if (status === "VERIFIED") return "Done";
   if (status === "EXECUTED" || status === "VERIFYING") return "Sent — waiting for confirmation.";
-  if (status === "FAILED") return "Needs reconnect.";
-  if (status === "AWAITING_APPROVAL") return "Draft only — needs your yes.";
+  if (status === "FAILED") {
+    if (!failureCode || failureCode === "AUTH" || failureCode === "DENIED_NEEDS_CONNECTION") return "Needs reconnect.";
+    if (failureCode === "VERIFY_MISMATCH") return "Didn't stick — check it.";
+    if (failureCode === "VERIFY_TIMEOUT") return "Not confirmed yet — check it.";
+    if (failureCode === "EXPIRED") return "Expired.";
+    if (failureCode.startsWith("DENIED_")) return "Not allowed.";
+    return "Couldn't finish.";
+  }
+  if (status === "AWAITING_APPROVAL" || status === "PROPOSED") return "Draft only — needs your yes.";
+  if (status === "APPROVED" || status === "EXECUTING") return "On it…";
+  if (status === "REJECTED") return "Skipped.";
+  if (status === "ROLLED_BACK") return "Undone.";
   if (status === "DRAFT") return "Draft only.";
   return status;
 }

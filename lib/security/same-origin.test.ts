@@ -11,3 +11,20 @@ describe("isSameOrigin", () => {
     expect(isSameOrigin(r({ "sec-fetch-site": "cross-site" }))).toBe(false);
   });
 });
+
+describe("isSameOrigin behind a proxy", () => {
+  it("accepts the Host the browser used even when req.url differs", () => {
+    const req = new Request("http://localhost:3102/api/x", {
+      method: "POST",
+      headers: { origin: "http://127.0.0.1:3102", host: "127.0.0.1:3102" },
+    });
+    expect(isSameOrigin(req)).toBe(true);
+  });
+  it("still refuses a different site with a matching-looking path", () => {
+    const req = new Request("http://localhost:3102/api/x", {
+      method: "POST",
+      headers: { origin: "http://127.0.0.1:9999", host: "127.0.0.1:3102" },
+    });
+    expect(isSameOrigin(req)).toBe(false);
+  });
+});
