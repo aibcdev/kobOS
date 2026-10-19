@@ -8,6 +8,7 @@ import { connectorFor } from "@/lib/hub/connector";
 import { connectorCtx } from "@/lib/hub/ctx";
 import { allManifests, getManifest, type ConnectorCategory, type ConnectorManifest, type DataContract, type Region } from "@/lib/hub/manifest";
 import { importSource } from "@/lib/hub/imports/sources";
+import { deleteProviderData, retentionPlan, type DisconnectMode } from "@/lib/hub/retention";
 import { connectorEnabled } from "@/lib/hub/sync/scheduler";
 
 /** Spec 2 §3.12: the owner's Connections page and the ops view read this; the UI never inspects raw rows. */
@@ -181,10 +182,11 @@ export async function connectWithKeys(input: { restaurantId: string; provider: s
 }
 
 /**
- * Disconnect: best-effort provider revoke, then drop credentials and sync cursors. Synced history (orders, guests,
- * menu links) stays so reports don't change retroactively; reconnecting resumes from a fresh backfill.
+ * Disconnect: best-effort provider revoke, drop credentials and sync cursors, then apply the owner's data choice
+ * (lib/hub/retention.ts). KEEP_TOTALS keeps sales history and removes guests' personal details after 30 days;
+ * DELETE_ALL removes everything the provider brought in now.
  */
-export async function disconnectIntegration(restaurantId: string, provider: string): Promise<boolean> {
+export async function disconnectIntegration(restaurantId: string, provider: string, mode: DisconnectMode = "KEEP_TOTALS", now = new Date()): Promise<boolean> {
   const row = await prisma.integration.findUnique({ where: { restaurantId_provider: { restaurantId, provider: provider as IntegrationProvider } } });
   if (!row || row.status === "DISCONNECTED") return false;
   registerAllConnectors();
@@ -196,13 +198,15 @@ export async function disconnectIntegration(restaurantId: string, provider: stri
       where: { id: row.id },
       data: {
         status: "DISCONNECTED",
-        disconnectedAt: new Date(),
+        disconnectedAt: now,
         encryptedAccessToken: null,
         encryptedRefreshToken: null,
         encryptedApiKey: null,
         accessTokenExpiresAt: null,
+        metadata: { ...((row.metadata ?? {}) as Record<string, unknown>), retention: retentionPlan(mode, now) },
       },
     }),
   ]);
+  if (mode === "DELETE_ALL") await deleteProviderData(restaurantId, provider);
   return true;
 }

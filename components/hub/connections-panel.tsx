@@ -183,10 +183,14 @@ function ConnectorItem({
   const failing = card.streams.filter((s) => s.failing);
   const backfilling = card.state === "CONNECTED" && card.streams.some((s) => !s.backfillDone);
 
+  const [confirming, setConfirming] = useState(false);
+  const [dataChoice, setDataChoice] = useState<"keep" | "delete">("keep");
+
   async function disconnect() {
-    if (!window.confirm(`Disconnect ${card.displayName}? KOB keeps the history it already has but stops syncing.`)) return;
-    const res = await fetch(`/api/hub/connections/${card.provider}?restaurantId=${encodeURIComponent(restaurantId)}`, { method: "DELETE" });
+    const q = new URLSearchParams({ restaurantId, data: dataChoice });
+    const res = await fetch(`/api/hub/connections/${card.provider}?${q}`, { method: "DELETE" });
     if (!res.ok) return setError(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Couldn't disconnect");
+    setConfirming(false);
     router.refresh();
   }
 
@@ -221,11 +225,38 @@ function ConnectorItem({
       {canManage ? (
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {card.state === "AVAILABLE" || card.state === "REAUTH" ? connectAction : null}
-          {connected ? (
-            <button type="button" onClick={() => void disconnect()} className="text-sm text-muted underline">
+          {connected && !confirming ? (
+            <button type="button" onClick={() => setConfirming(true)} className="text-sm text-muted underline">
               Disconnect
             </button>
           ) : null}
+        </div>
+      ) : null}
+      {confirming ? (
+        <div className="mt-3 rounded-2xl border border-line p-4 text-sm">
+          <p className="font-medium">Disconnect {card.displayName}? KOB stops syncing straight away. What should happen to what it already has?</p>
+          <label className="mt-2 flex items-start gap-2">
+            <input type="radio" className="mt-1" checked={dataChoice === "keep"} onChange={() => setDataChoice("keep")} />
+            <span>
+              Keep sales history for my reports
+              <span className="block text-muted">Guests&apos; emails, phone numbers and names from {card.displayName} are deleted after 30 days.</span>
+            </span>
+          </label>
+          <label className="mt-2 flex items-start gap-2">
+            <input type="radio" className="mt-1" checked={dataChoice === "delete"} onChange={() => setDataChoice("delete")} />
+            <span>
+              Delete everything from {card.displayName} now
+              <span className="block text-muted">Orders, bookings, menu links and guests it brought in. Your weekly totals for those days change.</span>
+            </span>
+          </label>
+          <div className="mt-3 flex gap-3">
+            <button type="button" onClick={() => void disconnect()} className="rounded-full bg-espresso px-4 py-2 text-paper">
+              Disconnect
+            </button>
+            <button type="button" onClick={() => setConfirming(false)} className="text-muted underline">
+              Cancel
+            </button>
+          </div>
         </div>
       ) : null}
       {open ? <KeyForm card={card} restaurantId={restaurantId} onDone={() => (setOpen(false), router.refresh())} /> : null}

@@ -4,6 +4,7 @@ import { registerAllConnectors } from "@/lib/connectors";
 import { prisma } from "@/lib/db/prisma";
 import { refreshHealth } from "@/lib/hub/health";
 import { getManifest } from "@/lib/hub/manifest";
+import { retentionSweep } from "@/lib/hub/retention";
 import { runStream, type HubStep } from "@/lib/hub/sync/run";
 import { dueStreams, ensureCursors } from "@/lib/hub/sync/scheduler";
 import { dueForRefresh, refreshAccessToken } from "@/lib/hub/tokens";
@@ -117,4 +118,10 @@ export const hubHealth = inngest.createFunction(
   },
 );
 
-export const hubFunctions = [hubWebhookProcess, hubWebhookSweep, hubSyncTick, hubStreamRun, hubIntegrationConnected, hubTokenRefresh, hubHealth];
+/** Daily: guests' personal details from disconnected providers go once the 30-day grace period ends. */
+export const hubRetentionSweep = inngest.createFunction(
+  { id: "hub-retention-sweep", name: "Hub · retention sweep", concurrency: 1, triggers: [cron("30 3 * * *")] },
+  async ({ step }) => step.run("sweep", () => retentionSweep()),
+);
+
+export const hubFunctions = [hubWebhookProcess, hubWebhookSweep, hubSyncTick, hubStreamRun, hubIntegrationConnected, hubTokenRefresh, hubHealth, hubRetentionSweep];
