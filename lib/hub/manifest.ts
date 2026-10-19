@@ -1,3 +1,4 @@
+import { cloverManifest } from "@/lib/connectors/clover/manifest";
 import { eposNowManifest } from "@/lib/connectors/epos-now/manifest";
 import { squareManifest } from "@/lib/connectors/square/manifest";
 import { toastManifest } from "@/lib/connectors/toast/manifest";
@@ -88,6 +89,16 @@ export type ConnectorManifest = {
     clientAuth?: "body" | "basic";
     /** Refresh this long before expiry (default 300 s). Square: tokens last 30 days, refreshed at day 7. */
     refreshAheadSeconds?: number;
+    /** Refresh endpoint when it isn't tokenUrl (Clover /oauth/v2/refresh). */
+    refreshUrl?: string;
+    /**
+     * Regional data centres (Clover NA/EU/LA): OAuth origin per provider region, and which region a restaurant's
+     * country lives in. The URLs above are written for the first region; the stored Integration.region picks one.
+     */
+    regionOrigins?: Record<string, string>;
+    regionByCountry?: Record<string, string>;
+    /** `env` = "sandbox" switches every OAuth URL to `origin`. */
+    sandbox?: { env: string; origin: string };
   };
   streams: StreamSpec[];
   webhooks?: {
@@ -107,7 +118,7 @@ export type ConnectorManifest = {
   costNote?: string;
 };
 
-const REGISTRY: readonly ConnectorManifest[] = [squareManifest, toastManifest, eposNowManifest, zettleManifest];
+const REGISTRY: readonly ConnectorManifest[] = [squareManifest, toastManifest, eposNowManifest, zettleManifest, cloverManifest];
 
 const byProvider = new Map(REGISTRY.map((m) => [m.provider, m]));
 if (byProvider.size !== REGISTRY.length) throw new Error("Duplicate connector manifest provider");

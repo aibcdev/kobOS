@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { decryptKeyFields } from "@/lib/hub/auth/api-key";
 import { jwtBearerGrant } from "@/lib/hub/auth/jwt-bearer";
 import { clientCredentialsGrant, refreshGrant, TokenError, type TokenEndpoint, type TokenSet } from "@/lib/hub/auth/oauth2";
+import { oauthUrls } from "@/lib/hub/auth/oauth-urls";
 import { getManifest } from "@/lib/hub/manifest";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
 
@@ -48,7 +49,7 @@ export function isFresh(row: Pick<Integration, "provider" | "accessTokenExpiresA
 function endpointFor(row: Integration, deps: TokenDeps): TokenEndpoint {
   const manifest = getManifest(row.provider);
   const legacy = getOAuthConfig(row.provider);
-  const tokenUrl = manifest?.auth.tokenUrl ?? legacy?.tokenUrl;
+  const tokenUrl = (manifest ? oauthUrls(manifest, row.region).tokenUrl : undefined) ?? legacy?.tokenUrl;
   const idEnv = manifest?.auth.clientIdEnv ?? legacy?.clientIdEnv;
   const secretEnv = manifest?.auth.clientSecretEnv ?? legacy?.clientSecretEnv;
   const clientId = idEnv ? process.env[idEnv] : undefined;
@@ -79,7 +80,9 @@ async function requestNewToken(row: Integration, deps: TokenDeps): Promise<Token
   }
   const { refreshToken } = decryptTokens(row);
   if (!refreshToken) throw new TokenError("invalid_grant", "No refresh token stored");
-  return refreshGrant(ep, refreshToken);
+  const manifest = getManifest(row.provider);
+  const refreshUrl = manifest ? oauthUrls(manifest, row.region).refreshUrl : undefined;
+  return refreshGrant(refreshUrl ? { ...ep, tokenUrl: refreshUrl } : ep, refreshToken);
 }
 
 /** Persisted fields after a successful refresh; rotating refresh tokens (Square, Xero, QBO, Clover) are kept. */

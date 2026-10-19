@@ -54,7 +54,7 @@ export interface Connector {
 
 const connectors = new Map<string, Connector>();
 
-/** Connector implementations register by manifest provider (T-88 Square/Toast/Epos Now/Zettle, T-89 Clover). */
+/** Connector implementations register by manifest provider (Square, Toast, Epos Now, Zettle, Clover). */
 export function registerConnector(connector: Connector): void {
   connectors.set(connector.manifest.provider, connector);
 }

@@ -40,9 +40,16 @@ export function tokenSetFrom(json: Record<string, unknown>, now = new Date()): T
   const accessToken = typeof json.access_token === "string" ? json.access_token : "";
   if (!accessToken) throw new TokenError("refresh_failed", "Token response had no access_token");
   const expiresIn = Number(json.expires_in);
-  // Square returns an absolute expires_at instead of expires_in.
+  // Square returns an absolute expires_at, Clover access_token_expiration (Unix seconds), instead of expires_in.
+  const cloverExp = Number(json.access_token_expiration);
   const expiresAt =
-    typeof json.expires_at === "string" ? new Date(json.expires_at) : Number.isFinite(expiresIn) && expiresIn > 0 ? new Date(now.getTime() + expiresIn * 1000) : undefined;
+    typeof json.expires_at === "string"
+      ? new Date(json.expires_at)
+      : Number.isFinite(cloverExp) && cloverExp > 0
+        ? new Date(cloverExp * 1000)
+        : Number.isFinite(expiresIn) && expiresIn > 0
+          ? new Date(now.getTime() + expiresIn * 1000)
+          : undefined;
   const scope = typeof json.scope === "string" ? json.scope : Array.isArray(json.scopes) ? (json.scopes as string[]).join(" ") : "";
   return {
     accessToken,

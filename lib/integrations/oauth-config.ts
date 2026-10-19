@@ -1,5 +1,5 @@
 import type { IntegrationProvider } from "@prisma/client";
-import { squareManifest } from "@/lib/connectors/square/manifest";
+import { allManifests } from "@/lib/hub/manifest";
 
 type OAuthConfig = {
   authUrl: string;
@@ -38,13 +38,20 @@ const CONFIG: Partial<Record<IntegrationProvider, OAuthConfig>> = {
     clientIdEnv: "GOOGLE_OAUTH_CLIENT_ID",
     clientSecretEnv: "GOOGLE_OAUTH_CLIENT_SECRET",
   },
-  SQUARE: {
-    authUrl: squareManifest.auth.authorizeUrl!,
-    tokenUrl: squareManifest.auth.tokenUrl!,
-    scopes: squareManifest.auth.scopes!,
-    clientIdEnv: squareManifest.auth.clientIdEnv!,
-    clientSecretEnv: squareManifest.auth.clientSecretEnv!,
-  },
+  ...Object.fromEntries(
+    allManifests()
+      .filter((m) => m.auth.kind === "OAUTH2_CODE" && m.auth.authorizeUrl && m.auth.tokenUrl && m.auth.clientIdEnv && m.auth.clientSecretEnv)
+      .map((m) => [
+        m.provider,
+        {
+          authUrl: m.auth.authorizeUrl!,
+          tokenUrl: m.auth.tokenUrl!,
+          scopes: m.auth.scopes ?? [],
+          clientIdEnv: m.auth.clientIdEnv!,
+          clientSecretEnv: m.auth.clientSecretEnv!,
+        },
+      ]),
+  ),
 };
 
 export function getOAuthConfig(provider: IntegrationProvider): OAuthConfig | null {
@@ -57,7 +64,8 @@ export function isOAuthConfigured(provider: IntegrationProvider): boolean {
   return Boolean(process.env[cfg.clientIdEnv] && process.env[cfg.clientSecretEnv]);
 }
 
-export function buildOAuthUrl(provider: IntegrationProvider, state: string, redirectUri: string): string | null {
+/** `authUrl` overrides the configured one (regional data centres, see lib/hub/auth/oauth-urls.ts). */
+export function buildOAuthUrl(provider: IntegrationProvider, state: string, redirectUri: string, authUrl?: string): string | null {
   const cfg = getOAuthConfig(provider);
   if (!cfg) return null;
   const clientId = process.env[cfg.clientIdEnv];
@@ -71,5 +79,6 @@ export function buildOAuthUrl(provider: IntegrationProvider, state: string, redi
     access_type: "offline",
     prompt: "consent",
   });
-  return `${cfg.authUrl}?${params.toString()}`;
+  if (!cfg.scopes.length) params.delete("scope");
+  return `${authUrl ?? cfg.authUrl}?${params.toString()}`;
 }
