@@ -74,7 +74,7 @@ export function ServiceRequestsPanel({
           setError(checkoutData.error ?? "Could not start trial checkout.");
           return;
         }
-        window.location.href = checkoutData.url;
+        window.location.assign(checkoutData.url);
         return;
       }
 
@@ -97,7 +97,7 @@ export function ServiceRequestsPanel({
       };
       if (!res.ok) {
         if (data.upgradeRequired) {
-          window.location.href = billingHref;
+          window.location.assign(billingHref);
           return;
         }
         if (res.status === 402) {

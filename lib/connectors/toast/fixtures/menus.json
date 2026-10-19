@@ -1,0 +1,13 @@
+{
+  "restaurantGuid": "rest-guid-1",
+  "menus": [
+    {
+      "name": "Dinner",
+      "menuGroups": [
+        { "name": "Mains", "menuItems": [{ "guid": "item-burger", "name": "Burger", "price": 14.5 }], "menuGroups": [{ "name": "Specials", "menuItems": [{ "guid": "item-special", "name": "Soft-shell crab", "price": null }] }] },
+        { "name": "Drinks", "menuItems": [{ "guid": "item-soda", "name": "Soda", "price": 3.0 }] }
+      ]
+    },
+    { "name": "Lunch", "menuGroups": [{ "name": "Lunch mains", "menuItems": [{ "guid": "item-burger", "name": "Burger", "price": 12.0 }] }] }
+  ]
+}

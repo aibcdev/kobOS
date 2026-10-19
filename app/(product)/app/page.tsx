@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
 import { listTalkConnectors } from "@/lib/kob/talk/connectors";
 import { LiveWorkspace } from "@/components/kob-talk/live-workspace";
+import { loadHomeData } from "@/lib/kob/home/load-home";
 import DemoWorkspace from "@/components/kob-talk/demo-workspace";
 import type { TalkMessage } from "@/lib/kob/talk/types";
 
@@ -68,10 +69,14 @@ export default async function WorkspacePage({
   const loaded = await loadWorkspace(user.id, params.r);
   if ("error" in loaded) return <Entry error={loaded.error} />;
   if ("empty" in loaded) return <CreateWorkspace />;
+  const home = await loadHomeData(loaded.restaurant.id, user.email ?? null).catch(
+    () => ({ audit: null, brief: null }),
+  );
   return (
     <LiveWorkspace
       key={loaded.restaurant.id}
       {...loaded}
+      home={home}
       connectionResult={
         typeof params.connected === "string" &&
         loaded.initialConnectors.some(

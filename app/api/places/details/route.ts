@@ -11,7 +11,7 @@ const querySchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const rl = checkPlacesRateLimit(clientIpFromHeaders(req.headers));
+  const rl = await checkPlacesRateLimit(clientIpFromHeaders(req.headers));
   if (!rl.ok) {
     return NextResponse.json(
       { error: "Too many requests. Try again later.", retryAfterSec: rl.retryAfterSec },

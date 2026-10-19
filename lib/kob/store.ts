@@ -1,3 +1,7 @@
+/**
+ * @deprecated localStorage walkthrough state for the demo, /onboard wizard and marketing previews. Not a source
+ * of truth for real restaurants; do not import from API routes.
+ */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type WorkMutations } from "@/lib/kob/act";
@@ -159,8 +163,8 @@ function applyMutations(
   },
   mutations: WorkMutations,
 ) {
-  let { restaurant, findings, reviews, memory, autonomy, googleConnected, connected } =
-    state;
+  let { restaurant, findings, reviews, memory, autonomy } = state;
+  const { googleConnected, connected } = state;
 
   if (mutations.setAutonomy?.length) {
     autonomy = autonomy.map((rule) => {

@@ -3,7 +3,7 @@ import { buildEvidencePackV1 } from "@/lib/audit/evidence-pack";
 import { applyRubricV2ToPayload, computeRubricV2, rubricFixtureEliteSignals } from "@/lib/audit/rubric-v2";
 import { computeRestaurantScores } from "@/lib/audit/restaurant-scoring";
 import { scoreBrandSocialFromEvidence } from "@/lib/audit/evidence-score";
-import type { AuditResultPayload } from "@/lib/audit/types";
+import { testAuditPayload } from "@/lib/audit/test-payload";
 
 function eliteKfcPack() {
   const pack = buildEvidencePackV1({
@@ -55,19 +55,7 @@ describe("evidence-based restaurant scoring", () => {
     expect(rubric.overall).toBeGreaterThanOrEqual(90);
     expect(rubric.brandSocialPresence).toBeGreaterThanOrEqual(88);
 
-    const payload = applyRubricV2ToPayload(
-      {
-        id: "test",
-        restaurantName: "KFC",
-        city: "Louisville",
-        websiteUrl: "https://www.kfc.com",
-        competitors: [],
-        opportunities: [],
-        scores: { overall: 0, seo: 0, design: 0, mobile: 0, conversion: 0 },
-        evidencePack,
-      } as AuditResultPayload,
-      rubric,
-    );
+    const payload = applyRubricV2ToPayload(testAuditPayload({ evidencePack }), rubric);
 
     const restaurant = computeRestaurantScores(payload);
     expect(restaurant.overall).toBeGreaterThanOrEqual(90);
@@ -122,16 +110,7 @@ describe("evidence-based restaurant scoring", () => {
     });
 
     const payload = applyRubricV2ToPayload(
-      {
-        id: "weak",
-        restaurantName: "Weak Cafe",
-        city: "Nowhere",
-        websiteUrl: "https://weak-local.example",
-        competitors: [],
-        opportunities: [],
-        scores: { overall: 0, seo: 0, design: 0, mobile: 0, conversion: 0 },
-        evidencePack: weakPack,
-      } as AuditResultPayload,
+      testAuditPayload({ evidencePack: weakPack }),
       computeRubricV2({ evidencePack: weakPack }),
     );
 

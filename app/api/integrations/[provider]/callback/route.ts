@@ -3,6 +3,10 @@ import { IntegrationProvider, Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { encryptSecret } from "@/lib/crypto/tokens";
+import { inngest } from "@/inngest/client";
+import { exchangeCode, tokenSetFrom } from "@/lib/hub/auth/oauth2";
+import { oauthUrls, providerRegion } from "@/lib/hub/auth/oauth-urls";
+import { getManifest } from "@/lib/hub/manifest";
 import { getOAuthConfig } from "@/lib/integrations/oauth-config";
 import { decodeOAuthState } from "@/lib/integrations/oauth-state";
 import { prisma } from "@/lib/db/prisma";
@@ -17,10 +21,11 @@ export async function GET(
   const stateRaw = url.searchParams.get("state") ?? "";
   const state = decodeOAuthState(stateRaw);
   const talk = state?.returnTo === "talk";
-  const back = new URL(talk ? "/app" : "/dashboard/workspace", url.origin);
+  const connections = state?.returnTo === "connections";
+  const back = new URL(talk ? "/app" : connections ? "/app/settings/connections" : "/dashboard/workspace", url.origin);
   if (state) back.searchParams.set("r", state.restaurantId);
   const redirect = (error?: string) => {
-    if (error) back.searchParams.set(talk ? "connectionError" : "error", error);
+    if (error) back.searchParams.set(talk || connections ? "connectionError" : "error", error);
     else back.searchParams.set("connected", providerRaw);
     const response = NextResponse.redirect(back);
     if (talk)
@@ -66,21 +71,50 @@ export async function GET(
     const clientSecret = process.env[cfg.clientSecretEnv];
     if (!clientId || !clientSecret)
       return redirect("This connection isn't configured yet.");
-    const tokenRes = await fetch(cfg.tokenUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: `${url.origin}/api/integrations/${provider}/callback`,
-        grant_type: "authorization_code",
-      }),
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!tokenRes.ok)
-      return redirect("Google couldn't complete the connection. Please retry.");
-    const tokens = (await tokenRes.json()) as {
+    const manifest = getManifest(provider);
+    const redirectUri = `${url.origin}/api/integrations/${provider}/callback`;
+    let tokenJson: Record<string, unknown>;
+    let region: string | null = null;
+    if (manifest) {
+      if (manifest.auth.regionOrigins) {
+        const r = await prisma.restaurant.findUnique({ where: { id: state.restaurantId }, select: { countryCode: true } });
+        region = providerRegion(manifest, r?.countryCode);
+      }
+      try {
+        tokenJson = (
+          await exchangeCode(
+            {
+              tokenUrl: oauthUrls(manifest, region).tokenUrl ?? cfg.tokenUrl,
+              clientId,
+              clientSecret,
+              body: manifest.auth.tokenBody,
+              clientAuth: manifest.auth.clientAuth,
+            },
+            code,
+            redirectUri,
+          )
+        ).raw;
+      } catch {
+        return redirect(`${manifest.displayName} couldn't complete the connection. Please retry.`);
+      }
+    } else {
+      const tokenRes = await fetch(cfg.tokenUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+        }),
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!tokenRes.ok)
+        return redirect("Google couldn't complete the connection. Please retry.");
+      tokenJson = (await tokenRes.json()) as Record<string, unknown>;
+    }
+    const tokens = tokenJson as {
       access_token?: string;
       refresh_token?: string;
       scope?: string;
@@ -104,6 +138,23 @@ export async function GET(
       ...((existing?.metadata ?? {}) as Record<string, unknown>),
       ...(talk ? { talkStatus: "unverified", talkCheckedAt: null } : {}),
     } as Prisma.InputJsonValue;
+    const granted = tokenSetFrom(tokenJson);
+    const hub = {
+      authKind: "OAUTH2_CODE",
+      status: "CONNECTED",
+      accessTokenExpiresAt: granted.expiresAt ?? null,
+      scopesGranted: granted.scopes ?? cfg.scopes,
+      connectedByUserId: state.userId,
+      disconnectedAt: null,
+      lastErrorCode: null,
+      ...(region ? { region } : {}),
+      // Square returns merchant_id with the token; Clover appends it to the redirect.
+      ...(typeof tokenJson.merchant_id === "string"
+        ? { externalAccountId: tokenJson.merchant_id }
+        : manifest && url.searchParams.get("merchant_id")
+          ? { externalAccountId: url.searchParams.get("merchant_id") }
+          : {}),
+    };
     const integration = await prisma.integration.upsert({
       where: {
         restaurantId_provider: { restaurantId: state.restaurantId, provider },
@@ -116,6 +167,7 @@ export async function GET(
           ? encryptSecret(tokens.refresh_token)
           : null,
         metadata,
+        ...hub,
       },
       update: {
         encryptedAccessToken: encryptSecret(tokens.access_token),
@@ -123,8 +175,14 @@ export async function GET(
           ? { encryptedRefreshToken: encryptSecret(tokens.refresh_token) }
           : {}),
         metadata,
+        ...hub,
       },
     });
+    if (manifest) {
+      await inngest
+        .send({ name: "hub/integration.connected", data: { integrationId: integration.id } })
+        .catch(() => undefined);
+    }
     if (!talk) {
       try {
         if (provider === "GOOGLE_CALENDAR") {

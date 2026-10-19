@@ -1,0 +1,6 @@
+{
+  "href": "https://api.clover.com/v3/merchants/MERCH123TEST",
+  "id": "MERCH123TEST",
+  "name": "Test Diner",
+  "address": { "address1": "12 Main St", "city": "Austin", "state": "TX", "zip": "78701", "country": "US" }
+}

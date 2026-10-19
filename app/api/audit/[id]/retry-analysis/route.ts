@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: RouteParams) {
   const { id } = await params;
 
   const ip = clientIpFromHeaders(req.headers) ?? "unknown";
-  const rl = checkSimpleRateLimit(`retry-analysis:${ip}`, {
+  const rl = await checkSimpleRateLimit(`retry-analysis:${ip}`, {
     windowMs: 60 * 60 * 1000,
     max: 5,
   });

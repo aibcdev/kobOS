@@ -1,5 +1,5 @@
 import type { Integration } from "@prisma/client";
-import { decryptIntegrationToken } from "@/lib/integrations/get-integration-token";
+import { getIntegrationAccessToken } from "@/lib/integrations/get-integration-token";
 import { prisma } from "@/lib/db/prisma";
 
 export type GmailSnapshot = {
@@ -13,7 +13,7 @@ export type GmailSnapshot = {
  * Stored on Integration.metadata — no message bodies are fetched or kept.
  */
 export async function syncGmailSnapshot(restaurantId: string, integration: Integration): Promise<number> {
-  const { accessToken } = decryptIntegrationToken(integration);
+  const accessToken = await getIntegrationAccessToken(integration);
   if (!accessToken) return 0;
 
   try {

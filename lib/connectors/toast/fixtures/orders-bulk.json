@@ -1,0 +1,36 @@
+[
+  {
+    "guid": "toast-order-1",
+    "openedDate": "2026-10-14T23:15:00.000+0000",
+    "closedDate": "2026-10-15T00:05:00.000+0000",
+    "modifiedDate": "2026-10-15T00:05:00.000+0000",
+    "source": "In Store",
+    "checks": [
+      {
+        "guid": "chk-1",
+        "totalAmount": 31.5,
+        "taxAmount": 2.5,
+        "customer": { "guid": "toast-cust-1", "email": "Grace@Example.com", "phone": "(415) 555-0100", "firstName": "Grace", "lastName": "Hopper" },
+        "payments": [{ "tipAmount": 6.0, "refund": null }],
+        "appliedDiscounts": [{ "discountAmount": 3.0 }],
+        "appliedServiceCharges": [],
+        "selections": [
+          { "guid": "sel-1", "displayName": "Burger", "item": { "guid": "item-burger" }, "quantity": 2, "price": 26.0, "preDiscountPrice": 29.0, "modifiers": [{ "displayName": "Add bacon", "price": 2.0 }] },
+          { "guid": "sel-2", "displayName": "Soda", "item": { "guid": "item-soda" }, "quantity": 1, "price": 3.0, "voided": true }
+        ]
+      },
+      { "guid": "chk-void", "voided": true, "totalAmount": 99.0 }
+    ]
+  },
+  {
+    "guid": "toast-order-2",
+    "openedDate": "2026-10-15T18:00:00.000+0000",
+    "closedDate": "2026-10-15T18:30:00.000+0000",
+    "modifiedDate": "2026-10-15T19:00:00.000+0000",
+    "source": "DoorDash",
+    "checks": [
+      { "guid": "chk-2", "totalAmount": 20.0, "taxAmount": 1.6, "payments": [{ "tipAmount": 0, "refund": { "refundAmount": 5.0, "tipRefundAmount": 0 } }], "selections": [] }
+    ]
+  },
+  { "guid": "toast-order-void", "openedDate": "2026-10-15T19:00:00.000+0000", "voided": true, "checks": [] }
+]

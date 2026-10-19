@@ -2,6 +2,9 @@ import { IntegrationProvider } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { prisma } from "@/lib/db/prisma";
+import { oauthUrls, providerRegion } from "@/lib/hub/auth/oauth-urls";
+import { getManifest } from "@/lib/hub/manifest";
 import { buildOAuthUrl, isOAuthConfigured } from "@/lib/integrations/oauth-config";
 import { encodeOAuthState } from "@/lib/integrations/oauth-state";
 
@@ -24,10 +27,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const provider = providerRaw as IntegrationProvider;
+  const returnTo = new URL(req.url).searchParams.get("returnTo") === "connections" ? "connections" : undefined;
 
   if (!isOAuthConfigured(provider)) {
+    const fallback = returnTo ? "/app/settings/connections" : "/dashboard/settings";
     return NextResponse.redirect(
-      `${new URL(req.url).origin}/dashboard/settings?r=${encodeURIComponent(restaurantId)}`,
+      `${new URL(req.url).origin}${fallback}?r=${encodeURIComponent(restaurantId)}`,
     );
   }
 
@@ -39,11 +44,18 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
       restaurantId,
       provider,
       userId: session.userId,
+      returnTo,
     });
   } catch {
     return NextResponse.json({ error: "OAuth state signing unavailable" }, { status: 503 });
   }
-  const url = buildOAuthUrl(provider, state, redirectUri);
+  const manifest = getManifest(provider);
+  let authUrl: string | undefined;
+  if (manifest?.auth.regionOrigins) {
+    const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { countryCode: true } });
+    authUrl = oauthUrls(manifest, providerRegion(manifest, restaurant?.countryCode)).authorizeUrl;
+  }
+  const url = buildOAuthUrl(provider, state, redirectUri, authUrl);
   if (!url) return NextResponse.json({ error: "OAuth URL build failed" }, { status: 503 });
 
   return NextResponse.redirect(url);

@@ -158,3 +158,22 @@ describe("formulas", () => {
     expect(POS_GUEST_LABEL).toBe("COMING_SOON");
   });
 });
+
+describe("ledger role mapping (T-10)", () => {
+  it("maps team roles to OS roles", async () => {
+    const { osRoleFor } = await import("@/lib/os/permissions");
+    expect(osRoleFor("OWNER")).toBe("OWNER");
+    expect(osRoleFor("ADMIN")).toBe("GENERAL_MANAGER");
+    expect(osRoleFor("MEMBER")).toBe("STAFF");
+  });
+
+  it("understands dotted action types", async () => {
+    const { roleAllows } = await import("@/lib/os/permissions");
+    expect(roleAllows("STAFF", "gbp.hours.regular.update")).toBe(false);
+    expect(roleAllows("MARKETING", "gbp.review.reply")).toBe(true);
+    expect(roleAllows("MARKETING", "pos.item.price.update")).toBe(false);
+    expect(roleAllows("CHEF", "pos.item.86")).toBe(true);
+    expect(roleAllows("GENERAL_MANAGER", "pos.item.price.update")).toBe(true);
+    expect(roleAllows("READ_ONLY", "gbp.review.reply")).toBe(false);
+  });
+});

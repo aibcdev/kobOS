@@ -1,10 +1,10 @@
 import type { Integration } from "@prisma/client";
-import { decryptIntegrationToken } from "@/lib/integrations/get-integration-token";
+import { getIntegrationAccessToken } from "@/lib/integrations/get-integration-token";
 import { prisma } from "@/lib/db/prisma";
 
 /** Sync recent Square orders into SalesSnapshot. Requires SQUARE_ACCESS_TOKEN in integration. */
 export async function syncSquareSales(restaurantId: string, integration: Integration): Promise<number> {
-  const { accessToken } = decryptIntegrationToken(integration);
+  const accessToken = await getIntegrationAccessToken(integration);
   if (!accessToken) return 0;
 
   const base = process.env.SQUARE_ENV === "production" ? "https://connect.squareup.com" : "https://connect.squareupsandbox.com";

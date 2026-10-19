@@ -1,3 +1,5 @@
+import { TRIAL_LABEL } from "@/lib/billing/offer";
+import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import type { ResourceArticle } from "./types";
 
 /** Seed Best-X / comparison library (Groberman: coverage at scale, quotable pages). */
@@ -581,7 +583,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       {
         name: "KOB",
         bestFor: "UK and independent owners who will not rip out POS this quarter",
-        pricing: "Free audit; Flex $49/mo or Flat $99/mo",
+        pricing: `Free audit; founding ${FOUNDING_PRICES.GB.label}/mo UK, ${FOUNDING_PRICES.US.label}/mo elsewhere; ${TRIAL_LABEL}, no card`,
         verdict: "Win on diagnosis, price, and approve-only work",
         href: "https://trykob.com/go/audit",
       },

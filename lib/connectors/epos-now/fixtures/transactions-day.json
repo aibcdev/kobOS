@@ -1,0 +1,17 @@
+[
+  {
+    "Id": 9001,
+    "CustomerId": 77,
+    "DateTime": "2026-10-14T23:30:00",
+    "TotalAmount": 24.6,
+    "TaxAmount": 4.1,
+    "ServiceCharge": 2.0,
+    "Gratuity": 0,
+    "DiscountValue": 1.0,
+    "TransactionItems": [
+      { "Id": 1, "ProductId": 501, "Quantity": 2, "UnitPrice": 9.8, "DiscountAmount": 1.0 },
+      { "Id": 2, "ProductId": 999, "Quantity": 1, "UnitPrice": 4.0 }
+    ]
+  },
+  { "Id": 9002, "DateTime": "2026-10-14T12:00:00", "TotalAmount": -9.8, "TransactionItems": [{ "Id": 3, "ProductId": 501, "Quantity": -1, "UnitPrice": 9.8 }] }
+]
