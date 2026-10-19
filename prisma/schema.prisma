@@ -212,6 +212,7 @@ enum IntegrationProvider {
   TRIPADVISOR
   YELP
   GBP
+  TWILIO
 
   @@schema("public")
 }

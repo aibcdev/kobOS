@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { describeDb, seedRestaurant } from "@/tests/helpers/db";
 import { guardEmail, numberGuard, weeklyEmail } from "@/lib/roi/email";
@@ -144,13 +145,41 @@ describeDb("weekly delivery on Postgres (T-92)", () => {
     expect(await deliver.deliverWeek(restaurantId, "2026-10-12", { send, now })).toMatchObject({ status: "sent", whatsapp: "flag_off" });
     expect(send).toHaveBeenCalledTimes(1);
     const msg = send.mock.calls[0][0];
-    expect(msg.to).toEqual([expect.stringMatching(/^owner-.+@example\.com$/)]);
+    expect(msg.to).toMatch(/^owner-.+@example\.com$/);
     expect(msg.text).toContain("Sales: £42.50");
     const saved = await prisma.roiWeek.findFirstOrThrow({ where: { restaurantId } });
     expect(saved.sentAt?.toISOString()).toBe(now.toISOString());
 
     expect(await deliver.deliverWeek(restaurantId, "2026-10-12", { send, now })).toMatchObject({ status: "already_sent" });
     expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends each owner and admin their own message, with a stable idempotency key per recipient", async () => {
+    const admin = randomUUID();
+    await prisma.user.create({ data: { id: admin, email: `admin-${admin.slice(0, 8)}@example.com` } });
+    await prisma.teamMember.create({ data: { userId: admin, restaurantId, role: "ADMIN" } });
+    const viewer = randomUUID();
+    await prisma.user.create({ data: { id: viewer, email: `viewer-${viewer.slice(0, 8)}@example.com` } });
+    await prisma.teamMember.create({ data: { userId: viewer, restaurantId, role: "MEMBER" } });
+    await prisma.order.create({
+      data: { restaurantId, currency: "GBP", sourceKind: "API", sourceProvider: "SQUARE", channel: "DINE_IN", status: "COMPLETED", placedAt: new Date("2026-10-07T12:00:00Z"), totalMinor: 1800, sourceExternalId: "w2" },
+    });
+
+    // Second recipient fails: the claim is released and the retry repeats both with the same keys.
+    const firstTry: string[] = [];
+    const flaky = vi.fn(async (msg: { idempotencyKey: string }) => {
+      firstTry.push(msg.idempotencyKey);
+      if (firstTry.length === 2) throw new Error("rate limited");
+    });
+    await expect(deliver.deliverWeek(restaurantId, "2026-10-05", { send: flaky, now })).rejects.toThrow("rate limited");
+    const send = vi.fn().mockResolvedValue(undefined);
+    expect(await deliver.deliverWeek(restaurantId, "2026-10-05", { send, now })).toMatchObject({ status: "sent" });
+
+    const sent = send.mock.calls.map(([m]) => m as { to: string; idempotencyKey: string });
+    expect(sent.map((m) => m.to.split("-")[0]).sort()).toEqual(["admin", "owner"]);
+    expect(sent.every((m) => !m.to.includes(","))).toBe(true);
+    expect(new Set(sent.map((m) => m.idempotencyKey)).size).toBe(2);
+    expect(firstTry).toEqual(sent.map((m) => m.idempotencyKey));
   });
 
   it("skips a week with no records at all", async () => {
