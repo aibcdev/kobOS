@@ -1,7 +1,7 @@
 import { providerName } from "@/lib/hub/capabilities";
 import { formatMetric, weekLabel } from "@/lib/roi/format";
 import type { WeekSnapshot } from "@/lib/roi/ledger";
-import { METRIC_KEYS, METRICS, type MetricKey } from "@/lib/roi/metrics";
+import { KOB_VALUE_EMPTY, METRIC_GROUPS, METRICS, showsAsEmpty, type MetricKey } from "@/lib/roi/metrics";
 
 /**
  * Spec 2 Phase 9 weekly email. Every figure in it is a formatted value from the saved RoiWeek snapshot; the number
@@ -16,48 +16,68 @@ export function weeklyEmail(input: { restaurantName: string; restaurantId: strin
   const { snapshot: s, locale } = input;
   const label = weekLabel(s.weekStart, locale);
   const link = (path: string) => `${input.appUrl}${path}${path.includes("?") ? "&" : "?"}r=${encodeURIComponent(input.restaurantId)}`;
-  const live = METRIC_KEYS.filter((k) => s.metrics[k]?.state === "LIVE").map((k) => ({ key: k, value: formatMetric(s.metrics[k], s.currency, locale)!, count: s.metrics[k].count }));
-  const off = METRIC_KEYS.filter((k) => s.metrics[k]?.state === "OFF");
-  const v = (k: MetricKey) => live.find((m) => m.key === k);
+  const shown = (k: MetricKey) => s.metrics[k]?.state === "LIVE" && !showsAsEmpty(k, s.metrics[k]);
+  const line = (k: MetricKey) => ({
+    key: k,
+    value: formatMetric(s.metrics[k], s.currency, locale)!,
+    label: METRICS[k].label,
+    explain: METRICS[k].explain,
+    href: link(`/app/roi/${s.weekStart}/${k}`),
+  });
 
-  const headline = [
-    v("net_sales") ? `${v("net_sales")!.value} in sales` : null,
-    v("kob_actions")?.count ? `${v("kob_actions")!.value} job${v("kob_actions")!.count === 1 ? "" : "s"} done by KOB` : null,
-  ].filter(Boolean);
-  const subject = `Your week at ${input.restaurantName}${headline.length ? `: ${headline.join(", ")}` : ""}`;
+  const groups = METRIC_GROUPS.map((g) => ({
+    ...g,
+    lines: g.metrics.filter(shown).map(line),
+    off: g.metrics
+      .filter((k) => s.metrics[k]?.state === "OFF")
+      .map((k) => ({ label: METRICS[k].label, connect: s.metrics[k].connect.slice(0, 2).map(providerName).join(" or ") })),
+    empty: g.metrics.some((k) => showsAsEmpty(k, s.metrics[k])) ? KOB_VALUE_EMPTY : null,
+  }));
+  const lines = groups.flatMap((g) => g.lines);
 
-  const lines = live.map((m) => ({ ...m, label: METRICS[m.key].label, explain: METRICS[m.key].explain, href: link(`/app/roi/${s.weekStart}/${m.key}`) }));
-  const offLines = off.map((k) => ({ label: METRICS[k].label, connect: s.metrics[k].connect.slice(0, 2).map(providerName).join(" or ") }));
+  const kobValue = lines.find((l) => l.key === "kob_value");
+  const subject = `Your week at ${input.restaurantName}${kobValue ? `: ${kobValue.value} verified from KOB` : ""}`;
   const footer = "Every number comes from your own records; tap one to see them. Time saved is an estimate using KOB's standard minutes for each job.";
 
   const text = [
     `Your week at ${input.restaurantName} (${label})`,
-    "",
-    ...lines.map((l) => `${l.label}: ${l.value}\n  ${l.explain} ${l.href}`),
-    ...(offLines.length ? ["", ...offLines.map((o) => `${o.label}: off. Connect ${o.connect} to see this.`)] : []),
+    ...groups.flatMap((g) => [
+      "",
+      g.title.toUpperCase(),
+      g.blurb,
+      ...g.lines.map((l) => `${l.label}: ${l.value}\n  ${l.explain} ${l.href}`),
+      ...g.off.map((o) => `${o.label}: off. Connect ${o.connect} to see this.`),
+      ...(g.empty ? [g.empty] : []),
+    ]),
     "",
     footer,
     `Print: ${link(`/app/roi/${s.weekStart}/print`)}`,
   ].join("\n");
 
+  const card = (l: (typeof lines)[number]) => `<a href="${esc(l.href)}" style="display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #e7e1da;border-radius:16px;padding:16px 18px;margin-bottom:10px">
+<span style="display:block;font-size:13px;color:#7a7068">${esc(l.label)}</span>
+<span style="display:block;font-size:26px;font-weight:600;margin-top:2px">${esc(l.value)}</span>
+<span style="display:block;font-size:13px;color:#7a7068;margin-top:4px">${esc(l.explain)}</span></a>`;
+  const muted = (t: string) => `<p style="font-size:13px;color:#7a7068;margin:8px 0">${esc(t)}</p>`;
+
   const html = `<!doctype html><html><body style="margin:0;background:#f7f5f2;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2a2420">
 <div style="max-width:560px;margin:0 auto;padding:32px 20px">
 <p style="margin:0;font-size:13px;color:#7a7068">${esc(label)}</p>
-<h1 style="margin:6px 0 24px;font-size:24px;font-weight:600">Your week at ${esc(input.restaurantName)}</h1>
-${lines
+<h1 style="margin:6px 0 8px;font-size:24px;font-weight:600">Your week at ${esc(input.restaurantName)}</h1>
+${groups
   .map(
-    (l) => `<a href="${esc(l.href)}" style="display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #e7e1da;border-radius:16px;padding:16px 18px;margin-bottom:10px">
-<span style="display:block;font-size:13px;color:#7a7068">${esc(l.label)}</span>
-<span style="display:block;font-size:26px;font-weight:600;margin-top:2px">${esc(l.value)}</span>
-<span style="display:block;font-size:13px;color:#7a7068;margin-top:4px">${esc(l.explain)}</span></a>`,
+    (g) => `<h2 style="margin:24px 0 4px;font-size:16px;font-weight:600">${esc(g.title)}</h2>
+${muted(g.blurb)}
+${g.lines.map(card).join("\n")}
+${g.off.map((o) => muted(`${o.label}: off. Connect ${o.connect} to see this.`)).join("\n")}
+${g.empty ? muted(g.empty) : ""}`,
   )
   .join("\n")}
-${offLines.map((o) => `<p style="font-size:13px;color:#7a7068;margin:8px 0">${esc(o.label)}: off. Connect ${esc(o.connect)} to see this.</p>`).join("\n")}
 <p style="font-size:12px;color:#7a7068;margin-top:24px">${esc(footer)}</p>
 <p style="font-size:12px;margin-top:8px"><a href="${esc(link(`/app/roi/${s.weekStart}/print`))}" style="color:#7a7068">Printable version</a> · <a href="${esc(link("/app/roi"))}" style="color:#7a7068">Open in KOB</a></p>
 </div></body></html>`;
 
-  return { subject, html, text, allowed: [...live.map((m) => m.value), label] };
+  return { subject, html, text, allowed: [...lines.map((l) => l.value), label] };
 }
 
 /**

@@ -12,10 +12,37 @@ import { STANDARD_MINUTES, standardMinutes } from "@/lib/roi/standard-minutes";
 
 export type RoiUnit = "money" | "count" | "minutes";
 
-export const METRIC_KEYS = ["net_sales", "delivery_sales", "returning_guests", "bookings", "kob_actions", "time_saved"] as const;
+export const METRIC_KEYS = ["net_sales", "delivery_sales", "returning_guests", "bookings", "kob_actions", "time_saved", "kob_value"] as const;
 export type MetricKey = (typeof METRIC_KEYS)[number];
 
 export type MetricWindow = { restaurantId: string; start: Date; end: Date; currency: string };
+
+/**
+ * How the report is split, so nobody reads sales as KOB's doing. "week" is what happened at the restaurant; "work" is
+ * what KOB did; "value" is money KOB can prove it brought in, and nothing else.
+ */
+export type MetricGroup = "week" | "work" | "value";
+
+export const METRIC_GROUPS: readonly { key: MetricGroup; title: string; blurb: string; metrics: MetricKey[] }[] = [
+  { key: "week", title: "Your week", blurb: "What happened at your restaurant. This is your business, not a measure of KOB.", metrics: ["net_sales", "delivery_sales", "returning_guests", "bookings"] },
+  { key: "work", title: "KOB's work", blurb: "Changes KOB made for you and checked went live.", metrics: ["kob_actions", "time_saved"] },
+  {
+    key: "value",
+    title: "Value from KOB (verified)",
+    blurb: "Only money KOB can prove it brought in, every amount traced to a record. Nothing estimated.",
+    metrics: ["kob_value"],
+  },
+];
+
+export const KOB_VALUE_EMPTY = "Nothing yet. This fills in when KOB's phone, ordering or win-back are on.";
+
+/**
+ * Sources allowed to feed "Value from KOB (verified)". Each must return rows KOB can prove it caused: promo-code
+ * redemptions on a KOB-issued code, bookings taken by KOB's phone, direct orders minus the commission avoided. No
+ * attribution models, no "influenced" revenue. Empty until those features ship.
+ */
+export type VerifiedValueSource = (w: MetricWindow) => Promise<EvidenceRow[]>;
+export const VERIFIED_VALUE_SOURCES: VerifiedValueSource[] = [];
 
 export type EvidenceRow = {
   /** Stable per row (order id, booking id, action id) for keys and reconciliation. */
@@ -201,7 +228,19 @@ export const METRICS: Record<MetricKey, MetricSpec> = {
         return [{ id: a.id, value: minutes, label: a.ownerFacingSummary || a.title, at: a.verifiedAt!, ref: actionRef(a), note: `${minutes} min by hand: ${basis.charAt(0).toLowerCase()}${basis.slice(1)}` }];
       }),
   },
+  kob_value: {
+    label: "Value from KOB",
+    unit: "money",
+    contracts: null,
+    explain: "Money KOB brought in that it can prove, record by record.",
+    rows: async (w) => (await Promise.all(VERIFIED_VALUE_SOURCES.map((source) => source(w)))).flat(),
+  },
 };
+
+/** A metric with nothing behind it that should read as a sentence, not a zero. */
+export function showsAsEmpty(key: MetricKey, m: { state: string; count: number } | undefined): boolean {
+  return key === "kob_value" && (!m || m.count === 0);
+}
 
 /** The only way rows become a number: rows without a usable SourceRef are dropped, never guessed at. */
 export function sumRows(rows: EvidenceRow[]): { value: number; count: number } {
