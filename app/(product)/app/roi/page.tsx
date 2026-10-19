@@ -80,6 +80,10 @@ export default async function RoiPage({ searchParams }: { searchParams: Promise<
           );
         })}
       </ul>
+
+      <Link href={withR(`/app/roi/${week}/print`)} className="text-sm text-muted underline">
+        Printable version
+      </Link>
     </AppPageShell>
   );
 }
