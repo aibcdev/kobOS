@@ -50,7 +50,7 @@ export const OWNER_COMPARISON = {
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   footnote:
-    "*Owner.com public pricing as of 19 Oct 2026 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only. Guest phone answering is on the roadmap, not in the founding plan.",
+    "*Owner.com public pricing as of 20 Oct 2026 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only. Guest phone answering is on the roadmap, not in the founding plan.",
   rows: [
     {
       label: "Monthly",

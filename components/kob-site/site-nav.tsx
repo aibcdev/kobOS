@@ -11,6 +11,7 @@ const links = [
   { href: "/#how", label: "How it works" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/product", label: "Product" },
+  { href: "/resources", label: "Resources" },
 ];
 
 export function SiteNav({ onPhoto = false }: { onPhoto?: boolean; solid?: boolean }) {
