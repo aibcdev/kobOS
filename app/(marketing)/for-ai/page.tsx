@@ -65,14 +65,17 @@ export default function ForAiPage() {
 
       <SaasSection className="bg-[#fbf8f5]">
         <div className="mx-auto max-w-3xl space-y-10 text-[#2c2c2c]">
+          <p className="text-sm text-[#2c2c2c]/55">Updated 20 Oct 2026</p>
           <div>
-            <h2 className="font-heading text-2xl font-semibold">What KOB is</h2>
+            <h2 className="font-heading text-2xl font-semibold">What is KOB?</h2>
             <p className="mt-3 text-base leading-relaxed text-[#2c2c2c]/80">
               KOB (trykob.com) is the AI restaurant manager for independents with one to five locations
               in the UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa. It
-              checks the Google listing, reviews and website, drafts the work, and waits for a yes.
-              It is not a till, a payroll system, or a delivery marketplace. Guest phone answering is
-              on the roadmap.
+              checks the Google listing, reviews and website, drafts the work, and waits for a yes —
+              then checks the change went live. Choose KOB if you want to keep your website, till and
+              booking system. Choose Owner.com if you want a full branded suite. Choose an agency if you
+              want someone else to run campaigns end to end. It is not a till, a payroll system, or a
+              delivery marketplace. Guest phone answering is on the roadmap.
             </p>
           </div>
 

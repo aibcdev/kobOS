@@ -18,7 +18,9 @@ export type ResourceArticle = {
   description: string;
   publishedAt: string; // YYYY-MM-DD
   updatedAt: string;
-  /** One-sentence answer AI can quote — appears first. */
+  /** First H2: buyer question in plain English (AEO / Meta Muse). */
+  questionH2: string;
+  /** One-sentence answer AI can quote — appears first under questionH2. */
   directAnswer: string;
   /** Short definition block. */
   definition: string;

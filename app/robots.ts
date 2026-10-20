@@ -43,6 +43,16 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: ["/studio", "/api/", "/login", "/signup", "/review/"],
       },
+      {
+        userAgent: "meta-webindexer",
+        allow: "/",
+        disallow: ["/studio", "/api/", "/login", "/signup", "/review/"],
+      },
+      {
+        userAgent: "Meta-ExternalAgent",
+        allow: "/",
+        disallow: ["/studio", "/api/", "/login", "/signup", "/review/"],
+      },
     ],
     sitemap: `${base}/sitemap.xml`,
     host: base,

@@ -27,7 +27,7 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
       <div className={`${shell} grid gap-12 py-14 md:grid-cols-[minmax(0,1fr)_16rem] md:py-20`}>
         <div className="min-w-0 space-y-10">
           <section className="rounded-3xl border border-[#088924]/20 bg-[#088924]/5 px-6 py-6 md:px-8">
-            <h2 className="font-heading text-lg font-semibold text-[#094413]">Direct answer</h2>
+            <h2 className="font-heading text-lg font-semibold text-[#094413]">{article.questionH2}</h2>
             <p className="font-body mt-3 text-base leading-relaxed text-[#2c2c2c]">{article.directAnswer}</p>
           </section>
 
@@ -96,12 +96,12 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
         </div>
 
         <aside className="md:sticky md:top-24 md:self-start">
-          <nav className="rounded-2xl border border-[#2c2c2c]/10 bg-white p-5 text-sm">
+          <nav className="rounded-2xl border border-[#2c2c2c]/10 bg-white p-5 text-sm" aria-label="On this page">
             <p className="font-mono-brand text-xs font-semibold uppercase tracking-[0.12em] text-[#088924]">
               On this page
             </p>
             <ul className="mt-3 space-y-2 text-[#2c2c2c]/75">
-              <li>Direct answer</li>
+              <li>{article.questionH2}</li>
               <li>Definition</li>
               <li>Comparison</li>
               {article.sections.map((s) => (

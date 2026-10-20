@@ -6,6 +6,10 @@ import { SaasIcon } from "./SaasIcon";
 
 type FaqItem = { q: string; a: string };
 
+/**
+ * Answers stay in the DOM for crawlers even when collapsed.
+ * Only the expanded panel is visually emphasized via aria-expanded.
+ */
 export function SaasFaqAccordion({ title, items }: { title: string; items: readonly FaqItem[] }) {
   const [open, setOpen] = useState<number | null>(0);
 
@@ -24,19 +28,26 @@ export function SaasFaqAccordion({ title, items }: { title: string; items: reado
                   type="button"
                   className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-[#2c2c2c] md:text-base"
                   aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${i}`}
+                  id={`faq-question-${i}`}
                   onClick={() => setOpen(isOpen ? null : i)}
                 >
                   {item.q}
                   <SaasIcon
                     icon="solar:alt-arrow-down-linear"
                     className={`shrink-0 text-xl transition-transform ${isOpen ? "rotate-180" : ""}`}
+                    aria-hidden
                   />
                 </button>
-                {isOpen ? (
-                  <div className="border-t border-[#2c2c2c]/5 px-5 pb-4 text-sm leading-relaxed text-[#2c2c2c]/75">
-                    {item.a}
-                  </div>
-                ) : null}
+                <div
+                  id={`faq-answer-${i}`}
+                  role="region"
+                  aria-labelledby={`faq-question-${i}`}
+                  hidden={!isOpen}
+                  className="border-t border-[#2c2c2c]/5 px-5 pb-4 text-sm leading-relaxed text-[#2c2c2c]/75"
+                >
+                  {item.a}
+                </div>
               </li>
             );
           })}

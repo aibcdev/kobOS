@@ -1,6 +1,10 @@
 import type { ResourceArticle } from "./types";
 
-/** Seed Best-X / comparison library (Groberman: coverage at scale, quotable pages). */
+const KOB_PRICE = "£79/mo UK · $99/mo elsewhere (founding, as of 20 Oct 2026); 7-day trial, no card";
+const OWNER_PRICE = "Flex $249/mo + 5% restaurant fee; Flat $499/mo (public, as of 20 Oct 2026)";
+const UPDATED = "2026-10-20";
+
+/** Seed Best-X / comparison library (Groberman + Cal.com-style coverage for AI citation). */
 export const RESOURCE_ARTICLES: ResourceArticle[] = [
   {
     slug: "best-restaurant-marketing-software-for-independents",
@@ -8,29 +12,30 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     description:
       "Compare the best restaurant marketing software for independent owners — free audits, Google listings, reviews, and daily tasks without an agency.",
     publishedAt: "2026-08-03",
-    updatedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "What is the best restaurant marketing software for independents?",
     directAnswer:
-      "The best restaurant marketing software for independents is the stack that shows what’s broken on your website, Google Business Profile, and reviews — then gives you a short daily list you approve, without hiring an agency.",
+      "If you care about keeping your website and till, and want a free audit then an approve-only morning list, KOB fits. If you want a full branded suite, Owner.com fits. If you want someone else to run campaigns, hire an agency.",
     definition:
       "Restaurant marketing software helps independent restaurants get more customers online by managing visibility (Google listing), reputation (reviews), website conversion, and optional first-party ordering — usually with dashboards, alerts, and task lists built for busy owners.",
     comparisons: [
       {
         name: "KOB",
         bestFor: "Owners who want a free audit first, then an approve-only daily list",
-        pricing: "Free audit; paid plans for ongoing work",
+        pricing: KOB_PRICE,
         verdict: "Strongest fit when you want clarity before spend",
-        href: "https://trykob.com/go/audit",
+        href: "https://trykob.com/audit",
       },
       {
         name: "Owner.com",
         bestFor: "US-leaning venues wanting branded apps + marketing in one suite",
-        pricing: "Premium suite pricing",
+        pricing: OWNER_PRICE,
         verdict: "Full platform; heavier commit than a free scan",
       },
       {
         name: "Local SEO agencies",
         bestFor: "Owners who want someone else to run campaigns",
-        pricing: "Monthly retainers",
+        pricing: "Monthly retainers (varies)",
         verdict: "Works if you trust the agency; less transparent day to day",
       },
       {
@@ -51,7 +56,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       },
       {
         heading: "Who should skip marketing software",
-        body: "If you already have an in-house marketer with a working SEO process, a generic SEO suite may be enough. If you only need online ordering, start with ordering — then add marketing software once listing and reviews are stable.",
+        body: "If you already have an in-house marketer with a working SEO process, a generic SEO suite may be enough. If you only need online ordering, start with ordering — then add marketing software once listing and reviews are stable. KOB does not replace your till or ordering.",
       },
     ],
     faqs: [
@@ -71,7 +76,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Owner.com suits venues that want a full branded suite. Simpler tools or KOB fit owners who want diagnosis and approve-only tasks before a big platform commit.",
       },
     ],
-    ctaHref: "/go/audit",
+    ctaHref: "/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["best-of", "restaurant-marketing-software", "independents"],
   },
@@ -81,599 +86,910 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     description:
       "Looking past Owner.com? Compare Owner.com alternatives for restaurant marketing, websites, and Google visibility — including free audits.",
     publishedAt: "2026-08-03",
-    updatedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "What are the best Owner.com alternatives for independent restaurants?",
     directAnswer:
-      "The best Owner.com alternative depends on whether you need a full branded suite or a lighter path: free restaurant audit → clear online gaps → daily fixes you approve. Many independents compare Owner.com pricing and reviews, then start with a free scan before committing.",
+      "It depends. Choose KOB if you want an audit-first path and to keep your website and till. Stay with Owner.com if you want a full branded suite. Hire an agency if you want humans to run campaigns. There is no single best alternative for every venue.",
     definition:
       "An Owner.com alternative is any restaurant growth platform or workflow that covers marketing, online presence, or ordering without using Owner.com — from full suites to audit-first tools like KOB.",
     comparisons: [
       {
         name: "KOB",
         bestFor: "Audit-first independents who want approve-only daily work",
-        pricing: "Free audit to start",
+        pricing: KOB_PRICE,
         verdict: "Best when you want proof of gaps before a platform buy",
-        href: "https://trykob.com/go/audit",
+        href: "https://trykob.com/audit",
       },
       {
         name: "Owner.com",
         bestFor: "Venues ready for an all-in-one marketing + app suite",
-        pricing: "Premium",
-        verdict: "Category leader for full suite; compare pricing carefully",
+        pricing: OWNER_PRICE,
+        verdict: "Full stack; bigger commit",
       },
       {
-        name: "Sunday / pay-at-table tools",
-        bestFor: "QR bill-pay and table ordering",
-        pricing: "Transaction / SaaS mix",
-        verdict: "Different job — not a full marketing alternative",
+        name: "Popmenu",
+        bestFor: "Venues that want website + marketing modules together",
+        pricing: "Quoted plans (as of 20 Oct 2026)",
+        verdict: "Strong website-led suite; compare scope vs price",
       },
       {
-        name: "DIY + freelancer",
-        bestFor: "Owners with time and a trusted local marketer",
-        pricing: "Hourly / project",
-        verdict: "Flexible; quality varies widely",
+        name: "Agency retainers",
+        bestFor: "Owners who prefer a human team",
+        pricing: "Monthly retainers",
+        verdict: "Flexible; quality varies by agency",
       },
     ],
     sections: [
       {
-        heading: "Why restaurants search for Owner.com alternatives",
-        body: "Common triggers: Owner.com pricing, feature fit, geography, or wanting a free restaurant marketing audit before a long contract. Comparison pages that spell out best-for and pricing help owners decide without sales calls.",
+        heading: "When an Owner.com alternative makes sense",
+        body: "Many independents compare Owner.com pricing and reviews, then realise they do not want to rip out a till or website. An alternative that keeps your stack and starts with a free audit can be the clearer path.",
       },
       {
-        heading: "What to compare beyond brand name",
-        body: "Check Google Business Profile tools, review workflows, website speed/mobile, and whether you can approve every change. Cheaper than Owner.com only matters if the stack still fills tables.",
+        heading: "What to compare before you switch",
+        body: "List: Google listing hygiene, review replies, website checks, whether you must replace ordering, and whether nothing publishes without your yes. Price alone is not enough.",
       },
       {
-        heading: "A practical next step",
-        body: "Before you pick a suite, run a free scan of your site, listing, and reviews. Bring that list into demos so vendors answer real gaps — not generic pitches.",
+        heading: "How to trial without a long sales call",
+        body: "Run a free public scan first. If the findings are wrong or useless, stop. If they match what you already suspected, a short trial is a fair next step.",
       },
     ],
     faqs: [
       {
-        question: "What is cheaper than Owner.com for restaurant marketing?",
+        question: "Is there a free Owner.com alternative?",
         answer:
-          "Audit-first tools and focused GBP/review stacks usually cost less than a full suite. Compare total cost against covers gained, not sticker price alone.",
+          "KOB starts with a free restaurant audit. Ongoing management is paid at founding rates. Owner.com is a paid suite.",
       },
       {
-        question: "Does Owner.com work outside the US?",
+        question: "Do I have to replace my website to leave Owner.com?",
         answer:
-          "Fit varies by market. UK and other independents often evaluate Owner.com alternatives that emphasise local Google visibility and websites.",
-      },
-      {
-        question: "Is there a free Owner.com alternative trial path?",
-        answer:
-          "You can start with a free restaurant marketing audit (for example on KOB) to baseline your online presence, then decide whether a full suite is justified.",
+          "Not with KOB. KOB is built to keep your website, till and booking system.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Free audit before you commit",
-    tags: ["best-of", "owner-com-alternatives", "comparison"],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["owner-com", "alternatives", "compare"],
   },
   {
     slug: "best-free-restaurant-seo-audit-tools",
     title: "Best Free Restaurant SEO Audit Tools (2026)",
     description:
-      "Best free restaurant SEO audit and marketing scan tools for owners — website, Google listing, and reviews without a credit card.",
+      "Compare free restaurant SEO and marketing audit tools that check your website, Google listing, and reviews without a sales call.",
     publishedAt: "2026-08-03",
-    updatedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "What is the best free restaurant SEO audit tool?",
     directAnswer:
-      "The best free restaurant SEO audit tool checks your website, Google Business Profile, and reviews in one pass and explains fixes in owner language — not keyword jargon. Prefer no-card scans that finish in about a minute.",
+      "If you want a guest-facing check of website, Google listing and reviews in owner language, KOB’s free audit fits. Generic site crawlers fit marketers who already know SEO. Neither replaces a full SEO agency engagement.",
     definition:
-      "A free restaurant SEO audit (or restaurant marketing audit) is a no-cost scan of how discoverable and trustworthy your restaurant looks online, usually covering site health, local listing completeness, and review presence.",
+      "A free restaurant SEO audit tool scans public signals — site pages, Google Business Profile, reviews — and lists fixes. It should not invent rankings or savings.",
     comparisons: [
       {
         name: "KOB free audit",
-        bestFor: "Owners who want site + GBP + reviews in one scan",
-        pricing: "Free, no card",
-        verdict: "Built for restaurants; clear next steps",
-        href: "https://trykob.com/go/audit",
+        bestFor: "Owners who want plain-language gaps before they pay",
+        pricing: "Free scan; paid founding plan after trial",
+        verdict: "Built for restaurants, not generic SEO",
+        href: "https://trykob.com/audit",
       },
       {
         name: "Google Business Profile insights",
         bestFor: "Listing-only checks",
         pricing: "Free",
-        verdict: "Essential but incomplete alone",
+        verdict: "Useful; does not cover website or reply drafts",
       },
       {
-        name: "PageSpeed Insights",
-        bestFor: "Site speed only",
-        pricing: "Free",
-        verdict: "Useful technical slice; not a full local audit",
-      },
-      {
-        name: "Agency “free audits”",
-        bestFor: "Owners open to sales follow-up",
-        pricing: "Free lead magnet",
-        verdict: "Quality varies; often a sales funnel",
+        name: "Generic website auditors",
+        bestFor: "Technical SEO teams",
+        pricing: "Freemium",
+        verdict: "Strong on tech; weak on hospitality context",
       },
     ],
     sections: [
       {
-        heading: "What a useful free audit must include",
-        body: "Website mobile UX, Google listing completeness, photos/hours/menu signals, and review volume/recency. If a tool only scores keywords, it is not a restaurant SEO audit.",
+        heading: "What a restaurant audit should check",
+        body: "Hours and holiday mismatches, unanswered reviews, broken booking or menu links, and whether the site says what Google says. Tech scores alone miss covers.",
       },
       {
-        heading: "After the scan",
-        body: "Prioritise fixes guests notice: hours, photos, menu pages, slow mobile, unanswered reviews. Software that turns the audit into an approve-only daily list beats a PDF you never open.",
+        heading: "When a free audit is enough",
+        body: "Use a free audit to decide whether to hire an agency, buy a suite, or start a short trial. Do not treat a free scan as a full SEO strategy.",
       },
     ],
     faqs: [
       {
         question: "Are free restaurant SEO audits accurate?",
         answer:
-          "Accuracy depends on live data from your site and Google listing. Treat scores as a triage list, then verify hours and menu pages yourself.",
+          "They are only as good as the public data they can see. Treat findings as a shortlist to verify, not as guaranteed rankings.",
       },
       {
-        question: "How often should I re-run a free audit?",
-        answer:
-          "After major site or listing changes, and at least monthly if you are actively fixing issues.",
+        question: "Do I need a card for KOB’s free audit?",
+        answer: "No. The public scan does not require a card.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Get free restaurant SEO audit",
-    tags: ["best-of", "free-audit", "seo"],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["audit", "seo", "free"],
   },
   {
     slug: "best-google-business-profile-tools-for-restaurants",
     title: "Best Google Business Profile Tools for Restaurants (2026)",
     description:
-      "Best Google Business Profile (GBP) tools for restaurants — listing optimisation, reviews, and local visibility for independents.",
+      "Compare tools that help restaurants keep Google Business Profile hours, posts, and reviews accurate.",
     publishedAt: "2026-08-03",
-    updatedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "What is the best Google Business Profile tool for restaurants?",
     directAnswer:
-      "The best Google Business Profile tools for restaurants keep hours, photos, menus, and reviews accurate — and alert you when the listing drifts. Pair GBP hygiene with a wider restaurant marketing audit so website and reviews match what Maps shows.",
+      "If you want morning checks against your website and approve-only fixes, KOB fits. If you only need the official Google interface, use Google Business Profile itself. Multi-location chains may need enterprise listing software.",
     definition:
-      "Google Business Profile tools help restaurants manage their Google Maps / local listing: categories, attributes, posts, photos, Q&A, and review replies that influence local pack visibility.",
+      "Google Business Profile tools help restaurants manage or monitor their Google listing: hours, attributes, photos, posts, and review replies.",
     comparisons: [
       {
         name: "KOB",
-        bestFor: "Owners who want GBP checked alongside website and reviews",
-        pricing: "Free audit to start",
-        verdict: "Best as part of a full online presence scan",
-        href: "https://trykob.com/go/audit",
+        bestFor: "Independents who want listing + reviews + website in one morning list",
+        pricing: KOB_PRICE,
+        verdict: "Strong when hours clash with the website",
+        href: "https://trykob.com/audit",
       },
       {
-        name: "Native Google Business Profile",
-        bestFor: "Manual weekly listing care",
+        name: "Google Business Profile",
+        bestFor: "Owners who manage one listing manually",
         pricing: "Free",
-        verdict: "Required baseline; easy to neglect",
+        verdict: "Source of truth; no morning draft list",
       },
       {
-        name: "Review platforms (e.g. reputation suites)",
-        bestFor: "High review volume venues",
-        pricing: "SaaS",
-        verdict: "Strong on reviews; pair with listing + site work",
+        name: "Enterprise listing platforms",
+        bestFor: "Chains with many locations",
+        pricing: "Enterprise contracts",
+        verdict: "Overkill for most 1–5 site independents",
       },
     ],
     sections: [
       {
-        heading: "GBP mistakes that cost covers",
-        body: "Wrong hours, missing menu links, thin photos, and ignored reviews. Guests decide before they call — your listing is often the first menu they see.",
+        heading: "Why restaurant hours go wrong",
+        body: "Holiday hours, seasonal menus, and website rebuilds often update one place and not Google. Guests trust Google first.",
       },
       {
-        heading: "How GBP tools fit marketing software",
-        body: "Listing tools alone don’t fix a weak website. The best stack connects GBP health to site conversion and review response in one weekly rhythm.",
+        heading: "Reviews and the listing",
+        body: "Unanswered reviews sit next to your hours. A good tool drafts replies in your voice and holds angry or legal-sounding reviews for you.",
       },
     ],
     faqs: [
       {
-        question: "Do restaurants need paid GBP software?",
+        question: "Can software post to Google without me?",
         answer:
-          "Not always. Many single-location venues can manage native GBP if they stay consistent. Paid tools help when you want alerts, multi-location control, or review workflows.",
-      },
-      {
-        question: "How does GBP relate to restaurant SEO?",
-        answer:
-          "GBP is the core of local restaurant SEO. Categories, reviews, and proximity signals heavily influence Maps and local pack results.",
+          "KOB does not post review replies to Google until that feature is live. Drafts are copied into Google. Hours fixes wait for your yes.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Scan listing + site free",
-    tags: ["best-of", "gbp", "local-seo"],
+    ctaHref: "/audit",
+    ctaLabel: "Check my Google listing",
+    tags: ["gbp", "google-listing", "restaurants"],
   },
   {
     slug: "restaurant-marketing-software-vs-agency",
     title: "Restaurant Marketing Software vs Agency: Which Is Better?",
     description:
-      "Restaurant marketing software vs agency compared — cost, control, and when independents should choose each path.",
+      "Software or agency for restaurant marketing? Compare cost, control, and when each fits independent restaurants.",
     publishedAt: "2026-08-03",
-    updatedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "Is restaurant marketing software or an agency better?",
     directAnswer:
-      "Restaurant marketing software is better when you want visibility and approve-only tasks on a budget; an agency is better when you need strategy and execution you will not touch. Many owners use a free audit first, then choose software or agency based on the gap list.",
+      "It depends. Software fits owners who want a short approve-only list and clear pricing. An agency fits owners who want humans to run campaigns end to end. Many independents start with a free audit, then choose.",
     definition:
-      "Restaurant marketing software is a productised workflow (audit, tasks, listing/reviews). A restaurant marketing agency is a people-powered service retainer for campaigns, creative, and SEO.",
+      "Restaurant marketing software automates checks and drafts. Agencies sell people and campaigns. Both can improve covers; they differ on control, cost, and speed.",
     comparisons: [
       {
-        name: "Marketing software (e.g. KOB)",
-        bestFor: "Owners who will approve a short daily list",
-        pricing: "SaaS + free audit entry",
-        verdict: "More control, usually lower cost",
-        href: "https://trykob.com/go/audit",
+        name: "KOB (software)",
+        bestFor: "Owners who want approve-only daily work",
+        pricing: KOB_PRICE,
+        verdict: "Transparent day to day",
+        href: "https://trykob.com/audit",
       },
       {
         name: "Local marketing agency",
-        bestFor: "Owners who will not log in weekly",
-        pricing: "Retainer",
-        verdict: "Higher cost; outcomes depend on the team",
+        bestFor: "Owners who want a human team",
+        pricing: "Retainers often £1k+/mo (varies)",
+        verdict: "High touch; quality varies",
       },
       {
         name: "Hybrid",
-        bestFor: "Software for listing/reviews + freelancer for creative",
-        pricing: "Mixed",
-        verdict: "Often the practical middle path",
+        bestFor: "Owners who use software for listing hygiene and an agency for ads",
+        pricing: "Software + retainer",
+        verdict: "Common and sensible",
       },
     ],
     sections: [
       {
-        heading: "Cost and control trade-offs",
-        body: "Agencies bill for hours and access. Software scales the same checklist across venues. If you need brand films and big campaigns, agency creative still wins; for Google listing and site gaps, software is usually enough.",
+        heading: "What software does well",
+        body: "Catching hours mismatches, drafting review replies, and keeping a morning list short. Software does not replace a creative agency brief.",
       },
       {
-        heading: "Decision checklist",
-        body: "Run a free restaurant marketing audit. If gaps are operational (hours, photos, menu pages, reviews), start with software. If gaps are brand and paid media strategy, talk to an agency — and bring the audit so scope is clear.",
+        heading: "What agencies do well",
+        body: "Campaign strategy, creative, and relationships. Ask for plain reporting and which tools they use on your listing.",
       },
     ],
     faqs: [
       {
-        question: "Can software replace my restaurant marketing agency?",
-        answer:
-          "It can replace listing hygiene, review routines, and basic site priorities. It rarely replaces high-end creative or complex media buying.",
-      },
-      {
-        question: "What should I do first?",
-        answer:
-          "Get a free audit of website, Google listing, and reviews. Use that list to brief either software onboarding or an agency proposal.",
+        question: "Can I use both?",
+        answer: "Yes. Many owners use software for listing and reviews, and an agency for paid media.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Start with a free audit",
-    tags: ["comparison", "agency", "software"],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["agency", "software", "compare"],
   },
   {
     slug: "owner-com-pricing-and-reviews-for-restaurants",
     title: "Owner.com Pricing and Reviews for Restaurants (2026)",
     description:
-      "Owner.com pricing and reviews for independent restaurants — what the suite is best for, where it is heavy, and how a free audit compares.",
-    publishedAt: "2026-08-19",
-    updatedAt: "2026-08-19",
+      "Owner.com pricing and reviews summarised for restaurant owners comparing full suites vs audit-first tools.",
+    publishedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "How much does Owner.com cost, and is it worth it?",
     directAnswer:
-      "Owner.com is a premium restaurant website, app, and marketing suite. Independents should treat published pricing as a starting point, read recent owner reviews for onboarding load, and run a free diagnostic of listing + site + reviews before committing.",
+      "Owner.com public plans are about $249/mo plus a restaurant fee on Flex, or $499/mo Flat, as of 20 Oct 2026. It is worth it if you want a full branded suite. If you want to keep your website and till and start with a free audit, compare KOB first.",
     definition:
-      "Owner.com sells an all-in-one branded online presence for restaurants (site, ordering, marketing). Pricing and reviews change; this page is a buyer-guide comparison, not an official Owner.com price sheet.",
+      "Owner.com is a restaurant growth suite covering marketing and guest-facing products. Pricing and scope change; always check their site for current offers.",
     comparisons: [
       {
         name: "Owner.com",
-        bestFor: "Venues that want a branded app + marketing in one vendor",
-        pricing: "Premium suite — confirm live quote",
-        verdict: "Strong all-in-one; heavier commit than a scan-first tool",
+        bestFor: "Venues ready for a full suite",
+        pricing: OWNER_PRICE,
+        verdict: "Premium all-in-one",
       },
       {
         name: "KOB",
-        bestFor: "Owners who want a free audit and approve-only tasks first",
-        pricing: "Free audit; paid plans after",
-        verdict: "Better when you need diagnosis before a platform switch",
-        href: "https://trykob.com/go/audit",
-      },
-      {
-        name: "Stay on current site + GBP",
-        bestFor: "Venues whose listing and reviews are already healthy",
-        pricing: "Time only",
-        verdict: "Fine until covers stall; then re-audit",
+        bestFor: "Independents who keep their stack",
+        pricing: KOB_PRICE,
+        verdict: "Lower commit; audit first",
+        href: "https://trykob.com/audit",
       },
     ],
     sections: [
       {
-        heading: "How to read Owner.com reviews as an owner",
-        body: "Look for comments on setup time, contract flexibility, and whether marketing work actually moved covers. Ignore both haters and affiliate posts. Pair reviews with a live scan of your own Google listing and website so you are not buying features you already have.",
+        heading: "How to read Owner.com pricing",
+        body: "Compare Flex vs Flat carefully. Factor restaurant fees and what you already pay for a website and till. Published figures here are as of 20 Oct 2026.",
       },
       {
-        heading: "Pricing without guessing a number",
-        body: "Suite vendors quote by location and modules. Ask for the full monthly number including ordering fees. Compare that to a free KOB audit plus a lighter software plan if your gaps are listing hygiene and reviews, not a full replatform.",
+        heading: "Reviews and fit",
+        body: "Read recent owner reviews for your country and venue type. A US full-suite fit may not match a UK independent who already has a site.",
       },
     ],
     faqs: [
       {
-        question: "Is Owner.com worth it for a single location?",
+        question: "Is Owner.com cheaper than an agency?",
         answer:
-          "It can be if you want a branded app and will use the suite weekly. If you mainly need Google listing, reviews, and a clearer website, start with a free audit and a lighter stack.",
-      },
-      {
-        question: "Where should I compare Owner.com alternatives?",
-        answer:
-          "Use a comparison table that names KOB, agencies, and generic SEO tools, then run your own venue through a free scan so the quote matches real gaps.",
+          "Sometimes. Compare total monthly cost including fees. Agencies and suites solve different jobs.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Scan your venue free",
-    tags: ["comparison", "owner-com", "pricing"],
+    ctaHref: "/audit",
+    ctaLabel: "Compare with a free audit",
+    tags: ["owner-com", "pricing", "reviews"],
   },
   {
     slug: "best-ways-to-get-more-restaurant-customers-online",
     title: "Best Ways to Get More Restaurant Customers Online (2026)",
     description:
-      "Best ways independent restaurants get more customers online — Google listing, reviews, website conversion, then paid ads.",
-    publishedAt: "2026-08-19",
-    updatedAt: "2026-08-19",
+      "Practical ways independent restaurants get more customers online: Google listing, reviews, website fixes, and when to use software.",
+    publishedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "What are the best ways for a restaurant to get more customers online?",
     directAnswer:
-      "The best ways to get more restaurant customers online are: fix Google Business Profile and reviews, make the website bookable on mobile, then add paid ads only after those basics convert.",
+      "Fix Google hours and unanswered reviews first, then broken website paths, then paid ads. Software like KOB helps with the first two. A full suite or agency helps if you need creative and campaigns after the basics work.",
     definition:
-      "Getting more restaurant customers online means turning search, Maps, and reviews into bookings — not posting more photos with no funnel.",
+      "Getting more restaurant customers online means improving discovery (Google), trust (reviews), and conversion (website and booking) so more guests choose you.",
     comparisons: [
       {
-        name: "Google listing + reviews",
+        name: "Listing + review hygiene",
         bestFor: "Almost every independent",
-        pricing: "Time; optional software",
-        verdict: "Highest leverage first move",
+        pricing: "Time or tools like KOB",
+        verdict: "Highest leverage first step",
       },
       {
-        name: "Website conversion (hours, menu, book)",
-        bestFor: "Venues with traffic but weak bookings",
-        pricing: "Fixes or a rebuild",
-        verdict: "Stops leaking guests who already found you",
+        name: "Paid ads",
+        bestFor: "Venues with tracking and a working listing",
+        pricing: "Ad spend + management",
+        verdict: "Scale after basics",
       },
       {
-        name: "KOB free audit",
-        bestFor: "Owners who want a ranked gap list",
-        pricing: "Free to start",
-        verdict: "Shows which of the above is actually broken",
-        href: "https://trykob.com/go/audit",
-      },
-      {
-        name: "Paid ads first",
-        bestFor: "Rarely — only when listing and site already convert",
-        pricing: "Media spend",
-        verdict: "Expensive if the landing experience is weak",
+        name: "Full marketing suite",
+        bestFor: "Venues replacing several tools at once",
+        pricing: OWNER_PRICE + " class suites",
+        verdict: "Bigger project",
       },
     ],
     sections: [
       {
-        heading: "Order of operations",
-        body: "Do not buy ads to a listing with wrong hours or a site that is slow on mobile. Rank the leaks: Maps, reviews, menu/book path, then social, then ads.",
+        heading: "Start with what guests already see",
+        body: "Wrong hours and silent 2★ reviews lose covers before ads can help. Check Google against your website weekly.",
       },
       {
-        heading: "What software should do",
-        body: "Software should show the leaks in owner language and a daily list you approve. An agency can still run creative once the basics are honest.",
+        heading: "Then convert the visit",
+        body: "Broken booking buttons and dead menus waste the click. Fix those before buying more traffic.",
       },
     ],
     faqs: [
       {
-        question: "What is the fastest way to get more restaurant bookings online?",
-        answer:
-          "Correct hours, photos, and review replies on Google, and a mobile site that shows the menu and a book/call action. That beats a new Instagram theme.",
-      },
-      {
-        question: "Should I start with TikTok or Google?",
-        answer:
-          "Google listing and website first. Social can fill awareness after guests can verify hours and book.",
+        question: "Should I buy ads before fixing my Google listing?",
+        answer: "Usually no. Ads amplify a broken listing.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "See which leak is yours",
-    tags: ["best-of", "covers", "online"],
+    ctaHref: "/audit",
+    ctaLabel: "See what guests see",
+    tags: ["customers", "online", "growth"],
   },
   {
     slug: "best-restaurant-marketing-software-uk-independents",
     title: "Best Restaurant Marketing Software for UK Independents (2026)",
     description:
-      "Best restaurant marketing software for UK independents — Google listing, reviews, and site gaps without a US-only suite.",
-    publishedAt: "2026-08-19",
-    updatedAt: "2026-08-19",
+      "Best restaurant marketing software for UK independent restaurants and cafés — pricing in GBP, Google listing focus, no US-only suite assumption.",
+    publishedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "What is the best restaurant marketing software for UK independents?",
     directAnswer:
-      "The best restaurant marketing software for UK independents is the stack that understands Google Business Profile, reviews, and a local website — and starts with a free audit rather than a US-only app suite.",
+      "For UK independents who want GBP pricing and to keep their website and till, KOB at £79/mo founding (as of 20 Oct 2026) fits. US-centric full suites can still work, but check currency, support hours, and whether you must replace your stack.",
     definition:
-      "UK independent restaurant marketing software helps single-location and small groups win local search, reviews, and direct bookings in Britain (and similar markets), not only US delivery-app bundles.",
+      "UK restaurant marketing software helps independents manage Google visibility, reviews, and website conversion with pricing and support that fit UK operators.",
     comparisons: [
       {
         name: "KOB",
-        bestFor: "UK and similar independents who want a free scan then approve-only work",
-        pricing: "Free audit; paid plans",
-        verdict: "Built for owner language and listing + site + reviews",
-        href: "https://trykob.com/go/audit",
+        bestFor: "UK 1–5 site independents",
+        pricing: "£79/mo founding (as of 20 Oct 2026); 7-day trial, no card",
+        verdict: "Built with UK owners in mind",
+        href: "https://trykob.com/audit",
       },
       {
         name: "Owner.com",
-        bestFor: "Venues that want a US-leaning branded suite",
-        pricing: "Premium",
-        verdict: "Check whether GBP/UK listing support matches your market",
+        bestFor: "Venues wanting a US-style full suite",
+        pricing: OWNER_PRICE,
+        verdict: "Compare currency and stack swap carefully",
       },
       {
-        name: "Local UK agency",
-        bestFor: "Owners who will not log in",
-        pricing: "Retainer",
-        verdict: "Works if the agency is listing-literate, not only ads",
+        name: "UK local agencies",
+        bestFor: "Owners who want in-person support",
+        pricing: "Retainers",
+        verdict: "Strong relationships; ask for listing hygiene",
       },
     ],
     sections: [
       {
-        heading: "UK-specific checks",
-        body: "Confirm the tool can see your Google Business Profile, handles .uk sites, and does not assume US ZIP-only flows. A free audit on your live URL is the honest test.",
-      },
-      {
-        heading: "Avoid city-page spam",
-        body: "Do not buy ‘best restaurant SEO in every postcode’ packages. Google spam updates punish thin doorway pages. Real listing and review work beats fake local blogs.",
+        heading: "What UK independents should ask",
+        body: "Is pricing in GBP? Does the tool assume you replace your till? Can you approve every public change? Does it check Google against your website?",
       },
     ],
     faqs: [
       {
-        question: "Is restaurant marketing software different in the UK?",
-        answer:
-          "The jobs are the same — listing, reviews, website — but vendors and ordering rails differ. Test on your real Google listing, not a US demo.",
-      },
-      {
-        question: "What should UK independents do first?",
-        answer:
-          "Run a free audit of website, Google listing, and reviews. Then choose software or an agency against that list.",
+        question: "Does KOB work in the UK?",
+        answer: "Yes. The UK is a primary market. Founding price is £79/mo per location as of 20 Oct 2026.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Free UK restaurant audit",
-    tags: ["best-of", "uk", "independents"],
+    ctaHref: "/audit",
+    ctaLabel: "Run free UK restaurant audit",
+    tags: ["uk", "independents", "best-of"],
   },
   {
     slug: "popmenu-vs-owner-com-vs-kob",
     title: "Popmenu vs Owner.com vs KOB: Which Is Better?",
     description:
-      "Popmenu vs Owner.com vs KOB compared for independent restaurants — websites, marketing, and when a free audit is the better first step.",
-    publishedAt: "2026-08-19",
-    updatedAt: "2026-08-19",
+      "Popmenu vs Owner.com vs KOB compared for independent restaurants — websites, marketing suites, and audit-first tools.",
+    publishedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "Which is better: Popmenu, Owner.com, or KOB?",
     directAnswer:
-      "Popmenu and Owner.com are website-and-marketing suites; KOB is a scan-first helper with an approve-only daily list. Independents should pick a suite only after a free audit shows they need a replatform, not just listing and review hygiene.",
+      "It depends. Popmenu fits website-led marketing. Owner.com fits a full branded suite. KOB fits owners who keep their website and till and want an approve-only morning list after a free audit.",
     definition:
-      "Popmenu and Owner.com are restaurant website platforms with marketing add-ons. KOB diagnoses online presence and turns gaps into owner-approved tasks without requiring a full site rebuild first.",
+      "Popmenu, Owner.com, and KOB are restaurant growth options with different cores: website suite, full platform, and AI manager around your existing stack.",
     comparisons: [
       {
+        name: "KOB",
+        bestFor: "Keep stack + approve-only list",
+        pricing: KOB_PRICE,
+        verdict: "Best audit-first path",
+        href: "https://trykob.com/audit",
+      },
+      {
         name: "Popmenu",
-        bestFor: "Venues shopping a new restaurant website with marketing modules",
-        pricing: "SaaS suite",
-        verdict: "Fit when you are already replacing the site",
+        bestFor: "Website + marketing modules",
+        pricing: "Quoted (as of 20 Oct 2026)",
+        verdict: "Strong if you want a new site",
       },
       {
         name: "Owner.com",
-        bestFor: "Venues wanting a branded app-heavy suite",
-        pricing: "Premium suite",
-        verdict: "Fit when you will use the full platform",
-      },
-      {
-        name: "KOB",
-        bestFor: "Owners who want diagnosis before a rebuild",
-        pricing: "Free audit; paid plans",
-        verdict: "Fit when Google listing and reviews are the leak",
-        href: "https://trykob.com/go/audit",
+        bestFor: "Full suite",
+        pricing: OWNER_PRICE,
+        verdict: "Biggest platform commit",
       },
     ],
     sections: [
       {
-        heading: "Website rebuild vs listing work",
-        body: "A new website does not fix wrong hours on Maps. Compare Popmenu and Owner.com when you need a new site. Use KOB when you need to know what guests actually see this week.",
-      },
-      {
-        heading: "Fair comparison rule",
-        body: "Do not rank a scan tool vs a CMS as if they sell the same SKU. Ask: do I need a new website, or a weekly list for listing, reviews, and conversion?",
+        heading: "How to decide in one afternoon",
+        body: "List must-haves: new website or keep current? Replace ordering or keep it? Need a free diagnostic first? Then shortlist two and run a KOB audit on your live site.",
       },
     ],
     faqs: [
       {
-        question: "Is KOB a Popmenu alternative?",
-        answer:
-          "Only partly. If you need a new restaurant website CMS, compare Popmenu and Owner.com. If you need a gap list on the site you already have, start with KOB’s free audit.",
-      },
-      {
-        question: "Can I use KOB with my current website?",
-        answer:
-          "Yes. The audit and daily list work on the site and Google listing you have now.",
+        question: "Does KOB replace Popmenu’s website?",
+        answer: "No. KOB does not replace your website.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Compare against your live venue",
-    tags: ["comparison", "popmenu", "owner-com"],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["popmenu", "owner-com", "compare"],
   },
   {
     slug: "kob-vs-owner-com-which-is-better",
     title: "KOB vs Owner.com: Which Is Better?",
     description:
-      "KOB vs Owner.com for independent restaurants — free audit and daily approve list versus a full ordering, app, and kitchen stack at $249–$499/mo.",
-    publishedAt: "2026-08-29",
-    updatedAt: "2026-08-29",
+      "KOB vs Owner.com for independent restaurants — honest comparison of price, stack swap, and approve-only work.",
+    publishedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "Which is better, KOB or Owner.com?",
     directAnswer:
-      "Owner.com is better if you will replatform first-party ordering, a branded app, and kitchen ops. KOB is better if you want a free scan of Google, reviews, and your current site, then a short list you approve — without swapping POS.",
+      "If you want to keep your website and till and start with a free audit, KOB is the better fit. If you want a full branded suite and are ready for that commit, Owner.com is the better fit. Neither is best for every restaurant.",
     definition:
-      "Owner.com is a US-leaning restaurant growth suite (website, SEO pages, ordering, app, loyalty, specialist launch). KOB is restaurant visibility software: diagnose leaks, then daily tasks for hours, reviews, and listing hygiene.",
+      "KOB is an AI restaurant manager around tools you already have. Owner.com is a full restaurant growth suite. They solve overlapping goals with different product shapes.",
     comparisons: [
       {
         name: "KOB",
-        bestFor: "UK and independent owners who will not rip out POS this quarter",
-        pricing: "Free audit; Flex $49/mo or Flat $99/mo",
-        verdict: "Win on diagnosis, price, and approve-only work",
-        href: "https://trykob.com/go/audit",
+        bestFor: "Independents keeping their stack",
+        pricing: KOB_PRICE,
+        verdict: "Lower commit; morning list",
+        href: "https://trykob.com/audit",
       },
       {
         name: "Owner.com",
-        bestFor: "Venues ready to move direct orders onto Owner’s stack",
-        pricing: "Flex $249/mo + 5% restaurant fee; Flat $499/mo (public, 2026-06-20)",
-        verdict: "Win on commerce depth, proof volume, and 24/7 specialist support",
+        bestFor: "Venues wanting one branded suite",
+        pricing: OWNER_PRICE,
+        verdict: "Full platform depth",
       },
     ],
     sections: [
       {
-        heading: "Do not compare them as the same SKU",
-        body: "Owner sells first-party sales infrastructure. KOB sells a daily visibility employee. Ranking one as “cheaper Owner” is the wrong frame. Ask: will I replace ordering this month?",
+        heading: "Price and trial",
+        body: "KOB founding is £79/mo in the UK and $99 elsewhere, as of 20 Oct 2026, with a 7-day trial and no card. Owner.com Flex and Flat public prices are higher; confirm on their site.",
       },
       {
-        heading: "What to do in the next ten minutes",
-        body: "Run the free KOB audit on the site you have now. If the report is mostly hours, photos, and reviews, you do not need a $249 suite yet. If you already decided to own delivery and a branded app, book Owner’s demo.",
+        heading: "What each will not do",
+        body: "KOB does not replace your till or ordering and does not claim phone answering is live. Owner.com is not a small diagnostic scan — it is a suite sale.",
       },
     ],
     faqs: [
       {
-        question: "Is KOB an Owner.com clone?",
-        answer:
-          "No. KOB does not ship a kitchen tablet or guest app. The homepage comparison is price and daily tasks, not feature-for-feature cloning.",
-      },
-      {
-        question: "Which is better for a UK independent?",
-        answer:
-          "Start with KOB’s free scan. Owner’s case studies, phone support, and POS integrations are US-weighted. Geography and stack lock-in matter more than mint-green marketing.",
+        question: "Can I try KOB without switching from Owner.com?",
+        answer: "Yes. Run the free audit on your public listing and site. Nothing replaces your current stack until you choose to.",
       },
     ],
-    ctaHref: "/go/audit",
+    ctaHref: "/audit",
     ctaLabel: "Run free restaurant audit",
-    tags: ["comparison", "owner-com", "kob"],
+    tags: ["kob", "owner-com", "compare"],
   },
   {
     slug: "replatform-vs-google-listing-hygiene-restaurants",
-    title: "Replatform vs Google Listing Hygiene for Restaurants (2026)",
+    title: "Replatform vs Google Listing Hygiene for Restaurants",
     description:
-      "When independent restaurants should rebuild the website and ordering stack versus fixing Google hours, reviews, and conversion leaks first.",
-    publishedAt: "2026-08-29",
-    updatedAt: "2026-08-29",
+      "Should you rebuild your restaurant website or fix Google listing hygiene first? Compare replatform projects vs listing and review fixes.",
+    publishedAt: "2026-08-03",
+    updatedAt: UPDATED,
+    questionH2: "Should restaurants replatform or fix Google listing hygiene first?",
     directAnswer:
-      "Fix Google Business Profile, hours, photos, and reviews before you replatform. A new Owner.com-style stack does not correct wrong Maps hours. Replatform when you have already decided to own first-party orders and will use the full suite.",
+      "Fix Google listing hygiene and unanswered reviews first in almost every case. Rebuild the website when conversion paths are broken after the listing is accurate. Replatforming is a bigger project; hygiene is a morning habit.",
     definition:
-      "Listing hygiene means accurate hours, categories, photos, and review replies on Google. Replatforming means moving the website, menu, and ordering onto a new vendor (Owner.com, Popmenu, and similar).",
+      "Replatforming means replacing your website or stack. Google listing hygiene means keeping hours, attributes, and reviews accurate on Google Business Profile.",
     comparisons: [
       {
-        name: "Listing hygiene (KOB audit)",
-        bestFor: "Quiet Tuesdays, wrong hours, unanswered reviews",
-        pricing: "Free scan; paid daily list",
-        verdict: "Do this first in almost every independent",
-        href: "https://trykob.com/go/audit",
+        name: "Listing hygiene (KOB)",
+        bestFor: "Most independents this month",
+        pricing: KOB_PRICE,
+        verdict: "Fastest path to fewer guest mistakes",
+        href: "https://trykob.com/audit",
       },
       {
-        name: "Replatform (Owner.com / similar)",
-        bestFor: "Committed move off third-party marketplaces onto one vendor stack",
-        pricing: "Premium monthly plus possible order fees",
-        verdict: "Do this after the scan shows a site/CMS problem, not a listing problem",
-      },
-      {
-        name: "Agency retainer",
-        bestFor: "Owners who will not tap approve themselves",
-        pricing: "Monthly retainer",
-        verdict: "Works if you trust the agency; less transparent day to day",
+        name: "Website replatform",
+        bestFor: "Sites that cannot take bookings or show a menu",
+        pricing: "Project fees",
+        verdict: "Necessary when the site is broken",
       },
     ],
     sections: [
       {
-        heading: "The expensive mistake",
-        body: "Buying a $249–$499/mo suite because Tuesday is quiet, when Maps still shows last year’s bank holiday hours. Guests never reach the new ordering flow.",
+        heading: "Signs you need hygiene, not a rebuild",
+        body: "Google hours disagree with the site, holiday hours missing, reviews unanswered, but guests can still book somehow.",
       },
       {
-        heading: "A fair test",
-        body: "Run a free restaurant marketing audit. If the top issues are listing and reviews, stay on your current site. If the site cannot take a booking and you already want to cut marketplace fees, then compare Owner.com.",
+        heading: "Signs you need a rebuild",
+        body: "Mobile site unusable, menu PDF only and broken, booking permanently 404. Fix those — then return to daily listing checks.",
       },
     ],
     faqs: [
       {
-        question: "Does a new website fix Google ranking?",
-        answer:
-          "Not by itself. Google still uses the Business Profile, reviews, and whether guests can confirm you are open. Hygiene and a usable page both matter; order them correctly.",
-      },
-      {
-        question: "Where should UK independents start?",
-        answer:
-          "Free audit on trykob.com, then decide. Owner.com’s public product is a US commerce stack; KOB’s trial is scan plus approve-only tasks.",
+        question: "Does KOB rebuild my website?",
+        answer: "No. KOB flags website mistakes and helps keep the listing right. It does not replace your site.",
       },
     ],
-    ctaHref: "/go/audit",
-    ctaLabel: "Free listing and website audit",
-    tags: ["best-of", "gbp", "owner-com"],
+    ctaHref: "/audit",
+    ctaLabel: "Check listing and website",
+    tags: ["gbp", "website", "compare"],
+  },
+  // ——— 8 new Cal.com-style comparison pages ———
+  {
+    slug: "kob-vs-bentobox-which-is-better",
+    title: "KOB vs BentoBox: Which Is Better?",
+    description:
+      "KOB vs BentoBox for independent restaurants — AI manager around your stack vs website-led hospitality platform.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "Which is better, KOB or BentoBox?",
+    directAnswer:
+      "Choose BentoBox if you want a hospitality website and marketing platform as your home base. Choose KOB if you already have a website and till and want an approve-only morning list for Google, reviews and site mistakes after a free audit.",
+    definition:
+      "BentoBox is a restaurant website and marketing platform. KOB is an AI restaurant manager that works around tools you already have.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Keep current website + till",
+        pricing: KOB_PRICE,
+        verdict: "Audit-first AI manager",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "BentoBox",
+        bestFor: "Venues wanting a hospitality website platform",
+        pricing: "Quoted plans (as of 20 Oct 2026)",
+        verdict: "Strong website-led suite",
+      },
+    ],
+    sections: [
+      {
+        heading: "When BentoBox fits better",
+        body: "You are rebuilding the site anyway and want hospitality templates, ecommerce, or marketing modules in one vendor.",
+      },
+      {
+        heading: "When KOB fits better",
+        body: "Your site is fine enough, but Google hours and reviews are messy. You want drafts you approve, not a new website project.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Does KOB replace BentoBox?",
+        answer: "No. KOB does not replace your website platform.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["bentobox", "compare", "kob"],
+  },
+  {
+    slug: "kob-vs-popmenu-which-is-better",
+    title: "KOB vs Popmenu: Which Is Better?",
+    description:
+      "KOB vs Popmenu for independent restaurants — approve-only AI manager vs website and marketing suite.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "Which is better, KOB or Popmenu?",
+    directAnswer:
+      "Choose Popmenu if you want a new website and marketing modules from one vendor. Choose KOB if you want to keep your site and get a free audit plus an approve-only morning list for listing, reviews and website mistakes.",
+    definition:
+      "Popmenu is a restaurant website and marketing platform. KOB is an AI restaurant manager around your existing stack.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Keep stack + morning list",
+        pricing: KOB_PRICE,
+        verdict: "Lower commit; diagnostic first",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "Popmenu",
+        bestFor: "Website + marketing together",
+        pricing: "Quoted plans (as of 20 Oct 2026)",
+        verdict: "Full website-led product",
+      },
+    ],
+    sections: [
+      {
+        heading: "Overlap and differences",
+        body: "Both care about online presence. Popmenu centres on the website. KOB centres on the Google listing, reviews, and checking that approved fixes went live.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Can I use KOB with a Popmenu site?",
+        answer: "Yes. KOB is designed to work with the website you already have.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["popmenu", "compare", "kob"],
+  },
+  {
+    slug: "best-restaurant-review-management-tools",
+    title: "Best Restaurant Review Management Tools (2026)",
+    description:
+      "Compare the best restaurant review management tools for independents — draft replies, hold angry reviews, and stay on Google.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "What is the best restaurant review management tool?",
+    directAnswer:
+      "If you want draft replies in your voice with bad reviews always held for you, and listing checks in the same morning list, KOB fits. Enterprise reputation suites fit multi-brand groups. Google itself fits owners who reply manually to every review.",
+    definition:
+      "Restaurant review management tools help owners monitor Google (and sometimes other) reviews, draft replies, and escalate sensitive feedback.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Independents who want drafts + listing hygiene together",
+        pricing: KOB_PRICE,
+        verdict: "Drafts ready; posting to Google not claimed as live",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "Google Business Profile",
+        bestFor: "Manual replies on one location",
+        pricing: "Free",
+        verdict: "Source of truth; no drafting help",
+      },
+      {
+        name: "Enterprise reputation platforms",
+        bestFor: "Groups and chains",
+        pricing: "Enterprise",
+        verdict: "Overkill for most 1–5 site venues",
+      },
+    ],
+    sections: [
+      {
+        heading: "What good review tools never do",
+        body: "They should not invent refunds, admit legal fault, or auto-post angry replies. KOB locks refunds and 1–2★ replies on Always ask.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Does KOB post replies to Google automatically?",
+        answer:
+          "Not as a live claim. You get a draft and copy it into Google until posting is live. Check the product page for current status.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "See unanswered reviews",
+    tags: ["reviews", "best-of"],
+  },
+  {
+    slug: "best-tools-to-keep-google-listing-hours-accurate",
+    title: "Best Tools to Keep Google Listing Hours Accurate (2026)",
+    description:
+      "Tools that catch Google Business Profile hours mismatches against your restaurant website — before guests arrive at the wrong time.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "What is the best way to keep Google listing hours accurate?",
+    directAnswer:
+      "Check Google against your website every morning and fix mismatches with approval. KOB is built for that loop. Google Business Profile alone works if you never forget holiday hours. Spreadsheets do not scale past one busy GM.",
+    definition:
+      "Hours accuracy tools compare your Google Business Profile opening times with your website and flag clashes, holidays, and seasonal changes.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Independents who want one-tap fixes",
+        pricing: KOB_PRICE,
+        verdict: "Morning clash detection",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "Google Business Profile",
+        bestFor: "Manual updates",
+        pricing: "Free",
+        verdict: "Correct when you remember",
+      },
+      {
+        name: "Enterprise listing sync",
+        bestFor: "Chains",
+        pricing: "Enterprise",
+        verdict: "For many locations",
+      },
+    ],
+    sections: [
+      {
+        heading: "Holiday hours are where independents slip",
+        body: "Christmas and bank holidays are the classic miss. Draft hours for the closed days, approve once, and confirm Google shows them.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Will KOB change my hours without asking?",
+        answer: "No. Hours fixes wait for your yes by default.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Check my hours",
+    tags: ["gbp", "hours", "best-of"],
+  },
+  {
+    slug: "restaurant-website-audit-tools-compared",
+    title: "Restaurant Website Audit Tools Compared (2026)",
+    description:
+      "Compare restaurant website audit tools that catch broken booking buttons, dead menus, and guest-facing mistakes.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "What is the best restaurant website audit tool?",
+    directAnswer:
+      "If you want hospitality-aware checks next to Google listing and reviews, KOB’s free audit fits. Generic Lighthouse-style tools fit developers. Neither rebuilds your site for you.",
+    definition:
+      "Restaurant website audit tools scan public pages for conversion and trust issues: broken links, placeholder text, menu access, and booking paths.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Owners who want website + listing + reviews together",
+        pricing: "Free audit; then " + KOB_PRICE,
+        verdict: "Plain-language findings",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "Generic page-speed tools",
+        bestFor: "Developers",
+        pricing: "Free / freemium",
+        verdict: "Tech scores; weak on guest language",
+      },
+      {
+        name: "Agency site audits",
+        bestFor: "Owners buying a rebuild",
+        pricing: "Project fees",
+        verdict: "Deep; slower and costlier",
+      },
+    ],
+    sections: [
+      {
+        heading: "What matters for restaurants",
+        body: "Can a guest see the menu, book a table, and trust the hours? Speed matters, but a dead booking button loses the cover first.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Does a website audit replace a redesign?",
+        answer: "No. It tells you what to fix first. Redesign when the structure is beyond repair.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Audit my restaurant website",
+    tags: ["website", "audit", "compare"],
+  },
+  {
+    slug: "best-restaurant-marketing-software-for-cafes",
+    title: "Best Restaurant Marketing Software for Cafés (2026)",
+    description:
+      "Best marketing software for independent cafés — Google listing, reviews, and website checks without a full restaurant suite.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "What is the best marketing software for cafés?",
+    directAnswer:
+      "Cafés usually need accurate Google hours, review replies, and a working website more than a full branded app suite. KOB fits that path. Full suites fit cafés that also want ordering and a new site in one buy.",
+    definition:
+      "Café marketing software helps independent coffee shops and casual cafés improve discovery and reputation online without enterprise complexity.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "1–5 site cafés keeping their till",
+        pricing: KOB_PRICE,
+        verdict: "Right-sized for independents",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "Full restaurant suites",
+        bestFor: "Cafés rebuilding the whole stack",
+        pricing: OWNER_PRICE + " class",
+        verdict: "More than many cafés need",
+      },
+      {
+        name: "Social-only tools",
+        bestFor: "Cafés that only post on Instagram",
+        pricing: "Low monthly",
+        verdict: "Misses Google hours and reviews",
+      },
+    ],
+    sections: [
+      {
+        heading: "Café-specific pitfalls",
+        body: "Seasonal hours, weekend brunch times, and pop-up closures. Guests check Google before they walk over.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Is KOB only for fine dining?",
+        answer: "No. It is built for independent restaurants and cafés.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Run free café audit",
+    tags: ["cafes", "best-of"],
+  },
+  {
+    slug: "owner-com-vs-agency-for-independents",
+    title: "Owner.com vs Agency for Independents (2026)",
+    description:
+      "Owner.com vs a marketing agency for independent restaurants — suite commit vs human retainer, and where an audit-first tool fits.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "Is Owner.com or a marketing agency better for independents?",
+    directAnswer:
+      "Choose Owner.com if you want one branded suite and are ready for that price. Choose an agency if you want humans running campaigns. Choose an audit-first tool like KOB first if you are not sure either is worth it yet.",
+    definition:
+      "Independents often choose between buying a restaurant growth suite and hiring a local or specialist marketing agency.",
+    comparisons: [
+      {
+        name: "Owner.com",
+        bestFor: "Full suite buyers",
+        pricing: OWNER_PRICE,
+        verdict: "Productised platform",
+      },
+      {
+        name: "Marketing agency",
+        bestFor: "Owners who want people",
+        pricing: "Retainers (varies widely)",
+        verdict: "Flexible; quality varies",
+      },
+      {
+        name: "KOB",
+        bestFor: "Owners testing gaps before a big commit",
+        pricing: KOB_PRICE,
+        verdict: "Free audit then approve-only list",
+        href: "https://trykob.com/audit",
+      },
+    ],
+    sections: [
+      {
+        heading: "A practical sequence",
+        body: "Run a free audit. Fix listing and review basics. Then decide if you still need a suite or an agency for ads and creative.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Can an agency and Owner.com overlap?",
+        answer: "Yes. Ask who owns the Google listing and who replies to reviews so work is not duplicated.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["owner-com", "agency", "compare"],
+  },
+  {
+    slug: "best-restaurant-marketing-software-for-india-independents",
+    title: "Best Restaurant Marketing Software for India Independents (2026)",
+    description:
+      "Best restaurant marketing software for independent restaurants in India — Google listing, reviews, and honest pricing.",
+    publishedAt: UPDATED,
+    updatedAt: UPDATED,
+    questionH2: "What is the best restaurant marketing software for India independents?",
+    directAnswer:
+      "Independents in India should prioritise Google listing accuracy, review replies, and a working website before buying a heavy US suite. KOB serves India at the founding rate ($99/mo elsewhere, as of 20 Oct 2026) with a free audit. Local agencies fit owners who want on-the-ground support.",
+    definition:
+      "Restaurant marketing software for India independents helps single and multi-location venues improve Google visibility and reputation with tools that work in the local market.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "1–5 site independents who want approve-only work",
+        pricing: "$99/mo founding (as of 20 Oct 2026); 7-day trial, no card",
+        verdict: "Audit-first; keep your stack",
+        href: "https://trykob.com/audit",
+      },
+      {
+        name: "Local digital agencies",
+        bestFor: "Owners who want local language support",
+        pricing: "Retainers",
+        verdict: "Strong relationships; ask for listing hygiene",
+      },
+      {
+        name: "US full suites",
+        bestFor: "Venues copying a US stack",
+        pricing: OWNER_PRICE + " class",
+        verdict: "Check support hours and currency",
+      },
+    ],
+    sections: [
+      {
+        heading: "What to verify before you buy",
+        body: "Does the tool work with your Google listing? Can you approve every public change? Is pricing clear in a currency you understand? Start with a free public audit.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Does KOB support India?",
+        answer: "Yes. India is in the supported country list. Founding price follows the non-UK rate as of 20 Oct 2026.",
+      },
+    ],
+    ctaHref: "/audit",
+    ctaLabel: "Run free restaurant audit",
+    tags: ["india", "independents", "best-of"],
   },
 ];

@@ -147,6 +147,17 @@ export async function SiteHome() {
       </p>
 
       <section className="mx-auto max-w-3xl px-5 pb-16 sm:px-8">
+        <h2 className="font-display text-headline font-medium">What is KOB?</h2>
+        <p className="mt-4 text-ink">
+          KOB is the AI restaurant manager for independent restaurants and cafés. It checks your Google
+          listing, reviews and website every morning, drafts the fixes, and waits for your yes — then
+          checks the change went live. Choose KOB if you want to keep your website, till and booking
+          system. Choose Owner.com if you want a full branded suite. Choose an agency if you want someone
+          else to run campaigns end to end. KOB does not replace your till or ordering.
+        </p>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-5 pb-16 sm:px-8">
         <h2 className="font-display text-headline font-medium">This morning, KOB found…</h2>
         <p className="mt-3 text-sm text-muted">Example morning, demo restaurant Osteria Lume.</p>
         <ol className="mt-8 space-y-4">
@@ -273,7 +284,8 @@ export async function SiteHome() {
           <p className="mt-6 font-display text-5xl font-medium tracking-tight">{price.label}</p>
           <p className="mt-2 text-muted">per location / month · founding · your region</p>
           <p className="mt-4 text-ink">
-            {GBP} / month in the UK. {USD} / month in the US, Canada, Australia and New Zealand.
+            {GBP} / month in the UK. {USD} / month in the US, Canada, Australia and New Zealand, as of 20
+            Oct 2026.
           </p>
           <p className="mt-3 text-ink">
             Founding rate, locked while you stay subscribed. {trial}. Month to month. No contract.

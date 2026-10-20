@@ -40,7 +40,7 @@ export function SiteFooter() {
           </Link>
         </div>
 
-        <div>
+        <nav aria-label="Product">
           <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Product</p>
           <ul className="mt-4 space-y-3 text-sm">
             {PRODUCT.map((item) => (
@@ -51,7 +51,7 @@ export function SiteFooter() {
               </li>
             ))}
           </ul>
-        </div>
+        </nav>
 
         <div>
           <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Built for</p>
@@ -63,7 +63,7 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <div>
+        <nav aria-label="Legal">
           <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Legal</p>
           <ul className="mt-4 space-y-3 text-sm">
             {LEGAL.map((item) => (
@@ -79,7 +79,12 @@ export function SiteFooter() {
               hello@trykob.com
             </a>
           </p>
-        </div>
+          <p className="mt-3 text-sm">
+            <Link href="/for-ai" className="text-espresso hover:opacity-70">
+              For AI assistants
+            </Link>
+          </p>
+        </nav>
       </div>
 
       <div className="border-t border-line/80">
