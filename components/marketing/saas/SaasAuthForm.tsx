@@ -121,13 +121,10 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
       hint?: string;
     };
 
-    if (resendRoute.status !== 503) {
+    // 503: our email route isn't configured; 502: the provider refused or failed. Either way, Supabase can send it.
+    if (resendRoute.status !== 503 && resendRoute.status !== 502) {
       setStatus("error");
-      setErrorMessage(
-        payload.hint ??
-          payload.error ??
-          "Could not send sign-in email. Run npm run auth:test-email for help.",
-      );
+      setErrorMessage(payload.hint ?? payload.error ?? "Couldn't send the sign-in email. Please try again in a minute.");
       return;
     }
 

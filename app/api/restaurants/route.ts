@@ -5,6 +5,7 @@ import { requireApiUser } from "@/lib/auth/api-session";
 import { countryFromHeaders, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
 import { recordTrialStarted, startTrial } from "@/lib/billing/trial";
 import { prisma } from "@/lib/db/prisma";
+import { sendWelcome } from "@/lib/email/owner";
 import { localeForCountry, normalizeCountryCode, resolveRestaurantTimezone } from "@/lib/geo/timezone";
 import { linkAuditToRestaurant, linkLatestAuditForEmail } from "@/lib/restaurant/hydrate-from-audit";
 import { slugify } from "@/lib/utils/slugify";
@@ -124,6 +125,7 @@ export async function POST(req: Request) {
     }
 
     if (restaurant.billingStatus === "TRIALING") void recordTrialStarted(restaurant.id).catch((e) => console.warn("[restaurants] funnel", e));
+    if (restaurant.billingStatus === "TRIALING") void sendWelcome(restaurant.id).catch((e) => console.warn("[welcome email]", e));
     return NextResponse.json({ restaurant }, { status: 201 });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not create restaurant";

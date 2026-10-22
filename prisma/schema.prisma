@@ -531,6 +531,7 @@ model Restaurant {
   featureFlagOverrides  FeatureFlagOverride[]
   roiWeeks              RoiWeek[]
   usageEvents           UsageEvent[]
+  ownerEmails           OwnerEmail[]
 
   @@index([organizationId])
   @@index([billingStatus, trialEndsAt])
@@ -2308,5 +2309,24 @@ model OsForecast {
   menuItem     OsMenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, serviceAt])
+  @@schema("public")
+}
+
+/// Every product email to an owner (welcome, brief, trial, published…). The dedupe key makes each send happen once.
+model OwnerEmail {
+  id           String     @id @default(cuid())
+  restaurantId String
+  kind         String
+  dedupeKey    String     @unique
+  recipient    String
+  subject      String
+  providerId   String?
+  /// SENT, DRY_RUN (no email provider configured) or FAILED.
+  status       String
+  error        String?
+  sentAt       DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, kind, sentAt])
   @@schema("public")
 }

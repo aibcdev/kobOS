@@ -7,6 +7,7 @@ import { countryFromHeaders } from "@/lib/billing/regional-pricing";
 import { recordTrialStarted, startTrial } from "@/lib/billing/trial";
 import { ensureTodayBrief } from "@/lib/chief-of-staff/ensure-today-brief";
 import { prisma } from "@/lib/db/prisma";
+import { sendWelcome } from "@/lib/email/owner";
 import { localeForCountry, normalizeCountryCode, resolveRestaurantTimezone } from "@/lib/geo/timezone";
 import { hydrateRestaurantFromLinkedAudit } from "@/lib/restaurant/hydrate-from-audit";
 import { limit, tooManyRequests } from "@/lib/security/rate-limit";
@@ -130,6 +131,7 @@ export async function POST(req: Request) {
 
     const after = await prisma.restaurant.findUniqueOrThrow({ where: { id: restaurant.id }, select: { trialEndsAt: true, billingStatus: true } });
     if (after.billingStatus === "TRIALING") void recordTrialStarted(restaurant.id).catch((e) => console.warn("[api/trial] funnel", e));
+    if (after.billingStatus === "TRIALING") void sendWelcome(restaurant.id).catch((e) => console.warn("[welcome email]", e));
     void ensureTodayBrief(restaurant.id).catch((e) => console.error("[api/trial] brief", e));
     return NextResponse.json({
       success: true,
