@@ -210,7 +210,7 @@ export function morningMessages(
   const handledLine = handled.length
     ? handled.some((f) => f.ruleId === "reviews-high")
       ? "Overnight 5-stars are drafted in your tone — not posted to Google until verified."
-      : `Queued on autopilot (not verified live): ${handled[0].headline.toLowerCase()}.`
+      : `Lined up for you (not live yet): ${handled[0].headline.toLowerCase()}.`
     : `I looked at ${restaurant.name} this morning.`;
 
   const suggestLines: string[] = [];
@@ -349,7 +349,7 @@ export function autonomyRate(rules: AutonomyRule[]) {
 }
 
 export function levelName(level: AutonomyLevel) {
-  if (level === "handle") return "Autopilot";
+  if (level === "handle") return "Trusted";
   if (level === "always-ask") return "Never without you";
   return "Suggest";
 }

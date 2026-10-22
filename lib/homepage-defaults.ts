@@ -6,9 +6,9 @@
 import { marketingCopy } from "@/lib/marketing/copy";
 
 export const defaultSiteMeta = {
-  title: "KOB — The AI Restaurant Manager",
+  title: "KOB — The Restaurant Manager for Owners",
   description:
-    "Every review answered. Every listing right. You just tap approve. KOB checks your Google listing, reviews and website, then checks the change went live. £79/mo UK, $99/mo elsewhere. 7 days free, no card.",
+    "KOB is the manager that looks after your reviews, Google listing, social posts and offers, so more guests walk through the door. You just tap approve. 7-day trial, no card, no contract.",
 } as const;
 
 export const DEFAULT_HERO_IMAGE =
@@ -28,16 +28,16 @@ export const homepageBandCopy = {
   missionTitle: "Most restaurants are losing sales online and do not know where.",
   missionBody:
     "Slow mobile sites, thin local SEO, and generic content leak covers every week. KOB exists to surface those leaks early, rank what to fix, and give you the words and layouts that convert—without hiring a full marketing department overnight.",
-  portalEyebrow: "AI Growth Agent",
+  portalEyebrow: "This week's list",
   portalTitle: "A short list of what to do this week—not another scorecard.",
   portalBody:
     "KOB reads search, reviews, reservations, and campaign performance the way a sharp operator would. You get a weekly plan: what to change on the site, what to publish, and what to measure next.",
   portalBullets: [
-    "AI-ranked fixes across SEO, pages, and offers—so you start where the money is",
+    "Fixes ranked across SEO, pages, and offers—so you start where the money is",
     "On-brand copy and layouts you can publish without a full creative team",
     "One owner for the plan: ship, measure, repeat",
   ],
-  portalCtaLabel: "Open Growth Agent",
+  portalCtaLabel: "Open this week's list",
   bridgingTitle: "Brand, search, and direct demand—one story",
   bridgingBody:
     "Guests decide before they walk in. When your site, local results, and direct paths to book tell the same story, you stop paying to re-win the same customer. KOB keeps that story coherent.",
@@ -72,7 +72,7 @@ export const homepageDefaults = {
     tertiaryCtaUrl: "/login",
     overlayLine1: "La Luna · Austin",
     overlayLine2: "Italian cuisine. Elevated.",
-    imageAlt: "Restaurant hero visual",
+    imageAlt: "Busy restaurant dining room at evening service",
   },
   socialProof: {
     label: "Built for independent restaurants and cafés",
@@ -92,7 +92,7 @@ export const homepageDefaults = {
   valueTabs: [
     {
       id: "growth",
-      label: "Growth Agent",
+      label: "This week's list",
       title: "A short list of what to fix this week—not another scorecard.",
       body: "KOB reads search, reviews, reservations, and campaign performance the way a sharp operator would. You get ranked fixes, on-brand copy, and clear next steps so busy teams move revenue, not slide decks.",
       imageUrl:
@@ -150,7 +150,7 @@ export const homepageDefaults = {
   trustBand: {
     heading: "Operators who stopped guessing and started fixing.",
     subheading: "Representative feedback from partner programmes; your outcomes may vary.",
-    badges: ["SOC-minded workflows", "Human-reviewed AI outputs", "Built for hospitality"],
+    badges: ["SOC-minded workflows", "Human-reviewed drafts", "Built for hospitality"],
   },
   platformFeatures: [
     {
@@ -267,7 +267,7 @@ export const homepageDefaults = {
     body: "Book a free demo. We will walk your online guest journey, show the leaks KOB surfaces, and leave you with a short list you can act on this week.",
     primaryCta: "Get a free demo",
     primaryCtaUrl: "/audit",
-    secondaryCta: "Open Growth Agent",
+    secondaryCta: "Open this week's list",
     secondaryCtaUrl: "/dashboard",
   },
   nav: {

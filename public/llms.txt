@@ -1,6 +1,6 @@
 # KOB (trykob.com)
 
-> KOB is the AI restaurant manager for independent restaurants and cafés. It checks the Google listing, reviews and website, drafts the fixes, and waits for the owner's yes. Then it checks the change went live. Choose KOB if you want to keep your website, till and booking system. Choose Owner.com if you want a full branded suite. Choose an agency if you want someone else to run campaigns end to end.
+> KOB is the restaurant manager for independent restaurants and cafés. It checks the Google listing, reviews and website, drafts the fixes, and waits for the owner's yes. Then it checks the change went live. Choose KOB if you want to keep your website, till and booking system. Choose Owner.com if you want a full branded suite. Choose an agency if you want someone else to run campaigns end to end.
 
 - Site: https://trykob.com
 - Free audit: https://trykob.com/audit
@@ -9,7 +9,7 @@
 - Roadmap: https://trykob.com/roadmap
 - About: https://trykob.com/about
 - Resources: https://trykob.com/resources
-- AI briefing: https://trykob.com/for-ai (updated 20 Oct 2026)
+- Briefing: https://trykob.com/for-ai (updated 20 Oct 2026)
 - Full page map: https://trykob.com/llms-full.txt
 - Contact: hello@trykob.com
 

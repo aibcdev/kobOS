@@ -474,7 +474,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     directAnswer:
       "It depends. Popmenu fits website-led marketing. Owner.com fits a full branded suite. KOB fits owners who keep their website and till and want an approve-only morning list after a free audit.",
     definition:
-      "Popmenu, Owner.com, and KOB are restaurant growth options with different cores: website suite, full platform, and AI manager around your existing stack.",
+      "Popmenu, Owner.com, and KOB are restaurant growth options with different cores: website suite, full platform, and a manager around your existing stack.",
     comparisons: [
       {
         name: "KOB",
@@ -523,7 +523,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     directAnswer:
       "If you want to keep your website and till and start with a free audit, KOB is the better fit. If you want a full branded suite and are ready for that commit, Owner.com is the better fit. Neither is best for every restaurant.",
     definition:
-      "KOB is an AI restaurant manager around tools you already have. Owner.com is a full restaurant growth suite. They solve overlapping goals with different product shapes.",
+      "KOB is a restaurant manager around tools you already have. Owner.com is a full restaurant growth suite. They solve overlapping goals with different product shapes.",
     comparisons: [
       {
         name: "KOB",
@@ -611,20 +611,20 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "kob-vs-bentobox-which-is-better",
     title: "KOB vs BentoBox: Which Is Better?",
     description:
-      "KOB vs BentoBox for independent restaurants — AI manager around your stack vs website-led hospitality platform.",
+      "KOB vs BentoBox for independent restaurants — a manager around your stack vs website-led hospitality platform.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or BentoBox?",
     directAnswer:
       "Choose BentoBox if you want a hospitality website and marketing platform as your home base. Choose KOB if you already have a website and till and want an approve-only morning list for Google, reviews and site mistakes after a free audit.",
     definition:
-      "BentoBox is a restaurant website and marketing platform. KOB is an AI restaurant manager that works around tools you already have.",
+      "BentoBox is a restaurant website and marketing platform. KOB is a restaurant manager that works around tools you already have.",
     comparisons: [
       {
         name: "KOB",
         bestFor: "Keep current website + till",
         pricing: KOB_PRICE,
-        verdict: "Audit-first AI manager",
+        verdict: "Audit-first restaurant manager",
         href: "https://trykob.com/audit",
       },
       {
@@ -658,14 +658,14 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "kob-vs-popmenu-which-is-better",
     title: "KOB vs Popmenu: Which Is Better?",
     description:
-      "KOB vs Popmenu for independent restaurants — approve-only AI manager vs website and marketing suite.",
+      "KOB vs Popmenu for independent restaurants — approve-only restaurant manager vs website and marketing suite.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or Popmenu?",
     directAnswer:
       "Choose Popmenu if you want a new website and marketing modules from one vendor. Choose KOB if you want to keep your site and get a free audit plus an approve-only morning list for listing, reviews and website mistakes.",
     definition:
-      "Popmenu is a restaurant website and marketing platform. KOB is an AI restaurant manager around your existing stack.",
+      "Popmenu is a restaurant website and marketing platform. KOB is a restaurant manager around your existing stack.",
     comparisons: [
       {
         name: "KOB",
@@ -738,7 +738,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     ],
     faqs: [
       {
-        question: "Does KOB post replies to Google automatically?",
+        question: "Does KOB post replies to Google without asking?",
         answer:
           "Not as a live claim. You get a draft and copy it into Google until posting is live. Check the product page for current status.",
       },

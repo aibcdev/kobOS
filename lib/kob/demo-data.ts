@@ -109,7 +109,7 @@ export const AUTONOMY_STAGES = [
   },
   {
     id: "autopilot" as const,
-    name: "Autopilot",
+    name: "Trusted",
     level: "handle" as AutonomyLevel,
     owner: "How were overnight reviews?",
     kob: "Two 5-star reviews came in after close. Drafts are ready — not posted until verified.\nOne wait complaint stays with you. No voucher offered.",

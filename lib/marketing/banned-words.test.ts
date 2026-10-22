@@ -22,6 +22,8 @@ const BANNED: { label: string; re: RegExp }[] = [
   { label: "on this site yet", re: /on this site yet/i },
   { label: "dreamed", re: /\bdreamed\b/i },
   { label: "superpower", re: /\bsuperpower\b/i },
+  { label: "AI restaurant manager", re: /AI restaurant manager/i },
+  { label: "The AI Restaurant Manager", re: /The AI Restaurant Manager/ },
 ];
 
 function walk(dir: string): string[] {

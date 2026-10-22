@@ -207,7 +207,7 @@ const AD_GROUPS: B2bAuditAdsPlan["adGroups"] = [
     path2: "software",
     headlines: [
       "Restaurant Marketing Software",
-      "AI Tools for Restaurants",
+      "Tools for Restaurants",
       "Not Another Bloated Stack",
       "Free Audit Before You Buy",
       "Growth Software From $49",
@@ -224,7 +224,7 @@ const AD_GROUPS: B2bAuditAdsPlan["adGroups"] = [
     ],
     descriptions: [
       "Restaurant marketing software designed to grow covers — start with a free online presence audit.",
-      "AI-assisted restaurant growth report. See what’s hurting your online presence — free, no card.",
+      "Free restaurant check-up. See what’s hurting your online presence — no card.",
       "Looking at restaurant software? First see what guests see online. Free website & Google audit.",
       "From $49/mo after a free scan. Daily list you approve — not a week of demos to get started.",
     ],
@@ -355,7 +355,7 @@ export function buildB2bAuditAdsPlan(input?: {
       "Owner brand terms (owner.com / owner com / owner restaurant / owner app) are PHRASE + EXACT only — never broad.",
       "B2B only: restaurant owners — not diners. Lead magnet = trykob.com/audit.",
       "We claim: free audit, website+Google+reviews, daily approve list, credits for site/SEO, from $49 vs Owner ~$249.",
-      "We do NOT claim: ordering, delivery, loyalty, AI full-site redesign, or #1 ratings.",
+      "We do NOT claim: ordering, delivery, loyalty, full-site redesign, or #1 ratings.",
       "Comparative ads: factual price/positioning. If Owner trademark ads disapprove, keep price claims without brand in headlines.",
       "Campaign CSV starts Enabled. Track: audit started + lead captured.",
     ],

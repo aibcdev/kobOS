@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About | KOB",
-  description: "KOB is the AI restaurant manager for independent restaurants and cafés.",
+  description: "KOB is the restaurant manager for independent restaurants and cafés.",
 };
 
 export default function AboutPage() {
@@ -11,7 +11,7 @@ export default function AboutPage() {
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">About</p>
       <h1 className="font-display mt-3 text-headline font-medium">KOB</h1>
       <p className="mt-6 text-ink">
-        KOB is the AI restaurant manager for independent restaurants and cafés, one to five
+        KOB is the restaurant manager for independent restaurants and cafés, one to five
         locations. Nothing goes public without your yes. After you approve, KOB checks the change
         is live.
       </p>

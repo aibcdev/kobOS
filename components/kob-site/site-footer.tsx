@@ -30,7 +30,7 @@ export function SiteFooter() {
             You approve. KOB checks it is live.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            The AI restaurant manager for independent restaurants and cafés. One to five locations.
+            The restaurant manager for independent restaurants and cafés. One to five locations.
           </p>
           <Link
             href="/onboard"
@@ -81,7 +81,7 @@ export function SiteFooter() {
           </p>
           <p className="mt-3 text-sm">
             <Link href="/for-ai" className="text-espresso hover:opacity-70">
-              For AI assistants
+              For assistants
             </Link>
           </p>
         </nav>

@@ -12,7 +12,7 @@ import {
 } from "@/lib/marketing/feature-status";
 
 export const metadata: Metadata = {
-  title: "Product | KOB — The AI Restaurant Manager",
+  title: "Product | KOB — The Restaurant Manager for Owners",
   description:
     "KOB checks your Google listing, reviews and website, drafts the fixes, and waits for your yes. Then it checks the change went live.",
 };
@@ -41,7 +41,7 @@ export default async function ProductHubPage() {
       <SaasPageHero
         variant="inset"
         eyebrow="Product"
-        title="The AI restaurant manager."
+        title="A manager for your restaurant — not another piece of software to learn."
         description="You tap approve. KOB checks the change is live. Keep your website, your till and your booking system."
       >
         <SaasPrimaryCta href="/onboard">Find my restaurant</SaasPrimaryCta>

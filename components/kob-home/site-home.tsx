@@ -48,10 +48,10 @@ function faq(priceLabel: string) {
   return [
     {
       q: "Will KOB post anything without me?",
-      a: "No. Everything starts on Ask me. You can switch a job to Autopilot later. Refunds, discounts and replies to bad reviews always wait for you.",
+      a: "No. Everything starts on Ask me. You can switch a job to Trusted later. Refunds, discounts and replies to bad reviews always wait for you.",
     },
     {
-      q: "What if the AI writes something wrong?",
+      q: "What if a draft is wrong?",
       a: "Every draft is editable. KOB does not promise refunds, admit fault, or mention health or legal issues in a reply. Reviews like that are always held for you.",
     },
     {
@@ -107,7 +107,7 @@ export async function SiteHome() {
         <div className="relative mx-auto flex min-h-[88dvh] max-w-7xl flex-col justify-end px-5 pb-16 pt-32 sm:px-8 lg:justify-center lg:pb-24">
           <div className="max-w-xl text-paper">
             <p className="text-xs font-medium tracking-[0.14em] text-paper/75 uppercase">
-              The AI restaurant manager for independents
+              Your restaurant's new manager
             </p>
             <h1 className="font-display mt-4 text-display font-medium tracking-[-0.05em] text-paper">
               Every review answered. Every listing right. You just tap approve.
@@ -149,7 +149,7 @@ export async function SiteHome() {
       <section className="mx-auto max-w-3xl px-5 pb-16 sm:px-8">
         <h2 className="font-display text-headline font-medium">What is KOB?</h2>
         <p className="mt-4 text-ink">
-          KOB is the AI restaurant manager for independent restaurants and cafés. It checks your Google
+          KOB is the restaurant manager for independent restaurants and cafés. It checks your Google
           listing, reviews and website every morning, drafts the fixes, and waits for your yes — then
           checks the change went live. Choose KOB if you want to keep your website, till and booking
           system. Choose Owner.com if you want a full branded suite. Choose an agency if you want someone
@@ -219,7 +219,7 @@ export async function SiteHome() {
         <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
           <h2 className="font-display text-headline font-medium">You decide what KOB is allowed to do</h2>
           <p className="mt-4 text-ink">
-            For each job, pick Ask me (the default), Autopilot, or Never. Start on Ask me for everything.
+            For each job, pick Ask me (the default), Trusted, or Never. Start on Ask me for everything.
           </p>
           <table className="mt-8 w-full text-left text-sm">
             <thead>

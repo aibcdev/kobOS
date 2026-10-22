@@ -80,7 +80,7 @@ export const marketingCopy = {
   },
 
   footerTagline:
-    "Restaurant growth software—get more customers, keep more customers, ask KOB to do the rest.",
+    "Takes the admin off your plate so you and your team can focus on guests. Nothing goes out until you approve it.",
 
   scanning: {
     headline: "Auditing…",
@@ -146,7 +146,7 @@ export const marketingCopy = {
   ] as const,
 
   auditInsightsClosing:
-    "You don’t need another AI toy—you need more customers. Start with the free audit.",
+    "You don't need more software. You need more guests. Start with the free check-up.",
 
   auditUpgrade: {
     headline: "Turn the audit into more bookings",
@@ -179,11 +179,11 @@ export const marketingCopy = {
     statLine:
       "Most guests decide online before they visit. KOB shows where you lose them—then helps you fill more tables.",
     bullets: [
-      "Open Talk for your restaurant",
+      "Open KOB for your restaurant",
       "Hours, reviews, and invoices in one place",
-      "You choose what KOB can handle automatically",
+      "You decide what KOB can take care of without asking",
     ] as const,
-    signInTitle: "Talk to KOB",
+    signInTitle: "Open KOB",
     signUpTitle: "Hire KOB",
     signInBlurb: "Continue with Google, or we’ll email a one-time code.",
     signUpBlurb: "Google or email. No password.",

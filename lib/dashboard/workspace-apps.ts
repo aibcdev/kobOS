@@ -37,7 +37,7 @@ export const WORKSPACE_APP_CATEGORIES: WorkspaceAppCategory[] = [
       { slug: "upsells", title: "Smart Upsells", description: "Grow average ticket", href: "/dashboard/upsells", icon: "chart" },
       { slug: "delivery", title: "Delivery", description: "Aggregator + direct paths", href: "/dashboard/delivery", icon: "cart" },
       { slug: "catering", title: "Catering", description: "Packages and inquiries", href: "/dashboard/catering", icon: "megaphone" },
-      { slug: "phone", title: "AI Phone Ordering", description: "Never miss a call", href: "/dashboard/phone-ordering", icon: "bot" },
+      { slug: "phone", title: "Phone Ordering", description: "Never miss a call", href: "/dashboard/phone-ordering", icon: "bot" },
     ],
   },
   {
