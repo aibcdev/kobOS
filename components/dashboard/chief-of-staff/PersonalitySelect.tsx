@@ -17,7 +17,7 @@ export function PersonalitySelect({
 }) {
   return (
     <div className={`${cosCard} p-5`}>
-      <p className="text-sm font-medium text-[#1a1a1a]">AI personality</p>
+      <p className="text-sm font-medium text-[#1a1a1a]">KOB's tone of voice</p>
       <p className="mt-1 text-xs text-[#888]">How KOB speaks in briefings and drafts.</p>
       <div className="relative mt-4">
         <select

@@ -11,12 +11,12 @@ import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
   title: "Website · KOB",
-  description: "AI website strategist and redesign recommendations.",
+  description: "Website redesign recommendations.",
 };
 
 export default async function WebsitePage({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
   if (isUiPreviewEnabled()) {
-    return <PreviewPlaceholder title="Website" description="The AI strategist panel needs API + database access." />;
+    return <PreviewPlaceholder title="Website" description="The website panel needs API + database access." />;
   }
   const userId = (await getDashboardPageUser()).id;
   const sp = await searchParams;

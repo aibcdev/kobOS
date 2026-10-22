@@ -6,7 +6,7 @@ import type { ChiefOfStaffTaskDto } from "@/lib/chief-of-staff/types";
 function sourceLabel(source: ChiefOfStaffTaskDto["source"], requiresIntegration: string | null) {
   if (requiresIntegration) return "Connect in Settings";
   if (source === "AUDIT") return "From your audit";
-  if (source === "AI") return "AI suggestion";
+  if (source === "AI") return "KOB suggestion";
   if (source === "MANUAL") return "Your request";
   return "Suggested";
 }
