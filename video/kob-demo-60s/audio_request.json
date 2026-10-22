@@ -1,0 +1,49 @@
+{
+  "provider": "elevenlabs",
+  "speed": "1.0",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Running a restaurant is a full-time job. Your Google profile — is another one."
+    },
+    {
+      "id": "02",
+      "text": "Unanswered reviews. Wrong hours. Missed bookings."
+    },
+    {
+      "id": "03",
+      "text": "Meet KOB — your restaurant manager. It does the work. You just approve."
+    },
+    {
+      "id": "04",
+      "text": "A new review comes in. KOB drafts a reply — in your voice."
+    },
+    {
+      "id": "05",
+      "text": "You tap approve. KOB posts it — then checks Google to make sure it's live."
+    },
+    {
+      "id": "06",
+      "text": "Tricky ones — like a health complaint — always wait for you."
+    },
+    {
+      "id": "07",
+      "text": "It spots what's wrong on Google and your website — and lines up the fix."
+    },
+    {
+      "id": "08",
+      "text": "And every week — a plain report of exactly what KOB did."
+    },
+    {
+      "id": "09",
+      "text": "KOB. Your restaurant, handled. trykob.com."
+    }
+  ],
+  "bgm": {
+    "mode": "retrieve",
+    "query": "calm modern minimal underscore, warm piano and soft plucks, light pulse, premium product film",
+    "blob": "KOB does the restaurant admin work. You just approve. Nothing goes live without your OK.",
+    "arc": "PAS with Demo Loop (hook → pain → product intro → demo cycle 1 → demo cycle 2 → trust → demo cycle 3 → report → brand outro)"
+  },
+  "voice": "JBFqnCBsd6RMkjVDRZzb"
+}

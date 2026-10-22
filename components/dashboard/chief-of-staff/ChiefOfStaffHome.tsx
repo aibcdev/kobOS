@@ -244,7 +244,7 @@ export function ChiefOfStaffHome({
           setBrief((b) => ({ ...b, aiPersonality: prev }));
           showToast({ message: "Could not save tone.", tone: "error" });
         } else {
-          showToast({ message: "AI tone saved.", tone: "success" });
+          showToast({ message: "Tone saved.", tone: "success" });
         }
       } finally {
         setPersonalitySaving(false);

@@ -124,16 +124,32 @@ export async function SiteHome() {
               >
                 Find my restaurant
               </Link>
-              {videoUrl ? (
-                <a
-                  href={videoUrl}
-                  className="inline-flex h-12 items-center rounded-full border border-paper/40 px-5 text-sm font-medium text-paper hover:bg-paper/10"
-                >
-                  Watch the 60-second demo
-                </a>
-              ) : null}
+              <a
+                href={videoUrl || "#watch"}
+                className="inline-flex h-12 items-center rounded-full border border-paper/40 px-5 text-sm font-medium text-paper hover:bg-paper/10"
+              >
+                Watch the 60-second demo
+              </a>
             </div>
             <p className="mt-4 text-sm text-paper/75">{trial}. See what KOB finds in a few taps.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="watch" className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
+        <h2 className="font-display text-headline font-medium">See how KOB works</h2>
+        <p className="mt-3 text-ink">A minute with the morning list. Nothing goes out until you approve it.</p>
+        <div className="mt-8 overflow-hidden rounded-[1.75rem] bg-espresso">
+          <div className="relative aspect-video">
+            <video
+              className="size-full object-cover"
+              poster="/photos/hero-interior.jpg"
+              controls
+              playsInline
+              preload="metadata"
+            >
+              <source src="/video/kob-demo-60s.mp4" type="video/mp4" />
+            </video>
           </div>
         </div>
       </section>

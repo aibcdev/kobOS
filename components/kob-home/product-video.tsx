@@ -37,7 +37,7 @@ export function ProductVideo() {
             playsInline
             preload="metadata"
           >
-            <source src="/video/kob-what-is.mp4" type="video/mp4" />
+            <source src="/video/kob-demo-60s.mp4" type="video/mp4" />
           </video>
         </div>
       </div>

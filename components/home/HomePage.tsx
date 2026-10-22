@@ -170,7 +170,7 @@ export function HomePage({ content }: { content: HomepageContent }) {
               Mission
             </a>
             <a className={navLinkClass} href="#portal">
-              Growth Agent
+              KOB drafts
             </a>
             <a className={navLinkClass} href="#content">
               Content

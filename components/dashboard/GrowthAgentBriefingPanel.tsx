@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { appBtnPrimary, appBtnSecondary, appCardSurface, appCodeInline } from "@/lib/app-ui-classes";
+import { appBtnSecondary, appCardSurface } from "@/lib/app-ui-classes";
 
 type Briefing = {
   warm_greeting?: string;
@@ -65,7 +65,7 @@ export function GrowthAgentBriefingPanel({
         <div>
           <h2 className="type-title-sm">Today&apos;s Growth Briefing</h2>
           <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-            Structured AI brief — needs <code className={appCodeInline}>GEMINI_API_KEY</code>.
+            Today&apos;s briefing from KOB. Refresh if anything looks stale.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -127,8 +127,7 @@ export function GrowthAgentBriefingPanel({
 
       {!briefing && !loading && !error ? (
         <p className="type-body-sm mt-6 text-[var(--color-muted)]">
-          Run a briefing to see personalized sections, or enable auto-load with{" "}
-          <code className={appCodeInline}>NEXT_PUBLIC_DASHBOARD_AUTO_BRIEFING=1</code>.
+          Run a briefing to see today&apos;s sections.
         </p>
       ) : null}
 
