@@ -8,12 +8,12 @@ import { foundingPrice, regionFromRequestHeaders } from "@/lib/billing/regional-
 import {
   checkoutCurrencyFor,
   getStripeFoundingPriceId,
-  getStripeGrowthPriceId,
   requireStripe,
 } from "@/lib/billing/stripe-server";
 import { createSubscriptionCheckoutSession } from "@/lib/billing/checkout-subscription-session";
 import { prisma } from "@/lib/db/prisma";
 import { hydrateRestaurantFromLinkedAudit } from "@/lib/restaurant/hydrate-from-audit";
+import { limit, tooManyRequests } from "@/lib/security/rate-limit";
 import { slugify } from "@/lib/utils/slugify";
 
 export const runtime = "nodejs";
@@ -24,7 +24,6 @@ const bodySchema = z.object({
   visibilityAuditId: z.string().min(12).optional(),
   /** `checkout` (default): return Stripe Checkout URL. `direct`: create subscription via API (card optional until trial end). */
   mode: z.enum(["checkout", "direct"]).optional(),
-  tier: z.enum(["starter", "pro"]).optional(),
 });
 
 export async function POST(req: Request) {
@@ -32,6 +31,8 @@ export async function POST(req: Request) {
   if (!session.ok) {
     return NextResponse.json({ error: session.message }, { status: session.status });
   }
+  const rl = await limit(`trial:user:${session.userId}`, { windowSec: 3600, max: 3 });
+  if (!rl.ok) return tooManyRequests(rl);
 
   let body: unknown;
   try {
@@ -53,12 +54,26 @@ export async function POST(req: Request) {
 
   const mode = parsed.data.mode ?? "checkout";
 
-  const priceId = parsed.data.tier === "starter" ? getStripeGrowthPriceId() : getStripeFoundingPriceId();
+  // One account, one trial: a restaurant this user already owns is reused rather than minting another customer.
+  const owned = await prisma.restaurant.findMany({
+    where: { members: { some: { userId: session.userId, role: "OWNER" } } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, stripeSubscriptionId: true, trialStartedAt: true, stripeCustomerId: true },
+  });
+  const active = owned.find((r) => r.stripeSubscriptionId || r.trialStartedAt);
+  if (active) {
+    return NextResponse.json({
+      success: true,
+      mode: "existing",
+      restaurantId: active.id,
+      message: "You already have a KOB trial or plan. Taking you to it.",
+    });
+  }
+  const reuse = owned[0] ?? null;
+
+  const priceId = getStripeFoundingPriceId();
   if (!priceId) {
-    return NextResponse.json(
-      { error: "Set STRIPE_PRICE_PRO (founding) or STRIPE_GROWTH_PRICE_ID." },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "Set STRIPE_PRICE_PRO (founding)." }, { status: 503 });
   }
   const regionCurrency = foundingPrice(regionFromRequestHeaders(req.headers)).currency;
   const currency = checkoutCurrencyFor(priceId, regionCurrency);
@@ -74,25 +89,31 @@ export async function POST(req: Request) {
 
   try {
     const restaurant = await prisma.$transaction(async (tx) => {
-      const slugExists = await tx.restaurant.findUnique({ where: { slug: slugBase } });
-      const finalSlug = slugExists ? `${slugBase}-${Date.now().toString(36)}` : slugBase;
-
-      const created = await tx.restaurant.create({
-        data: {
-          name: parsed.data.restaurantName.trim(),
-          slug: finalSlug,
-          city: parsed.data.city?.trim() || undefined,
-          subscriptionPlan: SubscriptionPlan.FREE,
-        },
-      });
-
-      await tx.teamMember.create({
-        data: {
-          userId: session.userId,
-          restaurantId: created.id,
-          role: "OWNER",
-        },
-      });
+      let created;
+      if (reuse) {
+        created = await tx.restaurant.update({
+          where: { id: reuse.id },
+          data: { name: parsed.data.restaurantName.trim(), city: parsed.data.city?.trim() || undefined },
+        });
+      } else {
+        const slugExists = await tx.restaurant.findUnique({ where: { slug: slugBase } });
+        const finalSlug = slugExists ? `${slugBase}-${Date.now().toString(36)}` : slugBase;
+        created = await tx.restaurant.create({
+          data: {
+            name: parsed.data.restaurantName.trim(),
+            slug: finalSlug,
+            city: parsed.data.city?.trim() || undefined,
+            subscriptionPlan: SubscriptionPlan.FREE,
+          },
+        });
+        await tx.teamMember.create({
+          data: {
+            userId: session.userId,
+            restaurantId: created.id,
+            role: "OWNER",
+          },
+        });
+      }
 
       if (parsed.data.visibilityAuditId) {
         const audit = await tx.visibilityAudit.findUnique({ where: { id: parsed.data.visibilityAuditId } });
@@ -100,6 +121,9 @@ export async function POST(req: Request) {
           throw new Error("audit_not_found");
         }
         if (audit.leadEmail?.trim() && audit.leadEmail.trim().toLowerCase() !== email.toLowerCase()) {
+          throw new Error("audit_email_mismatch");
+        }
+        if (!audit.leadEmail?.trim() && audit.restaurantId && audit.restaurantId !== created.id) {
           throw new Error("audit_email_mismatch");
         }
         await tx.visibilityAudit.update({

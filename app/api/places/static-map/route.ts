@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { clientIpFromHeaders, limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 /** Server-side Static Maps image for audit scanning when the JS Maps key is missing. */
 export async function GET(req: Request) {
+  const rl = await limit(`static-map:${clientIpFromHeaders(req.headers) ?? "unknown"}`, { windowSec: 3600, max: 120 });
+  if (!rl.ok) return tooManyRequests(rl);
   const url = new URL(req.url);
   const lat = Number.parseFloat(url.searchParams.get("lat") ?? "");
   const lng = Number.parseFloat(url.searchParams.get("lng") ?? "");

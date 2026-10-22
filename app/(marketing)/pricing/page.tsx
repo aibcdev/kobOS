@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { FOUNDING_PRICE_LINE, TRIAL_DAYS_FREE, TRIAL_LABEL } from "@/lib/billing/offer";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { trialPromise } from "@/lib/billing/trial-days";
@@ -16,7 +17,7 @@ import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 export const metadata: Metadata = {
   title: "Pricing | KOB — The AI Restaurant Manager",
   description:
-    "Founding price per location — £79/mo in the UK, $99/mo elsewhere. 7 days free, no card. You approve. KOB checks it is live.",
+    `Founding price per location — ${FOUNDING_PRICE_LINE}. ${TRIAL_DAYS_FREE}, no card. You approve. KOB checks it is live.`,
 };
 
 export default async function PricingPage() {

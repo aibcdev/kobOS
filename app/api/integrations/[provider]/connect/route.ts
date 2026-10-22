@@ -1,7 +1,11 @@
 import { IntegrationProvider } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
+import { canManageConnections } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { prisma } from "@/lib/db/prisma";
+import { oauthUrls, providerRegion } from "@/lib/hub/auth/oauth-urls";
+import { getManifest } from "@/lib/hub/manifest";
+import { newNonce, pkceChallenge, pkceVerifier, setBindingCookie } from "@/lib/integrations/oauth-binding";
 import { buildOAuthUrl, isOAuthConfigured } from "@/lib/integrations/oauth-config";
 import { encodeOAuthState } from "@/lib/integrations/oauth-state";
 
@@ -20,31 +24,40 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
     return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
   }
 
-  const allowed = await assertRestaurantMembership(session.userId, restaurantId);
-  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const access = await canManageConnections(session.userId, restaurantId);
+  if (access === "not_member") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (access === "forbidden") return NextResponse.json({ error: "Only owners and admins can connect accounts" }, { status: 403 });
 
   const provider = providerRaw as IntegrationProvider;
+  const returnTo = new URL(req.url).searchParams.get("returnTo") === "connections" ? "connections" : undefined;
 
   if (!isOAuthConfigured(provider)) {
+    const fallback = returnTo ? "/app/settings/connections" : "/dashboard/settings";
     return NextResponse.redirect(
-      `${new URL(req.url).origin}/dashboard/settings?r=${encodeURIComponent(restaurantId)}`,
+      `${new URL(req.url).origin}${fallback}?r=${encodeURIComponent(restaurantId)}`,
     );
   }
 
-  const origin = new URL(req.url).origin;
-  const redirectUri = `${origin}/api/integrations/${provider}/callback`;
+  const url = new URL(req.url);
+  const redirectUri = `${url.origin}/api/integrations/${provider}/callback`;
+  const nonce = newNonce();
   let state: string;
   try {
-    state = encodeOAuthState({
-      restaurantId,
-      provider,
-      userId: session.userId,
-    });
+    state = encodeOAuthState({ restaurantId, provider, userId: session.userId, returnTo, nonce });
   } catch {
     return NextResponse.json({ error: "OAuth state signing unavailable" }, { status: 503 });
   }
-  const url = buildOAuthUrl(provider, state, redirectUri);
-  if (!url) return NextResponse.json({ error: "OAuth URL build failed" }, { status: 503 });
+  const manifest = getManifest(provider);
+  let authUrl: string | undefined;
+  if (manifest?.auth.regionOrigins) {
+    const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { countryCode: true } });
+    authUrl = oauthUrls(manifest, providerRegion(manifest, restaurant?.countryCode)).authorizeUrl;
+  }
+  const challenge = manifest?.auth.pkce ? pkceChallenge(pkceVerifier(nonce)) : undefined;
+  const target = buildOAuthUrl(provider, state, redirectUri, authUrl, challenge);
+  if (!target) return NextResponse.json({ error: "OAuth URL build failed" }, { status: 503 });
 
-  return NextResponse.redirect(url);
+  const res = NextResponse.redirect(target);
+  setBindingCookie(res, state, url.protocol === "https:");
+  return res;
 }

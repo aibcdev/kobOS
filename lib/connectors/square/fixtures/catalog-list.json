@@ -1,0 +1,25 @@
+{
+  "objects": [
+    { "id": "CAT_COFFEE", "type": "CATEGORY", "category_data": { "name": "Coffee" } },
+    {
+      "id": "ITEM_FLATWHITE",
+      "type": "ITEM",
+      "item_data": {
+        "name": "Flat white",
+        "categories": [{ "id": "CAT_COFFEE" }],
+        "variations": [{ "id": "VAR_FLATWHITE", "item_variation_data": { "name": "Regular", "price_money": { "amount": 350, "currency": "GBP" } } }]
+      }
+    },
+    {
+      "id": "ITEM_BANANA",
+      "type": "ITEM",
+      "item_data": {
+        "name": "Banana bread",
+        "variations": [
+          { "id": "VAR_BANANA", "item_variation_data": { "name": "Slice", "price_money": { "amount": 300, "currency": "GBP" } } },
+          { "id": "VAR_BANANA_LOAF", "is_deleted": true, "item_variation_data": { "name": "Loaf", "price_money": { "amount": 1200, "currency": "GBP" } } }
+        ]
+      }
+    }
+  ]
+}

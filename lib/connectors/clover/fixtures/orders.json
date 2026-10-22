@@ -1,0 +1,47 @@
+{
+  "elements": [
+    {
+      "id": "ORDPAID1",
+      "currency": "USD",
+      "total": 2160,
+      "state": "locked",
+      "paymentState": "PAID",
+      "createdTime": 1760461200000,
+      "modifiedTime": 1760461500000,
+      "orderType": { "label": "Dine In" },
+      "customers": { "elements": [{ "id": "CUSTALICE" }] },
+      "lineItems": {
+        "elements": [
+          { "id": "LI1", "name": "Burger", "price": 1250, "item": { "id": "ITEMBURGER" }, "modifications": { "elements": [{ "name": "Extra cheese", "amount": 100 }] } },
+          { "id": "LI2", "name": "Fries", "price": 450, "item": { "id": "ITEMFRIES" } },
+          { "id": "LI3", "name": "Coffee beans", "price": 1000, "unitQty": 150 }
+        ]
+      },
+      "payments": { "elements": [{ "amount": 2160, "tipAmount": 300, "taxAmount": 160, "result": "SUCCESS" }] }
+    },
+    {
+      "id": "ORDOPEN2",
+      "currency": "USD",
+      "total": 450,
+      "state": "open",
+      "paymentState": "OPEN",
+      "createdTime": 1760464800000,
+      "modifiedTime": 1760464800000,
+      "orderType": { "label": "To Go" },
+      "lineItems": { "elements": [{ "id": "LI4", "name": "Fries", "price": 450, "item": { "id": "ITEMFRIES" } }] }
+    },
+    {
+      "id": "ORDREFUND3",
+      "currency": "USD",
+      "total": 1350,
+      "state": "locked",
+      "paymentState": "PARTIALLY_REFUNDED",
+      "createdTime": 1760468400000,
+      "modifiedTime": 1760472000000,
+      "orderType": { "label": "Delivery" },
+      "lineItems": { "elements": [{ "id": "LI5", "name": "Burger", "price": 1250, "item": { "id": "ITEMBURGER" } }] },
+      "payments": { "elements": [{ "amount": 1350, "tipAmount": 0, "taxAmount": 100, "result": "SUCCESS" }, { "amount": 1350, "result": "FAIL" }] },
+      "refunds": { "elements": [{ "amount": 500 }] }
+    }
+  ]
+}

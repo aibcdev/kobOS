@@ -1,0 +1,6 @@
+{
+  "locations": [
+    { "id": "L8EXAMPLE", "name": "Shoreditch", "status": "ACTIVE", "timezone": "Europe/London", "currency": "GBP", "address": { "address_line_1": "1 Rivington St", "locality": "London", "postal_code": "EC2A 3DT" } },
+    { "id": "LOLDCLOSED", "name": "Old pop-up", "status": "INACTIVE" }
+  ]
+}

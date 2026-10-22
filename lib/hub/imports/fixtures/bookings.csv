@@ -1,0 +1,4 @@
+Reservation ID,Date,Time,Covers,Status,Guest Name,Email
+R-1,2026-10-17,19:30,4,Completed,Ada Lovelace,ada@example.com
+R-2,2026-10-18,20:00,2,No-show,Cy,
+R-3,2026-10-19,13:00,x,Booked,Dee,

@@ -1,9 +1,10 @@
-/** Shared trial length. Marketing copy must read this — do not hard-code a different number. */
+import { TRIAL_DAYS, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
+
+/** Shared trial length. Reads `TRIAL_DAYS` in `lib/billing/offer.ts` — do not hard-code a different number. */
 export function getStripeTrialDays(): number {
-  return 7;
+  return TRIAL_DAYS;
 }
 
 export function trialPromise(): string {
-  const days = getStripeTrialDays();
-  return `${days} days free · No card · Cancel anytime`;
+  return `${TRIAL_DAYS_FREE} · No card · Cancel anytime`;
 }

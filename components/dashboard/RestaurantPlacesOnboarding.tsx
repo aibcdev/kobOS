@@ -18,6 +18,9 @@ type PlaceDetails = {
   websiteUri: string | null;
   lat: number | null;
   lng: number | null;
+  countryCode?: string | null;
+  region?: string | null;
+  utcOffsetMinutes?: number | null;
 };
 
 function cityFromAddress(address: string | undefined, secondary: string | undefined): string | undefined {
@@ -161,6 +164,10 @@ export function RestaurantPlacesOnboarding({
           body: JSON.stringify({
             name,
             city: city || undefined,
+            state: (d?.countryCode === "US" && d.region) || undefined,
+            countryCode: d?.countryCode || undefined,
+            utcOffsetMinutes: d?.utcOffsetMinutes ?? undefined,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             website: website || undefined,
             auditId: startedAuditId || undefined,
           }),

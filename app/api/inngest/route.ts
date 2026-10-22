@@ -13,7 +13,8 @@ function loadHandlers(): Promise<InngestHandlers> {
       const signingKey = process.env.INNGEST_SIGNING_KEY?.trim() || undefined;
       const signingKeyFallback = process.env.INNGEST_SIGNING_KEY_FALLBACK?.trim() || undefined;
 
-      if (process.env.NODE_ENV === "production" && process.env.INNGEST_DEV !== "1" && !signingKey) {
+      // INNGEST_DEV never relaxes this in production; the client ignores it there too (inngest/client.ts).
+      if (process.env.NODE_ENV === "production" && !signingKey) {
         throw new Error(
           "INNGEST_SIGNING_KEY missing at runtime (cloud mode). Set it in Netlify Production and redeploy.",
         );

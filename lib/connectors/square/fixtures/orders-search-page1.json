@@ -1,0 +1,49 @@
+{
+  "orders": [
+    {
+      "id": "sqOrderA1",
+      "location_id": "L8EXAMPLE",
+      "state": "COMPLETED",
+      "created_at": "2026-10-14T18:30:02.000Z",
+      "updated_at": "2026-10-14T18:42:10.000Z",
+      "closed_at": "2026-10-14T18:42:10.000Z",
+      "customer_id": "CUST_ADA",
+      "source": { "name": "Square Point of Sale" },
+      "line_items": [
+        {
+          "uid": "li-1",
+          "name": "Flat white",
+          "variation_name": "Regular",
+          "quantity": "2",
+          "catalog_object_id": "VAR_FLATWHITE",
+          "base_price_money": { "amount": 350, "currency": "GBP" },
+          "total_money": { "amount": 700, "currency": "GBP" },
+          "modifiers": [{ "name": "Oat milk", "base_price_money": { "amount": 40, "currency": "GBP" } }]
+        },
+        {
+          "uid": "li-2",
+          "name": "Banana bread",
+          "variation_name": "Slice",
+          "quantity": "1",
+          "catalog_object_id": "VAR_BANANA",
+          "base_price_money": { "amount": 300, "currency": "GBP" },
+          "total_money": { "amount": 300, "currency": "GBP" }
+        }
+      ],
+      "total_money": { "amount": 1150, "currency": "GBP" },
+      "total_tax_money": { "amount": 167, "currency": "GBP" },
+      "total_discount_money": { "amount": 0, "currency": "GBP" },
+      "total_tip_money": { "amount": 150, "currency": "GBP" },
+      "total_service_charge_money": { "amount": 0, "currency": "GBP" }
+    },
+    {
+      "id": "sqOrderDraft",
+      "location_id": "L8EXAMPLE",
+      "state": "DRAFT",
+      "created_at": "2026-10-14T19:00:00.000Z",
+      "updated_at": "2026-10-14T19:00:00.000Z",
+      "total_money": { "amount": 500, "currency": "GBP" }
+    }
+  ],
+  "cursor": "SQ_PAGE_2"
+}

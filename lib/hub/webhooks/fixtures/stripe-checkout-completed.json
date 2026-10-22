@@ -1,0 +1,1 @@
+{"id":"evt_1Q2w3e4r5t6y","object":"event","api_version":"2024-12-18.acacia","account":"acct_1TESTCONNECT","created":1760436000,"type":"checkout.session.completed","livemode":false,"data":{"object":{"id":"cs_test_123","object":"checkout.session","amount_total":2450,"currency":"gbp","customer_details":{"email":"guest@example.com"}}}}

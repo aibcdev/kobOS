@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { enrichOnboardInput } from "@/lib/kob/onboard-enrich";
 import { buildOnboardLens } from "@/lib/kob/onboard-lens";
+import { clientIpFromHeaders, limit, tooManyRequests } from "@/lib/security/rate-limit";
 import { roleLabel, type OnboardProfile } from "@/lib/kob/onboard-profile";
 import { EMPTY_ANSWERS, type OnboardAnswers } from "@/lib/kob/onboard-wizard";
 
@@ -26,7 +27,10 @@ const Body = z.object({
   profile: z.unknown().optional(),
 });
 
+// DECISION: stays public — last step of the anonymous /onboard funnel. Rate-limited per IP instead.
 export async function POST(req: Request) {
+  const rl = await limit(`kob-onboard:${clientIpFromHeaders(req.headers) ?? "unknown"}`, { windowSec: 3600, max: 20 });
+  if (!rl.ok) return tooManyRequests(rl);
   let json: unknown;
   try {
     json = await req.json();

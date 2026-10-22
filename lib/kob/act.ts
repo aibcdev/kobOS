@@ -1,3 +1,7 @@
+/**
+ * @deprecated Client-side demo mutations for the walkthrough store. External writes go through the Action
+ * Ledger; do not import from API routes.
+ */
 import type {
   AutonomyLevel,
   AutonomyRule,

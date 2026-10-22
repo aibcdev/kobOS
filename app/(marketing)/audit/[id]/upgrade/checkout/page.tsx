@@ -1,3 +1,4 @@
+import { START_FREE_TRIAL } from "@/lib/billing/offer";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { AuditDbUnavailable } from "@/components/marketing/audit/AuditDbUnavailable";
@@ -46,7 +47,7 @@ export default async function AuditUpgradeCheckoutPage({ params }: Props) {
       <AuditGraderHeader
         showTrialCta
         trialHref={`/audit/${audit.id}/upgrade/checkout`}
-        trialLabel="Start 7-day free trial"
+        trialLabel={START_FREE_TRIAL}
       />
       <div className={ownerContainer}>
         <AuditUpgradeCheckout
