@@ -67,3 +67,24 @@ export async function draftReviewReply(input: DraftInput, generate: Generate = (
   const res = await generate(draftPrompt(input));
   return res.ok ? cleanReply(res.text) : null;
 }
+
+/**
+ * A safe reply when no model is available: thanks the guest, invents nothing, and asks low ratings to get in touch.
+ * The owner still approves it, and can edit it, before anything is posted.
+ */
+export function templateReviewReply(input: Pick<DraftInput, "restaurantName" | "reviewerName" | "rating">): string {
+  const first = input.reviewerName?.trim().split(/\s+/)[0];
+  const hi = first ? `Hi ${first}, thank you` : "Thank you";
+  const team = `The ${input.restaurantName} team`;
+  if (input.rating >= 4)
+    return `${hi} for the kind words and for taking the time to leave a review. We're really glad you enjoyed your visit and we look forward to welcoming you back soon. ${team}`;
+  if (input.rating === 3)
+    return `${hi} for the honest feedback. We'd love to hear a little more about what would have made your visit better, so please get in touch with us directly. ${team}`;
+  return `${hi} for telling us about this, and we're sorry your visit fell short. That isn't the experience we want for anyone. Please get in touch with us directly so we can look into it properly. ${team}`;
+}
+
+/** A model draft when one is available, otherwise the safe template — never nothing. */
+export async function draftReviewReplyOrTemplate(input: DraftInput, generate?: Generate): Promise<{ text: string; drafted: "model" | "template" }> {
+  const text = await draftReviewReply(input, generate).catch(() => null);
+  return text ? { text, drafted: "model" } : { text: templateReviewReply(input), drafted: "template" };
+}

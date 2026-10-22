@@ -89,12 +89,24 @@ describe("Talk evidence and capability boundaries", () => {
     expect(context.needsConnection.size).toBe(0);
     expect(context.sources).toHaveLength(1);
   });
-  it("provides no write or arbitrary HTTP tools", () => {
-    expect(Object.keys(buildTalkTools("venue").tools)).toEqual([
+  it("reads this restaurant's data, drafts for approval, and has no publish or arbitrary HTTP tools", () => {
+    const names = Object.keys(buildTalkTools("venue").tools);
+    expect(names).toEqual([
+      "restaurant_profile",
+      "reviews_summary",
+      "draft_review_reply",
+      "google_listing",
+      "waiting_for_owner",
+      "plan_and_price",
+      "house_rules",
+      "save_house_rule",
+      "latest_brief",
+      "offers_and_content",
       "connections",
       "search_email",
       "read_email",
       "calendar_events",
     ]);
+    expect(names.filter((n) => /publish|post|send|approve|http|fetch/.test(n))).toEqual([]);
   });
 });

@@ -13,7 +13,9 @@ export function isSameOrigin(req: Request): boolean {
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
   const proto = req.headers.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
   const fromHost = host ? `${proto}://${host}` : null;
-  for (const raw of [req.url, fromHost, process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_SITE_URL]) {
+  // Netlify sets URL (production) and DEPLOY_PRIME_URL / DEPLOY_URL (deploy previews and branch deploys).
+  const configured = [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_SITE_URL, process.env.URL, process.env.DEPLOY_PRIME_URL, process.env.DEPLOY_URL];
+  for (const raw of [req.url, fromHost, ...configured]) {
     if (!raw?.trim()) continue;
     try {
       allowed.add(new URL(raw).origin);
