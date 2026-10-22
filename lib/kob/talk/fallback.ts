@@ -3,6 +3,8 @@ import type { Generate } from "@/lib/connectors/gbp/drafter";
 import { templateReviewReply } from "@/lib/connectors/gbp/drafter";
 import { formatLocalDate, nextMothersDay } from "@/lib/locale/holidays";
 import { draftReplyForReview, type ReplyDraft } from "@/lib/agent/review-reply";
+import { DAYS, LISTING_FACT, lastSnapshot, sameHours, saveWebsiteHours, websiteHours, type Day, type HoursPeriod, type ListingSnapshot } from "@/lib/connectors/gbp/listing";
+import { proposeHoursUpdate } from "@/lib/connectors/gbp/listing-sync";
 import {
   findReview,
   googleConnection,
@@ -179,32 +181,130 @@ async function mothersDayOffer(c: Ctx): Promise<FactAnswer> {
   };
 }
 
+const NOT_CONNECTED =
+  "Your Google listing isn't connected yet, so I can't see its hours, photos or posts. Connect it and KOB will check it every morning and flag anything out of date.";
+
+const dayTitle = (d: Day) => d[0] + d.slice(1).toLowerCase();
+function hoursLine(periods: HoursPeriod[], day: Day) {
+  const p = periods.filter((x) => x.day === day);
+  return p.length ? p.map((x) => `${x.open}–${x.close}`).join(", ") : "closed";
+}
+
+function describeChange(ch: { field: string; before: unknown; after: unknown }): string {
+  if (ch.field === "hours") {
+    const before = ch.before as HoursPeriod[];
+    const after = ch.after as HoursPeriod[];
+    const days = DAYS.filter((d) => hoursLine(before, d) !== hoursLine(after, d));
+    return days.map((d) => `${dayTitle(d)} hours ${hoursLine(before, d)} → ${hoursLine(after, d)}`).join("; ");
+  }
+  if (ch.field === "photos") return `${Number(ch.after) - Number(ch.before)} new photo(s)`;
+  if (ch.field === "posts") return "a new post";
+  if (ch.field === "description") return "the description changed";
+  if (ch.field === "specialHours") return "holiday hours changed";
+  if (ch.field === "categories") return "categories changed";
+  return ch.field;
+}
+
 async function listingChanges(c: Ctx): Promise<FactAnswer> {
   const g = await googleConnection(c.restaurantId);
-  if (g.state !== "connected")
+  if (g.state !== "connected") return { intent: "listing", text: NOT_CONNECTED, activity: [{ label: "Checked your Google connection", status: "complete" }] };
+  const since = new Date(c.now.getTime() - 7 * 86_400_000);
+  const [s, rows] = await Promise.all([
+    reviewSummary(c.restaurantId, since, c.now),
+    prisma.osFact.findMany({ where: { restaurantId: c.restaurantId, key: LISTING_FACT, lastUpdatedAt: { gte: since } }, orderBy: { lastUpdatedAt: "asc" } }),
+  ]);
+  const changes = rows.flatMap((r) => ((r.valueJson as { changes?: { field: string; before: unknown; after: unknown }[] }).changes ?? []).map(describeChange));
+  const latest = rows.at(-1)?.valueJson as ListingSnapshot | undefined;
+  const lines = [
+    rows.length ? `Since last week on Google: ${changes.length ? changes.join("; ") : "no changes to hours, photos, posts or description"}.` : "KOB hasn't read your listing in the last week yet.",
+    `${plural(s.count, "new review")} in the last 7 days.`,
+    latest ? `Right now: ${latest.photoCount} photos, last post ${latest.lastPostAt ? formatLocalDate(latest.lastPostAt.slice(0, 10)) : "never"}.` : "",
+  ];
+  return { intent: "listing", text: lines.filter(Boolean).join(" "), activity: [{ label: "Checked your Google listing", status: "complete" }] };
+}
+
+async function hoursCompare(c: Ctx): Promise<FactAnswer> {
+  const g = await googleConnection(c.restaurantId);
+  if (g.state !== "connected") return { intent: "listing", text: NOT_CONNECTED, activity: [{ label: "Checked your Google connection", status: "complete" }] };
+  const [snap, site] = await Promise.all([lastSnapshot(c.restaurantId), websiteHours(c.restaurantId)]);
+  if (!snap) return { intent: "listing", text: "KOB hasn't read your Google hours yet. It will on the next morning check.", activity: [] };
+  if (!site)
     return {
       intent: "listing",
-      text: "Your Google listing isn't connected yet, so I can't see its hours, photos or posts. Connect it and KOB will check it every morning and flag anything out of date.",
-      activity: [{ label: "Checked your Google connection", status: "complete" }],
+      text: "Your website doesn't state its opening hours in a way KOB can read, so I can't compare them. Tell me your hours and I'll check Google against them.",
+      activity: [{ label: "Checked your Google hours", status: "complete" }],
     };
-  const since = new Date(c.now.getTime() - 7 * 86_400_000);
-  const s = await reviewSummary(c.restaurantId, since, c.now);
+  const days = DAYS.filter((d) => hoursLine(snap.hours, d) !== hoursLine(site, d));
+  if (!days.length) return { intent: "listing", text: "Yes — your Google hours match your website for every day.", activity: [{ label: "Compared your hours", status: "complete" }] };
+  const { approvals } = await pendingApprovals(c.restaurantId);
+  const waiting = approvals.some((a) => a.kind === "gbp.hours.regular.update");
   return {
     intent: "listing",
-    text: `Google is connected${g.lastSyncedAt ? `, last checked ${new Date(g.lastSyncedAt).toLocaleString("en-GB", { timeZone: c.profile.timezone })}` : ""}. In the last 7 days: ${plural(s.count, "new review")}. Changes to hours, photos and posts will show here once listing checks are switched on.`,
-    activity: [{ label: "Checked your Google listing", status: "complete" }],
+    text: `No. ${days.map((d) => `${dayTitle(d)}: Google says ${hoursLine(snap.hours, d)}, your website says ${hoursLine(site, d)}`).join(". ")}. ${
+      waiting ? "A fix is waiting in Needs you — approve it and KOB updates Google and checks it took." : "Tell me which is right and I'll prepare the change for you to approve."
+    }`,
+    activity: [{ label: "Compared your hours", status: "complete" }],
   };
 }
 
-async function hoursChange(c: Ctx): Promise<FactAnswer> {
+/** "close at 22:00 on Sundays", "open at 11am on Mondays" → which days and which time changed. */
+export function parseHoursStatement(text: string): { days: Day[]; open?: string; close?: string } | null {
+  const t = text.toLowerCase();
+  const days = DAYS.filter((d) => new RegExp(`\\b${d.toLowerCase()}s?\\b|\\b${d.slice(0, 3).toLowerCase()}\\b`).test(t));
+  const clock = (raw: string) => {
+    const m = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/.exec(raw.trim());
+    if (!m) return undefined;
+    let h = Number(m[1]);
+    if (m[3] === "pm" && h < 12) h += 12;
+    if (m[3] === "am" && h === 12) h = 0;
+    return h <= 24 ? `${String(h).padStart(2, "0")}:${m[2] ?? "00"}` : undefined;
+  };
+  const close = /\bclos(?:e|es|ing)\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/.exec(t)?.[1];
+  const open = /\bopen(?:s|ing)?\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/.exec(t)?.[1];
+  const out = { days, ...(open ? { open: clock(open) } : {}), ...(close ? { close: clock(close) } : {}) };
+  return days.length && (out.open || out.close) ? out : null;
+}
+
+async function hoursChange(c: Ctx, message: string): Promise<FactAnswer> {
   const g = await googleConnection(c.restaurantId);
+  const said = parseHoursStatement(message);
+  if (g.state !== "connected")
+    return {
+      intent: "hours",
+      text: "Got it. Connect your Google listing and KOB can update your hours there once you approve, then check they took. Until then, please change them in your Google Business Profile.",
+      activity: [],
+    };
+  const snap = await lastSnapshot(c.restaurantId);
+  if (!said || !snap)
+    return {
+      intent: "hours",
+      text: snap
+        ? "Which day and what time? For example: \"close at 22:00 on Sundays\"."
+        : "KOB hasn't read your Google hours yet, so I can't prepare the change safely. It will after the next morning check.",
+      activity: [],
+    };
+  const next: HoursPeriod[] = snap.hours.map((p) =>
+    said.days.includes(p.day) ? { ...p, ...(said.open ? { open: said.open } : {}), ...(said.close ? { close: said.close } : {}) } : p,
+  );
+  const missing = said.days.filter((d) => !snap.hours.some((p) => p.day === d));
+  if (missing.length && said.open && said.close) for (const d of missing) next.push({ day: d, open: said.open, close: said.close });
+  if (sameHours(next, snap.hours)) return { intent: "hours", text: "Google already shows those hours — nothing to change.", activity: [{ label: "Checked your Google hours", status: "complete" }] };
+  await saveWebsiteHours(c.restaurantId, next, c.now, "owner");
+  const changed = DAYS.filter((d) => hoursLine(snap.hours, d) !== hoursLine(next, d));
+  const summary = changed.map((d) => `${dayTitle(d)} ${hoursLine(snap.hours, d)} → ${hoursLine(next, d)}`).join("; ");
+  const { action } = await proposeHoursUpdate(c.restaurantId, snap.location, snap.hours, next, {
+    reason: `Owner said: ${message.slice(0, 200)}`,
+    requestedByUserId: c.userId,
+    channelOrigin: "WEB",
+    now: c.now,
+  });
   return {
     intent: "hours",
     text:
-      g.state === "connected"
-        ? "Got it. Updating hours on Google isn't switched on in KOB yet, so for now please change it in your Google Business Profile. I'll flag it if your listing and website disagree."
-        : "Got it. Connect your Google listing and KOB can check your hours there against your website every morning. Until then, please update it in your Google Business Profile.",
-    activity: [],
+      action.status === "AWAITING_APPROVAL"
+        ? `Ready to update Google: ${summary}. It's waiting in Needs you — approve it and KOB changes your listing, then checks Google shows the new hours.`
+        : `I noted ${summary}, but couldn't line up the Google change (${action.failureReason ?? "Google isn't ready"}). Please update it in your Google Business Profile for now.`,
+    activity: [{ label: "Prepared a Google hours change", status: "complete" }],
   };
 }
 
@@ -344,8 +444,8 @@ export async function answerFromFacts(
   if (day && /\b(dead|quiet|slow|empty|help)\b/.test(t)) return quietNight(c, day);
   if (/\b(quiet|on the books|bookings?)\b/.test(t)) return quietBooks(c);
   if (/\b(instagram|post|caption)\b/.test(t)) return socialPost(c, message);
-  if (/\bhours\b/.test(t) && /\b(same|match|website|differ)\b/.test(t)) return listingChanges(c);
-  if (/\bhours\b|\bclose at\b|\bopen(ing)? at\b/.test(t)) return hoursChange(c);
+  if (/\bhours\b/.test(t) && /\b(same|match|website|differ)\b/.test(t)) return hoursCompare(c);
+  if (/\bhours\b|\bclose at\b|\bopen(ing)? at\b/.test(t)) return hoursChange(c, message);
   if (/\b(google|listing)\b/.test(t)) return listingChanges(c);
   if (/\b(rand|zar|how much|price after|cost after|pay after)\b/.test(t)) return priceAfterTrial(c);
   if (/\b(cancel|trial)\b/.test(t)) return trial(c, /\bcancel\b/.test(t));

@@ -32,13 +32,45 @@ export function TodayHome({
   const [actionError, setActionError] = useState<string | null>(null);
   const [replies, setReplies] = useState<ActionView[]>([]);
 
-  // Review replies go through the action ledger (approve → post → read back), not the chief-of-staff task API.
+  // Google connection: until it's connected, the first thing Today asks for is the listing (skippable).
+  const [google, setGoogle] = useState<{ state: string; href: string | null } | null>(null);
+  // The card only renders after the client fetch below, so reading storage here can't cause a hydration mismatch.
+  const [googleSkipped, setGoogleSkipped] = useState(() => {
+    try {
+      return typeof window !== "undefined" && window.localStorage.getItem(`kob.skipGoogle.${restaurant.id}`) === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/hub/connections/GBP?restaurantId=${encodeURIComponent(restaurant.id)}`, { cache: "no-store" })
+      .then((res) => (res.ok ? (res.json() as Promise<{ state: string; connect: { kind: string; href?: string } }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setGoogle({ state: data.state, href: data.connect.kind === "oauth" ? (data.connect.href ?? null) : null });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurant.id]);
+  function skipGoogle() {
+    setGoogleSkipped(true);
+    try {
+      window.localStorage.setItem(`kob.skipGoogle.${restaurant.id}`, "1");
+    } catch {
+      // fine: it just shows again next visit
+    }
+  }
+
+  // Google changes (replies, hours, posts) go through the action ledger (approve → post → read back), not the
+  // chief-of-staff task API.
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/actions?restaurantId=${encodeURIComponent(restaurant.id)}&status=needs_you&limit=20`, { cache: "no-store" })
       .then((res) => (res.ok ? (res.json() as Promise<{ actions: ActionView[] }>) : { actions: [] }))
       .then((data) => {
-        if (!cancelled) setReplies(data.actions.filter((a) => a.actionType.startsWith("gbp.review.")));
+        if (!cancelled) setReplies(data.actions.filter((a) => a.actionType.startsWith("gbp.")));
       })
       .catch(() => undefined);
     return () => {
@@ -169,10 +201,42 @@ export function TodayHome({
         </ul>
       ) : null}
 
+      {google && google.state !== "connected" && !googleSkipped ? (
+        <article className="rounded-3xl border border-line bg-paper p-5 text-sm">
+          <p className="font-medium">
+            {google.state === "reconnect"
+              ? "Reconnect your Google listing"
+              : google.state === "pick_location"
+                ? "Pick your restaurant's Google listing"
+                : "Connect your Google listing"}
+          </p>
+          <p className="mt-1 text-muted">
+            KOB reads your reviews, hours, photos and posts every morning, drafts replies and fixes, and only changes
+            Google after you approve — then checks it took.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {google.state === "pick_location" ? (
+              <Link href="/app/settings/connections" className="inline-flex min-h-11 items-center rounded-full bg-espresso px-4 text-paper">
+                Pick your listing
+              </Link>
+            ) : google.href ? (
+              <a href={google.href} className="inline-flex min-h-11 items-center rounded-full bg-espresso px-4 text-paper">
+                {google.state === "reconnect" ? "Reconnect Google" : "Connect Google"}
+              </a>
+            ) : (
+              <span className="text-muted">Google connections open soon for your account.</span>
+            )}
+            <button type="button" className="min-h-11 underline" onClick={skipGoogle}>
+              Skip for now
+            </button>
+          </div>
+        </article>
+      ) : null}
+
       {replies.length > 0 ? (
         <section aria-labelledby="today-replies" className="space-y-3">
           <h2 id="today-replies" className="text-sm font-medium">
-            Google review replies
+            Waiting for your yes on Google
           </h2>
           <ul className="space-y-3">
             {replies.map((a) => (

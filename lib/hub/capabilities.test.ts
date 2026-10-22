@@ -74,6 +74,8 @@ describe("regionFor", () => {
     ["uk", "GB"],
     ["US", "US"],
     ["nz", "NZ"],
+    ["ZA", "ZA"],
+    ["in", "IN"],
     ["FR", "GB"],
     [null, "GB"],
   ])("%s → %s", (code, region) => expect(regionFor(code)).toBe(region));

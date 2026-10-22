@@ -31,7 +31,8 @@ export type ConnectorCategory =
   | "WIFI"
   | "SIGNALS";
 
-export const REGIONS = ["GB", "IE", "US", "CA", "AU", "NZ"] as const;
+/** KOB's markets. */
+export const REGIONS = ["GB", "IE", "US", "CA", "AU", "NZ", "IN", "ZA"] as const;
 export type Region = (typeof REGIONS)[number];
 
 /** Kinds of rows a connector can supply. Features (lib/hub/capabilities.ts) are defined in terms of these. */
@@ -44,6 +45,7 @@ export const DATA_CONTRACTS = [
   "delivery_sales",
   "reviews",
   "review_replies",
+  "listing",
   "social_publish",
   "messaging",
   "supplier_bills",
