@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import type { Generate } from "@/lib/connectors/gbp/drafter";
 import { templateReviewReply } from "@/lib/connectors/gbp/drafter";
 import { formatLocalDate, nextMothersDay } from "@/lib/locale/holidays";
+import { googleReviewLink, reviewAskMessage } from "@/lib/reviews/review-kit";
 import { draftReplyForReview, type ReplyDraft } from "@/lib/agent/review-reply";
 import { DAYS, LISTING_FACT, lastSnapshot, sameHours, saveWebsiteHours, websiteHours, type Day, type HoursPeriod, type ListingSnapshot } from "@/lib/connectors/gbp/listing";
 import { proposeHoursUpdate } from "@/lib/connectors/gbp/listing-sync";
@@ -59,7 +60,9 @@ function replyBlock(d: ReplyDraft): string {
 }
 
 async function reviewsThisWeek(c: Ctx): Promise<FactAnswer> {
-  const s = await reviewSummary(c.restaurantId, periodStart("week", c.profile.timezone, c.now), c.now);
+  const weekStart = periodStart("week", c.profile.timezone, c.now);
+  const s = await reviewSummary(c.restaurantId, weekStart, c.now);
+  const lastWeek = await reviewSummary(c.restaurantId, new Date(weekStart.getTime() - 7 * 86_400_000), weekStart);
   if (!s.allTime.count)
     return {
       intent: "reviews_week",
@@ -68,7 +71,7 @@ async function reviewsThisWeek(c: Ctx): Promise<FactAnswer> {
     };
   const lines = [
     s.count
-      ? `This week: ${plural(s.count, "new review")}${s.average ? `, averaging ${s.average} stars` : ""}.`
+      ? `This week: ${plural(s.count, "new review")}${s.average ? `, averaging ${s.average} stars` : ""} (last week: ${lastWeek.count}).`
       : "No new reviews so far this week.",
     s.unrepliedTotal ? `${plural(s.unrepliedTotal, "review")} still ${s.unrepliedTotal === 1 ? "needs" : "need"} a reply.` : "Every review has a reply.",
   ];
@@ -403,11 +406,19 @@ async function quietBooks(c: Ctx): Promise<FactAnswer> {
   };
 }
 
-function reviewAsk(c: Ctx): FactAnswer {
+async function reviewAsk(c: Ctx): Promise<FactAnswer> {
+  const link = await googleReviewLink(c.restaurantId);
+  if (!link)
+    return {
+      intent: "review_ask",
+      text: "I don't have last night's guest list, so I won't guess who to message. Connect your Google listing and I'll give you your review link, a QR code for the tables and a short thank-you message to send.",
+      activity: [],
+    };
+  const msg = reviewAskMessage(c.profile.name, link.url, "sms");
   return {
     intent: "review_ask",
-    text: `I don't have last night's guest list, so I won't guess who to message. The simplest start is your Google review link on a table card or the bill${c.profile.name ? ` at ${c.profile.name}` : ""}. If you send guests a thank-you by text or email, add the link there too.`,
-    activity: [],
+    text: `I don't have last night's guest list, so I won't guess who to message. Here's a thank-you you can send to guests who've said you can contact them:\n\n"${msg.body}"\n\nFor the tables, print the review card with a QR code from Reviews → Review card. Never offer anything in return for a review.`,
+    activity: [{ label: "Found your Google review link", status: "complete" }],
   };
 }
 

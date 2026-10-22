@@ -25,6 +25,9 @@ export type ListingSnapshot = {
   lastPhotoAt: string | null;
   lastPostAt: string | null;
   livePosts: number;
+  placeId?: string | null;
+  /** Google's own "write a review" link for this listing. */
+  reviewUri?: string | null;
 };
 
 export const LISTING_FACT = "gbp.listing";
@@ -96,6 +99,8 @@ export async function readListing(client: GbpClient, location: string, now: Date
     lastPhotoAt: latest((media?.items ?? []).map((m) => m.createTime)),
     lastPostAt: latest((posts ?? []).map((p) => p.createTime)),
     livePosts: (posts ?? []).filter((p) => p.state === "LIVE").length,
+    placeId: listing.metadata?.placeId ?? null,
+    reviewUri: listing.metadata?.newReviewUri ?? null,
   };
 }
 
