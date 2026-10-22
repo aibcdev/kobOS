@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const created: Record<string, unknown>[] = [];
+const updated: Record<string, unknown>[] = [];
 
 vi.mock("@/lib/auth/api-session", () => ({
   requireApiUser: async () => ({ ok: true, userId: "user_1" }),
@@ -18,6 +19,12 @@ vi.mock("@/lib/db/prisma", () => {
       create: async ({ data }: { data: Record<string, unknown> }) => {
         created.push(data);
         return { id: "r_1", ...data };
+      },
+      // No earlier trial for this owner.
+      count: async () => 0,
+      update: async ({ data }: { data: Record<string, unknown> }) => {
+        updated.push(data);
+        return {};
       },
     },
     teamMember: { create: async () => ({}) },
@@ -45,6 +52,16 @@ function post(body: Record<string, unknown>, headers: Record<string, string> = {
 describe("POST /api/restaurants timezone + locale", () => {
   beforeEach(() => {
     created.length = 0;
+    updated.length = 0;
+  });
+
+  it("starts the 7-day free trial on the new restaurant, with no card", async () => {
+    const res = await post({ name: "Godfather", countryCode: "ZA" });
+    expect(res.status).toBe(201);
+    expect(updated[0]).toMatchObject({ subscriptionPlan: "TRIAL", billingStatus: "TRIALING" });
+    const { trialStartedAt, trialEndsAt } = updated[0] as { trialStartedAt: Date; trialEndsAt: Date };
+    expect(trialEndsAt.getTime() - trialStartedAt.getTime()).toBe(7 * 86_400_000);
+    expect((await res.json()).restaurant).toMatchObject({ subscriptionPlan: "TRIAL", billingStatus: "TRIALING" });
   });
 
   it("puts a GB restaurant (from CDN geo) on Europe/London even with a US browser zone", async () => {

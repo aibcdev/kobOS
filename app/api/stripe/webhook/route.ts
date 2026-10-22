@@ -68,15 +68,8 @@ export async function POST(req: Request) {
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.trial_will_end": {
+        // Trial reminders come from KOB's own trial job (inngest/billing.ts), not Stripe.
         await syncRestaurantFromStripeSubscription(event.data.object as Stripe.Subscription);
-        if (event.type === "customer.subscription.trial_will_end") {
-          const sub = event.data.object as Stripe.Subscription;
-          console.info("[stripe] trial_will_end", {
-            subscription: sub.id,
-            restaurantId: sub.metadata?.restaurantId,
-            trialEnd: sub.trial_end,
-          });
-        }
         break;
       }
       case "customer.subscription.deleted": {
@@ -85,10 +78,7 @@ export async function POST(req: Request) {
         if (!restaurantId) break;
         await prisma.restaurant.update({
           where: { id: restaurantId },
-          data: {
-            subscriptionPlan: SubscriptionPlan.FREE,
-            stripeSubscriptionId: null,
-          },
+          data: { subscriptionPlan: SubscriptionPlan.FREE, billingStatus: "CANCELED", stripeSubscriptionId: null },
         });
         break;
       }
