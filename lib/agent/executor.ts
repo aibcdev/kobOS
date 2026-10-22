@@ -64,6 +64,7 @@ export async function executeApprovedAction(
   });
   if (pre.alreadySatisfied) {
     await step.run("short-circuit", async () => {
+      // Google already showed it, so KOB didn't publish anything: no "published" email.
       await ledger.markVerified(claimed.id, pre.evidence ?? {}, "already_correct");
       await closeUndoneOriginal(claimed.id);
       await settle(claimed.id);
@@ -95,6 +96,7 @@ export async function executeApprovedAction(
     if (v.verified) {
       await step.run("verified", async () => {
         await ledger.markVerified(claimed.id, v.evidence ?? {});
+        notifyPublished(claimed.id);
         await closeUndoneOriginal(claimed.id);
         await settle(claimed.id);
       });
@@ -143,6 +145,7 @@ export async function verifyPending(
     const v = adapter ? await adapter.verify(a, (a.executedPayload ?? {}) as ExecuteResult).catch(() => null) : null;
     if (v?.verified) {
       await ledger.markVerified(a.id, v.evidence ?? {});
+      notifyPublished(a.id);
       await closeUndoneOriginal(a.id);
       await settle(a.id);
       out.verified++;
@@ -155,4 +158,11 @@ export async function verifyPending(
     }
   }
   return out;
+}
+
+/** Tell the owner once a change they approved is live (best-effort; never fails the action). */
+function notifyPublished(actionId: string): void {
+  void import("@/lib/email/owner")
+    .then((m) => m.sendPublished(actionId))
+    .catch((e) => console.warn("[executor] published email", e instanceof Error ? e.message : e));
 }

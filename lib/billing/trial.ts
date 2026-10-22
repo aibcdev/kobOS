@@ -56,9 +56,9 @@ export async function startTrial(db: Db, restaurantId: string, ownerUserId: stri
 }
 
 /** Trials past their end with no card become TRIAL_ENDED. Returns the restaurants that just ended. */
-export async function expireTrials(now: Date = new Date()): Promise<{ id: string; name: string }[]> {
+export async function expireTrials(now: Date = new Date(), only?: string[]): Promise<{ id: string; name: string }[]> {
   const due = await prisma.restaurant.findMany({
-    where: { billingStatus: "TRIALING", trialEndsAt: { lte: now } },
+    where: { billingStatus: "TRIALING", trialEndsAt: { lte: now }, ...(only ? { id: { in: only } } : {}) },
     select: { id: true, name: true },
   });
   if (due.length)
@@ -73,11 +73,18 @@ export async function expireTrials(now: Date = new Date()): Promise<{ id: string
  * Trials whose end falls in [now + aheadHours − windowHours, now + aheadHours): with an hourly job and the default
  * 48h/1h, each trial is found exactly once, two days before it ends (day 5 of 7) — the reminder email.
  */
-export async function trialsEndingSoon(now: Date = new Date(), opts: { aheadHours?: number; windowHours?: number } = {}): Promise<{ id: string; name: string; trialEndsAt: Date }[]> {
+export async function trialsEndingSoon(
+  now: Date = new Date(),
+  opts: { aheadHours?: number; windowHours?: number; only?: string[] } = {},
+): Promise<{ id: string; name: string; trialEndsAt: Date }[]> {
   const ahead = (opts.aheadHours ?? 48) * 3_600_000;
   const window = (opts.windowHours ?? 1) * 3_600_000;
   const rows = await prisma.restaurant.findMany({
-    where: { billingStatus: "TRIALING", trialEndsAt: { gte: new Date(now.getTime() + ahead - window), lt: new Date(now.getTime() + ahead) } },
+    where: {
+      billingStatus: "TRIALING",
+      trialEndsAt: { gte: new Date(now.getTime() + ahead - window), lt: new Date(now.getTime() + ahead) },
+      ...(opts.only ? { id: { in: opts.only } } : {}),
+    },
     select: { id: true, name: true, trialEndsAt: true },
   });
   return rows.map((r) => ({ ...r, trialEndsAt: r.trialEndsAt! }));
