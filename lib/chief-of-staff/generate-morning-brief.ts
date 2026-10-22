@@ -3,32 +3,33 @@ import { geminiJsonCompletion, isGeminiConfigured } from "@/lib/ai/gemini-config
 import { buildAuditTasksForRestaurant, fetchLatestLinkedAudit } from "@/lib/chief-of-staff/build-audit-tasks";
 import { morningBriefAiSchema } from "@/lib/chief-of-staff/morning-brief-schema";
 import type { TaskDraftInput, TodayBriefSummary } from "@/lib/chief-of-staff/types";
-import { nextUkHoliday } from "@/lib/chief-of-staff/uk-holidays";
 import { buildOwnerHeroFallback } from "@/lib/audit/build-owner-hero";
 import { parseAuditPayload } from "@/lib/audit/types";
 import { buildGrowthAgentBriefingContext } from "@/lib/growth-agent/restaurant-context";
 import { getCalendarSnapshot, type CalendarEventSnapshot } from "@/lib/integrations/providers/google-calendar";
 import { getGmailSnapshot } from "@/lib/integrations/providers/gmail";
 import { prisma } from "@/lib/db/prisma";
+import { localDay, pendingApprovals } from "@/lib/kob/talk/restaurant-facts";
+import { formatLocalDate, nextLocalEvent } from "@/lib/locale/holidays";
+import { nightsProfile, WEEKDAY_NAME } from "@/lib/venue/nights";
 
-function greetingForHour(name: string): string {
-  const h = new Date().getHours();
+function greetingForHour(name: string, timezone: string, now: Date): string {
+  const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: timezone }).format(now));
   const part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
   return `${part}, ${name}.`;
 }
 
-function todaysEvents(events: CalendarEventSnapshot[]): CalendarEventSnapshot[] {
-  const now = new Date();
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
+/** Events still to come today in the restaurant's local day. */
+function todaysEvents(events: CalendarEventSnapshot[], timezone: string, now: Date): CalendarEventSnapshot[] {
+  const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
   return events.filter((e) => {
     const start = new Date(e.start);
-    return start >= now && start <= endOfDay;
+    return start >= now && day(start) === day(now);
   });
 }
 
-function formatEventTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" });
+function formatEventTime(iso: string, timezone: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", timeZone: timezone });
 }
 
 function personalityTone(p: AiPersonality): string {
@@ -42,114 +43,74 @@ function personalityTone(p: AiPersonality): string {
   return map[p];
 }
 
-function ruleBasedAiTasks(
-  ctx: { name: string; city: string | null; reviewSummary: string; latestLinkedAuditSnapshot: string },
-  holidayName: string | null,
-  daysAway: number | null,
-  competitors: string[],
-): TaskDraftInput[] {
-  const place = ctx.city ? ` in ${ctx.city}` : "";
-  const tasks: TaskDraftInput[] = [
-    {
-      title: `Create 3 social post drafts for ${ctx.name}`,
-      detail: competitors.length
-        ? `${competitors.slice(0, 2).join(" and ")} post frequently. Approve this to get 3 ready-to-use captions — nothing goes live until you publish.`
-        : `Consistent posting keeps ${ctx.name} visible. Approve to get 3 caption drafts ready for review.`,
-      category: "SOCIAL",
-      source: "AI",
-      impactLabel: "+reach",
-      estimatedMinutes: 5,
-      confidenceScore: 72,
-    },
-    {
-      title: "Respond to Instagram DMs",
-      detail: "Quick replies convert enquiries into bookings.",
-      category: "SOCIAL",
-      source: "AI",
-      estimatedMinutes: 4,
-      confidenceScore: 68,
-      requiresIntegration: "Instagram",
-    },
-    {
-      title: "Check booking enquiries in inbox",
-      detail: "Unanswered enquiries often go to a competitor.",
-      category: "EMAIL",
-      source: "AI",
-      estimatedMinutes: 6,
-      confidenceScore: 70,
-      requiresIntegration: "Email inbox",
-    },
-    {
-      title: "Add 5 customer photos to Google Business Profile",
-      detail: "Fresh photos improve click-through from search and maps.",
-      category: "CONTENT",
-      source: "AI",
-      impactLabel: "Local discovery",
-      estimatedMinutes: 8,
-      confidenceScore: 80,
-    },
-  ];
+/**
+ * Tasks from what KOB actually knows about this restaurant today: unanswered reviews, nights it doesn't know yet,
+ * and the next local date worth planning for. No generic filler.
+ */
+async function factTasks(
+  restaurant: { id: string; name: string; countryCode: string | null; timezone: string },
+  today: string,
+  now: Date,
+): Promise<{ tasks: TaskDraftInput[]; needToKnow: string[]; event: ReturnType<typeof nextLocalEvent> }> {
+  const tasks: TaskDraftInput[] = [];
+  const needToKnow: string[] = [];
 
-  if (holidayName && daysAway != null && daysAway <= 21) {
-    tasks.unshift({
-      title: `Approve ${holidayName} campaign for ${ctx.name}`,
-      detail: `${holidayName} is ${daysAway} days away — draft email and social once you approve.`,
-      category: "HOLIDAY",
-      source: "AI",
-      impactLabel: "Seasonal revenue",
-      estimatedMinutes: 3,
-      confidenceScore: 86,
+  // Reviews: replies already drafted wait in Needs you; unanswered ones without a draft become tasks.
+  const { approvals } = await pendingApprovals(restaurant.id);
+  const replyKeys = new Set(
+    (await prisma.osAction.findMany({ where: { restaurantId: restaurant.id, actionType: "gbp.review.reply", status: { in: ["AWAITING_APPROVAL", "APPROVED", "EXECUTING", "EXECUTED", "VERIFYING"] } }, select: { taskKey: true } })).map((a) => a.taskKey),
+  );
+  const replies = approvals.filter((a) => a.kind === "gbp.review.reply").length;
+  if (replies) needToKnow.push(`${replies} review repl${replies === 1 ? "y is" : "ies are"} drafted and waiting for your yes.`);
+  const unanswered = await prisma.customerReview.findMany({
+    where: { restaurantId: restaurant.id, replied: false, reviewedAt: { gte: new Date(now.getTime() - 14 * 86_400_000) } },
+    orderBy: [{ rating: "asc" }, { reviewedAt: "desc" }],
+    take: 6,
+  });
+  for (const r of unanswered.filter((r) => !r.externalReviewId || !replyKeys.has(`gbp-review:${r.externalReviewId}`)).slice(0, 2)) {
+    const who = r.reviewerName?.trim().split(/\s+/)[0] ?? "a guest";
+    tasks.push({
+      title: `Reply to ${who}'s ${r.rating}-star review`,
+      detail: r.body ? `"${r.body.slice(0, 140)}"` : "Rating only, no comment.",
+      category: "REVIEWS",
+      source: "ENGINE",
+      impactLabel: r.rating <= 2 ? "Protect your rating" : "Thank a happy guest",
+      estimatedMinutes: 2,
+      confidenceScore: 90,
     });
   }
+  const newSinceYesterday = await prisma.customerReview.count({ where: { restaurantId: restaurant.id, reviewedAt: { gte: new Date(now.getTime() - 86_400_000) } } });
+  if (newSinceYesterday) needToKnow.unshift(`${newSinceYesterday} new review${newSinceYesterday === 1 ? "" : "s"} since yesterday.`);
 
-  return tasks;
-}
-
-async function callMorningBriefAi(
-  ctx: NonNullable<Awaited<ReturnType<typeof buildGrowthAgentBriefingContext>>>,
-  personality: AiPersonality,
-  holidayLine: string,
-): Promise<TaskDraftInput[]> {
-  if (!isGeminiConfigured()) return [];
-
-  const system = `You are KOB, the daily helper for UK independent restaurants—plain English, efficiency-first, never miss reviews/holidays/hours/posts. Tone: ${personalityTone(personality)}. Return JSON only.`;
-  const user = `Restaurant: ${ctx.name}, ${ctx.city ?? "UK"}.
-Visibility: ${ctx.visibilityScore ?? "unknown"}/100.
-Audit snapshot: ${ctx.latestLinkedAuditSnapshot.slice(0, 1200)}
-Open insights: ${ctx.openInsightTitles.join("; ") || "none"}
-Recommendations: ${ctx.recommendationTitles.join("; ") || "none"}
-Reviews: ${ctx.reviewSummary}
-${holidayLine}
-
-Return JSON:
-{
-  "revenueHealthLine": "one plain sentence on online consistency (reviews, hours, photos)—no jargon",
-  "needToKnow": ["max 4 critical bullets"],
-  "suggestions": ["max 5 short chips"],
-  "aiTasks": [{"title","detail","category","impactLabel","estimatedMinutes","confidenceScore","requiresIntegration?"}]
-}
-Include 2-4 aiTasks. Mark requiresIntegration when Instagram/email not connected.`;
-
-  const res = await geminiJsonCompletion({ system, user, temperature: 0.55 });
-  if (!res.ok) return [];
-
-  const raw = res.raw;
-
-  try {
-    const parsed = morningBriefAiSchema.parse(JSON.parse(raw));
-    return parsed.aiTasks.map((t) => ({
-      title: t.title,
-      detail: t.detail,
-      category: t.category,
-      source: "AI" as const,
-      impactLabel: t.impactLabel,
-      estimatedMinutes: t.estimatedMinutes,
-      confidenceScore: t.confidenceScore,
-      requiresIntegration: t.requiresIntegration,
-    }));
-  } catch {
-    return [];
+  // Quiet nights: offers only go where they help. Unknown → ask once.
+  const nights = await nightsProfile(restaurant.id, now);
+  if (nights.source === "unknown")
+    tasks.push({
+      title: `Which nights are quiet at ${restaurant.name}?`,
+      detail: `Tell KOB in Talk — for example "Tuesdays are quiet, Fridays are busy" — and offers will only ever go to the quiet ones.`,
+      category: "OPERATIONS",
+      source: "ENGINE",
+      estimatedMinutes: 1,
+      confidenceScore: 85,
+    });
+  else if (nights.quiet.length) {
+    const offers = await prisma.demandRecommendation.count({ where: { restaurantId: restaurant.id, status: "PENDING" } });
+    if (offers) needToKnow.push(`${offers} offer idea${offers === 1 ? "" : "s"} for quiet ${nights.quiet.map((d) => `${WEEKDAY_NAME[d]}s`).join(" and ")} waiting in Offers.`);
   }
+
+  // The next date this restaurant's guests plan around.
+  const event = nextLocalEvent(restaurant.countryCode, today, 21);
+  if (event)
+    tasks.push({
+      title: `Plan for ${event.name} (${event.daysAway === 0 ? "today" : `${event.daysAway} day${event.daysAway === 1 ? "" : "s"} away`})`,
+      detail: `${event.name} is ${formatLocalDate(event.date)}. Approve and KOB drafts a post and an offer for you to check.`,
+      category: "HOLIDAY",
+      source: "ENGINE",
+      impactLabel: "Seasonal bookings",
+      estimatedMinutes: 3,
+      confidenceScore: 82,
+    });
+  return { tasks, needToKnow, event };
 }
 
 function mergeTasks(auditTasks: TaskDraftInput[], aiTasks: TaskDraftInput[]): TaskDraftInput[] {
@@ -170,7 +131,8 @@ export type GenerateMorningBriefResult = {
   taskDrafts: TaskDraftInput[];
 };
 
-export async function generateMorningBrief(restaurantId: string): Promise<GenerateMorningBriefResult | null> {
+export async function generateMorningBrief(restaurantId: string, opts: { now?: Date } = {}): Promise<GenerateMorningBriefResult | null> {
+  const now = opts.now ?? new Date();
   const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
   if (!restaurant) return null;
 
@@ -182,61 +144,51 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
   const auditPayload = linkedAudit ? parseAuditPayload(linkedAudit.resultPayload) : null;
   const perception = auditPayload?.perceptionAuditV1;
   const ownerHero = perception?.ownerHero ?? (perception && auditPayload ? buildOwnerHeroFallback(auditPayload, perception) : null);
-  const competitors = auditPayload?.competitors?.map((c) => c.name) ?? [];
 
-  const holiday = nextUkHoliday();
-  const holidayLine = holiday
-    ? `Next UK event: ${holiday.event.name} in ${holiday.daysAway} days.`
-    : "No imminent UK holiday.";
+  const { date: today } = localDay(restaurant.timezone, now);
+  const facts = await factTasks(restaurant, today, now);
+  const holiday = facts.event;
+  const place = [ctx.city, restaurant.countryCode].filter(Boolean).join(", ");
 
   let aiMeta = {
     revenueHealthLine: ctx.city
-      ? `${ctx.name} in ${ctx.city} — focus on the high-impact fixes below.`
-      : `${ctx.name} — focus on the high-impact fixes below.`,
-    needToKnow: [] as string[],
+      ? `${ctx.name} in ${ctx.city} — here's what needs you today.`
+      : `${ctx.name} — here's what needs you today.`,
+    needToKnow: [...facts.needToKnow],
     suggestions: [] as string[],
   };
 
-  let aiTasks = ruleBasedAiTasks(ctx, holiday?.event.name ?? null, holiday?.daysAway ?? null, competitors);
-
+  // The language service may only reword the summary; tasks come from the restaurant's own facts.
   if (isGeminiConfigured()) {
     try {
-      const apiKeyTasks = await callMorningBriefAi(ctx, restaurant.aiPersonality, holidayLine);
-      if (apiKeyTasks.length) aiTasks = apiKeyTasks;
-
       const metaRes = await geminiJsonCompletion({
-        system:
-          "Return JSON only. Never invent lost-revenue or lost-customer £ amounts. Prefer actionable fixes over loss framing.",
-        user: `For ${ctx.name}: ${holidayLine} Audit: ${ctx.latestLinkedAuditSnapshot.slice(0, 800)}. Return {"revenueHealthLine","needToKnow":[],"suggestions":[]}`,
-        temperature: 0.5,
+        system: `You write one plain sentence for the owner of an independent restaurant in ${place || "their town"}. Tone: ${personalityTone(restaurant.aiPersonality)}. Never invent numbers, money, guests or events. Never mention AI, automation, bots or agents. Return JSON only.`,
+        user: `Facts for ${ctx.name} today: ${facts.needToKnow.join(" ") || "nothing urgent"}. ${holiday ? `${holiday.name} is ${holiday.daysAway} days away.` : ""} Return {"revenueHealthLine": "<one sentence>"}`,
+        temperature: 0.4,
       });
       if (metaRes.ok) {
-        const m = morningBriefAiSchema.pick({ revenueHealthLine: true, needToKnow: true, suggestions: true }).safeParse(JSON.parse(metaRes.raw));
-        if (m.success) aiMeta = m.data;
+        const m = morningBriefAiSchema.pick({ revenueHealthLine: true }).safeParse(JSON.parse(metaRes.raw));
+        if (m.success) aiMeta = { ...aiMeta, revenueHealthLine: m.data.revenueHealthLine };
       }
     } catch {
-      /* fallback to rule-based */
+      /* keep the plain line */
     }
   }
 
-  if (holiday && holiday.daysAway <= 21) {
-    aiMeta.needToKnow.unshift(`${holiday.event.name} is ${holiday.daysAway} days away.`);
-  }
-
   // Live signals from connected calendar + inbox (cached snapshots, no network).
-  let greeting = greetingForHour(restaurant.name);
+  let greeting = greetingForHour(restaurant.name, restaurant.timezone, now);
   try {
     const [calendarEvents, gmail] = await Promise.all([
       getCalendarSnapshot(restaurantId),
       getGmailSnapshot(restaurantId),
     ]);
 
-    const today = todaysEvents(calendarEvents);
-    if (today.length) {
-      const first = today[0];
+    const upcoming = todaysEvents(calendarEvents, restaurant.timezone, now);
+    if (upcoming.length) {
+      const first = upcoming[0];
       const eventLine = first.allDay
         ? `Today: ${first.title}.`
-        : `You have ${first.title} at ${formatEventTime(first.start)}${today.length > 1 ? ` and ${today.length - 1} more event${today.length > 2 ? "s" : ""} today` : ""}.`;
+        : `You have ${first.title} at ${formatEventTime(first.start, restaurant.timezone)}${upcoming.length > 1 ? ` and ${upcoming.length - 1} more event${upcoming.length > 2 ? "s" : ""} today` : ""}.`;
       greeting = `${greeting} ${eventLine}`;
       aiMeta.needToKnow.unshift(eventLine);
     }
@@ -256,7 +208,7 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
     );
   }
 
-  const merged = mergeTasks(auditTasks, aiTasks);
+  const merged = mergeTasks(facts.tasks, auditTasks);
   const totalMinutes = merged.reduce((s, t) => s + (t.estimatedMinutes ?? 5), 0);
 
   let revenueLow: number | null = null;
@@ -279,7 +231,7 @@ export async function generateMorningBrief(restaurantId: string): Promise<Genera
     suggestions: aiMeta.suggestions.slice(0, 6),
     holidayBlock: holiday
       ? {
-          eventName: holiday.event.name,
+          eventName: holiday.name,
           daysAway: holiday.daysAway,
           emailPrepared: holidayTasks.some((t) => Boolean(t.draftPayload)),
           instagramPrepared: holidayTasks.some((t) => Boolean(t.draftPayload)),
