@@ -18,10 +18,25 @@ enum Role {
   @@schema("public")
 }
 
+/// Where a restaurant is in its trial and billing. TRIAL_ENDED: no card when the trial ran out, so KOB is read-only
+/// (nothing new is proposed or published) until a card is added. Data is kept.
+enum BillingStatus {
+  NONE
+  TRIALING
+  TRIAL_ENDED
+  ACTIVE
+  PAST_DUE
+  CANCELED
+
+  @@schema("public")
+}
+
 enum SubscriptionPlan {
   FREE
   STARTER
   PRO
+  /// The 7-day free trial: full product, no card.
+  TRIAL
 
   @@schema("public")
 }
@@ -444,6 +459,9 @@ model Restaurant {
    * When Stripe trial / paid plan first activated for this venue.
    */
   trialStartedAt        DateTime?
+  /// When the free trial ends (trialStartedAt + TRIAL_DAYS).
+  trialEndsAt           DateTime?
+  billingStatus         BillingStatus           @default(NONE)
   /**
    * Credits available for human-fulfilled service requests (website, logo, SEO, etc.).
    */
@@ -515,6 +533,7 @@ model Restaurant {
   usageEvents           UsageEvent[]
 
   @@index([organizationId])
+  @@index([billingStatus, trialEndsAt])
   @@schema("public")
 }
 

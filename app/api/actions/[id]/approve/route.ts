@@ -5,6 +5,7 @@ import { sendActionApproved } from "@/lib/agent/events";
 import { assertGrantable, GrantError, grantFromApproval } from "@/lib/agent/grants";
 import { approve, fail, getAction, LedgerTransitionError } from "@/lib/agent/ledger";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { canAct } from "@/lib/billing/trial";
 import { osRoleFor, roleAllows } from "@/lib/os/permissions";
 import { isSameOrigin } from "@/lib/security/same-origin";
 
@@ -34,6 +35,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (action.status !== "AWAITING_APPROVAL" && action.status !== "PROPOSED") {
     return NextResponse.json({ error: "This can no longer be approved", action: actionView(action) }, { status: 409 });
   }
+  // After a trial ends without a card KOB is read-only: nothing new goes out until a card is added.
+  const billing = await canAct(action.restaurantId);
+  if (!billing.ok) return NextResponse.json({ error: billing.message, code: billing.code, nextHref: "/dashboard/billing" }, { status: 402 });
   if (!roleAllows(osRoleFor(member.role), action.actionType)) {
     return NextResponse.json({ error: "Your role can't approve this" }, { status: 403 });
   }
