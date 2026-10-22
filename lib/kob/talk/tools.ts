@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
-import { draftReplyForReview } from "./actions";
+import { draftReplyForReview } from "@/lib/agent/review-reply";
 import { ConnectorError, googleRead, listTalkConnectors } from "./connectors";
 import {
   contentQueue,

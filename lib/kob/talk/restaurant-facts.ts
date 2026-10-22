@@ -104,6 +104,14 @@ export async function reviewSummary(restaurantId: string, since: Date, until: Da
   };
 }
 
+/** "the 1-star", "two star", "5★" → 1..5, or null. */
+export function starsMentioned(text: string): number | null {
+  const m = text.match(/\b([1-5])\s*[- ]?\s*(?:star|★)/i) ?? text.match(/\b(one|two|three|four|five)[- ]star/i);
+  if (!m) return null;
+  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+  return Number(m[1]) || words[m[1].toLowerCase()] || null;
+}
+
 const STOP = new Set(["the", "a", "an", "to", "about", "reply", "review", "star", "stars", "our", "my", "we", "with", "for", "and", "of", "on", "in", "said", "guest", "draft", "voice"]);
 
 /** The review the owner means: by star rating and/or words from it, unreplied first, newest first. */

@@ -1,21 +1,16 @@
 import type { CustomerReview } from "@prisma/client";
-import { draftReviewReply, type Generate } from "@/lib/connectors/gbp/drafter";
+import { draftReviewReplyOrTemplate, type Generate } from "@/lib/connectors/gbp/drafter";
 import { prisma } from "@/lib/db/prisma";
 import { flag } from "@/lib/flags";
 import { proposeAction } from "@/lib/agent/propose";
+import { saveReplyDraft } from "@/lib/agent/review-reply";
 import type { PolicyDeps } from "@/lib/agent/policy";
+import { reviewSubject, reviewTaskKey } from "@/lib/connectors/gbp/review-subject";
 
 /** Older reviews aren't drafted: the first sync would otherwise ask the owner about a month of backlog. */
 export const DRAFT_WINDOW_DAYS = 7;
 
-const SAFETY = /\b(food poisoning|poison(ed|ing)?|allerg(y|ic|ies)|anaphyla\w*|sick|vomit\w*|ill(ness)?|hospital|diarrh\w*|hair in|glass in|raw chicken|undercooked|cockroach\w*|rat|mice|mouse)\b/i;
-
-/** What the policy engine reads: low stars raise severity; health and hygiene complaints always ask. */
-export function reviewSubject(r: Pick<CustomerReview, "rating" | "body">): { rating: number; severity: number; safety: boolean } {
-  return { rating: r.rating, severity: r.rating <= 2 ? 2 : r.rating === 3 ? 1 : 0, safety: SAFETY.test(r.body) };
-}
-
-export const reviewTaskKey = (reviewName: string) => `gbp-review:${reviewName}`;
+export { reviewSubject, reviewTaskKey };
 
 /**
  * For each unanswered recent review: draft a reply and propose it through the ledger. Policy decides whether it
@@ -43,11 +38,12 @@ export async function proposeReviewReplies(
   for (const r of recent) {
     const name = r.externalReviewId!;
     if (already.has(reviewTaskKey(name))) continue;
-    const reply = await draftReviewReply(
+    // Without a model the safe template is used, so every new review still gets a draft for the owner to check.
+    const { text: reply } = await draftReviewReplyOrTemplate(
       { restaurantName: restaurant.name, voice: restaurant.vibe, reviewerName: r.reviewerName, rating: r.rating, reviewText: r.body },
       opts.generate,
     );
-    if (!reply) continue;
+    await saveReplyDraft(restaurantId, r.id, reply);
     const who = r.reviewerName?.trim().split(/\s+/)[0] || "a guest";
     await proposeAction(
       {
