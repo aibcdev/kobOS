@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AUTH_NEXT_COOKIE, AUTH_NEXT_MAX_AGE_SEC } from "@/lib/auth/auth-next-cookie";
+import { AUTH_NEXT_COOKIE, AUTH_NEXT_MAX_AGE_SEC, safeNextPath } from "@/lib/auth/auth-next-cookie";
 import { withTimeout } from "@/lib/auth/with-timeout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { createMagicLinkAuthClient } from "@/lib/supabase/magic-link-auth";
@@ -24,8 +24,7 @@ export function SaasAuthForm({ defaultMode = "signin" }: { defaultMode?: Mode })
   const planTier = plan === "flat" ? "pro" : plan === "flex" ? "starter" : null;
   const nextPathRaw = params.get("next")?.trim() ?? params.get("redirect")?.trim();
   const defaultNext = planTier ? `/dashboard/billing?tier=${planTier}` : "/app";
-  const nextPath =
-    nextPathRaw && nextPathRaw.startsWith("/") && !nextPathRaw.startsWith("//") ? nextPathRaw : defaultNext;
+  const nextPath = nextPathRaw ? safeNextPath(nextPathRaw) : defaultNext;
   const emailFromQuery = params.get("email")?.trim() ?? "";
   const [email, setEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");

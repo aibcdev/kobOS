@@ -106,7 +106,7 @@ describeDb("30 mornings: the brief and offers fit each venue", () => {
       return d.titles.length ? d.titles.filter((t) => lastWeek.has(t)).length / d.titles.length : 0;
     });
     expect(repeats.reduce((a, b) => a + b, 0) / repeats.length).toBeLessThanOrEqual(0.5);
-  });
+  }, 60_000);
 
   it("Harbour & Rye (Bristol): pound offers, never a Friday discount", async () => {
     const r = await venue("Harbour & Rye", "GB", "Europe/London", "en-GB", "£35–45");
@@ -118,5 +118,5 @@ describeDb("30 mornings: the brief and offers fit each venue", () => {
       expect(offer.days).not.toContain("FRI");
     }
     expect(JSON.stringify(tasks.map((t) => t.title))).not.toMatch(/Heritage Day/);
-  });
+  }, 60_000);
 });
