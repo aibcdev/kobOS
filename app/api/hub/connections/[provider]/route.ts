@@ -1,9 +1,29 @@
 import { NextResponse } from "next/server";
-import { connectWithKeys, disconnectIntegration } from "@/lib/hub/connections";
+import { requireApiUser } from "@/lib/auth/api-session";
+import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
+import { prisma } from "@/lib/db/prisma";
+import { connectMethod, connectWithKeys, disconnectIntegration } from "@/lib/hub/connections";
 import { authorizeConnectionChange as authorize } from "@/lib/hub/connection-auth";
 import { getManifest } from "@/lib/hub/manifest";
 
 export const runtime = "nodejs";
+
+/** One provider's state for this restaurant and how to connect it (e.g. the Today "Connect your Google listing" card). */
+export async function GET(req: Request, ctx: { params: Promise<{ provider: string }> }) {
+  const { provider } = await ctx.params;
+  const manifest = getManifest(provider);
+  if (!manifest) return NextResponse.json({ error: "Unknown provider" }, { status: 404 });
+  const session = await requireApiUser();
+  if (!session.ok) return NextResponse.json({ error: session.message }, { status: session.status });
+  const restaurantId = new URL(req.url).searchParams.get("restaurantId") ?? "";
+  if (!restaurantId || !(await assertRestaurantMembership(session.userId, restaurantId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const row = await prisma.integration.findFirst({
+    where: { restaurantId, provider: manifest.provider as never },
+    select: { status: true, externalAccountId: true },
+  });
+  const state = !row || row.status === "DISCONNECTED" ? "not_connected" : row.status === "PENDING_SETUP" || !row.externalAccountId ? "pick_location" : row.status === "REAUTH" ? "reconnect" : "connected";
+  return NextResponse.json({ provider: manifest.provider, state, connect: connectMethod(manifest, restaurantId) }, { headers: { "Cache-Control": "no-store" } });
+}
 
 /** Connect an API-key / key-and-secret provider (Toast, Epos Now, Zettle). OAuth providers use /api/integrations/[provider]/connect. */
 export async function POST(req: Request, ctx: { params: Promise<{ provider: string }> }) {
