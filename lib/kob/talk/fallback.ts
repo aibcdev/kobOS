@@ -3,6 +3,10 @@ import type { Generate } from "@/lib/connectors/gbp/drafter";
 import { templateReviewReply } from "@/lib/connectors/gbp/drafter";
 import { formatLocalDate, nextMothersDay } from "@/lib/locale/holidays";
 import { googleReviewLink, reviewAskMessage } from "@/lib/reviews/review-kit";
+import { nightsProfile, setMenuPrice, setNights, spendPerHead, type Weekday } from "@/lib/venue/nights";
+
+/** Talk's day codes (MON…) are the same three letters the nights profile uses. */
+const WEEKDAY_TO_NIGHT: Record<string, Weekday> = { MON: "MON", TUE: "TUE", WED: "WED", THU: "THU", FRI: "FRI", SAT: "SAT", SUN: "SUN" };
 import { draftReplyForReview, type ReplyDraft } from "@/lib/agent/review-reply";
 import { DAYS, LISTING_FACT, lastSnapshot, sameHours, saveWebsiteHours, websiteHours, type Day, type HoursPeriod, type ListingSnapshot } from "@/lib/connectors/gbp/listing";
 import { proposeHoursUpdate } from "@/lib/connectors/gbp/listing-sync";
@@ -135,30 +139,38 @@ async function saveRule(c: Ctx, text: string): Promise<FactAnswer> {
 
 async function quietNight(c: Ctx, dayKey: string): Promise<FactAnswer> {
   const day = WEEKDAY[dayKey];
-  const blocked = (await noDiscountDays(c.restaurantId)).includes(day.code);
-  const spend = c.profile.pricePoint ? ` With a spend of ${c.profile.pricePoint} a head,` : "";
+  const code = WEEKDAY_TO_NIGHT[day.code];
+  const nights = await nightsProfile(c.restaurantId, c.now);
+  const blocked = nights.protectedDays.includes(code);
+  if (!blocked) await setNights(c.restaurantId, "quiet", [code], c.now);
+  const price = setMenuPrice(spendPerHead(c.profile.pricePoint));
+  const set = price ? new Intl.NumberFormat("en-GB", { style: "currency", currency: c.profile.currency, maximumFractionDigits: 0 }).format(price) : null;
   const ideas = blocked
-    ? [
-        `a ${day.label} chef's table or tasting night at full price`,
-        `a regulars' night: personal invites to past guests, no discount`,
-      ]
+    ? [`a ${day.label} chef's table or tasting night at full price`, `a regulars' night: personal invites to past guests, no discount`]
     : [
-        `a ${day.label} set menu (two courses, one fixed price)`,
-        `bring-a-friend: their main at half price, ${day.label}s only`,
-        `a ${day.label} early-evening offer for tables seated before 7pm`,
+        set ? `a ${day.label} set menu: two courses for ${set}` : `a ${day.label} set menu (two courses, one fixed price — tell me the price)`,
+        `dessert on us for tables seated before 7pm on ${day.label}s`,
+        `bring-a-friend: their main half price, ${day.label}s only`,
       ];
   const post = `${day.label}s at ${c.profile.name}: ${blocked ? "a night worth booking for" : "a little something to make the week better"}. Book your table${c.profile.city ? ` in ${c.profile.city}` : ""} — we'd love to see you.`;
   return {
     intent: "quiet_night",
     text: [
-      `A few ideas for ${day.label}s.${spend} I'd pick one and price it in ${c.profile.currency}:`,
+      blocked ? `You've marked ${day.label}s as busy or never to discount, so these keep full price:` : `Noted: ${day.label}s are quiet. Ideas in ${c.profile.currency}:`,
       ...ideas.map((i) => `• ${i}`),
-      blocked ? `(You've told me never to discount ${day.label}s, so these keep full price.)` : "",
-      `A post to go with it:\n\n"${post}"\n\nDraft — not posted. Tell me which idea and the price, and I'll tighten it up.`,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    activity: [{ label: "Checked your house rules", status: "complete" }],
+      `A post to go with it:\n\n"${post}"\n\nDraft — not posted. KOB will also suggest ${day.label} offers in Offers for you to approve.`,
+    ].join("\n"),
+    activity: [{ label: blocked ? "Checked your house rules" : "Noted a quiet night", status: "complete" }],
+  };
+}
+
+async function busyNight(c: Ctx, dayKey: string): Promise<FactAnswer> {
+  const day = WEEKDAY[dayKey];
+  await setNights(c.restaurantId, "busy", [WEEKDAY_TO_NIGHT[day.code]], c.now);
+  return {
+    intent: "busy_night",
+    text: `Noted: ${day.label}s are busy. KOB will never suggest a discount on a ${day.label}.`,
+    activity: [{ label: "Noted a busy night", status: "complete" }],
   };
 }
 
@@ -452,6 +464,7 @@ export async function answerFromFacts(
   if (/\bhow many reviews\b/.test(t)) return reviewCount(c, /last month/.test(t) ? "last_month" : /week/.test(t) ? "week" : "month");
   if (/\breviews?\b/.test(t)) return reviewsThisWeek(c);
   if (/mother'?s day|mothering sunday/.test(t)) return mothersDayOffer(c);
+  if (day && /\b(busy|packed|full|rammed)\b/.test(t) && !/\?$/.test(t.trim())) return busyNight(c, day);
   if (day && /\b(dead|quiet|slow|empty|help)\b/.test(t)) return quietNight(c, day);
   if (/\b(quiet|on the books|bookings?)\b/.test(t)) return quietBooks(c);
   if (/\b(instagram|post|caption)\b/.test(t)) return socialPost(c, message);
