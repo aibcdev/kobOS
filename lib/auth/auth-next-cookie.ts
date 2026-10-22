@@ -2,9 +2,11 @@
 export const AUTH_NEXT_COOKIE = "kob_auth_next";
 export const AUTH_NEXT_MAX_AGE_SEC = 600;
 
+/** Same-origin paths only (query kept, e.g. /onboard?resume=1); anything that could leave the site becomes /app. */
 export function safeNextPath(raw: string | null | undefined): string {
   const next = raw?.trim() || "/app";
-  if (!next.startsWith("/") || next.startsWith("//")) return "/app";
+  // "//evil.com" and "/\evil.com" are both read by browsers as another host; control characters never belong.
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\") || /[\u0000-\u001f]/.test(next)) return "/app";
   return next;
 }
 

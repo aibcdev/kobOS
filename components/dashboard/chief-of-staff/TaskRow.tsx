@@ -29,7 +29,7 @@ export function TaskRow({
   task,
   onApprove,
   onReview,
-  busy,
+  busy: _busy,
 }: {
   task: ChiefOfStaffTaskDto;
   onApprove: (id: string) => void;

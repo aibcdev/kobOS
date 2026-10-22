@@ -181,7 +181,7 @@ export function OutboundWorkspace({
 }: PipelineProps) {
   const router = useRouter();
   const [city, setCity] = useState(defaultCity);
-  const [max, setMax] = useState(10);
+  const [max] = useState(10);
   const [drafting, setDrafting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [runningDaily, setRunningDaily] = useState(false);
