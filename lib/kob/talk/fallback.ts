@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import type { Generate } from "@/lib/connectors/gbp/drafter";
 import { templateReviewReply } from "@/lib/connectors/gbp/drafter";
 import { formatLocalDate, nextMothersDay } from "@/lib/locale/holidays";
-import { draftReplyForReview, type ReplyDraft } from "./actions";
+import { draftReplyForReview, type ReplyDraft } from "@/lib/agent/review-reply";
 import {
   findReview,
   googleConnection,
@@ -16,6 +16,7 @@ import {
   planStatus,
   reviewSummary,
   saveHouseRule,
+  starsMentioned,
   type Profile,
 } from "./restaurant-facts";
 import type { TalkActivity } from "./types";
@@ -93,15 +94,9 @@ async function reviewCount(c: Ctx, period: "month" | "last_month" | "week"): Pro
   };
 }
 
-function ratingFrom(text: string): number | null {
-  const m = text.match(/\b([1-5])\s*[- ]?\s*(?:star|★)/i) ?? text.match(/\b(one|two|three|four|five)[- ]star/i);
-  if (!m) return null;
-  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
-  return Number(m[1]) || words[m[1].toLowerCase()] || null;
-}
 
 async function replyToReview(c: Ctx, text: string): Promise<FactAnswer> {
-  const rating = ratingFrom(text);
+  const rating = starsMentioned(text);
   const about = text.replace(/^.*?\b(about|said|says|saying)\b/i, "");
   const review = await findReview(c.restaurantId, { rating, text: about === text ? text : about });
   if (!review) {

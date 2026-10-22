@@ -40,7 +40,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const result = await executeTaskApprove(task);
+  const result = await executeTaskApprove(task, session.userId);
   if (!result.ok) {
     return NextResponse.json(
       { error: result.code, message: result.message, nextHref: result.nextHref },
@@ -54,5 +54,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     message: result.message,
     nextHref: result.nextHref,
     contentId: result.contentId,
+    actionId: result.actionId,
   });
 }
