@@ -424,7 +424,7 @@ export function AuditReportDashboard({
             </span>
             <div>
               <p className="font-head text-sm font-semibold">KOB</p>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-accent)]">AI Report</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-accent)]">Restaurant report</p>
             </div>
           </div>
           <nav className="space-y-1" aria-label="Report sections">

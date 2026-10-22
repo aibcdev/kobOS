@@ -14,7 +14,7 @@ import { SaasFaqAccordion } from "@/components/marketing/saas/SaasFaqAccordion";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 
 export const metadata: Metadata = {
-  title: "Pricing | KOB — The AI Restaurant Manager",
+  title: "Pricing | KOB — The Restaurant Manager for Owners",
   description:
     "Founding price per location — £79/mo in the UK, $99/mo elsewhere. 7 days free, no card. You approve. KOB checks it is live.",
 };
@@ -34,7 +34,7 @@ export default async function PricingPage() {
           <span className="mb-4 inline-block rounded-full bg-[#088924]/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#088924]">
             Founding
           </span>
-          <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">AI restaurant manager</h2>
+          <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">Your restaurant manager</h2>
           <p className="mt-2 text-sm text-ink">
             Reviews, your Google listing and your website. You tap approve. KOB checks the change went live.
           </p>

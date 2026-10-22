@@ -46,7 +46,7 @@ const MESSAGES: Record<AuditStartErrorCode, Omit<AuditUserMessage, "code" | "dev
   },
   validation: {
     title: "Check your details",
-    message: "Something in the form needs a quick fix before we can run your AI report.",
+    message: "Something in the form needs a quick fix before we can put your report together.",
   },
   unknown: {
     title: "Something went wrong",

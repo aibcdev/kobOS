@@ -59,7 +59,7 @@ export function WebsiteRedesignPanel({ restaurantId }: { restaurantId: string })
   return (
     <div className="space-y-8">
       <div className={appCardSurface}>
-        <h2 className="type-title-sm">AI website strategist</h2>
+        <h2 className="type-title-sm">Website strategist</h2>
         <p className="type-body-sm mt-2 text-[var(--color-muted)]">
           Uses your workspace URL plus digest-style signals (keywords, traffic hints, optional city audit). Add a
           website URL on the restaurant if you have not already.

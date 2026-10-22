@@ -38,7 +38,7 @@ export function HeardFromFields({
       </label>
       {showPrompt ? (
         <label className="block text-sm font-medium text-[#2c2c2c]">
-          What did you type into the AI? <span className="font-normal text-[#2c2c2c]/50">(optional)</span>
+          What did you search for? (optional)
           <textarea
             value={prompt}
             onChange={(e) => {

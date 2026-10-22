@@ -11,22 +11,22 @@ export function SaasAuthPage({ defaultMode = "signin" }: { defaultMode?: "signin
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16">
         <div className="max-w-lg">
           <h1 className="font-display text-headline font-medium tracking-tight text-espresso">
-            {isSignUp ? "Hire KOB" : "Talk to KOB"}
+            {isSignUp ? "Hire KOB" : "Open KOB"}
           </h1>
           <p className="mt-4 text-[1.05rem] leading-relaxed text-ink">
             {isSignUp
-              ? "Google or email. No password. You land in Talk."
+              ? "Google or email. No password. Your first jobs are ready to approve."
               : "Continue with Google, or email a one-time code. Same login as Try KOB."}
           </p>
           <ul className="mt-8 space-y-3 text-sm text-ink">
             {(isSignUp
               ? [
                   "Google, reviews, hours, invoices",
-                  "You choose what goes on autopilot",
+                  "You decide what KOB can take care of without asking",
                   "Phone answering is Coming soon",
                 ]
               : [
-                  "Open Talk for your restaurant",
+                  "Open KOB for your restaurant",
                   "Hours, reviews, and invoices in one place",
                   "Nothing live on Google until the job is verified",
                 ]

@@ -6,7 +6,7 @@ import { useKobStore } from "@/lib/kob/store";
 
 const LEVELS: { id: AutonomyLevel; label: string }[] = [
   { id: "ask", label: "Suggest" },
-  { id: "handle", label: "Autopilot" },
+  { id: "handle", label: "Trusted" },
   { id: "always-ask", label: "Never" },
 ];
 
@@ -26,7 +26,7 @@ export function AutonomyPane() {
       addMessage({
         id: `auto-${id}-${Date.now()}`,
         role: "done",
-        text: `${label} is on autopilot. I'll take that job from now on.`,
+        text: `${label} is trusted. I'll take that job from now on.`,
       });
       setPane("kob");
     }
@@ -37,7 +37,7 @@ export function AutonomyPane() {
       <div>
         <h1 className="font-display text-3xl font-medium">Autonomy</h1>
         <p className="mt-2 max-w-xl text-ink">
-          Suggest, then approve, then autopilot. You grant this by talking — or
+          Suggest, then approve, then Trusted. You grant this by talking — or
           move one job at a time here.
         </p>
       </div>

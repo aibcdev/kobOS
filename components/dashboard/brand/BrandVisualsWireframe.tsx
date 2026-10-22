@@ -259,14 +259,14 @@ export function BrandVisualsWireframe({
         </div>
         {dishes?.length ? (
           <div className="mt-8 space-y-4 border-t border-[var(--color-hairline)] pt-8">
-            <h3 className="type-title-sm">Latest AI food analysis</h3>
+            <h3 className="type-title-sm">Latest food analysis</h3>
             {dishes.map((d, idx) => (
               <div key={`${d.dish_name}-${idx}`} className={`${appCardSurface} space-y-2`}>
                 <p className="type-label-md text-[var(--color-ink)]">{d.dish_name}</p>
                 <p className="type-caption text-[var(--color-muted)]">{d.current_assessment}</p>
                 <p className="type-body-sm text-[var(--color-muted)]">{d.improvement_brief}</p>
                 <details className="type-caption text-[var(--color-muted-medium)]">
-                  <summary className="cursor-pointer">AI image prompt</summary>
+                  <summary className="cursor-pointer">Photo prompt</summary>
                   <p className="mt-2 whitespace-pre-wrap text-[var(--color-muted)]">{d.ai_generation_prompt}</p>
                 </details>
                 <p className="type-caption text-[var(--color-muted-medium)]">Video: {d.video_idea}</p>
@@ -312,7 +312,7 @@ export function BrandVisualsWireframe({
               type="button"
               className={`${appBtnSecondary} mt-3`}
               onClick={() => {
-                setWireframeNotice("Palette apply is not wired yet — use Brand scans and Growth Agent for live changes.");
+                setWireframeNotice("Palette apply is not wired yet — use Brand scans and KOB drafts for live changes.");
               }}
             >
               Apply palette
@@ -321,13 +321,13 @@ export function BrandVisualsWireframe({
           <div>
             <p className="type-caption font-semibold text-[var(--color-muted-medium)]">Typography &amp; mood</p>
             <p className="type-body-sm mt-3 text-[var(--color-muted)]">
-              Serif headlines + humanist body for hospitality premium. Mood board generator ties to Growth Agent prompts.
+              Serif headlines + humanist body for hospitality premium. Mood board generator ties to KOB photo briefs.
             </p>
             <button
               type="button"
               className={`${appBtnSecondary} mt-3`}
               onClick={() => {
-                setWireframeNotice("Mood board export is on the roadmap — run food photography above for AI-ready prompts.");
+                setWireframeNotice("Mood board export is on the roadmap — run food photography above for photo briefs.");
               }}
             >
               Generate mood board
@@ -347,7 +347,7 @@ export function BrandVisualsWireframe({
             </div>
             <p className="type-caption mt-2 text-[var(--color-muted-medium)]">{modal.type.replace(/_/g, " ")}</p>
             <p className="type-body-sm mt-4 text-[var(--color-muted)]">
-              Runs the food photography agent for this restaurant. Results include reshoot briefs and AI image prompts.
+              Runs the food photography agent for this restaurant. Results include reshoot briefs and photo prompts.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <button
@@ -370,7 +370,7 @@ export function BrandVisualsWireframe({
             {foodError ? <p className="type-body-sm mt-4 text-red-700">{foodError}</p> : null}
             {dishes?.length ? (
               <div className="mt-6 space-y-4 border-t border-[var(--color-hairline)] pt-6">
-                <p className="type-caption font-semibold text-[var(--color-muted-medium)]">Top dishes (AI)</p>
+                <p className="type-caption font-semibold text-[var(--color-muted-medium)]">Top dishes</p>
                 {dishes.map((d, idx) => (
                   <div key={`${d.dish_name}-${idx}`} className="rounded-[var(--radius-sm)] bg-[var(--color-surface-beige)] p-3">
                     <p className="type-label-md text-[var(--color-ink)]">{d.dish_name}</p>

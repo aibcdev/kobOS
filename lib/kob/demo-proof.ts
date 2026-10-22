@@ -170,7 +170,7 @@ export const PRICING = [
     items: [
       "Everything in KOB",
       "Takes reservation enquiries",
-      "AI phone allowance",
+      "Phone allowance",
       "Private events and missed calls",
       "Advanced integrations",
     ],

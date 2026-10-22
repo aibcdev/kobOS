@@ -22,7 +22,7 @@ const BENEFITS = [
 const HOME_ROWS = OWNER_COMPARISON.rows.filter((row) =>
   [
     "Monthly",
-    "AI manager (Talk + approve)",
+    "Manager (you approve)",
     "Guest phone answering",
     "Free public scan before you pay",
     "7-day free trial",

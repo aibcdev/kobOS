@@ -113,7 +113,7 @@ export function ReviewsRelationshipPanel({ restaurantId, reviews }: { restaurant
     <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
       <div className="space-y-4 lg:col-span-2">
         <h2 className="type-title-sm">Review inbox</h2>
-        <p className="type-body-sm text-[var(--color-muted)]">Select a guest review — then draft an on-brand reply with Growth Agent.</p>
+        <p className="type-body-sm text-[var(--color-muted)]">Select a guest review — then draft an on-brand reply with KOB.</p>
         <ul className="space-y-3">
           {reviews.map((r) => (
             <li key={r.id}>

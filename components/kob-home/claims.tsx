@@ -38,7 +38,7 @@ export function Claims() {
             </article>
           ))}
           <p className="text-[0.7rem] text-espresso/45">
-            You choose what KOB can handle automatically.
+            You decide what KOB can take care of without asking.
           </p>
         </div>
       </section>
@@ -83,7 +83,7 @@ function ClaimSlide({
       <p className="mt-4 max-w-xl text-lg text-ink">{claim.body}</p>
       {index === CLAIMS.length - 1 ? (
         <p className="mt-6 text-[0.7rem] text-espresso/45">
-          You choose what KOB can handle automatically.
+          You decide what KOB can take care of without asking.
         </p>
       ) : null}
     </motion.article>

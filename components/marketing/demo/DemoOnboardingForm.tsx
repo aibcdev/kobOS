@@ -307,7 +307,7 @@ export function DemoOnboardingForm() {
             disabled={loading}
             className="w-full rounded-full bg-[var(--color-primary)] py-4 text-base font-semibold text-white hover:bg-[var(--color-accent)] disabled:opacity-60"
           >
-            {loading ? "Starting…" : "Run my free AI scan"}
+            {loading ? "Starting…" : "Run my free check-up"}
           </button>
           <button type="button" className="w-full text-sm text-[var(--color-muted-medium)] hover:text-[var(--color-ink)]" onClick={() => setStep(1)}>
             ← Back

@@ -7,7 +7,7 @@ import { SaasPageHero, SaasPrimaryCta, SaasSecondaryCta } from "@/components/mar
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
 export const metadata: Metadata = {
-  title: "7-day free trial | KOB — The AI Restaurant Manager",
+  title: "7-day free trial | KOB — The Restaurant Manager for Owners",
   description:
     "7 days free. No card. KOB drafts review replies and listing fixes. You approve. Nothing goes public without your yes.",
 };

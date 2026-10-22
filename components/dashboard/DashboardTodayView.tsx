@@ -46,7 +46,7 @@ function opportunityLinks(restaurantId: string, type: RecommendationType) {
   const brand = L("/dashboard/brand", "Brand & visuals");
   const website = L("/dashboard/website", "Website");
   const reviews = L("/dashboard/reviews", "Reviews");
-  const agent = L("/dashboard/growth-agent", "Growth Agent");
+  const agent = L("/dashboard/growth-agent", "KOB drafts");
   if (type === "CREATE_BLOG" || type === "GENERATE_SEO_PAGE" || type === "POST_SOCIAL") return [brand, website, agent];
   if (type === "CREATE_CAMPAIGN" || type === "SEND_EMAIL") return [reviews, brand, agent];
   if (type === "UPDATE_HOMEPAGE" || type === "RUN_PROMOTION") return [website, reviews];
@@ -161,7 +161,7 @@ export function DashboardTodayView({
             href={withR(restaurantId, "/dashboard/growth-agent")}
             className={`${appBtnPrimary} w-full no-underline sm:w-auto`}
           >
-            Open Growth Agent tools
+            Open KOB drafts
           </Link>
         </div>
       </div>
@@ -247,7 +247,7 @@ export function DashboardTodayView({
       >
         <h2 className="type-title-md text-[var(--color-ink)]">Your food deserves stronger visuals</h2>
         <p className="type-body-md mx-auto mt-3 max-w-xl text-pretty text-[var(--color-muted)]">
-          Generate AI photo prompts and photography briefs tuned to your brand — one click in Growth Agent.
+          Generate photo prompts and photography briefs tuned to your brand — one click from KOB drafts.
         </p>
         <Link href={withR(restaurantId, "/dashboard/growth-agent")} className={`${appBtnPrimary} mt-6 inline-block no-underline`}>
           Food photography prompts

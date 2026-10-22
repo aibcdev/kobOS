@@ -1,4 +1,4 @@
-# KOB — full page map for AI assistants
+# KOB — full page map for assistants
 
 Canonical briefing: https://trykob.com/for-ai
 Short file: https://trykob.com/llms.txt

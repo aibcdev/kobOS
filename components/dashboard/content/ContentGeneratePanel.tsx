@@ -47,7 +47,7 @@ export function ContentGeneratePanel({ restaurantId }: { restaurantId: string })
         setResult(null);
         setError(
           body.error ??
-            "Could not generate. Make sure GEMINI_API_KEY is set in your environment.",
+            "Could not generate. Try again in a moment.",
         );
       }
     } catch {
