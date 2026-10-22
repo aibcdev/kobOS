@@ -297,7 +297,7 @@ export function OutboundWorkspace({
         <h1 className="type-title-md">Sales pipeline</h1>
         <p className="type-body-md mt-2 text-[var(--color-muted)]">
           {ukColdMode
-            ? "UK cold outreach: independent restaurants, weak online visibility, emails from Hunter. Approve a batch daily, then sends run automatically."
+            ? "UK cold outreach: independent restaurants, weak online visibility, emails from Hunter. Approve a batch daily, then sends go out on schedule."
             : "Outbound email with human approval before send."}
           {salesMode ? " Sales mode on." : ""}
         </p>

@@ -1,3 +1,4 @@
+import { OWNER_WORDING_RULE } from "@/lib/copy/banned-words";
 import { ContentType } from "@prisma/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { geminiConfigError, getGeminiImageModelName, getGeminiModelName, isGeminiConfigured } from "@/lib/ai/gemini-config";
@@ -60,7 +61,7 @@ export async function generateAndStoreContent(args: {
   const restaurant = await prisma.restaurant.findUnique({ where: { id: args.restaurantId } });
   if (!restaurant) return { error: "Restaurant not found." };
 
-  const systemLine = "You write high-converting restaurant marketing copy. Be specific, warm, and concise.";
+  const systemLine = `You write high-converting restaurant marketing copy. Be specific, warm, and concise. ${OWNER_WORDING_RULE}`;
 
   const prompt = [
     systemLine,

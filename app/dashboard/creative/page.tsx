@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db/prisma";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
-  title: "Creative Agent · KOB",
+  title: "Creative Studio · KOB",
   description: "Generate a month of UGC ads and dish photography from your brand.",
 };
 
@@ -16,7 +16,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
   if (isUiPreviewEnabled()) {
     return (
       <PreviewPlaceholder
-        title="Creative Agent"
+        title="Creative Studio"
         description="Brand brief and generated creatives appear here with Postgres."
       />
     );
@@ -56,7 +56,7 @@ export default async function CreativePage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="mx-auto max-w-5xl px-[var(--spacing-md)] py-10">
-      <h1 className="type-title-md">Creative Agent</h1>
+      <h1 className="type-title-md">Creative Studio</h1>
       <p className="type-body-md mt-2 text-[var(--color-muted)]">
         One click for {restaurant.name}: identity brief + a month of scroll-ready creatives.
       </p>
