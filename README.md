@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+**Repo of record:** this repo serves trykob.com; other KOB repos are archived ([ADR 0001](docs/adr/0001-repo-of-record.md)).
+
 **Product design:** [docs/DESIGN.md](docs/DESIGN.md) · **Launch (trykob.com):** [docs/LAUNCH.md](docs/LAUNCH.md) · **Daily sales email:** [docs/SALES_PIPELINE.md](docs/SALES_PIPELINE.md)
 
 ## Getting Started

@@ -1,5 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
+/** With E2E_DATABASE_URL, the dev server runs in UI preview against that DB and executes actions in-process. */
+const e2eDb = process.env.E2E_DATABASE_URL;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -13,5 +16,8 @@ export default defineConfig({
     url: "http://127.0.0.1:3102",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: e2eDb
+      ? { DATABASE_URL: e2eDb, NEXT_PUBLIC_UI_PREVIEW: "1", KOB_INLINE_ACTIONS: "1", KOB_INLINE_STEP_MS: "2500" }
+      : {},
   },
 });

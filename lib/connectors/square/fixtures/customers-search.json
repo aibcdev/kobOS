@@ -1,0 +1,6 @@
+{
+  "customers": [
+    { "id": "CUST_ADA", "given_name": "Ada", "family_name": "Lovelace", "email_address": "ada@example.com", "phone_number": "+44 7700 900001", "updated_at": "2026-10-10T08:00:00.000Z" },
+    { "id": "CUST_BOB", "given_name": "Bob", "updated_at": "2026-10-12T08:00:00.000Z" }
+  ]
+}

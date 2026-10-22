@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureStripeCatalog } from "@/lib/billing/ensure-stripe-catalog";
+import { TRIAL_DAYS } from "@/lib/billing/offer";
 import { requireStripe } from "@/lib/billing/stripe-server";
 
 export const runtime = "nodejs";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
       livemode: true,
       ...prices,
       STRIPE_GROWTH_PRICE_ID: prices.STRIPE_PRICE_STARTER,
-      STRIPE_TRIAL_DAYS: "7",
+      STRIPE_TRIAL_DAYS: String(TRIAL_DAYS),
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

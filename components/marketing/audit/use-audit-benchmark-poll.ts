@@ -58,7 +58,7 @@ export function useAuditBenchmarkPoll(
   const [data, setData] = useState(initial);
   const [timedOut, setTimedOut] = useState(false);
   const [retrying, setRetrying] = useState(false);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/audit/${auditId}`, { cache: "no-store" });
@@ -93,10 +93,11 @@ export function useAuditBenchmarkPoll(
     let cancelled = false;
     let timeoutId = 0;
     let intervalMs = INITIAL_INTERVAL_MS;
+    startedAt.current ??= Date.now();
 
     const tick = async () => {
       if (cancelled) return;
-      if (Date.now() - startedAt.current >= MAX_POLL_MS) {
+      if (Date.now() - (startedAt.current ?? Date.now()) >= MAX_POLL_MS) {
         setTimedOut(true);
         return;
       }

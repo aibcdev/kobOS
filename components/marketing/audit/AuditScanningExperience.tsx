@@ -41,7 +41,7 @@ export function AuditScanningExperience({
 }) {
   const router = useRouter();
   const [poll, setPoll] = useState<PollPayload | null>(null);
-  const startRef = useRef(Date.now());
+  const startRef = useRef<number | null>(null);
   const redirected = useRef(false);
   const pathKey = resultPathKey || auditId;
 
@@ -69,6 +69,7 @@ export function AuditScanningExperience({
 
   useEffect(() => {
     if (redirected.current) return;
+    startRef.current ??= Date.now();
     const elapsed = Date.now() - startRef.current;
     const progress = poll?.analysisProgress;
     const scoresReady = poll?.restaurantScores != null;

@@ -2,7 +2,9 @@ import { SubscriptionPlan } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { countryFromHeaders, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
 import { prisma } from "@/lib/db/prisma";
+import { localeForCountry, normalizeCountryCode, resolveRestaurantTimezone } from "@/lib/geo/timezone";
 import { linkAuditToRestaurant, linkLatestAuditForEmail } from "@/lib/restaurant/hydrate-from-audit";
 import { slugify } from "@/lib/utils/slugify";
 
@@ -17,7 +19,11 @@ const createSchema = z.object({
   cuisineType: z.string().max(120).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(120).optional().nullable(),
+  /** Owner's browser zone; only used when Places/geo can't decide. */
   timezone: z.string().max(80).optional(),
+  /** From Places `addressComponents` when the owner picked their listing. */
+  countryCode: z.string().max(8).optional().nullable(),
+  utcOffsetMinutes: z.number().int().min(-840).max(840).optional().nullable(),
   website: z.string().max(2048).optional(),
   /** Audit id or slug from signup (?audit=) so the same 3 wins show on the dashboard. */
   auditId: z.string().min(2).max(120).optional(),
@@ -65,6 +71,17 @@ export async function POST(req: Request) {
     }
   }
 
+  const countryCode =
+    normalizeCountryCode(parsed.data.countryCode) ??
+    normalizeCountryCode(countryFromHeaders(req.headers)) ??
+    (regionFromRequestHeaders(req.headers) === "GB" ? "GB" : null);
+  const timezone = resolveRestaurantTimezone({
+    countryCode,
+    state: parsed.data.state,
+    utcOffsetMinutes: parsed.data.utcOffsetMinutes,
+    browserTimezone: parsed.data.timezone,
+  });
+
   try {
     const restaurant = await prisma.$transaction(async (tx) => {
       const exists = await tx.restaurant.findUnique({ where: { slug } });
@@ -77,7 +94,9 @@ export async function POST(req: Request) {
           cuisineType: parsed.data.cuisineType ?? undefined,
           city: parsed.data.city ?? undefined,
           state: parsed.data.state ?? undefined,
-          timezone: parsed.data.timezone ?? undefined,
+          timezone: timezone ?? undefined,
+          countryCode,
+          locale: localeForCountry(countryCode),
           website: websiteUrl,
           subscriptionPlan: SubscriptionPlan.FREE,
         },

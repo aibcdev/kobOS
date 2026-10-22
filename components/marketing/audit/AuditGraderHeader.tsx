@@ -1,3 +1,4 @@
+import { START_FREE_TRIAL } from "@/lib/billing/offer";
 import Link from "next/link";
 import { ownerContainer, ownerNavHeight } from "@/lib/marketing/owner-ui-classes";
 
@@ -5,7 +6,7 @@ import { ownerContainer, ownerNavHeight } from "@/lib/marketing/owner-ui-classes
 export function AuditGraderHeader({
   showTrialCta = false,
   trialHref = "/pricing",
-  trialLabel = "Start 7-day free trial",
+  trialLabel = START_FREE_TRIAL,
   onTrialClick,
 }: {
   showTrialCta?: boolean;

@@ -1,0 +1,7 @@
+{
+  "elements": [
+    { "id": "ITEMBURGER", "name": "Burger", "price": 1250, "priceType": "FIXED", "hidden": false, "available": true, "categories": { "elements": [{ "id": "CATMAINS", "name": "Mains" }] } },
+    { "id": "ITEMFRIES", "name": "Fries ", "price": 450, "priceType": "FIXED", "hidden": true, "available": true },
+    { "id": "ITEMSPECIAL", "name": "Daily special", "price": 0, "priceType": "VARIABLE", "available": true }
+  ]
+}

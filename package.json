@@ -11,7 +11,7 @@
     "dev:kob": "next dev --port 3333",
     "dev:kob:reset": "node -e \"try{require('fs').unlinkSync('.next/dev/lock')}catch(e){}\" && next dev --port 3333",
     "dev:local": "next dev --port 3004",
-    "build": "prisma migrate deploy && prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

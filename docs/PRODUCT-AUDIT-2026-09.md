@@ -7,7 +7,7 @@
 | `/` | AI restaurant manager homepage | Primary |
 | `/onboard` | Hire wizard → Talk | Primary |
 | `/login` `/signup` | Auth → `/app` | Primary |
-| `/#pricing` | £99 founding | Canonical |
+| `/#pricing` | £79 UK / $99 founding | Canonical |
 | `/pricing` | Must match founding offer | Fix |
 | `/product` | Soft-land to manager | Fix |
 | `/audit` `/go/audit` | Ads scan funnel | Bridge to onboard |

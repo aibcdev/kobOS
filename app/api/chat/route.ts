@@ -1,8 +1,9 @@
 import { stepCountIs, streamText, type ModelMessage } from "ai";
 import { z } from "zod";
-import { geminiConfigError, getChatLanguageModel, isGeminiConfigured } from "@/lib/ai/gemini-config";
+import { geminiConfigError, getChatLanguageModel, getGeminiModelName, isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { recordLlmUsage } from "@/lib/billing/usage";
 import { buildChatSystemPrompt } from "@/lib/chat/system-prompt";
 import { buildChatTools } from "@/lib/chat/tools";
 import { prisma } from "@/lib/db/prisma";
@@ -69,7 +70,8 @@ export async function POST(req: Request) {
     messages: history,
     tools: buildChatTools(restaurantId),
     stopWhen: stepCountIs(3),
-    onFinish: async ({ text, toolResults }) => {
+    onFinish: async ({ text, toolResults, totalUsage }) => {
+      await recordLlmUsage(restaurantId, getGeminiModelName(), totalUsage, "chat");
       let content = text;
       if (toolResults?.length) {
         const summaries = toolResults

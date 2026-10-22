@@ -1,4 +1,8 @@
 import { cron } from "inngest";
+import { actionFunctions } from "@/inngest/actions";
+import { hubFunctions } from "@/inngest/hub";
+import { importFunctions } from "@/inngest/imports";
+import { roiFunctions } from "@/inngest/roi";
 import { persistAiRecommendations } from "@/lib/ai/recommendations";
 import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { analyzeWebsiteFromHtml } from "@/lib/audit/analyze-url";
@@ -909,6 +913,11 @@ export const integrationSyncDaily = inngest.createFunction(
       await step.run(`sync-${row.id}`, async () => {
         const integration = await prisma.integration.findUnique({ where: { id: row.id } });
         if (!integration) return 0;
+        if (integration.provider === "SQUARE" || integration.provider === "TOAST") {
+          // Once the hub connector is live for this restaurant it owns Order + SalesSnapshot (inngest/hub.ts).
+          const { flag } = await import("@/lib/flags");
+          if (await flag(integration.provider === "SQUARE" ? "SQUARE_LIVE" : "TOAST_LIVE", integration.restaurantId)) return 0;
+        }
         if (integration.provider === "SQUARE") {
           const { syncSquareSales } = await import("@/lib/integrations/providers/square");
           return syncSquareSales(integration.restaurantId, integration);
@@ -1039,4 +1048,8 @@ export const functions = [
   integrationSyncDaily,
   cosGenerateDraftsOnApprove,
   creativeAgentPackRequested,
+  ...actionFunctions,
+  ...hubFunctions,
+  ...importFunctions,
+  ...roiFunctions,
 ];

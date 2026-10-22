@@ -1,0 +1,4 @@
+[
+  { "uuid": "prod-cake", "name": "Cake", "category": { "name": "Bakery" }, "variants": [{ "uuid": "var-cake-slice", "name": "Slice", "price": { "amount": 400, "currencyId": "GBP" } }, { "uuid": "var-cake-whole", "name": "Whole", "price": { "amount": 2400, "currencyId": "GBP" } }] },
+  { "uuid": "prod-tea", "name": "Tea", "variants": [{ "uuid": "var-tea", "name": "Tea", "price": { "amount": 400, "currencyId": "GBP" } }] }
+]

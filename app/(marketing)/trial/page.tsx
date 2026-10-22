@@ -5,11 +5,12 @@ import { trialPromise } from "@/lib/billing/trial-days";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { SaasPageHero, SaasPrimaryCta, SaasSecondaryCta } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
+import { FREE_TRIAL_LABEL, TRIAL_DAYS, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
 
 export const metadata: Metadata = {
-  title: "7-day free trial | KOB — The AI Restaurant Manager",
+  title: `${FREE_TRIAL_LABEL} | KOB — The AI Restaurant Manager`,
   description:
-    "7 days free. No card. KOB drafts review replies and listing fixes. You approve. Nothing goes public without your yes.",
+    `${TRIAL_DAYS_FREE}. No card. KOB drafts review replies and listing fixes. You approve. Nothing goes public without your yes.`,
 };
 
 const INCLUDED = [
@@ -50,7 +51,7 @@ export default async function TrialPage() {
       <SaasPageHero
         variant="inset"
         eyebrow={trial}
-        title="Try KOB for a week. No card."
+        title={`Try KOB free for ${TRIAL_DAYS} days. No card.`}
         description="Start with reviews and your Google listing. You approve every public change."
       >
         <SaasPrimaryCta href="/onboard">Find my restaurant</SaasPrimaryCta>
@@ -60,7 +61,7 @@ export default async function TrialPage() {
       <SaasSection className="bg-cream">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
           <div>
-            <h2 className="font-display text-headline font-medium text-espresso">What you get for 7 days</h2>
+            <h2 className="font-display text-headline font-medium text-espresso">What you get for {TRIAL_DAYS} days</h2>
             <ul className="mt-8 space-y-4">
               {INCLUDED.map((item) => (
                 <li key={item.title} className="rounded-[1.75rem] border border-line bg-paper p-5">
