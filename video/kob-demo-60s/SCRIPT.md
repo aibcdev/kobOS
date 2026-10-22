@@ -1,70 +1,50 @@
 # SCRIPT — kob-demo-60s
 
-**Voice:** George (ElevenLabs, `JBFqnCBsd6RMkjVDRZzb`), model `eleven_multilingual_v2`
-**Voice settings:** stability 0.55 · similarity 0.75 · style 0.15
-**Voice direction:** Calm, warm, British. Unhurried and plain-spoken, like a trusted manager briefing the owner. No hype, no sales lift at the end.
+**Voice:** George (ElevenLabs, `JBFqnCBsd6RMkjVDRZzb`), model `eleven_v3`
+**Voice settings:** stability 0.78 · similarity 0.80
+**Voice direction:** Almost bored. Super certain. Short sentences. No warmth lift, no sell, no smile on the close. He already knows this is the product.
+**Layout:** One line per picture frame. Place each clip at the frame `data-start`. Pad with silence. Do not speed up.
+
+Spoken text spells KOB as “Cob” and trykob.com as “try cob dot com”.
 
 ---
 
-## Line 1 — Hook (Frame 1)
+## Line 01 — Hook (Frame 01) · 0.0 – 3.0s
 
-**Time:** 0.0 – 5.0s
-**Delivery:** Knowing, a little wry on "another one".
+    You didn't open a restaurant to manage Google.
 
-    Running a restaurant is a full-time job. Your Google profile — is another one.
+## Line 02 — Two worlds (Frame 02) · 3.0 – 7.5s
 
-## Line 2 — The problem (Frame 2)
+    Guests still pick where to eat online.
 
-**Time:** 5.0 – 12.0s
-**Delivery:** Three short, even beats with small pauses.
+## Line 03 — What they find (Frame 03) · 7.5 – 17.3s
 
-    Unanswered reviews. Wrong hours. Missed bookings.
+    Unanswered review. Wrong hours. A booking page stuck on last Christmas.
 
-## Line 3 — Meet KOB (Frame 3)
+## Line 04 — Cost (Frame 04) · 17.3 – 20.2s
 
-**Time:** 12.0 – 17.0s
-**Delivery:** Warm introduction; land "You just approve."
+    That quietly costs you a table.
 
-    Meet KOB — your restaurant manager. It does the work. You just approve.
+## Line 05 — Meet KOB (Frame 05) · 20.2 – 26.5s
 
-## Line 4 — Review draft (Frame 4)
+    Cob does the work. You approve.
 
-**Time:** 17.0 – 24.0s
-**Delivery:** Matter-of-fact, slight smile on "in your voice".
+## Line 06 — Review loop (Frame 06) · 26.5 – 35.7s
 
-    A new review comes in. KOB drafts a reply — in your voice.
+    A review comes in. It drafts the reply. You tap yes. It checks Google.
 
-## Line 5 — Approve to Done (Frame 5)
+## Line 07 — Sensitive (Frame 07) · 35.7 – 40.6s
 
-**Time:** 24.0 – 30.0s
-**Delivery:** Steady, reassuring on "make sure it's live".
+    A health complaint always waits for you.
 
-    You tap approve. KOB posts it — then checks Google to make sure it's live.
+## Line 08 — Fixes (Frame 08) · 40.6 – 44.9s
 
-## Line 6 — Needs you (Frame 6)
+    Wrong hours, broken pages — lined up.
 
-**Time:** 30.0 – 37.0s
-**Delivery:** Lower, protective.
+## Line 09 — Your week (Frame 09) · 44.9 – 48.9s
 
-    Tricky ones — like a health complaint — always wait for you.
+    Every week, exactly what it did.
 
-## Line 7 — Fixes (Frame 7)
+## Line 10 — Close (Frame 10) · 48.9 – 60.0s
 
-**Time:** 37.0 – 46.0s
-**Delivery:** Light, capable.
-
-    It spots what's wrong on Google and your website — and lines up the fix.
-
-## Line 8 — Weekly report (Frame 8)
-
-**Time:** 46.0 – 54.0s
-**Delivery:** Plain and honest.
-
-    And every week — a plain report of exactly what KOB did.
-
-## Line 9 — Close (Frame 9)
-
-**Time:** 54.0 – 60.0s
-**Delivery:** Quiet confidence, slow; the URL said clearly.
-
-    KOB. Your restaurant, handled. trykob.com.
+    Your restaurant, handled. Try cob dot com.

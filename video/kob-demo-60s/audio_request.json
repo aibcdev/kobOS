@@ -1,42 +1,61 @@
 {
   "provider": "elevenlabs",
+  "model": "eleven_v3",
   "speed": "1.0",
+  "voice_settings": {
+    "stability": 0.78,
+    "similarity_boost": 0.8
+  },
   "lines": [
     {
       "id": "01",
-      "text": "Running a restaurant is a full-time job. Your Google profile — is another one."
+      "start": 0.0,
+      "text": "You didn't open a restaurant to manage Google."
     },
     {
       "id": "02",
-      "text": "Unanswered reviews. Wrong hours. Missed bookings."
+      "start": 3.0,
+      "text": "Guests still pick where to eat online."
     },
     {
       "id": "03",
-      "text": "Meet KOB — your restaurant manager. It does the work. You just approve."
+      "start": 7.5,
+      "text": "Unanswered review. Wrong hours. A booking page stuck on last Christmas."
     },
     {
       "id": "04",
-      "text": "A new review comes in. KOB drafts a reply — in your voice."
+      "start": 17.3,
+      "text": "That quietly costs you a table."
     },
     {
       "id": "05",
-      "text": "You tap approve. KOB posts it — then checks Google to make sure it's live."
+      "start": 20.2,
+      "text": "Cob does the work. You approve."
     },
     {
       "id": "06",
-      "text": "Tricky ones — like a health complaint — always wait for you."
+      "start": 26.5,
+      "text": "A review comes in. It drafts the reply. You tap yes. It checks Google."
     },
     {
       "id": "07",
-      "text": "It spots what's wrong on Google and your website — and lines up the fix."
+      "start": 35.7,
+      "text": "A health complaint always waits for you."
     },
     {
       "id": "08",
-      "text": "And every week — a plain report of exactly what KOB did."
+      "start": 40.6,
+      "text": "Wrong hours, broken pages — lined up."
     },
     {
       "id": "09",
-      "text": "KOB. Your restaurant, handled. trykob.com."
+      "start": 44.9,
+      "text": "Every week, exactly what it did."
+    },
+    {
+      "id": "10",
+      "start": 48.9,
+      "text": "Your restaurant, handled. Try cob dot com."
     }
   ],
   "bgm": {

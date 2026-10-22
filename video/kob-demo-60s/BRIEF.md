@@ -47,5 +47,5 @@ Honesty rules (non-negotiable):
 - No invented stats/testimonials or £ savings. Numbers only as example data inside the fictional demo restaurant.
 - Allowed claims: "approve-only", "nothing goes live without your OK", "7-day free trial, no card", "180+ restaurant sites".
 - Trial length: the spec said "free 3-day trial", but the codebase (`getStripeTrialDays()` returns 7) and trykob.com both say 7-day — the film uses "7-day free trial · no card". Flagged to user.
-- Demo restaurant: "Osteria Lume", 2-site Italian, owner "Marco". Fictional reviews and reviewer first names only.
+- Demo restaurant: "The Juniper", 1-site neighbourhood restaurant in Peckham, owner "Priya". Fictional. Reviews and first names only. No lorem ipsum.
 - British English spelling.

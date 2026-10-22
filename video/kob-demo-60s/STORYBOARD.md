@@ -7,13 +7,13 @@ audience: Independent restaurant owners (1–5 sites), UK/IE/US/CA/AU/NZ/IN/ZA, 
 mode: collaborative
 music: calm modern minimal underscore, warm piano and soft plucks, light pulse, premium product film
 style_reference: /Users/akeemojuko/Downloads/xdyee7qdKl-WltqC.mp4 (Crumbs promo) — kinetic type, white/lime-flood alternation, notification stacks, iPhone UI, all-caps slams, logo end card
-demo_restaurant: Osteria Lume (fictional, 2-site Italian), owner Marco
+demo_restaurant: The Juniper (fictional, 1-site Peckham neighbourhood), owner Priya
 ---
 
 ## Frame 1 — Hook
 
 - scene: White ground with a soft lime bloom; "Running a restaurant is a full-time job." types in word by word, then "Your Google profile is another one." replaces it, the word "another" landing a beat late
-- voiceover: "Running a restaurant is a full-time job. Your Google profile — is another one."
+- voiceover: "You didn't open a restaurant to manage Google."
 - duration: 5s
 - poster: 3.5s
 - transition_in: cut
@@ -30,8 +30,8 @@ keyMessage: Google is a second job you never signed up for.
 
 ## Frame 2 — The problem
 
-- scene: Three iOS notification banners drop in and stack on white: "New ★★☆☆☆ review · No reply yet" / "Google: Osteria Lume · Closed Sunday" (you're open) / "Booking page · 'Lorem ipsum dolor…'"; then the stack blurs back and the caption line lands on a lime flood: "Unanswered reviews. Wrong hours. Missed bookings."
-- voiceover: "Unanswered reviews. Wrong hours. Missed bookings."
+- scene: Google list for Peckham — Grove Kitchen and Southover Arms open, The Juniper closed. Then an unanswered Emma 2★, Sunday hours marked Closed, booking page still selling Christmas 2025.
+- voiceover: "Guests still pick where to eat online."
 - duration: 7s
 - poster: 4.5s
 - transition_in: cut
@@ -49,7 +49,7 @@ keyMessage: Small public mistakes cost you bookings.
 ## Frame 3 — Meet KOB
 
 - scene: Lime flood holds; the KOB orb pops from a point with a soft overshoot, the "KOB" wordmark wipes in beside it; then the lockup lifts and "It does the work. You just approve." runs word by word underneath in ink
-- voiceover: "Meet KOB — your restaurant manager. It does the work. You just approve."
+- voiceover: "Cob does the work. You approve."
 - duration: 5s
 - poster: 3.8s
 - transition_in: blur-crossfade
@@ -66,8 +66,8 @@ keyMessage: KOB is the manager; you're the approver.
 
 ## Frame 4 — A review arrives, KOB drafts
 
-- scene: iPhone centred on white with lime bloom. A notification "New ★★★★☆ review — Osteria Lume" lands, the phone opens to KOB's Today screen; an approval card slides up: the review ("Lovely pasta, a bit slow on Saturday." — Sophie) and KOB's draft reply in Marco's voice ("Thanks Sophie — so glad you loved the pasta. Saturday was busier than we planned for; we've added a runner for weekends. Hope to see you again soon. — Marco"). Green phrase left of phone: "In your voice."
-- voiceover: "A new review comes in. KOB drafts a reply — in your voice."
+- scene: iPhone centred on white with lime bloom. A 4★ from Tom about the roast lands; Today shows The Juniper; Priya's draft is waiting. Approve → Checking Google → Done.
+- voiceover: "A review comes in. It drafts the reply. You tap yes. It checks Google."
 - duration: 7s
 - poster: 5.5s
 - transition_in: zoom-through
@@ -87,7 +87,7 @@ keyMessage: Replies are written for you, sounding like you.
 ## Frame 5 — Approve → posted → checked → Done
 
 - scene: Same phone (no cut feel). Card shows "Approve once" (primary) and "Always for 5★" (secondary). Finger dot taps Approve with ripple; the button's label rolls: "Posting…" → "Checking Google…" → "Done ✓" (tick draws); a small read-back row appears under the reply: "Live on Google · verified just now". Green phrase left of phone: "Checked. Live."
-- voiceover: "You tap approve. KOB posts it — then checks Google to make sure it's live."
+- voiceover: "That quietly costs you a table."
 - duration: 6s
 - poster: 5.2s
 - transition_in: cut
@@ -108,7 +108,7 @@ keyMessage: One tap, and it's actually done.
 ## Frame 6 — Tricky ones wait
 
 - scene: Phone slides right; a 2★ review card appears ("Felt unwell after dinner on Friday…" — Dan) tagged with an amber "Needs you" pill and a line "Won't post without you". No auto-post. Left of the phone, ink type on white: "Tricky ones always wait for you."
-- voiceover: "Tricky ones — like a health complaint — always wait for you."
+- voiceover: "A health complaint always waits for you."
 - duration: 7s
 - poster: 4.5s
 - transition_in: push-slide LEFT
@@ -127,7 +127,7 @@ keyMessage: KOB knows when to stop and ask.
 ## Frame 7 — Spots it, lines up the fix
 
 - scene: Two fix cards stack in the phone: "Sunday hours wrong on Google — shows Closed, you're open 12–9pm · Fix ready" and "Placeholder text on your booking page · Fix ready". Finger taps Approve on the hours fix → status rolls to "Fix approved ✓". Green phrase left: "Spotted. Fixed."
-- voiceover: "It spots what's wrong on Google and your website — and lines up the fix."
+- voiceover: "Wrong hours, broken pages — lined up."
 - duration: 9s
 - poster: 7s
 - transition_in: crossfade
@@ -146,8 +146,8 @@ keyMessage: Problems come to you already solved; you just OK them.
 
 ## Frame 8 — Your week
 
-- scene: The phone pulls back and is joined by a desktop-width report card (KOB /app/roi style): "Your week at Osteria Lume". Three sections fill in row by row: "Your week" (example outcomes), "KOB's work: 7 reviews replied · 1 listing fix · 2 website fixes", "Value from KOB (verified)" showing one verified line ("Sunday hours fix approved and confirmed") — honest, small. Title above: "Every week, a plain report."
-- voiceover: "And every week — a plain report of exactly what KOB did."
+- scene: The phone pulls back and is joined by a desktop-width report card (KOB /app/roi style): "Your week at The Juniper". Three sections fill in row by row: "Your week" (example outcomes), "KOB's work: 7 reviews replied · 1 listing fix · 2 website fixes", "Value from KOB (verified)" showing one verified line ("Sunday hours fix approved and confirmed") — honest, small. Title above: "Every week, a plain report."
+- voiceover: "Every week, exactly what it did."
 - duration: 8s
 - poster: 6.5s
 - transition_in: zoom-through
@@ -166,7 +166,7 @@ keyMessage: You can see everything KOB did.
 ## Frame 9 — Slams + end card
 
 - scene: Hard-cut slams: lime flood "YOU APPROVE." (ink, ~11cqw) → white "KOB DOES IT." → then calm end card on white with lime bloom: orb + KOB wordmark, "Nothing goes live without your OK.", "7-day free trial · no card", "trykob.com" — held to the end
-- voiceover: "KOB. Your restaurant, handled. trykob.com."
+- voiceover: "Your restaurant, handled. Try cob dot com."
 - duration: 6s
 - poster: 5s
 - transition_in: cut

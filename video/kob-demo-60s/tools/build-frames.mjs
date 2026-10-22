@@ -129,12 +129,12 @@ frame(
   `
 <div id="f02-L" class="abs" style="left:0;top:0;width:960px;height:1080px;background:#111;overflow:hidden">
   <div class="abs" style="left:110px;top:70px;font-size:22px;font-weight:600;letter-spacing:.14em;color:#a8ff2e">YOU · ON THE PASS</div>
-  ${ticket(0, "TABLE 12<br>2× Cacio e pepe<br>1× Burrata")}
-  ${ticket(1, "TABLE 4<br>3× Tagliatelle<br>1× Tiramisu")}
-  ${ticket(2, "TABLE 9<br>2× Risotto<br>2× Negroni")}
-  ${ticket(3, "TABLE 15<br>4× Margherita<br>1× Focaccia")}
-  ${ticket(4, "TABLE 2<br>1× Ossobuco<br>2× Panna cotta")}
-  ${ticket(5, "TABLE 7<br>2× Carbonara<br>1× Arancini")}
+  ${ticket(0, "TABLE 12<br>2× Sunday roast<br>1× Beef dripping")}
+  ${ticket(1, "TABLE 4<br>3× Lamb shoulder<br>1× Sticky toffee")}
+  ${ticket(2, "TABLE 9<br>2× Pork chop<br>2× Negroni")}
+  ${ticket(3, "TABLE 15<br>4× Fish pie<br>1× Bread basket")}
+  ${ticket(4, "TABLE 2<br>1× Whole chicken<br>2× Affogato")}
+  ${ticket(5, "TABLE 7<br>2× Onglet<br>1× Chips")}
   <div id="f02-cap" class="kt abs" style="left:110px;bottom:90px;font-size:64px;color:#fff">On the pass.</div>
 </div>
 <div id="f02-Rp" class="abs" style="left:0;top:0;width:1920px;height:1080px;background:#fff;overflow:hidden">
@@ -142,12 +142,12 @@ frame(
   <div class="abs" style="left:150px;top:70px;font-size:22px;font-weight:600;letter-spacing:.14em;color:#1f7a48">YOUR GUESTS · ONLINE</div>
   <div id="f02-list" class="abs" style="left:150px;top:0;width:660px;height:1080px">
     <div class="card abs" id="f02-search" style="left:0;top:150px;width:660px;height:96px;border-radius:48px;display:flex;align-items:center;gap:18px;padding:0 34px;font-size:32px">
-      <span style="font-size:30px">⌕</span><span id="f02-q">italian near me</span><span id="f02-caret" style="width:3px;height:36px;background:#111;display:inline-block"></span>
+      <span style="font-size:30px">⌕</span><span id="f02-q">peckham restaurants</span><span id="f02-caret" style="width:3px;height:36px;background:#111;display:inline-block"></span>
     </div>
     <div class="abs" style="left:0;top:110px;width:660px">
-      ${result(0, "Trattoria Sole", "4.7", "Italian · 0.3 mi", "Open", false)}
-      ${result(1, "Osteria Lume", "4.1", "Italian · 0.4 mi", "Closed", true)}
-      ${result(2, "Pasta Bar", "4.6", "Italian · 0.6 mi", "Open", false)}
+      ${result(0, "Grove Kitchen", "4.7", "Neighbourhood · 0.3 mi", "Open", false)}
+      ${result(1, "The Juniper", "4.1", "Modern British · 0.4 mi", "Closed", true)}
+      ${result(2, "Southover Arms", "4.6", "Pub · 0.6 mi", "Open", false)}
     </div>
   </div>
 </div>`,
@@ -176,12 +176,12 @@ frame(
 ${bloom("f03-bl", "right:-600px;bottom:-760px;width:1500px;height:1300px")}
 <div id="f03-list" class="abs" style="left:630px;top:0;width:660px;height:1080px">
   <div class="abs" style="left:0;top:110px;width:660px">
-    ${["Trattoria Sole|4.7|Open|0", "Osteria Lume|4.1|Closed|1", "Pasta Bar|4.6|Open|0"]
+    ${["Grove Kitchen|4.7|Open|0", "The Juniper|4.1|Closed|1", "Southover Arms|4.6|Open|0"]
       .map((s, i) => {
         const [n, r, st, bad] = s.split("|");
         return `<div class="card abs f03-res" id="f03-r${i}" style="left:0;top:${170 + i * 150}px;width:660px;height:126px;padding:22px;display:flex;gap:20px;align-items:center;border-radius:24px">
       <div style="width:82px;height:82px;border-radius:16px;background:${["linear-gradient(135deg,#e9b872,#b5651d)", "linear-gradient(135deg,#c0392b,#6e2c00)", "linear-gradient(135deg,#f6d365,#fda085)"][i]}"></div>
-      <div style="flex:1"><div style="font-weight:600;font-size:27px">${n}</div><div class="muted" style="font-size:20px;margin-top:4px">★ ${r} · Italian</div></div>
+      <div style="flex:1"><div style="font-weight:600;font-size:27px">${n}</div><div class="muted" style="font-size:20px;margin-top:4px">★ ${r} · Peckham</div></div>
       <div style="font-weight:600;font-size:20px;color:${bad === "1" ? "#c13515" : "#2f9e5f"}">${st}</div></div>`;
       })
       .join("")}
@@ -198,7 +198,7 @@ ${bloom("f03-bl", "right:-600px;bottom:-760px;width:1500px;height:1300px")}
 <div id="f03-revt" class="kt abs" style="left:1210px;top:420px;width:560px;font-size:76px">A review nobody answered.</div>
 
 <div id="f03-hours" class="card abs" style="left:900px;top:170px;width:780px;padding:40px 48px;border-radius:36px">
-  <div style="font-weight:600;font-size:30px;margin-bottom:18px">Osteria Lume · Opening hours</div>
+  <div style="font-weight:600;font-size:30px;margin-bottom:18px">The Juniper · Opening hours</div>
   ${["Monday|12:00–22:00", "Tuesday|12:00–22:00", "Wednesday|12:00–22:00", "Thursday|12:00–22:00", "Friday|12:00–23:00", "Saturday|12:00–23:00", "Sunday|Closed"]
     .map((r) => {
       const [d, h] = r.split("|");
@@ -211,11 +211,11 @@ ${bloom("f03-bl", "right:-600px;bottom:-760px;width:1500px;height:1300px")}
 
 <div id="f03-web" class="abs" style="left:310px;top:150px;width:1300px;height:800px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 40px 100px rgba(17,17,17,.16);border:1px solid rgba(17,17,17,.08)">
   <div class="row" style="height:64px;background:#f4f4f2;padding:0 24px;gap:10px"><span style="width:14px;height:14px;border-radius:50%;background:#ff5f57"></span><span style="width:14px;height:14px;border-radius:50%;background:#febc2e"></span><span style="width:14px;height:14px;border-radius:50%;background:#28c840"></span>
-    <div style="margin-left:24px;flex:1;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;padding:0 16px;font-size:20px;color:#5c5c5c">osterialume.co.uk/book</div></div>
+    <div style="margin-left:24px;flex:1;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;padding:0 16px;font-size:20px;color:#5c5c5c">thejuniper.co.uk/book</div></div>
   <div style="padding:70px 90px">
     <div class="kt" style="font-size:84px">Book a table</div>
     <div style="position:relative;display:inline-block;margin-top:30px">
-      <div style="font-size:40px;line-height:1.45;color:#2c2c2c;max-width:1050px">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.</div>
+      <div style="font-size:40px;line-height:1.45;color:#2c2c2c;max-width:1050px">Christmas 2025 set menu — £65. Bookings by email. We’ll update this page in the new year.</div>
       <svg class="abs" style="left:0;bottom:-18px" width="1050" height="24" viewBox="0 0 1050 24"><path id="f03-squig" d="M0 12 Q 12.5 0 25 12 T 50 12 T 75 12 T 100 12 T 125 12 T 150 12 T 175 12 T 200 12 T 225 12 T 250 12 T 275 12 T 300 12 T 325 12 T 350 12 T 375 12 T 400 12 T 425 12 T 450 12 T 475 12 T 500 12 T 525 12 T 550 12 T 575 12 T 600 12 T 625 12 T 650 12 T 675 12 T 700 12 T 725 12 T 750 12 T 775 12 T 800 12 T 825 12 T 850 12 T 875 12 T 900 12 T 925 12 T 950 12 T 975 12 T 1000 12 T 1025 12 T 1050 12" fill="none" stroke="#c13515" stroke-width="4" stroke-dasharray="2000" stroke-dashoffset="2000"/></svg>
     </div>
     <div style="margin-top:60px;display:inline-flex;height:76px;padding:0 44px;border-radius:999px;background:#ececea;color:#777;font-size:30px;font-weight:600;align-items:center">Reserve</div>
@@ -266,7 +266,7 @@ frame(
   `
 <div class="fill" style="background:#111"></div>
 <div id="f04-grid" class="fill">${tables}</div>
-<div id="f04-t" class="kt abs" style="left:0;right:0;top:120px;text-align:center;font-size:84px;color:#fff">Each one quietly costs you a table.</div>
+<div id="f04-t" class="kt abs" style="left:0;right:0;top:120px;text-align:center;font-size:84px;color:#fff">That quietly costs you a table.</div>
 <div id="f04-lime" class="fill" style="background:#a8ff2e"></div>`,
   `
 tl.fromTo('.tb',{opacity:0,scale:0.6},{opacity:1,scale:1,duration:0.4,stagger:{each:0.03,from:'center'},ease:'back.out(1.6)'},0.05);
@@ -311,7 +311,7 @@ tl.fromTo('#f05-white',{opacity:0},{opacity:1,duration:0.2},6.1);
 
 /* ───────────── 06 — Review loop (26.5–35.7) ───────────── */
 const reply =
-  "Thanks Sophie — so glad you loved the pasta. Saturday was busier than we planned for, so we've added a runner at weekends. Hope to see you again soon. — Marco";
+  "Thanks Tom — glad the lamb landed. Saturday got away from us; we've put an extra runner on. Hope you'll come back. — Priya";
 frame(
   "06-review-loop.html",
   "f06-review",
@@ -320,17 +320,17 @@ frame(
 ${bloom("f06-bl", "left:-560px;top:-700px;width:1600px;height:1300px")}
 <div id="f06-notif" class="card abs row" style="left:460px;top:120px;width:1000px;padding:28px 34px;gap:26px;border-radius:36px">
   <div style="width:96px;height:96px;border-radius:24px;background:#a8ff2e;display:flex;align-items:center;justify-content:center">${orb(58)}</div>
-  <div style="flex:1"><div style="font-weight:600;font-size:32px">New ★★★★☆ review</div><div style="font-size:27px;margin-top:4px">Sophie: “Lovely pasta, a bit slow on Saturday.”</div></div>
+  <div style="flex:1"><div style="font-weight:600;font-size:32px">New ★★★★☆ review</div><div style="font-size:27px;margin-top:4px">Tom: “Came for the roast. Lamb was spot on. A bit slow on Saturday.”</div></div>
   <div class="muted abs" style="right:30px;top:22px;font-size:20px">now</div>
 </div>
 <div id="f06-head" class="kt abs" style="left:0;right:0;top:100px;text-align:center;font-size:88px">Drafted in your voice.</div>
 <div id="f06-rev" class="card abs" style="left:150px;top:330px;width:700px;padding:44px;border-radius:34px">
-  <div class="muted" style="font-size:22px">Google review · Sophie</div>
+  <div class="muted" style="font-size:22px">Google review · Tom</div>
   <div class="stars" style="font-size:34px;margin-top:8px">★★★★☆</div>
-  <div style="font-size:40px;line-height:1.35;margin-top:16px;font-weight:500">Lovely pasta, a bit slow on Saturday.</div>
+  <div style="font-size:40px;line-height:1.35;margin-top:16px;font-weight:500">Came for the roast. Lamb was spot on. A bit slow on Saturday.</div>
 </div>
 <div id="f06-draft" class="card abs" style="left:930px;top:330px;width:840px;min-height:470px;padding:44px;border-radius:34px;border:2px solid #2f9e5f">
-  <div class="row" style="gap:14px">${orb(40)}<div style="font-size:22px;font-weight:600;letter-spacing:.08em;color:#1f7a48">KOB'S DRAFT · AS MARCO</div></div>
+  <div class="row" style="gap:14px">${orb(40)}<div style="font-size:22px;font-weight:600;letter-spacing:.08em;color:#1f7a48">KOB'S DRAFT · AS PRIYA</div></div>
   <div id="f06-txt" style="font-size:34px;line-height:1.45;margin-top:22px">${reply}</div>
 </div>
 
@@ -340,11 +340,11 @@ ${bloom("f06-bl", "left:-560px;top:-700px;width:1600px;height:1300px")}
       <div class="abs" style="top:14px;left:164px;width:124px;height:36px;border-radius:20px;background:#000"></div>
       <div class="abs row" style="top:22px;left:46px;right:46px;justify-content:space-between;font-weight:600;font-size:17px"><span>9:41</span><span>●●● ▮</span></div>
       <div class="abs" style="top:78px;left:16px;right:16px">
-        <div class="row" style="gap:12px;padding:6px">${orb(38)}<div><div class="kt" style="font-size:30px">Today</div><div class="muted" style="font-size:13.5px">Osteria Lume · Mon 19 Oct</div></div></div>
+        <div class="row" style="gap:12px;padding:6px">${orb(38)}<div><div class="kt" style="font-size:30px">Today</div><div class="muted" style="font-size:13.5px">The Juniper · Mon 19 Oct</div></div></div>
         <div style="background:#fff;border:1px solid rgba(17,17,17,.08);border-radius:24px;padding:18px;margin-top:12px">
-          <div style="font-size:17px;font-weight:500">Reply to Sophie's ★★★★☆ review</div>
+          <div style="font-size:17px;font-weight:500">Reply to Tom's ★★★★☆ review</div>
           <div class="muted" style="font-size:13.5px;margin-top:3px">Google review · 2 min ago</div>
-          <div style="background:#f4f4f2;border-radius:16px;padding:11px 13px;font-size:14px;margin-top:12px">Lovely pasta, a bit slow on Saturday.</div>
+          <div style="background:#f4f4f2;border-radius:16px;padding:11px 13px;font-size:14px;margin-top:12px">Came for the roast. Lamb was spot on. A bit slow on Saturday.</div>
           <div style="border-left:3px solid #2f9e5f;padding:2px 0 2px 11px;font-size:14px;line-height:1.45;margin-top:12px">${reply}</div>
           <div class="row" style="gap:8px;font-size:13.5px;margin-top:12px"><span id="f06-sdot" style="width:10px;height:10px;border-radius:50%;background:#d97706"></span><span id="f06-stxt">Ready to post · waiting for your OK</span></div>
           <div style="position:relative"><div id="f06-btn" style="position:relative;height:50px;border-radius:999px;background:#111;color:#fff;font-size:15.5px;font-weight:500;margin-top:12px;overflow:hidden">
@@ -405,7 +405,7 @@ ${bloom("f07-bl", "right:-600px;top:-700px;width:1500px;height:1300px")}
   ${mini(1, "Priya", "★★★★★", "Lovely staff, great wine list…")}
   ${mini(2, "Tom", "★★★★☆", "Busy but worth the wait…")}
   ${mini(3, "Aisha", "★★★★★", "Birthday dinner, perfect…")}
-  ${mini(4, "Ben", "★★★★☆", "Great pasta, small portions…")}
+  ${mini(4, "Ben", "★★★★☆", "Great roast, small portions…")}
   ${mini(5, "Grace", "★★★★★", "Tiramisu was unreal…")}
   ${mini(6, "Leo", "★★★★★", "Our new local…")}
   ${mini(7, "Maya", "★★★★☆", "Cosy and friendly…")}
@@ -451,8 +451,8 @@ ${bloom("f08-bl", "left:-600px;bottom:-760px;width:1500px;height:1300px")}
 </div>
 <div id="f08-b" class="card abs" style="left:990px;top:300px;width:760px;height:560px;border-radius:36px;overflow:hidden">
   <div id="f08-b0" class="fill"><div class="abs" style="left:48px;top:44px;font-size:22px;font-weight:600;letter-spacing:.1em">WEBSITE · BOOKING PAGE</div>
-  <div class="fill" style="top:120px;padding:0 48px"><div class="kt" style="font-size:66px">Book a table</div><div style="font-size:38px;line-height:1.4;margin-top:20px;color:#c13515">Lorem ipsum dolor sit amet, consectetur…</div></div></div>
-  <div id="f08-bb" class="fill" style="top:0;background:#e7f6ee;padding:120px 48px 0"><div class="kt" style="font-size:66px">Book a table</div><div style="font-size:38px;line-height:1.4;margin-top:20px">Fresh pasta, made every morning. Tables tonight from 6pm.</div><div style="font-size:26px;margin-top:20px;color:#1f7a48;font-weight:600">Fix ready ✓</div><div class="abs" style="left:48px;top:44px;font-size:22px;font-weight:600;letter-spacing:.1em;color:#1f7a48">WEBSITE · BOOKING PAGE</div></div>
+  <div class="fill" style="top:120px;padding:0 48px"><div class="kt" style="font-size:66px">Book a table</div><div style="font-size:38px;line-height:1.4;margin-top:20px;color:#c13515">Christmas 2025 set menu — £65. Bookings by email.</div></div></div>
+  <div id="f08-bb" class="fill" style="top:0;background:#e7f6ee;padding:120px 48px 0"><div class="kt" style="font-size:66px">Book a table</div><div style="font-size:38px;line-height:1.4;margin-top:20px">Sunday roast from 12. Tables tonight from 6pm.</div><div style="font-size:26px;margin-top:20px;color:#1f7a48;font-weight:600">Fix ready ✓</div><div class="abs" style="left:48px;top:44px;font-size:22px;font-weight:600;letter-spacing:.1em;color:#1f7a48">WEBSITE · BOOKING PAGE</div></div>
   <div id="f08-wb" class="abs" style="top:0;bottom:0;left:0;width:10px;background:#a8ff2e;box-shadow:0 0 40px #a8ff2e"></div>
 </div>`,
   `
@@ -480,7 +480,7 @@ frame(
 ${bloom("f09-bl", "left:-600px;top:-700px;width:1600px;height:1300px")}
 <div id="f09-t" class="kt abs" style="left:0;right:0;top:70px;text-align:center;font-size:84px">Every week, a plain report.</div>
 <div id="f09-card" class="card abs" style="left:250px;top:220px;width:1420px;padding:50px 56px;border-radius:40px">
-  <div class="row" style="justify-content:space-between"><div class="row" style="gap:18px">${orb(52)}<div class="kt" style="font-size:52px">Your week at Osteria Lume</div></div><div class="muted" style="font-size:26px">12–18 Oct</div></div>
+  <div class="row" style="justify-content:space-between"><div class="row" style="gap:18px">${orb(52)}<div class="kt" style="font-size:52px">Your week at The Juniper</div></div><div class="muted" style="font-size:26px">12–18 Oct</div></div>
   <div style="font-size:24px;font-weight:600;letter-spacing:.08em;color:#2f9e5f;margin-top:36px">KOB'S WORK · CHANGES MADE AND CHECKED LIVE</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:18px">
     ${stat("f09-n1", "Reviews replied")}${stat("f09-n2", "Listing fix")}${stat("f09-n3", "Website fixes")}
