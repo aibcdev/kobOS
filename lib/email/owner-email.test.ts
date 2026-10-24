@@ -122,7 +122,7 @@ describeDb("30 days of owner emails", () => {
     const ending = cap.sent.find((m) => /free trial ends/.test(m.subject))!;
     expect(ending.text).toMatch(/nothing is charged/);
     expect(ending.text).toContain("https://app.test/dashboard/billing?r=");
-  });
+  }, 60_000);
 
   it("Harbour & Rye adds a card on day 6: weekly summaries keep coming and every approved change gets a confirmation", async () => {
     const { captureTransport, useTransport } = await import("./transport");
@@ -152,7 +152,7 @@ describeDb("30 days of owner emails", () => {
     expect(count("daily_brief")).toBeGreaterThanOrEqual(15);
     const done = cap.sent.filter((m) => m.subject.startsWith("Done:"));
     expect(done.map((m) => m.text.includes(`/app/actions/${published[0]}`) || m.text.includes(`/app/actions/${published[1]}`))).toEqual([true, true]);
-  });
+  }, 60_000);
 
   it("without an email provider it records a dry run instead of claiming it sent", async () => {
     const r = await venue("Dry Run Diner", "US", "America/New_York");

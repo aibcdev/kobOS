@@ -16,3 +16,7 @@ export function bannedWordsIn(text: string): string[] {
   if (b) out.push(...b.map((w) => w.toLowerCase()));
   return [...new Set(out)];
 }
+
+/** Appended to every prompt whose output an owner or guest reads (drafts, posts, replies, briefs, Talk). */
+export const OWNER_WORDING_RULE =
+  "Never use the words AI, artificial intelligence, bot, chatbot, agent, automated, automation, automatically, autopilot, machine learning or algorithm, and never describe KOB or yourself that way. Write like a capable restaurant manager: plain, warm hospitality English.";

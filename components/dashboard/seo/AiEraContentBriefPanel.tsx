@@ -53,9 +53,9 @@ export function AiEraContentBriefPanel({ restaurantId }: { restaurantId: string 
 
   return (
     <div className={`${appCardSurface} mt-8`}>
-      <h2 className="type-title-sm">AI-era content brief</h2>
+      <h2 className="type-title-sm">Search-ready content brief</h2>
       <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-        Builds pages that rank on Google and get cited in AI Overviews — answer block, PAA structure, and a unique
+        Builds pages that rank on Google and get quoted in its answer boxes — answer block, PAA structure, and a unique
         edge.
       </p>
 
