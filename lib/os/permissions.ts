@@ -83,7 +83,7 @@ export function authorised(input: {
   }
   const needAsk = riskRequiresApproval(input.risk, input.mode) || band === "suggest";
   if (band === "limited_autopilot" && input.risk >= 51) {
-    return { ok: true, requiresApproval: true, reason: "Limited autopilot: high risk still asks." };
+    return { ok: true, requiresApproval: true, reason: "Within your limits: higher-risk changes still ask you." };
   }
   return {
     ok: true,

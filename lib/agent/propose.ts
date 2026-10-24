@@ -2,6 +2,7 @@ import type { OsAction } from "@prisma/client";
 import { sendActionApproved } from "@/lib/agent/events";
 import { approve, createProposal, fail, type ProposalInput } from "@/lib/agent/ledger";
 import { evaluatePolicy, type PolicyDeps, type PolicyResult } from "@/lib/agent/policy";
+import { canAct } from "@/lib/billing/trial";
 
 /**
  * The one entry point for proposing an external change: write the proposal, run policy, then either leave it
@@ -14,6 +15,10 @@ export async function proposeAction(
   const proposed = await createProposal(input);
   // A duplicate that has already moved on keeps its state.
   if (proposed.status !== "AWAITING_APPROVAL") return { action: proposed, policy: null };
+
+  // Read-only after a trial ends without a card: the proposal is recorded but closed, with the reason.
+  const billing = await canAct(input.restaurantId, input.now);
+  if (!billing.ok) return { action: await fail(proposed.id, `DENIED_${billing.code}`, billing.message), policy: null };
 
   const policy = await evaluatePolicy(proposed, deps);
   if (policy.decision === "DENY") {

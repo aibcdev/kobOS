@@ -1,8 +1,8 @@
 import { ConnectorError } from "@/lib/connectors/errors";
 
 /**
- * Google Business Profile, only the calls the review-reply loop needs. Account and location listing use the v1
- * Account Management / Business Information APIs; reviews are still only on My Business v4.
+ * Google Business Profile. Accounts, locations and the listing itself (hours, profile) use the v1 Account Management
+ * / Business Information APIs; reviews, photos and posts are still only on My Business v4.
  */
 export const GBP_SCOPE = "https://www.googleapis.com/auth/business.manage";
 
@@ -26,6 +26,41 @@ export type GbpReview = {
 
 export type GbpLocation = { name: string; title: string; address: string | null };
 
+export type GbpTime = { hours?: number; minutes?: number };
+export type GbpPeriod = { openDay: string; openTime?: GbpTime; closeDay: string; closeTime?: GbpTime };
+export type GbpDate = { year: number; month: number; day: number };
+export type GbpSpecialPeriod = { startDate: GbpDate; endDate?: GbpDate; openTime?: GbpTime; closeTime?: GbpTime; closed?: boolean };
+
+/** The parts of a v1 Location KOB reads and may change. */
+export type GbpListing = {
+  name: string;
+  title?: string;
+  websiteUri?: string;
+  regularHours?: { periods?: GbpPeriod[] };
+  specialHours?: { specialHourPeriods?: GbpSpecialPeriod[] };
+  categories?: { primaryCategory?: { displayName?: string }; additionalCategories?: { displayName?: string }[] };
+  profile?: { description?: string };
+  metadata?: { placeId?: string; newReviewUri?: string; mapsUri?: string };
+};
+
+export type GbpMediaItem = { name: string; createTime?: string; mediaFormat?: string };
+export type GbpLocalPost = {
+  name: string;
+  summary?: string;
+  state?: "LOCAL_POST_STATE_UNSPECIFIED" | "REJECTED" | "LIVE" | "PROCESSING";
+  topicType?: string;
+  createTime?: string;
+  updateTime?: string;
+};
+
+export const LISTING_READ_MASK = "name,title,websiteUri,regularHours,specialHours,categories,profile,metadata";
+
+/** `accounts/1/locations/2` → { account: "accounts/1", location: "locations/2" }; null when it isn't one. */
+export function parseLocationName(name: string): { account: string; location: string } | null {
+  const m = /^(accounts\/[^/]+)\/(locations\/[^/]+)$/.exec(name);
+  return m ? { account: m[1], location: m[2] } : null;
+}
+
 export type Fetch = typeof fetch;
 
 const STARS: Record<GbpStar, number> = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5, STAR_RATING_UNSPECIFIED: 0 };
@@ -38,7 +73,7 @@ export function parseReviewName(name: string): { account: string; location: stri
 }
 
 export function gbpClient(accessToken: string, f: Fetch = fetch) {
-  async function call<T>(method: "GET" | "PUT", url: string, body?: unknown): Promise<T> {
+  async function call<T>(method: "GET" | "PUT" | "PATCH" | "POST", url: string, body?: unknown): Promise<T> {
     let res: Response;
     try {
       res = await f(url, {
@@ -80,10 +115,22 @@ export function gbpClient(accessToken: string, f: Fetch = fetch) {
       });
     },
 
-    /** Newest first; one page is enough for a 30-minute sync. */
-    async reviews(account: string, location: string, pageSize = 50): Promise<GbpReview[]> {
-      const out = await call<{ reviews?: GbpReview[] }>("GET", `${V4}/${account}/${location}/reviews?pageSize=${pageSize}&orderBy=updateTime%20desc`);
-      return out.reviews ?? [];
+    /**
+     * Newest first. Pages until it reaches reviews not updated since `since` (the sync cursor), or up to `maxPages`
+     * on the first sync, so a listing with hundreds of reviews is brought in whole over a few syncs.
+     */
+    async reviews(account: string, location: string, opts: { since?: string | null; maxPages?: number; pageSize?: number } = {}): Promise<GbpReview[]> {
+      const out: GbpReview[] = [];
+      let token: string | undefined;
+      for (let page = 0; page < (opts.maxPages ?? 10); page++) {
+        const q = new URLSearchParams({ pageSize: String(opts.pageSize ?? 50), orderBy: "updateTime desc", ...(token ? { pageToken: token } : {}) });
+        const res = await call<{ reviews?: GbpReview[]; nextPageToken?: string }>("GET", `${V4}/${account}/${location}/reviews?${q}`);
+        const batch = res.reviews ?? [];
+        out.push(...batch);
+        token = res.nextPageToken;
+        if (!token || (opts.since && batch.some((r) => r.updateTime <= opts.since!))) break;
+      }
+      return out;
     },
 
     async review(name: string): Promise<GbpReview> {
@@ -92,6 +139,38 @@ export function gbpClient(accessToken: string, f: Fetch = fetch) {
 
     async reply(name: string, comment: string): Promise<{ comment: string; updateTime: string }> {
       return call("PUT", `${V4}/${name}/reply`, { comment });
+    },
+
+    /** The listing (v1 addresses it as `locations/{l}`). */
+    async listing(locationName: string): Promise<GbpListing> {
+      const loc = parseLocationName(locationName);
+      if (!loc) throw new ConnectorError("VALIDATION", `Bad GBP location ${locationName}`);
+      return call<GbpListing>("GET", `${INFO}/${loc.location}?readMask=${LISTING_READ_MASK}`);
+    },
+
+    /** Changes only the fields in `updateMask` (e.g. "regularHours", "profile.description"). */
+    async updateListing(locationName: string, patch: Partial<GbpListing>, updateMask: string): Promise<GbpListing> {
+      const loc = parseLocationName(locationName);
+      if (!loc) throw new ConnectorError("VALIDATION", `Bad GBP location ${locationName}`);
+      return call<GbpListing>("PATCH", `${INFO}/${loc.location}?updateMask=${encodeURIComponent(updateMask)}`, patch);
+    },
+
+    async media(locationName: string): Promise<{ items: GbpMediaItem[]; total: number }> {
+      const out = await call<{ mediaItems?: GbpMediaItem[]; totalMediaItemCount?: number }>("GET", `${V4}/${locationName}/media?pageSize=100`);
+      return { items: out.mediaItems ?? [], total: out.totalMediaItemCount ?? out.mediaItems?.length ?? 0 };
+    },
+
+    async localPosts(locationName: string): Promise<GbpLocalPost[]> {
+      const out = await call<{ localPosts?: GbpLocalPost[] }>("GET", `${V4}/${locationName}/localPosts?pageSize=20`);
+      return out.localPosts ?? [];
+    },
+
+    async createLocalPost(locationName: string, post: Record<string, unknown>): Promise<GbpLocalPost> {
+      return call<GbpLocalPost>("POST", `${V4}/${locationName}/localPosts`, post);
+    },
+
+    async localPost(name: string): Promise<GbpLocalPost> {
+      return call<GbpLocalPost>("GET", `${V4}/${name}`);
     },
   };
 }

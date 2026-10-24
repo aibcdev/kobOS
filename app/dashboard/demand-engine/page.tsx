@@ -18,7 +18,7 @@ import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
   title: "Demand · KOB",
-  description: "Approve AI offers for quiet periods — one click, we publish.",
+  description: "Approve offers for quiet periods — one click, we publish.",
 };
 
 function channelLabels(channels: { channel: string }[]): string[] {
@@ -44,7 +44,7 @@ export default async function DemandPage({
     return (
       <PreviewPlaceholder
         title="Demand"
-        description="Approve AI offers when quiet periods hit — one click."
+        description="Approve offers when quiet periods hit — one click."
       />
     );
   }

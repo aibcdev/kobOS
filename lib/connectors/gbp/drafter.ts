@@ -1,4 +1,5 @@
 import { geminiTextCompletion } from "@/lib/ai/gemini-config";
+import { bannedWordsIn, OWNER_WORDING_RULE } from "@/lib/copy/banned-words";
 
 export const MAX_REPLY_CHARS = 1000;
 
@@ -27,6 +28,7 @@ Rules for the reply:
   the restaurant directly. Never promise compensation.
 - Never invent facts about the restaurant, staff, menu or what happened.
 - Sign off as the team, not a named person.
+- ${OWNER_WORDING_RULE}
 Output only the reply text.`;
 
 /** Removes the fence tags so guest text can't close the block early. */
@@ -59,6 +61,8 @@ export function cleanReply(raw: string): string | null {
     text = end > 200 ? cut.slice(0, end + 1) : "";
   }
   if (text.length < 20 || URL_OR_CONTACT.test(text) || /untrusted_review/i.test(text)) return null;
+  // A draft that calls itself AI (or similar) is thrown away; the safe template is used instead.
+  if (bannedWordsIn(text).length) return null;
   return text;
 }
 
@@ -66,4 +70,25 @@ export function cleanReply(raw: string): string | null {
 export async function draftReviewReply(input: DraftInput, generate: Generate = (a) => geminiTextCompletion({ ...a, temperature: 0.5, maxOutputTokens: 400 })): Promise<string | null> {
   const res = await generate(draftPrompt(input));
   return res.ok ? cleanReply(res.text) : null;
+}
+
+/**
+ * A safe reply when no model is available: thanks the guest, invents nothing, and asks low ratings to get in touch.
+ * The owner still approves it, and can edit it, before anything is posted.
+ */
+export function templateReviewReply(input: Pick<DraftInput, "restaurantName" | "reviewerName" | "rating">): string {
+  const first = input.reviewerName?.trim().split(/\s+/)[0];
+  const hi = first ? `Hi ${first}, thank you` : "Thank you";
+  const team = `The ${input.restaurantName} team`;
+  if (input.rating >= 4)
+    return `${hi} for the kind words and for taking the time to leave a review. We're really glad you enjoyed your visit and we look forward to welcoming you back soon. ${team}`;
+  if (input.rating === 3)
+    return `${hi} for the honest feedback. We'd love to hear a little more about what would have made your visit better, so please get in touch with us directly. ${team}`;
+  return `${hi} for telling us about this, and we're sorry your visit fell short. That isn't the experience we want for anyone. Please get in touch with us directly so we can look into it properly. ${team}`;
+}
+
+/** A model draft when one is available, otherwise the safe template — never nothing. */
+export async function draftReviewReplyOrTemplate(input: DraftInput, generate?: Generate): Promise<{ text: string; drafted: "model" | "template" }> {
+  const text = await draftReviewReply(input, generate).catch(() => null);
+  return text ? { text, drafted: "model" } : { text: templateReviewReply(input), drafted: "template" };
 }

@@ -1,5 +1,6 @@
 import type { CustomerReview } from "@prisma/client";
 import { starsOf, type GbpReview } from "@/lib/connectors/gbp/client";
+import { markReplyDraftPublished } from "@/lib/agent/review-reply";
 import { prisma } from "@/lib/db/prisma";
 
 /**
@@ -44,4 +45,5 @@ export async function recordPostedReply(restaurantId: string, reviewName: string
     prisma.customerReview.update({ where: { id: review.id }, data: { replied: true } }),
     prisma.reviewReply.create({ data: { reviewId: review.id, replyText, status: "POSTED", postedAt: at } }),
   ]);
+  await markReplyDraftPublished(restaurantId, review.id, replyText);
 }

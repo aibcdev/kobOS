@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
+import { isSameOrigin } from "@/lib/security/same-origin";
 
 /** Live connectors always require a real session and DB membership, including in preview mode. */
 export async function talkAccess(restaurantId: string) {
@@ -26,7 +27,7 @@ export async function talkAccess(restaurantId: string) {
   return { ok: true as const, userId: user.id, restaurant: member.restaurant };
 }
 
+/** Browsers always send Origin on these POSTs, so it's required; deploy previews and proxies are allowed via isSameOrigin. */
 export function sameOrigin(req: Request) {
-  const origin = req.headers.get("origin");
-  return origin === new URL(req.url).origin;
+  return req.headers.get("origin") !== null && isSameOrigin(req);
 }

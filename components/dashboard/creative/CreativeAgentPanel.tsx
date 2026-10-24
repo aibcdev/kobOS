@@ -123,7 +123,7 @@ export function CreativeAgentPanel({
         upgradeRequired?: boolean;
       };
       if (!res.ok) {
-        setError(data.error ?? data.message ?? "Could not start Creative Agent.");
+        setError(data.error ?? data.message ?? "Could not start Creative Studio.");
         return;
       }
       if (data.packId) {
@@ -178,7 +178,7 @@ export function CreativeAgentPanel({
   return (
     <div className="space-y-8">
       <section className={`${appCardSurface} border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/40`}>
-        <p className="type-caption font-medium uppercase tracking-wide text-emerald-800">Creative Agent</p>
+        <p className="type-caption font-medium uppercase tracking-wide text-emerald-800">Creative Studio</p>
         <h2 className="type-title-sm mt-2 text-[var(--color-ink)]">Create a month of creatives</h2>
         <p className="type-body-sm mt-2 max-w-2xl text-[var(--color-muted)]">
           We scrape {restaurantName}&apos;s brand signals, write an identity brief, then generate UGC-style
