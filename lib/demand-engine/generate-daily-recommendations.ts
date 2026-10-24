@@ -1,18 +1,16 @@
 /**
- * Phase 2 — daily Demand recommendations (quiet windows, weather, history templates).
- * Caps at 3 pending cards. Not a deals marketplace — AI growth manager for quiet periods.
+ * Daily offer ideas for the restaurant's genuinely quiet nights, in its own currency and sized to its prices.
+ * Never on a busy night or a day the owner said never to discount. When KOB doesn't know which nights are quiet,
+ * it suggests nothing (the brief asks the owner instead). At most 3 waiting at once.
  */
 
 import { prisma } from "@/lib/db/prisma";
 import type { StructuredOffer } from "@/lib/demand-engine/types";
+import { currencyForCountry } from "@/lib/commerce/currency";
+import { localDay } from "@/lib/kob/talk/restaurant-facts";
+import { nightsProfile, setMenuPrice, spendPerHead, WEEKDAY_NAME, WEEKDAYS, type Weekday } from "@/lib/venue/nights";
 
 export const MAX_PENDING_DEMAND_RECS = 3;
-
-function daysFromNow(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d;
-}
 
 type Candidate = {
   title: string;
@@ -23,124 +21,131 @@ type Candidate = {
   offer: StructuredOffer;
 };
 
-function buildCandidates(input: {
+const DAY_MS = 86_400_000;
+
+/** ISO-ish week number, so ideas rotate week to week instead of repeating. */
+const weekNumber = (date: string) => Math.floor(Date.parse(`${date}T00:00:00Z`) / (7 * DAY_MS));
+
+/** The next local date (YYYY-MM-DD) that falls on `day`, from `today`. */
+function nextDate(today: string, todayWeekday: number, day: Weekday): string {
+  const ahead = (WEEKDAYS.indexOf(day) - todayWeekday + 7) % 7 || 7;
+  return new Date(Date.parse(`${today}T00:00:00Z`) + ahead * DAY_MS).toISOString().slice(0, 10);
+}
+
+export function buildCandidates(input: {
   name: string;
   cuisine: string;
   city: string;
-  weekday: number;
-  rainyHint: boolean;
+  currency: string;
+  locale: string;
+  quiet: Weekday[];
+  today: string;
+  todayWeekday: number;
+  spend: number | null;
 }): Candidate[] {
-  const { name, cuisine, city, weekday, rainyHint } = input;
-  const now = new Date();
-  const validFrom = now.toISOString();
-  const validTo = daysFromNow(3).toISOString();
+  const money = (n: number) => new Intl.NumberFormat(input.locale, { style: "currency", currency: input.currency, maximumFractionDigits: 0 }).format(n);
+  const setPrice = setMenuPrice(input.spend);
   const out: Candidate[] = [];
-
-  // 0=Sun … 2=Tue
-  if (weekday === 2 || weekday === 3) {
-    out.push({
-      title: "Free dessert with any main · Tue–Wed 5–7pm",
-      reason: `A midweek early-evening idea for ${name} — a sweetener that lifts covers without discounting the main. Change the window if yours is different.`,
-      impactScore: 80,
-      templateKey: "quiet_midweek",
-      offer: {
-        headline: "Free dessert with any main",
-        description: `Free dessert with mains Tue–Wed 5–7pm at ${name}.`,
-        discountType: "bogo",
-        discountLabel: "Free dessert",
-        daypart: "dinner",
-        conditions: "Tue–Wed · 5–7pm · Dine-in · One per guest",
-        validFrom,
-        validTo,
-        templateKey: "quiet_midweek",
+  input.quiet.slice(0, 2).forEach((day, i) => {
+    const d = WEEKDAY_NAME[day];
+    const date = nextDate(input.today, input.todayWeekday, day);
+    const validFrom = `${date}T00:00:00Z`;
+    const validTo = `${date}T23:59:59Z`;
+    const base = { validFrom, validTo, currency: input.currency, days: [day] };
+    const ideas: Candidate[] = [
+      {
+        title: setPrice ? `${d} set menu · two courses for ${money(setPrice)}` : `${d} set menu · two courses, one price`,
+        reason: `${d}s are quiet at ${input.name}. A set menu gives regulars an easy reason to book.${setPrice ? " Priced from your usual spend per head — change it before you approve." : " Tell KOB the price before you approve."}`,
+        impactScore: 80,
+        templateKey: `set_menu:${day}`,
+        offer: {
+          ...base,
+          headline: setPrice ? `Two courses for ${money(setPrice)}` : "Two-course set menu",
+          description: `${d} set menu at ${input.name}${setPrice ? `: two courses for ${money(setPrice)}` : ""}.`,
+          discountType: "fixed_menu",
+          ...(setPrice ? { discountValue: setPrice, discountLabel: money(setPrice) } : { discountLabel: "Set menu" }),
+          daypart: "dinner",
+          conditions: `${d} · Dine-in`,
+          templateKey: `set_menu:${day}`,
+        },
       },
-    });
-  }
-
-  if (weekday >= 1 && weekday <= 5) {
-    out.push({
-      title: "£12 lunch deal · Mon–Fri 12–3pm",
-      reason: `A fixed weekday lunch price gives nearby workers an easy reason to pick a ${cuisine} spot in ${city}. Adjust the price before you approve.`,
-      impactScore: 68,
-      templateKey: "lunch_special",
-      offer: {
-        headline: "£12 lunch deal",
-        description: "Main + soft drink for £12, Mon–Fri 12–3pm.",
-        discountType: "fixed_menu",
-        discountValue: 12,
-        discountLabel: "£12 lunch",
-        daypart: "lunch",
-        conditions: "Mon–Fri · 12–3pm · While stocks last",
-        validFrom,
-        validTo: daysFromNow(5).toISOString(),
-        templateKey: "lunch_special",
+      {
+        title: `${d} early tables · dessert on us before 7pm`,
+        reason: `Fills the first sitting on a quiet ${d} without touching the price of a main.`,
+        impactScore: 74,
+        templateKey: `early_dessert:${day}`,
+        offer: {
+          ...base,
+          headline: "Dessert on us before 7pm",
+          description: `Book before 7pm on ${d} at ${input.name} and dessert is on us.`,
+          discountType: "bogo",
+          discountLabel: "Free dessert",
+          daypart: "dinner",
+          conditions: `${d} · Seated before 7pm · One per guest`,
+          templateKey: `early_dessert:${day}`,
+        },
       },
-    });
-  }
-
-  if (rainyHint || weekday === 0 || weekday === 6) {
-    out.push({
-      title: "Rainy-day free side",
-      reason: "A weather-led idea: reward guests who still come out when it's wet. We don't read live weather yet — you choose the days.",
-      impactScore: 62,
-      templateKey: "rainy_day",
-      offer: {
-        headline: "Rainy day: free side",
-        description: "Free side with any main when it rains.",
-        discountType: "bogo",
-        discountLabel: "Free side",
-        daypart: "all_day",
-        conditions: "Valid on rainy days this week · One per table",
-        validFrom,
-        validTo: daysFromNow(4).toISOString(),
-        templateKey: "rainy_day",
+      {
+        title: `${d} bring-a-friend · their main half price`,
+        reason: `Turns one regular into two covers on a quiet ${d}.`,
+        impactScore: 70,
+        templateKey: `bring_friend:${day}`,
+        offer: {
+          ...base,
+          headline: "Bring a friend: their main half price",
+          description: `On ${d}s at ${input.name}, bring a friend and their main is half price.`,
+          discountType: "percent",
+          discountValue: 50,
+          discountLabel: "Friend's main half price",
+          daypart: "dinner",
+          conditions: `${d} · One per table · Dine-in`,
+          templateKey: `bring_friend:${day}`,
+        },
       },
-    });
-  }
-
-  // Always have at least one quiet-period idea.
-  if (out.length === 0) {
-    out.push({
-      title: "Quiet evening boost · 5–7pm",
-      reason: `A short, clear offer for the pre-rush hour at ${name} — one of the softer windows for most ${cuisine} spots in ${city}.`,
-      impactScore: 70,
-      templateKey: "quiet_evening",
-      offer: {
-        headline: "Early bird: free soft drink",
-        description: `Free soft drink with any main 5–7pm at ${name}.`,
-        discountType: "bogo",
-        discountLabel: "Free soft drink",
-        daypart: "dinner",
-        conditions: "Tonight · 5–7pm · Dine-in",
-        validFrom,
-        validTo: daysFromNow(2).toISOString(),
-        templateKey: "quiet_evening",
+      {
+        title: `${d} regulars' night · a personal invite, no discount`,
+        reason: `Some rooms fill best without a deal: invite the people who already love ${input.name}.`,
+        impactScore: 66,
+        templateKey: `regulars:${day}`,
+        offer: {
+          ...base,
+          headline: `${d} regulars' night`,
+          description: `A personal invite to our regulars for ${d} night at ${input.name}.`,
+          discountType: "fixed_menu",
+          discountLabel: "Regulars' night",
+          daypart: "dinner",
+          conditions: `${d} · Invite only`,
+          templateKey: `regulars:${day}`,
+        },
       },
-    });
-  }
-
-  return out.sort((a, b) => b.impactScore - a.impactScore).slice(0, MAX_PENDING_DEMAND_RECS);
-}
-
-/** Simple weather proxy until a real weather API is wired — treat UK-ish rainy seasons as hint. */
-function rainyHintForNow(): boolean {
-  const month = new Date().getMonth(); // 0-11
-  return month >= 9 || month <= 2; // Oct–Mar
+    ];
+    // Rotate which idea leads each week, so the brief doesn't repeat itself.
+    const start = (weekNumber(input.today) + i) % ideas.length;
+    out.push(...[...ideas.slice(start), ...ideas.slice(0, start)].slice(0, 2));
+  });
+  return out.slice(0, MAX_PENDING_DEMAND_RECS);
 }
 
 /**
  * Top up PENDING recommendations to at most 3. Skips templateKeys already pending.
  * Returns how many new rows were created.
  */
-export async function generateDailyRecommendationsForRestaurant(restaurantId: string): Promise<{
+export async function generateDailyRecommendationsForRestaurant(restaurantId: string, opts: { now?: Date } = {}): Promise<{
   created: number;
   pending: number;
 }> {
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { name: true, cuisineType: true, city: true },
+    select: { name: true, cuisineType: true, city: true, countryCode: true, timezone: true, locale: true },
   });
   if (!restaurant) return { created: 0, pending: 0 };
+  const now = opts.now ?? new Date();
+  const nights = await nightsProfile(restaurantId, now);
+
+  // An owner who has since protected a day never sees a waiting offer for it.
+  const pending = await prisma.demandRecommendation.findMany({ where: { restaurantId, status: "PENDING" }, select: { id: true, offer: true } });
+  const clash = pending.filter((p) => ((p.offer as StructuredOffer).days ?? []).some((d) => nights.protectedDays.includes(d as Weekday)));
+  if (clash.length) await prisma.demandRecommendation.updateMany({ where: { id: { in: clash.map((c) => c.id) } }, data: { status: "EXPIRED" } });
 
   const existing = await prisma.demandRecommendation.findMany({
     where: { restaurantId, status: "PENDING" },
@@ -160,13 +165,20 @@ export async function generateDailyRecommendationsForRestaurant(restaurantId: st
     return { created: 0, pending: MAX_PENDING_DEMAND_RECS };
   }
 
+  const fact = await prisma.osFact.findFirst({ where: { restaurantId, key: "price_point" }, orderBy: { lastUpdatedAt: "desc" } });
+  const pricePoint = (fact?.valueJson as { text?: string } | null)?.text ?? null;
+  const { date: today, weekday } = localDay(restaurant.timezone, now);
   const usedKeys = new Set(existing.map((e) => e.templateKey).filter(Boolean));
   const candidates = buildCandidates({
     name: restaurant.name,
     cuisine: restaurant.cuisineType?.trim() || "restaurant",
     city: restaurant.city?.trim() || "your area",
-    weekday: new Date().getDay(),
-    rainyHint: rainyHintForNow(),
+    currency: currencyForCountry(restaurant.countryCode),
+    locale: restaurant.locale || "en-GB",
+    quiet: nights.quiet,
+    today,
+    todayWeekday: weekday,
+    spend: spendPerHead(pricePoint),
   }).filter((c) => !usedKeys.has(c.templateKey));
 
   const slots = MAX_PENDING_DEMAND_RECS - existing.length;
@@ -183,7 +195,7 @@ export async function generateDailyRecommendationsForRestaurant(restaurantId: st
       impactScore: d.impactScore,
       templateKey: d.templateKey,
       offer: d.offer,
-      expiresAt: daysFromNow(7),
+      expiresAt: new Date(Date.parse(d.offer.validTo)),
       status: "PENDING",
     })),
   });

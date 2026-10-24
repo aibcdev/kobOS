@@ -65,6 +65,7 @@ export async function syncOnePage(integrationId: string, stream: string, now = n
         ...(authDead ? { status: "REAUTH" } : {}),
       },
     });
+    if (authDead) void notifyReconnect(integrationId);
     throw e;
   }
 }
@@ -94,4 +95,16 @@ export async function runStream(integrationId: string, stream: string, step: Hub
     if (gapMs) await step.sleep(`gap-${page}`, gapMs);
   }
   return { pages: MAX_PAGES_PER_RUN, rows, done: false };
+}
+
+/** Google access was revoked or expired: ask the owner to reconnect (at most weekly). Best-effort. */
+async function notifyReconnect(integrationId: string): Promise<void> {
+  try {
+    const row = await prisma.integration.findUnique({ where: { id: integrationId }, select: { restaurantId: true, provider: true } });
+    if (row?.provider !== "GBP") return;
+    const { sendReconnectGoogle } = await import("@/lib/email/owner");
+    await sendReconnectGoogle(row.restaurantId);
+  } catch (e) {
+    console.warn("[sync] reconnect email", e instanceof Error ? e.message : e);
+  }
 }

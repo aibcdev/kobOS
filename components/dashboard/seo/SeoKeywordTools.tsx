@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { appBtnPrimary, appBtnSecondary, appCardSurface } from "@/lib/app-ui-classes";
+import { appBtnPrimary, appCardSurface } from "@/lib/app-ui-classes";
 
 export function SeoKeywordTools({ restaurantId }: { restaurantId: string }) {
   const router = useRouter();

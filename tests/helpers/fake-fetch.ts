@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 export type FakeCall = { method: string; url: string; headers: Record<string, string>; body: unknown };
-type Reply = { status?: number; json?: unknown; headers?: Record<string, string> };
+/** `text` answers with a raw body (e.g. a web page) instead of JSON. */
+type Reply = { status?: number; json?: unknown; text?: string; headers?: Record<string, string> };
 type Route = { method?: string; match: RegExp; reply: Reply | ((call: FakeCall) => Reply) };
 
 /** Loads a recorded fixture next to a connector: fixture("square", "locations.json"). */
@@ -30,6 +31,8 @@ export function fakeFetch(routes: Route[]) {
     const route = routes.find((r) => (!r.method || r.method === method) && r.match.test(url));
     if (!route) throw new Error(`Unrouted ${method} ${url}`);
     const reply = typeof route.reply === "function" ? route.reply(call) : route.reply;
+    if (reply.text !== undefined)
+      return new Response(reply.text, { status: reply.status ?? 200, headers: { "Content-Type": "text/html", ...(reply.headers ?? {}) } });
     return new Response(JSON.stringify(reply.json ?? {}), {
       status: reply.status ?? 200,
       headers: { "Content-Type": "application/json", ...(reply.headers ?? {}) },

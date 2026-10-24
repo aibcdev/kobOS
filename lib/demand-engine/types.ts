@@ -16,6 +16,10 @@ export type StructuredOffer = {
   validFrom: string;
   validTo: string;
   templateKey?: string;
+  /** ISO 4217; amounts are in this currency. Older offers without it were GBP. */
+  currency?: string;
+  /** The weekdays the offer runs (e.g. ["TUE"]); never a day the owner protected. */
+  days?: string[];
 };
 
 export function discountLabelFromOffer(offer: StructuredOffer): string {
@@ -24,7 +28,8 @@ export function discountLabelFromOffer(offer: StructuredOffer): string {
     return `${offer.discountValue}% off`;
   }
   if (offer.discountType === "amount" && offer.discountValue != null) {
-    return `£${offer.discountValue} off`;
+    const money = new Intl.NumberFormat("en-GB", { style: "currency", currency: offer.currency ?? "GBP", maximumFractionDigits: 0 });
+    return `${money.format(offer.discountValue)} off`;
   }
   if (offer.discountType === "bogo") return "Buy 1 get 1";
   return offer.headline.slice(0, 40);

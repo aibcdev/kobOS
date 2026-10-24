@@ -163,8 +163,8 @@ export function WorkspaceHub({
 
         {/* Run agents */}
         <section className={appCardSurface}>
-          <h2 className="type-title-sm">Run agents</h2>
-          <p className="type-body-sm mt-2 text-[var(--color-muted)]">Delegate tasks to your assistant.</p>
+          <h2 className="type-title-sm">Hand it to KOB</h2>
+          <p className="type-body-sm mt-2 text-[var(--color-muted)]">Tell KOB what you need done.</p>
           <Link
             href={`/dashboard/chat?r=${encodeURIComponent(restaurantId)}`}
             className={`mt-4 inline-flex ${appBtnSecondary}`}

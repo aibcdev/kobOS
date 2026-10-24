@@ -1,4 +1,5 @@
 import { geminiTextCompletion } from "@/lib/ai/gemini-config";
+import { bannedWordsIn, OWNER_WORDING_RULE } from "@/lib/copy/banned-words";
 
 export const MAX_REPLY_CHARS = 1000;
 
@@ -27,6 +28,7 @@ Rules for the reply:
   the restaurant directly. Never promise compensation.
 - Never invent facts about the restaurant, staff, menu or what happened.
 - Sign off as the team, not a named person.
+- ${OWNER_WORDING_RULE}
 Output only the reply text.`;
 
 /** Removes the fence tags so guest text can't close the block early. */
@@ -59,6 +61,8 @@ export function cleanReply(raw: string): string | null {
     text = end > 200 ? cut.slice(0, end + 1) : "";
   }
   if (text.length < 20 || URL_OR_CONTACT.test(text) || /untrusted_review/i.test(text)) return null;
+  // A draft that calls itself AI (or similar) is thrown away; the safe template is used instead.
+  if (bannedWordsIn(text).length) return null;
   return text;
 }
 

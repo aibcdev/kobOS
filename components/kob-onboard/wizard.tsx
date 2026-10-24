@@ -33,7 +33,6 @@ export function OnboardWizard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hydrateFromOnboard = useKobStore((s) => s.hydrateFromOnboard);
-  const startNoCardTrial = useKobStore((s) => s.startNoCardTrial);
   const router = useRouter();
 
   useEffect(() => {
@@ -146,10 +145,24 @@ export function OnboardWizard() {
         return;
       }
       hydrateFromOnboard(data.profile, data.lens);
-      startNoCardTrial();
-      trackKob("trial_started");
+      // The trial starts on the restaurant (no card). Not signed in yet: sign up first, then come back here.
+      const trial = await fetch("/api/trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantName: finalAnswers.companyName, city: data.profile.city ?? null }),
+      });
+      if (trial.status === 401) {
+        router.push(`/signup?next=${encodeURIComponent("/onboard?resume=1")}`);
+        return;
+      }
+      const started = (await trial.json()) as { nextHref?: string; mode?: string; error?: string };
+      if (!trial.ok) {
+        setError(started.error ?? "Could not start your trial.");
+        return;
+      }
+      if (started.mode === "trial") trackKob("trial_started");
       trackKob("signup_completed");
-      router.push("/app");
+      router.push(started.nextHref ?? "/app");
     } catch {
       setError("Something went wrong. Try again.");
     } finally {
