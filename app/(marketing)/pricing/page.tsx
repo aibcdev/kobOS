@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { FOUNDING_PRICE_LINE, TRIAL_DAYS_FREE, TRIAL_LABEL } from "@/lib/billing/offer";
+import { FOUNDING_PRICE_LINE, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { trialPromise } from "@/lib/billing/trial-days";

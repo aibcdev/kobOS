@@ -9,7 +9,7 @@ export function ActionCardsColumn({
   onApproveHoliday,
   onApproveTopFix,
   holidayBusy,
-  creativeHref,
+  creativeHref: _creativeHref,
   requestsHref,
 }: {
   greeting: string;

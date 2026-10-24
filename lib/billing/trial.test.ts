@@ -96,14 +96,14 @@ describeDb("the trial lives on the restaurant", () => {
     // Day-5 reminder: found exactly once across hourly ticks.
     let reminders = 0;
     for (let h = 0; h < 8 * 24; h++) {
-      const due = await trial.trialsEndingSoon(new Date(start.getTime() + h * 3_600_000));
+      const due = await trial.trialsEndingSoon(new Date(start.getTime() + h * 3_600_000), { only: ids });
       reminders += due.filter((d) => d.id === a.restaurant.id).length;
     }
     expect(reminders).toBe(1);
 
     expect(await trial.canAct(a.restaurant.id, new Date(start.getTime() + 6 * DAY))).toEqual({ ok: true });
     const day8 = new Date(start.getTime() + 8 * DAY);
-    expect((await trial.expireTrials(day8)).map((r) => r.id)).toContain(a.restaurant.id);
+    expect((await trial.expireTrials(day8, ids)).map((r) => r.id)).toContain(a.restaurant.id);
     const after = await prisma.restaurant.findUniqueOrThrow({ where: { id: a.restaurant.id } });
     expect(after).toMatchObject({ billingStatus: "TRIAL_ENDED", subscriptionPlan: "FREE", stripeSubscriptionId: null });
     expect(trial.trialState(after, day8)).toMatchObject({ kind: "ended" });
@@ -120,6 +120,6 @@ describeDb("the trial lives on the restaurant", () => {
     expect(action).toMatchObject({ status: "FAILED", failureCode: "DENIED_TRIAL_ENDED" });
 
     // Expiring twice changes nothing.
-    expect((await trial.expireTrials(day8)).map((r) => r.id)).not.toContain(a.restaurant.id);
+    expect((await trial.expireTrials(day8, ids)).map((r) => r.id)).not.toContain(a.restaurant.id);
   });
 });

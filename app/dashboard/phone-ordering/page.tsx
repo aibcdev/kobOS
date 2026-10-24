@@ -7,8 +7,8 @@ import { getDashboardPageUser } from "@/lib/dashboard/get-dashboard-user";
 import { isUiPreviewEnabled } from "@/lib/preview/ui-preview";
 
 export const metadata: Metadata = {
-  title: "AI Phone Ordering · KOB",
-  description: "AI that answers the phone and takes orders.",
+  title: "Phone Ordering · KOB",
+  description: "A host that answers the phone and takes orders.",
 };
 
 export default async function PhoneOrderingPage({
@@ -17,7 +17,7 @@ export default async function PhoneOrderingPage({
   searchParams: Promise<{ r?: string }>;
 }) {
   if (isUiPreviewEnabled()) {
-    return <PreviewPlaceholder title="AI Phone Ordering" description="Waitlist for voice ordering." />;
+    return <PreviewPlaceholder title="Phone Ordering" description="Waitlist for voice ordering." />;
   }
   const userId = (await getDashboardPageUser()).id;
   const sp = await searchParams;
@@ -27,11 +27,11 @@ export default async function PhoneOrderingPage({
   return (
     <DashboardProductSurface
       eyebrow="Grow online sales"
-      title="AI Phone Ordering"
+      title="Phone Ordering"
       restaurantName={restaurant.name}
       restaurantId={restaurantId}
       status="waitlist"
-      description="Never miss a call — AI answers, takes orders, and hands off to your kitchen when you are ready."
+      description="Never miss a call — KOB answers, takes orders, and hands off to your kitchen when you are ready."
       bullets={[
         "Handles peak-hour missed calls",
         "Order capture into your workflow",
