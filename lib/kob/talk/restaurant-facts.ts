@@ -1,7 +1,7 @@
 import type { CustomerReview, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { TRIAL_DAYS } from "@/lib/billing/offer";
-import { foundingPrice, regionForCountry } from "@/lib/billing/regional-pricing";
+import { priceForCountry } from "@/lib/billing/regional-pricing";
 import { currencyForCountry } from "@/lib/commerce/currency";
 import { utcToZoned, zonedToUtc } from "@/lib/connectors/shared";
 
@@ -104,6 +104,14 @@ export async function reviewSummary(restaurantId: string, since: Date, until: Da
   };
 }
 
+/** "the 1-star", "two star", "5★" → 1..5, or null. */
+export function starsMentioned(text: string): number | null {
+  const m = text.match(/\b([1-5])\s*[- ]?\s*(?:star|★)/i) ?? text.match(/\b(one|two|three|four|five)[- ]star/i);
+  if (!m) return null;
+  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+  return Number(m[1]) || words[m[1].toLowerCase()] || null;
+}
+
 const STOP = new Set(["the", "a", "an", "to", "about", "reply", "review", "star", "stars", "our", "my", "we", "with", "for", "and", "of", "on", "in", "said", "guest", "draft", "voice"]);
 
 /** The review the owner means: by star rating and/or words from it, unreplied first, newest first. */
@@ -189,13 +197,15 @@ export async function contentQueue(restaurantId: string) {
 export async function planStatus(restaurantId: string, now: Date = new Date()) {
   const r = await prisma.restaurant.findUniqueOrThrow({
     where: { id: restaurantId },
-    select: { subscriptionPlan: true, trialStartedAt: true, stripeSubscriptionId: true, countryCode: true },
+    select: { subscriptionPlan: true, trialStartedAt: true, trialEndsAt: true, billingStatus: true, stripeSubscriptionId: true, countryCode: true },
   });
-  const price = foundingPrice(regionForCountry(r.countryCode));
-  const trialEndsAt = r.trialStartedAt ? new Date(r.trialStartedAt.getTime() + TRIAL_DAYS * DAY) : null;
+  const price = priceForCountry(r.countryCode);
+  // Rows from before trialEndsAt existed: the end follows from the start.
+  const trialEndsAt = r.trialEndsAt ?? (r.trialStartedAt ? new Date(r.trialStartedAt.getTime() + TRIAL_DAYS * DAY) : null);
   const daysLeft = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / DAY)) : null;
   return {
     plan: r.subscriptionPlan,
+    billingStatus: r.billingStatus,
     trialStartedAt: r.trialStartedAt?.toISOString() ?? null,
     trialEndsAt: trialEndsAt?.toISOString() ?? null,
     trialDaysLeft: daysLeft,

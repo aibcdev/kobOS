@@ -2,7 +2,14 @@ import { prisma } from "@/lib/db/prisma";
 import type { Generate } from "@/lib/connectors/gbp/drafter";
 import { templateReviewReply } from "@/lib/connectors/gbp/drafter";
 import { formatLocalDate, nextMothersDay } from "@/lib/locale/holidays";
-import { draftReplyForReview, type ReplyDraft } from "./actions";
+import { googleReviewLink, reviewAskMessage } from "@/lib/reviews/review-kit";
+import { nightsProfile, setMenuPrice, setNights, spendPerHead, type Weekday } from "@/lib/venue/nights";
+
+/** Talk's day codes (MON…) are the same three letters the nights profile uses. */
+const WEEKDAY_TO_NIGHT: Record<string, Weekday> = { MON: "MON", TUE: "TUE", WED: "WED", THU: "THU", FRI: "FRI", SAT: "SAT", SUN: "SUN" };
+import { draftReplyForReview, type ReplyDraft } from "@/lib/agent/review-reply";
+import { DAYS, LISTING_FACT, lastSnapshot, sameHours, saveWebsiteHours, websiteHours, type Day, type HoursPeriod, type ListingSnapshot } from "@/lib/connectors/gbp/listing";
+import { proposeHoursUpdate } from "@/lib/connectors/gbp/listing-sync";
 import {
   findReview,
   googleConnection,
@@ -16,6 +23,7 @@ import {
   planStatus,
   reviewSummary,
   saveHouseRule,
+  starsMentioned,
   type Profile,
 } from "./restaurant-facts";
 import type { TalkActivity } from "./types";
@@ -56,7 +64,9 @@ function replyBlock(d: ReplyDraft): string {
 }
 
 async function reviewsThisWeek(c: Ctx): Promise<FactAnswer> {
-  const s = await reviewSummary(c.restaurantId, periodStart("week", c.profile.timezone, c.now), c.now);
+  const weekStart = periodStart("week", c.profile.timezone, c.now);
+  const s = await reviewSummary(c.restaurantId, weekStart, c.now);
+  const lastWeek = await reviewSummary(c.restaurantId, new Date(weekStart.getTime() - 7 * 86_400_000), weekStart);
   if (!s.allTime.count)
     return {
       intent: "reviews_week",
@@ -65,7 +75,7 @@ async function reviewsThisWeek(c: Ctx): Promise<FactAnswer> {
     };
   const lines = [
     s.count
-      ? `This week: ${plural(s.count, "new review")}${s.average ? `, averaging ${s.average} stars` : ""}.`
+      ? `This week: ${plural(s.count, "new review")}${s.average ? `, averaging ${s.average} stars` : ""} (last week: ${lastWeek.count}).`
       : "No new reviews so far this week.",
     s.unrepliedTotal ? `${plural(s.unrepliedTotal, "review")} still ${s.unrepliedTotal === 1 ? "needs" : "need"} a reply.` : "Every review has a reply.",
   ];
@@ -93,15 +103,9 @@ async function reviewCount(c: Ctx, period: "month" | "last_month" | "week"): Pro
   };
 }
 
-function ratingFrom(text: string): number | null {
-  const m = text.match(/\b([1-5])\s*[- ]?\s*(?:star|★)/i) ?? text.match(/\b(one|two|three|four|five)[- ]star/i);
-  if (!m) return null;
-  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
-  return Number(m[1]) || words[m[1].toLowerCase()] || null;
-}
 
 async function replyToReview(c: Ctx, text: string): Promise<FactAnswer> {
-  const rating = ratingFrom(text);
+  const rating = starsMentioned(text);
   const about = text.replace(/^.*?\b(about|said|says|saying)\b/i, "");
   const review = await findReview(c.restaurantId, { rating, text: about === text ? text : about });
   if (!review) {
@@ -135,30 +139,38 @@ async function saveRule(c: Ctx, text: string): Promise<FactAnswer> {
 
 async function quietNight(c: Ctx, dayKey: string): Promise<FactAnswer> {
   const day = WEEKDAY[dayKey];
-  const blocked = (await noDiscountDays(c.restaurantId)).includes(day.code);
-  const spend = c.profile.pricePoint ? ` With a spend of ${c.profile.pricePoint} a head,` : "";
+  const code = WEEKDAY_TO_NIGHT[day.code];
+  const nights = await nightsProfile(c.restaurantId, c.now);
+  const blocked = nights.protectedDays.includes(code);
+  if (!blocked) await setNights(c.restaurantId, "quiet", [code], c.now);
+  const price = setMenuPrice(spendPerHead(c.profile.pricePoint));
+  const set = price ? new Intl.NumberFormat("en-GB", { style: "currency", currency: c.profile.currency, maximumFractionDigits: 0 }).format(price) : null;
   const ideas = blocked
-    ? [
-        `a ${day.label} chef's table or tasting night at full price`,
-        `a regulars' night: personal invites to past guests, no discount`,
-      ]
+    ? [`a ${day.label} chef's table or tasting night at full price`, `a regulars' night: personal invites to past guests, no discount`]
     : [
-        `a ${day.label} set menu (two courses, one fixed price)`,
-        `bring-a-friend: their main at half price, ${day.label}s only`,
-        `a ${day.label} early-evening offer for tables seated before 7pm`,
+        set ? `a ${day.label} set menu: two courses for ${set}` : `a ${day.label} set menu (two courses, one fixed price — tell me the price)`,
+        `dessert on us for tables seated before 7pm on ${day.label}s`,
+        `bring-a-friend: their main half price, ${day.label}s only`,
       ];
   const post = `${day.label}s at ${c.profile.name}: ${blocked ? "a night worth booking for" : "a little something to make the week better"}. Book your table${c.profile.city ? ` in ${c.profile.city}` : ""} — we'd love to see you.`;
   return {
     intent: "quiet_night",
     text: [
-      `A few ideas for ${day.label}s.${spend} I'd pick one and price it in ${c.profile.currency}:`,
+      blocked ? `You've marked ${day.label}s as busy or never to discount, so these keep full price:` : `Noted: ${day.label}s are quiet. Ideas in ${c.profile.currency}:`,
       ...ideas.map((i) => `• ${i}`),
-      blocked ? `(You've told me never to discount ${day.label}s, so these keep full price.)` : "",
-      `A post to go with it:\n\n"${post}"\n\nDraft — not posted. Tell me which idea and the price, and I'll tighten it up.`,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    activity: [{ label: "Checked your house rules", status: "complete" }],
+      `A post to go with it:\n\n"${post}"\n\nDraft — not posted. KOB will also suggest ${day.label} offers in Offers for you to approve.`,
+    ].join("\n"),
+    activity: [{ label: blocked ? "Checked your house rules" : "Noted a quiet night", status: "complete" }],
+  };
+}
+
+async function busyNight(c: Ctx, dayKey: string): Promise<FactAnswer> {
+  const day = WEEKDAY[dayKey];
+  await setNights(c.restaurantId, "busy", [WEEKDAY_TO_NIGHT[day.code]], c.now);
+  return {
+    intent: "busy_night",
+    text: `Noted: ${day.label}s are busy. KOB will never suggest a discount on a ${day.label}.`,
+    activity: [{ label: "Noted a busy night", status: "complete" }],
   };
 }
 
@@ -184,32 +196,130 @@ async function mothersDayOffer(c: Ctx): Promise<FactAnswer> {
   };
 }
 
+const NOT_CONNECTED =
+  "Your Google listing isn't connected yet, so I can't see its hours, photos or posts. Connect it and KOB will check it every morning and flag anything out of date.";
+
+const dayTitle = (d: Day) => d[0] + d.slice(1).toLowerCase();
+function hoursLine(periods: HoursPeriod[], day: Day) {
+  const p = periods.filter((x) => x.day === day);
+  return p.length ? p.map((x) => `${x.open}–${x.close}`).join(", ") : "closed";
+}
+
+function describeChange(ch: { field: string; before: unknown; after: unknown }): string {
+  if (ch.field === "hours") {
+    const before = ch.before as HoursPeriod[];
+    const after = ch.after as HoursPeriod[];
+    const days = DAYS.filter((d) => hoursLine(before, d) !== hoursLine(after, d));
+    return days.map((d) => `${dayTitle(d)} hours ${hoursLine(before, d)} → ${hoursLine(after, d)}`).join("; ");
+  }
+  if (ch.field === "photos") return `${Number(ch.after) - Number(ch.before)} new photo(s)`;
+  if (ch.field === "posts") return "a new post";
+  if (ch.field === "description") return "the description changed";
+  if (ch.field === "specialHours") return "holiday hours changed";
+  if (ch.field === "categories") return "categories changed";
+  return ch.field;
+}
+
 async function listingChanges(c: Ctx): Promise<FactAnswer> {
   const g = await googleConnection(c.restaurantId);
-  if (g.state !== "connected")
+  if (g.state !== "connected") return { intent: "listing", text: NOT_CONNECTED, activity: [{ label: "Checked your Google connection", status: "complete" }] };
+  const since = new Date(c.now.getTime() - 7 * 86_400_000);
+  const [s, rows] = await Promise.all([
+    reviewSummary(c.restaurantId, since, c.now),
+    prisma.osFact.findMany({ where: { restaurantId: c.restaurantId, key: LISTING_FACT, lastUpdatedAt: { gte: since } }, orderBy: { lastUpdatedAt: "asc" } }),
+  ]);
+  const changes = rows.flatMap((r) => ((r.valueJson as { changes?: { field: string; before: unknown; after: unknown }[] }).changes ?? []).map(describeChange));
+  const latest = rows.at(-1)?.valueJson as ListingSnapshot | undefined;
+  const lines = [
+    rows.length ? `Since last week on Google: ${changes.length ? changes.join("; ") : "no changes to hours, photos, posts or description"}.` : "KOB hasn't read your listing in the last week yet.",
+    `${plural(s.count, "new review")} in the last 7 days.`,
+    latest ? `Right now: ${latest.photoCount} photos, last post ${latest.lastPostAt ? formatLocalDate(latest.lastPostAt.slice(0, 10)) : "never"}.` : "",
+  ];
+  return { intent: "listing", text: lines.filter(Boolean).join(" "), activity: [{ label: "Checked your Google listing", status: "complete" }] };
+}
+
+async function hoursCompare(c: Ctx): Promise<FactAnswer> {
+  const g = await googleConnection(c.restaurantId);
+  if (g.state !== "connected") return { intent: "listing", text: NOT_CONNECTED, activity: [{ label: "Checked your Google connection", status: "complete" }] };
+  const [snap, site] = await Promise.all([lastSnapshot(c.restaurantId), websiteHours(c.restaurantId)]);
+  if (!snap) return { intent: "listing", text: "KOB hasn't read your Google hours yet. It will on the next morning check.", activity: [] };
+  if (!site)
     return {
       intent: "listing",
-      text: "Your Google listing isn't connected yet, so I can't see its hours, photos or posts. Connect it and KOB will check it every morning and flag anything out of date.",
-      activity: [{ label: "Checked your Google connection", status: "complete" }],
+      text: "Your website doesn't state its opening hours in a way KOB can read, so I can't compare them. Tell me your hours and I'll check Google against them.",
+      activity: [{ label: "Checked your Google hours", status: "complete" }],
     };
-  const since = new Date(c.now.getTime() - 7 * 86_400_000);
-  const s = await reviewSummary(c.restaurantId, since, c.now);
+  const days = DAYS.filter((d) => hoursLine(snap.hours, d) !== hoursLine(site, d));
+  if (!days.length) return { intent: "listing", text: "Yes — your Google hours match your website for every day.", activity: [{ label: "Compared your hours", status: "complete" }] };
+  const { approvals } = await pendingApprovals(c.restaurantId);
+  const waiting = approvals.some((a) => a.kind === "gbp.hours.regular.update");
   return {
     intent: "listing",
-    text: `Google is connected${g.lastSyncedAt ? `, last checked ${new Date(g.lastSyncedAt).toLocaleString("en-GB", { timeZone: c.profile.timezone })}` : ""}. In the last 7 days: ${plural(s.count, "new review")}. Changes to hours, photos and posts will show here once listing checks are switched on.`,
-    activity: [{ label: "Checked your Google listing", status: "complete" }],
+    text: `No. ${days.map((d) => `${dayTitle(d)}: Google says ${hoursLine(snap.hours, d)}, your website says ${hoursLine(site, d)}`).join(". ")}. ${
+      waiting ? "A fix is waiting in Needs you — approve it and KOB updates Google and checks it took." : "Tell me which is right and I'll prepare the change for you to approve."
+    }`,
+    activity: [{ label: "Compared your hours", status: "complete" }],
   };
 }
 
-async function hoursChange(c: Ctx): Promise<FactAnswer> {
+/** "close at 22:00 on Sundays", "open at 11am on Mondays" → which days and which time changed. */
+export function parseHoursStatement(text: string): { days: Day[]; open?: string; close?: string } | null {
+  const t = text.toLowerCase();
+  const days = DAYS.filter((d) => new RegExp(`\\b${d.toLowerCase()}s?\\b|\\b${d.slice(0, 3).toLowerCase()}\\b`).test(t));
+  const clock = (raw: string) => {
+    const m = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/.exec(raw.trim());
+    if (!m) return undefined;
+    let h = Number(m[1]);
+    if (m[3] === "pm" && h < 12) h += 12;
+    if (m[3] === "am" && h === 12) h = 0;
+    return h <= 24 ? `${String(h).padStart(2, "0")}:${m[2] ?? "00"}` : undefined;
+  };
+  const close = /\bclos(?:e|es|ing)\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/.exec(t)?.[1];
+  const open = /\bopen(?:s|ing)?\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/.exec(t)?.[1];
+  const out = { days, ...(open ? { open: clock(open) } : {}), ...(close ? { close: clock(close) } : {}) };
+  return days.length && (out.open || out.close) ? out : null;
+}
+
+async function hoursChange(c: Ctx, message: string): Promise<FactAnswer> {
   const g = await googleConnection(c.restaurantId);
+  const said = parseHoursStatement(message);
+  if (g.state !== "connected")
+    return {
+      intent: "hours",
+      text: "Got it. Connect your Google listing and KOB can update your hours there once you approve, then check they took. Until then, please change them in your Google Business Profile.",
+      activity: [],
+    };
+  const snap = await lastSnapshot(c.restaurantId);
+  if (!said || !snap)
+    return {
+      intent: "hours",
+      text: snap
+        ? "Which day and what time? For example: \"close at 22:00 on Sundays\"."
+        : "KOB hasn't read your Google hours yet, so I can't prepare the change safely. It will after the next morning check.",
+      activity: [],
+    };
+  const next: HoursPeriod[] = snap.hours.map((p) =>
+    said.days.includes(p.day) ? { ...p, ...(said.open ? { open: said.open } : {}), ...(said.close ? { close: said.close } : {}) } : p,
+  );
+  const missing = said.days.filter((d) => !snap.hours.some((p) => p.day === d));
+  if (missing.length && said.open && said.close) for (const d of missing) next.push({ day: d, open: said.open, close: said.close });
+  if (sameHours(next, snap.hours)) return { intent: "hours", text: "Google already shows those hours — nothing to change.", activity: [{ label: "Checked your Google hours", status: "complete" }] };
+  await saveWebsiteHours(c.restaurantId, next, c.now, "owner");
+  const changed = DAYS.filter((d) => hoursLine(snap.hours, d) !== hoursLine(next, d));
+  const summary = changed.map((d) => `${dayTitle(d)} ${hoursLine(snap.hours, d)} → ${hoursLine(next, d)}`).join("; ");
+  const { action } = await proposeHoursUpdate(c.restaurantId, snap.location, snap.hours, next, {
+    reason: `Owner said: ${message.slice(0, 200)}`,
+    requestedByUserId: c.userId,
+    channelOrigin: "WEB",
+    now: c.now,
+  });
   return {
     intent: "hours",
     text:
-      g.state === "connected"
-        ? "Got it. Updating hours on Google isn't switched on in KOB yet, so for now please change it in your Google Business Profile. I'll flag it if your listing and website disagree."
-        : "Got it. Connect your Google listing and KOB can check your hours there against your website every morning. Until then, please update it in your Google Business Profile.",
-    activity: [],
+      action.status === "AWAITING_APPROVAL"
+        ? `Ready to update Google: ${summary}. It's waiting in Needs you — approve it and KOB changes your listing, then checks Google shows the new hours.`
+        : `I noted ${summary}, but couldn't line up the Google change (${action.failureReason ?? "Google isn't ready"}). Please update it in your Google Business Profile for now.`,
+    activity: [{ label: "Prepared a Google hours change", status: "complete" }],
   };
 }
 
@@ -308,11 +418,19 @@ async function quietBooks(c: Ctx): Promise<FactAnswer> {
   };
 }
 
-function reviewAsk(c: Ctx): FactAnswer {
+async function reviewAsk(c: Ctx): Promise<FactAnswer> {
+  const link = await googleReviewLink(c.restaurantId);
+  if (!link)
+    return {
+      intent: "review_ask",
+      text: "I don't have last night's guest list, so I won't guess who to message. Connect your Google listing and I'll give you your review link, a QR code for the tables and a short thank-you message to send.",
+      activity: [],
+    };
+  const msg = reviewAskMessage(c.profile.name, link.url, "sms");
   return {
     intent: "review_ask",
-    text: `I don't have last night's guest list, so I won't guess who to message. The simplest start is your Google review link on a table card or the bill${c.profile.name ? ` at ${c.profile.name}` : ""}. If you send guests a thank-you by text or email, add the link there too.`,
-    activity: [],
+    text: `I don't have last night's guest list, so I won't guess who to message. Here's a thank-you you can send to guests who've said you can contact them:\n\n"${msg.body}"\n\nFor the tables, print the review card with a QR code from Reviews → Review card. Never offer anything in return for a review.`,
+    activity: [{ label: "Found your Google review link", status: "complete" }],
   };
 }
 
@@ -346,11 +464,12 @@ export async function answerFromFacts(
   if (/\bhow many reviews\b/.test(t)) return reviewCount(c, /last month/.test(t) ? "last_month" : /week/.test(t) ? "week" : "month");
   if (/\breviews?\b/.test(t)) return reviewsThisWeek(c);
   if (/mother'?s day|mothering sunday/.test(t)) return mothersDayOffer(c);
+  if (day && /\b(busy|packed|full|rammed)\b/.test(t) && !/\?$/.test(t.trim())) return busyNight(c, day);
   if (day && /\b(dead|quiet|slow|empty|help)\b/.test(t)) return quietNight(c, day);
   if (/\b(quiet|on the books|bookings?)\b/.test(t)) return quietBooks(c);
   if (/\b(instagram|post|caption)\b/.test(t)) return socialPost(c, message);
-  if (/\bhours\b/.test(t) && /\b(same|match|website|differ)\b/.test(t)) return listingChanges(c);
-  if (/\bhours\b|\bclose at\b|\bopen(ing)? at\b/.test(t)) return hoursChange(c);
+  if (/\bhours\b/.test(t) && /\b(same|match|website|differ)\b/.test(t)) return hoursCompare(c);
+  if (/\bhours\b|\bclose at\b|\bopen(ing)? at\b/.test(t)) return hoursChange(c, message);
   if (/\b(google|listing)\b/.test(t)) return listingChanges(c);
   if (/\b(rand|zar|how much|price after|cost after|pay after)\b/.test(t)) return priceAfterTrial(c);
   if (/\b(cancel|trial)\b/.test(t)) return trial(c, /\bcancel\b/.test(t));

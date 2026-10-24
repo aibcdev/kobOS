@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { appBtnPrimary, appBtnSecondary, appCardSurface, appCodeInline } from "@/lib/app-ui-classes";
+import { appBtnSecondary, appCardSurface, appCodeInline } from "@/lib/app-ui-classes";
 
 type Briefing = {
   warm_greeting?: string;

@@ -26,7 +26,6 @@ export function trackKob(event: KobEvent, props?: Record<string, string | number
       w.gtag("event", event, props ?? {});
     }
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
       console.debug("[kob:analytics]", detail);
     }
   } catch {

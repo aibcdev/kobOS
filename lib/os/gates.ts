@@ -41,6 +41,7 @@ export function ownerFacingStatus(status: string, failureCode?: string | null): 
     if (failureCode === "VERIFY_MISMATCH") return "Didn't stick — check it.";
     if (failureCode === "VERIFY_TIMEOUT") return "Not confirmed yet — check it.";
     if (failureCode === "EXPIRED") return "Expired.";
+    if (failureCode === "DENIED_TRIAL_ENDED") return "Trial ended — add a card to send this.";
     if (failureCode.startsWith("DENIED_")) return "Not allowed.";
     return "Couldn't finish.";
   }

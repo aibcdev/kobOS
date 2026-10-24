@@ -1,6 +1,7 @@
 import { ConnectorError } from "@/lib/connectors/errors";
 import { createGbpAdapter } from "@/lib/connectors/gbp/adapter";
 import { gbpClient, type GbpClient } from "@/lib/connectors/gbp/client";
+import { syncListing } from "@/lib/connectors/gbp/listing-sync";
 import { gbpManifest } from "@/lib/connectors/gbp/manifest";
 import { proposeReviewReplies } from "@/lib/connectors/gbp/producer";
 import { upsertGbpReviews } from "@/lib/connectors/gbp/reviews";
@@ -60,11 +61,22 @@ async function syncReviews(ctx: ConnectorCtx, raw: string | null): Promise<SyncP
   const [, account, loc] = m;
 
   const since = raw ? ((JSON.parse(raw) as { since?: string }).since ?? null) : null;
-  const reviews = (await (await client(ctx)).reviews(account, loc)).filter((r) => !since || r.updateTime > since);
+  const reviews = (await (await client(ctx)).reviews(account, loc, { since })).filter((r) => !since || r.updateTime > since);
   const unanswered = await upsertGbpReviews(ctx.restaurantId, reviews);
   await proposeReviewReplies(ctx.restaurantId, unanswered, { now: ctx.now?.() });
   const maxSeen = reviews.reduce<string | null>((m, r) => (!m || r.updateTime > m ? r.updateTime : m), since);
   return { rows: reviews.length, nextCursor: JSON.stringify({ since: maxSeen }), done: true };
+}
+
+async function syncListingStream(ctx: ConnectorCtx, raw: string | null): Promise<SyncPage> {
+  const location = await reviewLocation(ctx);
+  if (location === "needs_choice") {
+    await requireLocationChoice(ctx.integrationId);
+    return { rows: 0, nextCursor: raw, done: true };
+  }
+  if (!location) return { rows: 0, nextCursor: raw, done: true };
+  const { changes } = await syncListing(ctx.restaurantId, await client(ctx), location, { now: ctx.now?.(), fetch: ctx.fetch });
+  return { rows: changes.length, nextCursor: raw, done: true };
 }
 
 export const gbpConnector: Connector = {
@@ -82,6 +94,7 @@ export const gbpConnector: Connector = {
   listLocations,
   async sync(ctx, stream, cursor) {
     if (stream === "reviews") return syncReviews(ctx, cursor);
+    if (stream === "listing") return syncListingStream(ctx, cursor);
     throw new ConnectorError("VALIDATION", `GBP has no stream ${stream}`);
   },
   actions: createGbpAdapter(),

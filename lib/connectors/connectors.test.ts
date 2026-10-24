@@ -317,7 +317,7 @@ describeDb("POS read connectors on Postgres (T-88)", () => {
     const { getManifest } = await import("@/lib/hub/manifest");
     const { registerAllConnectors } = await import("@/lib/connectors");
     const { actionAdapterFor } = await import("@/lib/agent/verify");
-    const actions: Record<string, string[]> = { SQUARE: ["pos.item.86", "pos.item.price.update"], GBP: ["gbp.review.reply"] };
+    const actions: Record<string, string[]> = { SQUARE: ["pos.item.86", "pos.item.price.update"], GBP: ["gbp.review.reply", "gbp.hours.regular.update", "gbp.hours.special.set", "gbp.post.create", "gbp.profile.description.update"] };
     registerAllConnectors();
     for (const c of CONNECTORS) {
       expect(getManifest(c.manifest.provider)).toBe(c.manifest);

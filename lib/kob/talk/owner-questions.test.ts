@@ -189,7 +189,7 @@ describeDb("Talk answers the 20 owner questions from the restaurant's data (no l
   it("a quiet-night idea never discounts a day the owner protected", async () => {
     await answerFromFacts(harbour.id, harbour.userId, "Never discount Tuesdays.", { now: NOW });
     const a = await answerFromFacts(harbour.id, harbour.userId, "Tuesday nights are dead, help.", { now: NOW });
-    expect(a.text).toMatch(/never to discount Tuesdays/);
+    expect(a.text).toMatch(/marked Tuesdays as busy or never to discount/);
     expect(a.text).not.toMatch(/half price/);
   });
 

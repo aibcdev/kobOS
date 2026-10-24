@@ -40,7 +40,7 @@ export async function fetchRenderedPage(url: string): Promise<BrowserbaseRendere
 
   const target = normalizeUrl(url);
   try {
-    // eslint-disable-next-line no-new -- URL validates
+    // Throws on an invalid URL.
     new URL(target);
   } catch {
     throw new Error("invalid_url");

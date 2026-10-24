@@ -3,11 +3,12 @@ import { prisma } from "@/lib/db/prisma";
 import { proposeAction } from "@/lib/agent/propose";
 import type { PolicyDeps } from "@/lib/agent/policy";
 import { draftReviewReplyOrTemplate, type Generate } from "@/lib/connectors/gbp/drafter";
-import { reviewSubject, reviewTaskKey } from "@/lib/connectors/gbp/producer";
-import { googleConnection } from "./restaurant-facts";
+import { reviewSubject, reviewTaskKey } from "@/lib/connectors/gbp/review-subject";
+import { googleConnection } from "@/lib/kob/talk/restaurant-facts";
 
 export type ReplyDraft = {
   reviewId: string;
+  contentId: string;
   rating: number;
   reviewer: string | null;
   text: string;
@@ -16,6 +17,24 @@ export type ReplyDraft = {
   actionId: string | null;
   reason: string | null;
 };
+
+/** The content queue copy of a reply draft, so the owner can always see (and copy) what KOB wrote. */
+export const replyContentPrompt = (reviewId: string) => `review:${reviewId}`;
+
+export async function saveReplyDraft(restaurantId: string, reviewId: string, text: string): Promise<string> {
+  const row = await prisma.generatedContent.create({
+    data: { restaurantId, type: "GROWTH_REVIEW_REPLY", prompt: replyContentPrompt(reviewId), output: text, status: "READY" },
+  });
+  return row.id;
+}
+
+/** After Google shows the reply: mark the matching draft published. */
+export async function markReplyDraftPublished(restaurantId: string, reviewId: string, text: string): Promise<void> {
+  await prisma.generatedContent.updateMany({
+    where: { restaurantId, type: "GROWTH_REVIEW_REPLY", prompt: replyContentPrompt(reviewId), output: text },
+    data: { published: true },
+  });
+}
 
 /**
  * Draft a reply to one review and, when Google is connected and the review came from Google, put it in the owner's
@@ -32,7 +51,8 @@ export async function draftReplyForReview(
     { restaurantName: restaurant.name, voice: restaurant.vibe, reviewerName: review.reviewerName, rating: review.rating, reviewText: review.body },
     opts.generate,
   );
-  const base = { reviewId: review.id, rating: review.rating, reviewer: review.reviewerName?.trim().split(/\s+/)[0] ?? null, text };
+  const contentId = await saveReplyDraft(restaurantId, review.id, text);
+  const base = { reviewId: review.id, contentId, rating: review.rating, reviewer: review.reviewerName?.trim().split(/\s+/)[0] ?? null, text };
   const google = await googleConnection(restaurantId);
   if (review.source !== "GOOGLE" || !review.externalReviewId)
     return { ...base, placed: "chat_only", actionId: null, reason: "This review isn't from Google, so it can't be posted from KOB." };

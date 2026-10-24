@@ -107,7 +107,8 @@ export async function syncHoursEverywhere(input: HoursSyncInput): Promise<{
   } else if (unverified.length) {
     ownerMessage = "Sent — waiting for confirmation.";
   } else {
-    ownerMessage = `Hours verified everywhere: ${canonical.open}–${canonical.close}.`;
+    // Name only the channels that were read back, never "everywhere".
+    ownerMessage = `Hours checked on ${ok.join(" and ")}: ${canonical.open}–${canonical.close}.`;
   }
 
   return { canonical, needsApproval: false, results, ownerMessage };

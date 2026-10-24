@@ -67,7 +67,7 @@ export function ChiefOfStaffHome({
         showToast({ message: "Preview mode — approve works after sign-in.", tone: "info" });
         return;
       }
-      // Optimistic: tick the box immediately — don't wait for AI.
+      // Optimistic: tick the box immediately — don't wait for the draft.
       const prevTasks = brief.tasks;
       setBrief((b) => ({
         ...b,
@@ -81,13 +81,13 @@ export function ChiefOfStaffHome({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ restaurantId }),
         });
-        const body = (await res.json()) as { message?: string; nextHref?: string; error?: string };
+        const body = (await res.json()) as { message?: string; nextHref?: string; error?: string; actionId?: string };
         if (res.ok) {
           showToast({
             message: body.message ?? "Approved.",
             tone: "success",
             href: body.nextHref,
-            hrefLabel: "Content",
+            hrefLabel: body.actionId ? "Check the reply" : "Content",
           });
         } else {
           setBrief((b) => ({ ...b, tasks: prevTasks }));
@@ -95,7 +95,7 @@ export function ChiefOfStaffHome({
             message: body.message ?? body.error ?? "Could not approve.",
             tone: "error",
             href: body.nextHref,
-            hrefLabel: "Settings",
+            hrefLabel: body.error === "connect_google" ? "Connect Google" : "Settings",
           });
         }
       } catch {
@@ -244,7 +244,7 @@ export function ChiefOfStaffHome({
           setBrief((b) => ({ ...b, aiPersonality: prev }));
           showToast({ message: "Could not save tone.", tone: "error" });
         } else {
-          showToast({ message: "AI tone saved.", tone: "success" });
+          showToast({ message: "Tone saved.", tone: "success" });
         }
       } finally {
         setPersonalitySaving(false);

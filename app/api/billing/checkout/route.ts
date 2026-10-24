@@ -3,94 +3,70 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { getRestaurantForMember } from "@/lib/billing/restaurant-member";
 import { createSubscriptionCheckoutSession } from "@/lib/billing/checkout-subscription-session";
-import { foundingPrice, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
-import {
-  checkoutCurrencyFor,
-  getStripePricePro,
-  getStripePriceStarter,
-  requireStripe,
-} from "@/lib/billing/stripe-server";
+import { priceForCountry } from "@/lib/billing/regional-pricing";
+import { getStripePricePro, requireStripe } from "@/lib/billing/stripe-server";
 import { prisma } from "@/lib/db/prisma";
 
 export const runtime = "nodejs";
 
-const bodySchema = z.object({
-  restaurantId: z.string().min(12),
-  tier: z.enum(["starter", "pro"]),
-});
+const bodySchema = z.object({ restaurantId: z.string().min(12) });
 
+/** KOB's Stripe product: STRIPE_PRODUCT_ID, or the product behind the founding price. */
+async function kobProduct(stripe: ReturnType<typeof requireStripe>): Promise<string | null> {
+  const id = process.env.STRIPE_PRODUCT_ID?.trim();
+  if (id) return id;
+  const priceId = getStripePricePro();
+  if (!priceId) return null;
+  const price = await stripe.prices.retrieve(priceId);
+  return typeof price.product === "string" ? price.product : price.product.id;
+}
+
+/** Add a card: Stripe Checkout at the restaurant's own price and currency. During the trial, billing starts at its end. */
 export async function POST(req: Request) {
   const session = await requireApiUser();
-  if (!session.ok) {
-    return NextResponse.json({ error: session.message }, { status: session.status });
-  }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const parsed = bodySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
-  }
-
-  const restaurant = await getRestaurantForMember(session.userId, parsed.data.restaurantId);
-  if (!restaurant) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  if (!session.ok) return NextResponse.json({ error: session.message }, { status: session.status });
+  const parsed = bodySchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "restaurantId required" }, { status: 422 });
+  const member = await getRestaurantForMember(session.userId, parsed.data.restaurantId);
+  if (!member) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   let stripe: ReturnType<typeof requireStripe>;
   try {
     stripe = requireStripe();
   } catch {
-    return NextResponse.json({ error: "Stripe is not configured (STRIPE_SECRET_KEY)." }, { status: 503 });
+    return NextResponse.json({ error: "Card payments aren't switched on yet. Nothing has been charged." }, { status: 503 });
   }
+  const product = await kobProduct(stripe).catch(() => null);
+  if (!product) return NextResponse.json({ error: "Card payments aren't switched on yet. Nothing has been charged." }, { status: 503 });
 
-  const priceId = parsed.data.tier === "pro" ? getStripePricePro() : getStripePriceStarter();
-  if (!priceId) {
-    return NextResponse.json(
-      { error: parsed.data.tier === "pro" ? "STRIPE_PRICE_PRO is not set" : "STRIPE_PRICE_STARTER is not set" },
-      { status: 503 },
-    );
-  }
-
-  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  const restaurant = await prisma.restaurant.findUniqueOrThrow({
+    where: { id: member.id },
+    select: { id: true, countryCode: true, trialEndsAt: true, billingStatus: true, stripeCustomerId: true },
+  });
+  const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { email: true } });
   const email = user?.email?.trim();
-  if (!email) {
-    return NextResponse.json({ error: "Account email missing" }, { status: 400 });
-  }
+  if (!email) return NextResponse.json({ error: "Account email missing" }, { status: 400 });
 
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    new URL(req.url).origin ||
-    "http://localhost:3333";
-
-  const successPath = `/dashboard?r=${encodeURIComponent(restaurant.id)}&welcome=1&checkout=success`;
-  const cancelPath = `/dashboard/billing?r=${encodeURIComponent(restaurant.id)}&checkout=cancel`;
-
+  const price = priceForCountry(restaurant.countryCode);
+  const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(req.url).origin;
+  const r = encodeURIComponent(restaurant.id);
   try {
-    const sessionStripe = await createSubscriptionCheckoutSession({
+    const checkout = await createSubscriptionCheckoutSession({
       stripe,
       restaurantId: restaurant.id,
       customerEmail: email,
       existingStripeCustomerId: restaurant.stripeCustomerId,
-      priceId,
-      currency: checkoutCurrencyFor(priceId, foundingPrice(regionFromRequestHeaders(req.headers)).currency),
+      product,
+      currency: price.currency,
+      amount: price.amount,
+      trialEndsAt: restaurant.billingStatus === "TRIALING" ? restaurant.trialEndsAt : null,
       origin,
-      successPath,
-      cancelPath,
+      successPath: `/dashboard/billing?r=${r}&checkout=success`,
+      cancelPath: `/dashboard/billing?r=${r}&checkout=cancel`,
     });
-
-    if (!sessionStripe.url) {
-      return NextResponse.json({ error: "Stripe did not return a checkout URL" }, { status: 502 });
-    }
-
-    return NextResponse.json({ url: sessionStripe.url });
+    if (!checkout.url) return NextResponse.json({ error: "Stripe did not return a checkout link" }, { status: 502 });
+    return NextResponse.json({ url: checkout.url, price: price.label });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Stripe checkout failed";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Checkout failed" }, { status: 502 });
   }
 }

@@ -3,7 +3,6 @@
 import {
   ALL_LEAD_ENGINE_CITIES,
   isIrelandCity,
-  leadEngineCityNames,
 } from "@/lib/lead-engine/scrapers/uk-ie-cities";
 
 export type LeadEngineConfig = {
@@ -28,8 +27,6 @@ export type LeadEngineConfig = {
   seedTarget: number;
   cities: Array<{ city: string; country: "GB" | "IE" }>;
 };
-
-const DEFAULT_UK_IE_CITIES = leadEngineCityNames().join(",");
 
 function parseLeadEngineCities(citiesRaw: string): Array<{ city: string; country: "GB" | "IE" }> {
   return citiesRaw
