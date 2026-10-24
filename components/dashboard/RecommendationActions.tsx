@@ -64,7 +64,7 @@ export function RecommendationActions({ restaurantId }: Props) {
         onClick={() => void runAiRecommendations()}
         className={appBtnPrimary}
       >
-        Run AI recommendations
+        Get recommendations
       </button>
       <button
         type="button"

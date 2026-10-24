@@ -10,7 +10,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Redesign Studio · KOB",
-  description: "AI website redesign strategist — hero, conversion, and section plans.",
+  description: "Website redesign plans — hero, conversion, and section plans.",
 };
 
 function withR(restaurantId: string, path: string) {
@@ -28,7 +28,7 @@ export default async function RedesignPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="mx-auto max-w-5xl px-[var(--spacing-md)] py-10">
-      <p className="type-caption text-[var(--color-muted-medium)]">AI Website Redesign Studio</p>
+      <p className="type-caption text-[var(--color-muted-medium)]">Website redesign studio</p>
       <h1 className="type-title-md mt-2 font-head">Premium layout, built for reservations</h1>
       <p className="type-body-md mt-3 max-w-2xl text-pretty text-[var(--color-muted)]">
         We analyze your live site and workspace signals, then return a conversion-focused plan: hero, menu schema hints,

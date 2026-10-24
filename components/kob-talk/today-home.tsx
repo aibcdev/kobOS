@@ -54,6 +54,21 @@ export function TodayHome({
       cancelled = true;
     };
   }, [restaurant.id]);
+  // Trial banner: days left, or "ended — add a card" (KOB is read-only until then).
+  const [billing, setBilling] = useState<{ state: string; daysLeft: number | null; price: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/billing/status?restaurantId=${encodeURIComponent(restaurant.id)}`, { cache: "no-store" })
+      .then((res) => (res.ok ? (res.json() as Promise<{ state: string; daysLeft: number | null; price: string }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setBilling(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurant.id]);
+
   function skipGoogle() {
     setGoogleSkipped(true);
     try {
@@ -199,6 +214,30 @@ export function TodayHome({
             <li key={i} className="h-24 animate-pulse rounded-2xl bg-paper" />
           ))}
         </ul>
+      ) : null}
+
+      {billing?.state === "trialing" && billing.daysLeft != null ? (
+        <p className="text-sm text-muted">
+          {billing.daysLeft} day{billing.daysLeft === 1 ? "" : "s"} left in your free trial ·{" "}
+          <Link href={`/dashboard/billing?r=${encodeURIComponent(restaurant.id)}`} className="underline">
+            Billing
+          </Link>
+        </p>
+      ) : null}
+      {billing?.state === "ended" ? (
+        <article role="status" className="rounded-3xl border border-line bg-paper p-5 text-sm">
+          <p className="font-medium">Your free trial has ended</p>
+          <p className="mt-1 text-muted">
+            KOB is paused: your data is kept, but nothing new is drafted or published. Add a card to keep it running — {billing.price} a
+            month. Nothing has been charged.
+          </p>
+          <Link
+            href={`/dashboard/billing?r=${encodeURIComponent(restaurant.id)}`}
+            className="mt-3 inline-flex min-h-11 items-center rounded-full bg-espresso px-4 text-paper"
+          >
+            Add a card
+          </Link>
+        </article>
       ) : null}
 
       {google && google.state !== "connected" && !googleSkipped ? (

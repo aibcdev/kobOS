@@ -3,105 +3,50 @@
 import { useState } from "react";
 import { appBtnPrimary, appBtnSecondary } from "@/lib/app-ui-classes";
 
+/** One button: add a card (Stripe Checkout at this restaurant's price) or manage the card already on file. */
 export function BillingActions({
   restaurantId,
-  hasStripeCustomer,
-  stripeReady,
+  action,
+  priceLabel,
+  cardsOn,
 }: {
   restaurantId: string;
-  hasStripeCustomer: boolean;
-  stripeReady: boolean;
+  action: "add_card" | "manage";
+  priceLabel: string;
+  cardsOn: boolean;
 }) {
-  const [busy, setBusy] = useState<null | "starter" | "pro" | "portal">(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function checkout(tier: "starter" | "pro") {
+  async function go() {
     setError(null);
-    setBusy(tier);
+    setBusy(true);
     try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, tier }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        setError(data.error ?? "Checkout failed");
-        setBusy(null);
-        return;
-      }
-      window.location.href = data.url;
-    } catch {
-      setError("Network error");
-      setBusy(null);
-    }
-  }
-
-  async function portal() {
-    setError(null);
-    setBusy("portal");
-    try {
-      const res = await fetch("/api/billing/portal", {
+      const res = await fetch(action === "manage" ? "/api/billing/portal" : "/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ restaurantId }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        setError(data.error ?? "Portal failed");
-        setBusy(null);
+        setError(data.error ?? "That didn't work. Nothing has been charged — please try again.");
+        setBusy(false);
         return;
       }
       window.location.href = data.url;
     } catch {
-      setError("Network error");
-      setBusy(null);
+      setError("Network error. Nothing has been charged.");
+      setBusy(false);
     }
   }
 
+  if (!cardsOn) return <p className="type-body-sm text-[var(--color-muted)]">Card payments open soon. Nothing will be charged until then.</p>;
   return (
-    <div className="space-y-4">
-      {!stripeReady ? (
-        <p className="type-body-sm text-amber-800">
-          Set <code className="rounded bg-[var(--color-muted-faint)] px-1 font-mono text-[12px]">STRIPE_SECRET_KEY</code>
-          , <code className="rounded bg-[var(--color-muted-faint)] px-1 font-mono text-[12px]">STRIPE_PRICE_STARTER</code>
-          , and <code className="rounded bg-[var(--color-muted-faint)] px-1 font-mono text-[12px]">STRIPE_PRICE_PRO</code>{" "}
-          to enable live checkout.
-        </p>
-      ) : null}
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          disabled={Boolean(busy) || !stripeReady}
-          onClick={() => void checkout("starter")}
-          className={appBtnSecondary}
-        >
-          {busy === "starter" ? "Redirecting…" : "Start free trial · Starter"}
-        </button>
-        <button
-          type="button"
-          disabled={Boolean(busy) || !stripeReady}
-          onClick={() => void checkout("pro")}
-          className={appBtnPrimary}
-        >
-          {busy === "pro" ? "Redirecting…" : "Start free trial · Pro"}
-        </button>
-        {hasStripeCustomer ? (
-          <button
-            type="button"
-            disabled={Boolean(busy) || !stripeReady}
-            onClick={() => void portal()}
-            className={appBtnSecondary}
-          >
-            {busy === "portal" ? "Opening…" : "Manage billing"}
-          </button>
-        ) : null}
-      </div>
+    <div className="space-y-3">
+      <button type="button" disabled={busy} onClick={() => void go()} className={action === "manage" ? appBtnSecondary : appBtnPrimary}>
+        {busy ? "Opening…" : action === "manage" ? "Manage card or cancel" : `Add a card · ${priceLabel}/month`}
+      </button>
       {error ? <p className="type-body-sm text-red-700">{error}</p> : null}
-      <p className="type-caption text-[var(--color-muted-medium)]">
-        Webhook URL: <span className="font-mono">/api/stripe/webhook</span> — set{" "}
-        <span className="font-mono">STRIPE_WEBHOOK_SECRET</span> in production.
-      </p>
     </div>
   );
 }
