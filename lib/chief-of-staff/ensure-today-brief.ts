@@ -5,9 +5,10 @@ import type { ChiefOfStaffTaskDto, TodayBriefPayload } from "@/lib/chief-of-staf
 import { shellTodayBriefWithJourney } from "@/lib/dashboard/journey-priorities";
 import { prisma } from "@/lib/db/prisma";
 
-function todayUtcDate(): Date {
-  const d = new Date();
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+/** The restaurant's own calendar day (as a @db.Date), so a Cape Town brief turns over at Cape Town midnight. */
+async function localBriefDate(restaurantId: string, now: Date): Promise<Date> {
+  const { timezone } = await prisma.restaurant.findUniqueOrThrow({ where: { id: restaurantId }, select: { timezone: true } });
+  return new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(now)}T00:00:00Z`);
 }
 
 function toDraft(payload: ChiefOfStaffTask["draftPayload"]): ChiefOfStaffTaskDto["draft"] {
@@ -67,8 +68,9 @@ export function shellTodayBrief(
 }
 
 /** DB-only read — never calls Gemini. Used for fast post-login dashboard paint. */
-export async function getCachedTodayBrief(restaurantId: string): Promise<TodayBriefPayload | null> {
-  const briefDate = todayUtcDate();
+export async function getCachedTodayBrief(restaurantId: string, now: Date = new Date()): Promise<TodayBriefPayload | null> {
+  const briefDate = await localBriefDate(restaurantId, now).catch(() => null);
+  if (!briefDate) return null;
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
     select: { aiPersonality: true },
@@ -81,19 +83,15 @@ export async function getCachedTodayBrief(restaurantId: string): Promise<TodayBr
   if (!existing) return null;
 
   const tasks = await prisma.chiefOfStaffTask.findMany({
-    where: {
-      restaurantId,
-      createdAt: { gte: existing.createdAt },
-      status: { in: ["PENDING", "APPROVED"] },
-    },
+    // Everything still open, plus what was approved today.
+    where: { restaurantId, OR: [{ status: "PENDING" }, { status: "APPROVED", updatedAt: { gte: briefDate } }] },
     orderBy: [{ status: "asc" }, { confidenceScore: "desc" }],
     take: 20,
   });
   return snapshotToPayload(existing, tasks, restaurant.aiPersonality);
 }
 
-export async function ensureTodayBrief(restaurantId: string, force = false): Promise<TodayBriefPayload> {
-  const briefDate = todayUtcDate();
+export async function ensureTodayBrief(restaurantId: string, force = false, now: Date = new Date()): Promise<TodayBriefPayload> {
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
     select: { aiPersonality: true },
@@ -101,26 +99,35 @@ export async function ensureTodayBrief(restaurantId: string, force = false): Pro
   if (!restaurant) {
     throw new Error("restaurant_not_found");
   }
+  const briefDate = await localBriefDate(restaurantId, now);
 
   if (!force) {
-    const cached = await getCachedTodayBrief(restaurantId);
+    const cached = await getCachedTodayBrief(restaurantId, now);
     if (cached?.tasks.length) return cached;
   }
 
-  const generated = await generateMorningBrief(restaurantId);
+  const generated = await generateMorningBrief(restaurantId, { now });
   if (!generated) {
     throw new Error("brief_generation_failed");
   }
 
   const snapshot = await prisma.$transaction(async (tx) => {
-    await tx.chiefOfStaffTask.updateMany({
-      where: { restaurantId, status: "PENDING" },
-      data: { status: "DISMISSED" },
+    // Brief-made tasks (ENGINE, AUDIT, AI) are replaced, but one still on today's list stays as it is, so
+    // regenerating never duplicates. Tasks from listing checks (draftPayload.listingIssue) or the owner are kept.
+    const open = await tx.chiefOfStaffTask.findMany({
+      where: { restaurantId, status: "PENDING", source: { in: ["ENGINE", "AUDIT", "AI"] } },
+      select: { id: true, title: true, draftPayload: true },
     });
+    const wanted = new Set(generated.taskDrafts.map((t) => t.title.toLowerCase()));
+    const listingIssue = (p: unknown) => Boolean(p && typeof p === "object" && "listingIssue" in p);
+    const stale = open.filter((t) => !wanted.has(t.title.toLowerCase()) && !listingIssue(t.draftPayload));
+    if (stale.length) await tx.chiefOfStaffTask.updateMany({ where: { id: { in: stale.map((t) => t.id) } }, data: { status: "DISMISSED" } });
+    const kept = new Set(open.filter((t) => wanted.has(t.title.toLowerCase())).map((t) => t.title.toLowerCase()));
+    const fresh = generated.taskDrafts.filter((t) => !kept.has(t.title.toLowerCase()));
 
-    if (generated.taskDrafts.length) {
+    if (fresh.length) {
       await tx.chiefOfStaffTask.createMany({
-        data: generated.taskDrafts.map((t) => ({
+        data: fresh.map((t) => ({
           restaurantId,
           title: t.title,
           detail: t.detail ?? "",
@@ -154,7 +161,7 @@ export async function ensureTodayBrief(restaurantId: string, force = false): Pro
   });
 
   const tasks = await prisma.chiefOfStaffTask.findMany({
-    where: { restaurantId, status: { in: ["PENDING", "APPROVED"] } },
+    where: { restaurantId, OR: [{ status: "PENDING" }, { status: "APPROVED", updatedAt: { gte: briefDate } }] },
     orderBy: [{ source: "asc" }, { confidenceScore: "desc" }],
     take: 20,
   });

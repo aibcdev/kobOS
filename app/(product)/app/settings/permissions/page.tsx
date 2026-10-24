@@ -12,7 +12,7 @@ const MODE_TEXT: Record<string, string> = {
   NEVER: "Never — KOB won't suggest this",
   ASK: "Asks you first",
   AUTO_WITH_LIMITS: "Does it within your limits",
-  AUTOPILOT: "Autopilot",
+  AUTOPILOT: "Handles it for you",
 };
 
 function limitText(limits: unknown): string[] {

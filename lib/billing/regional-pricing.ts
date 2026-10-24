@@ -72,3 +72,39 @@ export function regionFromRequestHeaders(h: Headers): PriceRegion {
     regionForCountry(countryFromHeaders(h))
   );
 }
+
+// ---- What each restaurant is charged ------------------------------------------------------------
+
+/** What a restaurant pays per location per month: its currency (ISO 4217, lower case for Stripe) and amount. */
+export type CountryPrice = { currency: string; amount: number; label: string };
+
+function labelFor(currency: string, amount: number): string {
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency: currency.toUpperCase(), maximumFractionDigits: 0 }).format(amount);
+}
+
+/**
+ * The default offer: £79 in the UK and Crown Dependencies, $99 everywhere else. Local prices (ZAR, INR, AUD, EUR…)
+ * are a config change, not a code change: set KOB_PRICES, e.g. {"ZA":{"currency":"zar","amount":1499}}.
+ */
+export function priceTable(): Record<string, { currency: string; amount: number }> {
+  const table: Record<string, { currency: string; amount: number }> = {};
+  for (const c of GBP_COUNTRIES) table[c] = { currency: "gbp", amount: FOUNDING_PRICES.GB.amount };
+  const raw = process.env.KOB_PRICES?.trim();
+  if (raw) {
+    try {
+      for (const [country, p] of Object.entries(JSON.parse(raw) as Record<string, { currency?: unknown; amount?: unknown }>)) {
+        if (typeof p.currency === "string" && /^[a-z]{3}$/i.test(p.currency) && typeof p.amount === "number" && p.amount > 0)
+          table[country.toUpperCase()] = { currency: p.currency.toLowerCase(), amount: p.amount };
+      }
+    } catch {
+      console.warn("[pricing] KOB_PRICES is not valid JSON; using the default prices");
+    }
+  }
+  return table;
+}
+
+/** The one place a restaurant's price comes from: pricing page, billing, checkout, emails and Talk. */
+export function priceForCountry(country: string | null | undefined): CountryPrice {
+  const p = priceTable()[country?.trim().toUpperCase() ?? ""] ?? { currency: FOUNDING_PRICES.US.currency, amount: FOUNDING_PRICES.US.amount };
+  return { ...p, label: labelFor(p.currency, p.amount) };
+}

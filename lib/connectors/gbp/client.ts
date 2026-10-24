@@ -40,6 +40,7 @@ export type GbpListing = {
   specialHours?: { specialHourPeriods?: GbpSpecialPeriod[] };
   categories?: { primaryCategory?: { displayName?: string }; additionalCategories?: { displayName?: string }[] };
   profile?: { description?: string };
+  metadata?: { placeId?: string; newReviewUri?: string; mapsUri?: string };
 };
 
 export type GbpMediaItem = { name: string; createTime?: string; mediaFormat?: string };
@@ -52,7 +53,7 @@ export type GbpLocalPost = {
   updateTime?: string;
 };
 
-export const LISTING_READ_MASK = "name,title,websiteUri,regularHours,specialHours,categories,profile";
+export const LISTING_READ_MASK = "name,title,websiteUri,regularHours,specialHours,categories,profile,metadata";
 
 /** `accounts/1/locations/2` → { account: "accounts/1", location: "locations/2" }; null when it isn't one. */
 export function parseLocationName(name: string): { account: string; location: string } | null {
