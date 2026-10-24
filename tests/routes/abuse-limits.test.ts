@@ -16,8 +16,6 @@ vi.mock("@/lib/billing/stripe-server", () => ({
   getStripeFoundingPriceId: () => "price_founding",
   checkoutCurrencyFor: () => "gbp",
 }));
-vi.mock("@/lib/billing/checkout-subscription-session", () => ({ createSubscriptionCheckoutSession: async () => ({ url: "https://checkout.test/s" }) }));
-vi.mock("@/lib/billing/free-trial-subscription", () => ({ createFreeTrialSubscription: async () => ({ subscriptionId: "sub", customerId: "cus", trialEndsAt: "x" }) }));
 vi.mock("@/lib/restaurant/hydrate-from-audit", () => ({ hydrateRestaurantFromLinkedAudit: async () => undefined }));
 vi.mock("@/lib/chief-of-staff/ensure-today-brief", () => ({ ensureTodayBrief: async () => undefined }));
 
@@ -54,16 +52,17 @@ describeDb("/api/trial limits (review H-6, L-4)", () => {
 
   it("reuses the owner's restaurant, returns an active trial instead of a new one, and caps attempts", async () => {
     h.user = userId;
+    // The first call starts the trial on a new restaurant, with no card and no Stripe.
     const first = await (await post({ restaurantName: "Mama's" })).json();
-    expect(first).toMatchObject({ mode: "checkout", checkoutUrl: "https://checkout.test/s" });
-    const second = await (await post({ restaurantName: "Mama's Kitchen", tier: "starter" })).json();
-    expect(second.restaurantId).toBe(first.restaurantId);
+    expect(first).toMatchObject({ mode: "trial", nextHref: `/app?r=${first.restaurantId}` });
+    const row = await prisma.restaurant.findUniqueOrThrow({ where: { id: first.restaurantId } });
+    expect(row).toMatchObject({ subscriptionPlan: "TRIAL", billingStatus: "TRIALING" });
+    expect(row.trialEndsAt!.getTime() - row.trialStartedAt!.getTime()).toBe(7 * 86_400_000);
+    // A second call goes back to that trial instead of starting another.
+    expect(await (await post({ restaurantName: "Another" })).json()).toMatchObject({ mode: "existing", restaurantId: first.restaurantId });
     expect(await prisma.teamMember.count({ where: { userId, role: "OWNER" } })).toBe(1);
-    expect((await prisma.restaurant.findUniqueOrThrow({ where: { id: first.restaurantId } })).name).toBe("Mama's Kitchen");
 
-    await prisma.restaurant.update({ where: { id: first.restaurantId }, data: { trialStartedAt: new Date() } });
-    expect(await (await post({ restaurantName: "Another", mode: "direct" })).json()).toMatchObject({ mode: "existing", restaurantId: first.restaurantId });
-
+    expect((await post({ restaurantName: "Once more" })).status).toBe(200);
     expect((await post({ restaurantName: "Again" })).status).toBe(429);
   });
 

@@ -347,7 +347,7 @@ export function RestaurantPlacesOnboarding({
 
       {auditId && !busy ? (
         <p className="mt-6 rounded-xl bg-[var(--color-primary)]/8 px-3 py-2 text-sm text-[var(--color-ink)]">
-          Your growth report will link to this venue automatically.
+          Your growth report will link to this venue.
         </p>
       ) : null}
     </div>
