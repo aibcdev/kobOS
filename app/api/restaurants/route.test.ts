@@ -7,6 +7,10 @@ vi.mock("@/lib/auth/api-session", () => ({
   requireApiUser: async () => ({ ok: true, userId: "user_1" }),
 }));
 
+// Side effects of starting a trial; covered by their own tests.
+vi.mock("@/lib/email/owner", () => ({ sendWelcome: async () => undefined }));
+vi.mock("@/lib/billing/trial", async (orig) => ({ ...(await orig<typeof import("@/lib/billing/trial")>()), recordTrialStarted: async () => undefined }));
+
 vi.mock("@/lib/restaurant/hydrate-from-audit", () => ({
   linkAuditToRestaurant: async () => {},
   linkLatestAuditForEmail: async () => {},
