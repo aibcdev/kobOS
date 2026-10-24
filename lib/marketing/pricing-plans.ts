@@ -1,5 +1,8 @@
 /** KOB public pricing — founding manager offer (canonical). Amounts by region live in `lib/billing/regional-pricing`. */
 
+import { FREE_TRIAL_LABEL, TRIAL_LABEL } from "@/lib/billing/offer";
+import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
+
 export type PricingTierId = "founding";
 
 export type PricingPlan = {
@@ -16,7 +19,7 @@ export type PricingPlan = {
 export const LAUNCH_PRICING = {
   active: true,
   label: "Founding price",
-  detail: "Keep your founding rate while you stay subscribed. 7-day trial, no card.",
+  detail: `Keep your founding rate while you stay subscribed. ${TRIAL_LABEL}, no card.`,
 } as const;
 
 export const PRICING_PLANS: PricingPlan[] = [
@@ -25,7 +28,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: "Founding",
     badge: "AI restaurant manager",
     priceMonthly: 99,
-    priceNote: "USD · per location / month · founding (£79 in the UK)",
+    priceNote: `USD · per location / month · founding (${FOUNDING_PRICES.GB.label} in the UK)`,
     description:
       "KOB checks your Google listing, reviews and website, drafts the fixes, and waits for your yes.",
     stripeTier: "pro",
@@ -54,7 +57,7 @@ export const OWNER_COMPARISON = {
   rows: [
     {
       label: "Monthly",
-      kob: "$99/mo founding (£79 UK)",
+      kob: `${FOUNDING_PRICES.US.label}/mo founding (${FOUNDING_PRICES.GB.label} UK)`,
       owner: "$249–$499/mo",
       kobWins: true,
     },
@@ -83,7 +86,7 @@ export const OWNER_COMPARISON = {
       kobWins: true,
     },
     {
-      label: "7-day free trial",
+      label: FREE_TRIAL_LABEL,
       kob: "Yes — no card",
       owner: "Varies",
       kobWins: true,
@@ -120,12 +123,12 @@ export const pricingIncludedFeatures = (priceLabel: string) => [
     detail: "Nothing goes public without your yes. KOB only marks a job done after it can see the change.",
   },
   {
-    title: "7-day free trial",
+    title: FREE_TRIAL_LABEL,
     detail: "No card. Cancel anytime. If you never add a card, the trial ends.",
   },
   {
     title: "Founding price",
-    detail: `${priceLabel} per location / month while you stay subscribed. £79 in the UK, $99 elsewhere.`,
+    detail: `${priceLabel} per location / month while you stay subscribed. ${FOUNDING_PRICES.GB.label} in the UK, ${FOUNDING_PRICES.US.label} elsewhere.`,
   },
 ];
 
@@ -156,7 +159,7 @@ export const pricingFaq = (priceLabel: string) => [
   },
   {
     q: "What does it cost after the trial?",
-    a: `${priceLabel} per location per month at the founding rate (£79 UK, $99 elsewhere). No contract. If you do not add a card, the trial ends.`,
+    a: `${priceLabel} per location per month at the founding rate (${FOUNDING_PRICES.GB.label} UK, ${FOUNDING_PRICES.US.label} elsewhere). No contract. If you do not add a card, the trial ends.`,
   },
   {
     q: "Who is behind KOB?",

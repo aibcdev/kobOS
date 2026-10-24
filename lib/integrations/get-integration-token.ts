@@ -1,6 +1,9 @@
 import type { Integration, IntegrationProvider } from "@prisma/client";
-import { decryptSecret } from "@/lib/crypto/tokens";
 import { prisma } from "@/lib/db/prisma";
+import { TokenError } from "@/lib/hub/auth/oauth2";
+import { decryptTokens, getAccessToken } from "@/lib/hub/tokens";
+
+/** Thin compatibility layer over lib/hub/tokens.ts, which owns decrypting and refreshing. */
 
 export async function getIntegration(
   restaurantId: string,
@@ -15,15 +18,20 @@ export function decryptIntegrationToken(row: Integration): {
   accessToken: string | null;
   refreshToken: string | null;
 } {
-  let accessToken: string | null = null;
-  let refreshToken: string | null = null;
+  return decryptTokens(row);
+}
+
+/**
+ * A usable access token for this integration, refreshed through the hub when it is about to expire. Null when the
+ * owner must reconnect or the provider can't be reached; callers treat that as "no data this run".
+ */
+export async function getIntegrationAccessToken(row: Integration): Promise<string | null> {
   try {
-    if (row.encryptedAccessToken) accessToken = decryptSecret(row.encryptedAccessToken);
-    if (row.encryptedRefreshToken) refreshToken = decryptSecret(row.encryptedRefreshToken);
-  } catch {
-    return { accessToken: null, refreshToken: null };
+    return await getAccessToken(row.id);
+  } catch (e) {
+    if (e instanceof TokenError && e.code === "not_configured") return decryptTokens(row).accessToken;
+    return null;
   }
-  return { accessToken, refreshToken };
 }
 
 export async function getIntegrationTokens(
@@ -32,9 +40,9 @@ export async function getIntegrationTokens(
 ): Promise<{ accessToken: string | null; refreshToken: string | null; metadata: Record<string, unknown> } | null> {
   const row = await getIntegration(restaurantId, provider);
   if (!row) return null;
-  const tokens = decryptIntegrationToken(row);
   return {
-    ...tokens,
+    accessToken: await getIntegrationAccessToken(row),
+    refreshToken: decryptTokens(row).refreshToken,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
   };
 }

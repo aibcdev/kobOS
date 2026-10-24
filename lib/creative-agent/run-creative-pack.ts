@@ -141,7 +141,7 @@ export async function runCreativePack(
       temperature: 0.55,
     });
 
-    let brief: CreativeBrandBrief =
+    const brief: CreativeBrandBrief =
       briefResult.ok && parseBrief(briefResult.raw)
         ? parseBrief(briefResult.raw)!
         : {

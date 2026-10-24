@@ -108,7 +108,7 @@ export default async function VisualsPage({ searchParams }: { searchParams: Prom
         pixelMetrics={pixelMetrics}
         heroEyebrow={restaurant.name}
         heroTitle="Visuals & Branding Studio"
-        heroSubtitle="Make your food impossible to scroll past — live tiles, AI food photography prompts, and pixel signals from your linked public audit."
+        heroSubtitle="Make your food impossible to scroll past — live tiles, food photography briefs, and pixel signals from your linked public audit."
       />
     </div>
   );

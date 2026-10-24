@@ -1,5 +1,6 @@
 "use client";
 
+import { FREE_TRIAL_LABEL } from "@/lib/billing/offer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -53,17 +54,16 @@ export function AuditUpgradeCheckout({
             restaurantName,
             city: city || null,
             visibilityAuditId: auditId,
-            mode: "checkout",
-            tier: "starter",
           }),
         });
-        const body = (await res.json()) as { checkoutUrl?: string; error?: string };
-        if (!res.ok || !body.checkoutUrl) {
-          setError(body.error ?? "Could not start checkout. Check Stripe configuration.");
+        const body = (await res.json()) as { error?: string; restaurantId?: string; nextHref?: string };
+        if (!res.ok || !body.restaurantId) {
+          setError(body.error ?? "Could not start your trial. Try again.");
           setStatus("failed");
           return;
         }
-        window.location.href = body.checkoutUrl;
+        // No card and no checkout: the trial starts on the restaurant and the owner lands in it.
+        window.location.href = body.nextHref ?? `/app?r=${encodeURIComponent(body.restaurantId)}`;
       } catch {
         setError("Network error — try again.");
         setStatus("failed");
@@ -80,9 +80,9 @@ export function AuditUpgradeCheckout({
             aria-hidden
           />
           <p className="mt-6 text-lg font-medium text-[#2c2c2c]">
-            {status === "checking" ? "Confirming your account…" : "Opening secure checkout…"}
+            {status === "checking" ? "Confirming your account…" : "Starting your free trial…"}
           </p>
-          <p className="mt-2 text-sm text-[#666666]">7-day free trial for {restaurantName}</p>
+          <p className="mt-2 text-sm text-[#666666]">{FREE_TRIAL_LABEL} for {restaurantName}</p>
         </>
       ) : null}
       {error ? (

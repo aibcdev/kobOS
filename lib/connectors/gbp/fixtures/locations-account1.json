@@ -1,0 +1,9 @@
+{
+  "locations": [
+    {
+      "name": "locations/4471000000000000001",
+      "title": "Nonna's Kitchen Shoreditch",
+      "storefrontAddress": { "regionCode": "GB", "postalCode": "E2 7DG", "locality": "London", "addressLines": ["12 Calvert Avenue"] }
+    }
+  ]
+}

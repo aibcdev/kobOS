@@ -80,7 +80,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
       <div className={`mt-8 ${appCardSurface}`}>
         <h2 className="type-title-sm">Reputation trends</h2>
         <p className="type-body-sm mt-2 text-[var(--color-muted)]">
-          Spike alerts and campaigns tie into Growth Agent on Today. CRM fields for power reviewers live in Settings
+          Spike alerts and campaigns show up on Today. CRM fields for power reviewers live in Settings
           over time.
         </p>
       </div>

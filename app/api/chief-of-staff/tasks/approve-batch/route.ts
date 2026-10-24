@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   const errors: string[] = [];
 
   for (const task of tasks) {
-    const result = await executeTaskApprove(task);
+    const result = await executeTaskApprove(task, session.userId);
     if (result.ok) approved += 1;
     else {
       blocked += 1;

@@ -94,7 +94,7 @@ export async function enrichPlatformLead(
   let hasContactForm = false;
   let instagramUrl: string | null = null;
   let instagramFollowers: number | null = null;
-  let websiteText: string | null = null;
+  const websiteText: string | null = null;
 
   if (google.websiteUrl?.trim() && (!fast || isFullScan())) {
     const scan = await quickWebsiteScan(google.websiteUrl);

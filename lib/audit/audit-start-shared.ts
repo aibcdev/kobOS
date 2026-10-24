@@ -89,7 +89,7 @@ export function parseAuditStartBody(body: unknown) {
 }
 
 export async function handleAuditStart(req: Request) {
-  const rl = checkAuditRunRateLimit(clientIpFromHeaders(req.headers));
+  const rl = await checkAuditRunRateLimit(clientIpFromHeaders(req.headers));
   if (!rl.ok) {
     return NextResponse.json(
       {

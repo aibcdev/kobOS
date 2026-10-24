@@ -1,0 +1,20 @@
+{
+  "purchases": [
+    {
+      "purchaseUUID1": "zt-p-1",
+      "timestamp": "2026-10-14T10:15:00.000+0000",
+      "amount": 1250,
+      "vatAmount": 208,
+      "currency": "GBP",
+      "gratuityAmount": 100,
+      "discounts": [{ "amount": -50 }],
+      "products": [
+        { "productUuid": "prod-cake", "variantUuid": "var-cake-slice", "name": "Cake", "variantName": "Slice", "quantity": "2", "unitPrice": 400 },
+        { "productUuid": "prod-tea", "variantUuid": "var-tea", "name": "Tea", "variantName": "Tea", "quantity": "1", "unitPrice": 400, "discountValue": 50 }
+      ]
+    },
+    { "purchaseUUID1": "zt-p-2", "timestamp": "2026-10-14T11:00:00.000+0000", "amount": -400, "currency": "GBP", "refund": true, "products": [] }
+  ],
+  "firstPurchaseHash": "h0",
+  "lastPurchaseHash": "h2"
+}

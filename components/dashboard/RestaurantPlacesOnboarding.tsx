@@ -18,6 +18,9 @@ type PlaceDetails = {
   websiteUri: string | null;
   lat: number | null;
   lng: number | null;
+  countryCode?: string | null;
+  region?: string | null;
+  utcOffsetMinutes?: number | null;
 };
 
 function cityFromAddress(address: string | undefined, secondary: string | undefined): string | undefined {
@@ -161,6 +164,10 @@ export function RestaurantPlacesOnboarding({
           body: JSON.stringify({
             name,
             city: city || undefined,
+            state: (d?.countryCode === "US" && d.region) || undefined,
+            countryCode: d?.countryCode || undefined,
+            utcOffsetMinutes: d?.utcOffsetMinutes ?? undefined,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             website: website || undefined,
             auditId: startedAuditId || undefined,
           }),
@@ -340,7 +347,7 @@ export function RestaurantPlacesOnboarding({
 
       {auditId && !busy ? (
         <p className="mt-6 rounded-xl bg-[var(--color-primary)]/8 px-3 py-2 text-sm text-[var(--color-ink)]">
-          Your growth report will link to this venue automatically.
+          Your growth report will link to this venue.
         </p>
       ) : null}
     </div>

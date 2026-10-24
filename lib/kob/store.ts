@@ -1,3 +1,7 @@
+/**
+ * @deprecated localStorage walkthrough state for the demo, /onboard wizard and marketing previews. Not a source
+ * of truth for real restaurants; do not import from API routes.
+ */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type WorkMutations } from "@/lib/kob/act";
@@ -66,9 +70,7 @@ type KobStore = {
   holding: HoldingItem[]
   onboardProfile: OnboardProfile | null
   onboardLens: OnboardLens | null
-  trialEndsAt: string | null
   pendingClosureDate: string | null
-  startNoCardTrial: () => void
   hydrateRestaurant: (restaurant: Restaurant) => void
   hydrateFromOnboard: (profile: OnboardProfile, lens?: OnboardLens | null) => void
   replayMorning: () => void
@@ -159,8 +161,8 @@ function applyMutations(
   },
   mutations: WorkMutations,
 ) {
-  let { restaurant, findings, reviews, memory, autonomy, googleConnected, connected } =
-    state;
+  let { restaurant, findings, reviews, memory, autonomy } = state;
+  const { googleConnected, connected } = state;
 
   if (mutations.setAutonomy?.length) {
     autonomy = autonomy.map((rule) => {
@@ -286,12 +288,7 @@ export const useKobStore = create<KobStore>()(
       holding: [],
       onboardProfile: null,
       onboardLens: null,
-      trialEndsAt: null,
       pendingClosureDate: null,
-      startNoCardTrial: () => {
-        const ends = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        set({ trialEndsAt: ends });
-      },
       hydrateRestaurant: (restaurant) => {
         const autonomy = get().autonomy;
         set({
@@ -501,7 +498,6 @@ export const useKobStore = create<KobStore>()(
         holding: state.holding,
         onboardProfile: state.onboardProfile,
         onboardLens: state.onboardLens,
-        trialEndsAt: state.trialEndsAt,
         pendingClosureDate: state.pendingClosureDate,
       }),
       merge: (persisted, current) => {
@@ -551,7 +547,6 @@ export const useKobStore = create<KobStore>()(
           holding: saved.holding ?? [],
           onboardProfile: saved.onboardProfile ?? null,
           onboardLens: saved.onboardLens ?? null,
-          trialEndsAt: saved.trialEndsAt ?? null,
         };
       },
     },

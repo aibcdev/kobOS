@@ -1,5 +1,6 @@
-import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { canManageConnections } from "@/lib/api/restaurant-access";
+import { newNonce, setBindingCookie } from "@/lib/integrations/oauth-binding";
 import { talkAccess } from "@/lib/kob/talk/access";
 import { connectorConfigured } from "@/lib/kob/talk/connectors";
 import { isTalkProvider } from "@/lib/kob/talk/types";
@@ -38,12 +39,19 @@ export async function GET(
       );
       return NextResponse.redirect(back);
     }
+    if ((await canManageConnections(access.userId, restaurantId)) !== "ok") {
+      back.searchParams.set(
+        "connectionError",
+        "Only owners and admins can connect accounts.",
+      );
+      return NextResponse.redirect(back);
+    }
     const state = encodeOAuthState({
       restaurantId,
       userId: access.userId,
       provider,
       returnTo: "talk",
-      nonce: randomUUID(),
+      nonce: newNonce(),
     });
     const target = buildOAuthUrl(
       provider,
@@ -51,17 +59,7 @@ export async function GET(
       `${url.origin}/api/integrations/${provider}/callback`,
     )!;
     const response = NextResponse.redirect(target);
-    response.cookies.set(
-      "kob-talk-oauth",
-      createHash("sha256").update(state).digest("hex"),
-      {
-        httpOnly: true,
-        secure: url.protocol === "https:",
-        sameSite: "lax",
-        maxAge: 1800,
-        path: "/api/integrations",
-      },
-    );
+    setBindingCookie(response, state, url.protocol === "https:");
     return response;
   } catch {
     back.searchParams.set(

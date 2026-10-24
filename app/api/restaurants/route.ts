@@ -2,7 +2,11 @@ import { SubscriptionPlan } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/api-session";
+import { countryFromHeaders, regionFromRequestHeaders } from "@/lib/billing/regional-pricing";
+import { recordTrialStarted, startTrial } from "@/lib/billing/trial";
 import { prisma } from "@/lib/db/prisma";
+import { sendWelcome } from "@/lib/email/owner";
+import { localeForCountry, normalizeCountryCode, resolveRestaurantTimezone } from "@/lib/geo/timezone";
 import { linkAuditToRestaurant, linkLatestAuditForEmail } from "@/lib/restaurant/hydrate-from-audit";
 import { slugify } from "@/lib/utils/slugify";
 
@@ -17,7 +21,11 @@ const createSchema = z.object({
   cuisineType: z.string().max(120).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(120).optional().nullable(),
+  /** Owner's browser zone; only used when Places/geo can't decide. */
   timezone: z.string().max(80).optional(),
+  /** From Places `addressComponents` when the owner picked their listing. */
+  countryCode: z.string().max(8).optional().nullable(),
+  utcOffsetMinutes: z.number().int().min(-840).max(840).optional().nullable(),
   website: z.string().max(2048).optional(),
   /** Audit id or slug from signup (?audit=) so the same 3 wins show on the dashboard. */
   auditId: z.string().min(2).max(120).optional(),
@@ -65,6 +73,17 @@ export async function POST(req: Request) {
     }
   }
 
+  const countryCode =
+    normalizeCountryCode(parsed.data.countryCode) ??
+    normalizeCountryCode(countryFromHeaders(req.headers)) ??
+    (regionFromRequestHeaders(req.headers) === "GB" ? "GB" : null);
+  const timezone = resolveRestaurantTimezone({
+    countryCode,
+    state: parsed.data.state,
+    utcOffsetMinutes: parsed.data.utcOffsetMinutes,
+    browserTimezone: parsed.data.timezone,
+  });
+
   try {
     const restaurant = await prisma.$transaction(async (tx) => {
       const exists = await tx.restaurant.findUnique({ where: { slug } });
@@ -77,7 +96,9 @@ export async function POST(req: Request) {
           cuisineType: parsed.data.cuisineType ?? undefined,
           city: parsed.data.city ?? undefined,
           state: parsed.data.state ?? undefined,
-          timezone: parsed.data.timezone ?? undefined,
+          timezone: timezone ?? undefined,
+          countryCode,
+          locale: localeForCountry(countryCode),
           website: websiteUrl,
           subscriptionPlan: SubscriptionPlan.FREE,
         },
@@ -90,8 +111,10 @@ export async function POST(req: Request) {
           role: "OWNER",
         },
       });
+      // The 7-day free trial starts here, on the restaurant, with no card (one per account).
+      const trialEndsAt = await startTrial(tx, created.id, session.userId);
 
-      return created;
+      return { ...created, ...(trialEndsAt ? { subscriptionPlan: "TRIAL" as const, billingStatus: "TRIALING" as const, trialEndsAt } : {}) };
     });
 
     const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { email: true } });
@@ -101,6 +124,8 @@ export async function POST(req: Request) {
       await linkLatestAuditForEmail(restaurant.id, user.email);
     }
 
+    if (restaurant.billingStatus === "TRIALING") void recordTrialStarted(restaurant.id).catch((e) => console.warn("[restaurants] funnel", e));
+    if (restaurant.billingStatus === "TRIALING") void sendWelcome(restaurant.id).catch((e) => console.warn("[welcome email]", e));
     return NextResponse.json({ restaurant }, { status: 201 });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not create restaurant";

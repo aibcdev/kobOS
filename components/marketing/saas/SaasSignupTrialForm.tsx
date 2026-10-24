@@ -14,6 +14,7 @@ import { storeHeardFrom, type HeardFromPayload } from "@/lib/marketing/heard-fro
 
 import { SaasIcon } from "./SaasIcon";
 import { trialPromise } from "@/lib/billing/trial-days";
+import { FREE_TRIAL_LABEL } from "@/lib/billing/offer";
 
 const inputClass =
   "mt-1.5 w-full rounded-xl border border-[#2c2c2c]/12 bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none placeholder:text-[#2c2c2c]/35 focus:border-[var(--color-forest)] focus:ring-2 focus:ring-[var(--color-forest)]/15";
@@ -230,7 +231,7 @@ export function SaasSignupTrialForm() {
   return (
     <div className="rounded-[1.5rem] border border-[#2c2c2c]/08 bg-white p-6 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.35)] sm:p-8">
       <h2 className="font-heading text-[1.75rem] tracking-tight text-[#1a1a1a] md:text-[1.85rem]">
-        Start your free 7-day trial
+        Start your {FREE_TRIAL_LABEL}
       </h2>
 
       {status === "sent" || status === "verifying" ? (

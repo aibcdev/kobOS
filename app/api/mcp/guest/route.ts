@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { GUEST_TOOLS } from "@/lib/os/phone/agents";
 import { demoBrain, guestShouldEscalate, runGuestTool } from "@/lib/os/mcp-guest";
+import { clientIpFromHeaders, limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const rl = await limit(`mcp-guest:${clientIpFromHeaders(req.headers) ?? "unknown"}`, { windowSec: 60, max: 30 });
+  if (!rl.ok) return tooManyRequests(rl);
   let body: { tool?: string; args?: Record<string, unknown>; utterance?: string };
   try {
     body = (await req.json()) as typeof body;

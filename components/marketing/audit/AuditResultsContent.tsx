@@ -1,5 +1,6 @@
 "use client";
 
+import { START_FREE_TRIAL } from "@/lib/billing/offer";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { VisibilityAudit } from "@prisma/client";
@@ -210,7 +211,7 @@ export function AuditResultsContent({
                 href={signupHref}
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-forest)] px-6 text-sm font-semibold text-white no-underline"
               >
-                Start 7-day free trial
+                {START_FREE_TRIAL}
               </Link>
               <Link
                 href={dashboardHref}

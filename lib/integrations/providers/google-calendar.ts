@@ -1,5 +1,5 @@
 import type { Integration } from "@prisma/client";
-import { decryptIntegrationToken } from "@/lib/integrations/get-integration-token";
+import { getIntegrationAccessToken } from "@/lib/integrations/get-integration-token";
 import { prisma } from "@/lib/db/prisma";
 
 export type CalendarEventSnapshot = {
@@ -14,7 +14,7 @@ export type CalendarEventSnapshot = {
  * and store them as a lightweight snapshot on Integration.metadata.
  */
 export async function syncGoogleCalendarEvents(restaurantId: string, integration: Integration): Promise<number> {
-  const { accessToken } = decryptIntegrationToken(integration);
+  const accessToken = await getIntegrationAccessToken(integration);
   if (!accessToken) return 0;
 
   const now = new Date();

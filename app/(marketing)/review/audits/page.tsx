@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -57,9 +58,9 @@ export default function TeamAuditReviewPage() {
 
         <p className="mt-8 text-sm font-semibold">Sample — Kingsway Karahi</p>
         <p className="mt-2 rounded-xl bg-white px-4 py-3 font-mono text-sm break-all shadow-sm">
-          <a className="font-semibold text-[#094413] underline" href="/audit/kingsway-karahi-luton">
+          <Link className="font-semibold text-[#094413] underline" href="/audit/kingsway-karahi-luton">
             https://trykob.com/audit/kingsway-karahi-luton
-          </a>
+          </Link>
         </p>
 
         <ol className="mt-10 list-decimal space-y-3 pl-5 text-sm">

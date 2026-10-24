@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db/prisma";
 import { isGeminiConfigured } from "@/lib/ai/gemini-config";
 import { sameOrigin, talkAccess } from "@/lib/kob/talk/access";
 import { runLiveTalk } from "@/lib/kob/talk/agent";
+import { answerFromFacts } from "@/lib/kob/talk/fallback";
+import { limit, tooManyRequests } from "@/lib/security/rate-limit";
 
 export const maxDuration = 60;
 const inputSchema = z.object({
@@ -35,6 +37,12 @@ export async function POST(req: Request) {
         { error: access.error },
         { status: access.status },
       );
+    const rl = await limit(`talk:${access.userId}`, { windowSec: 60, max: 10 });
+    if (!rl.ok)
+      return tooManyRequests(
+        rl,
+        "Please wait a moment before sending another request.",
+      );
     const conversation = await prisma.conversation.findFirst({
       where: { id: input.conversationId, restaurantId: input.restaurantId },
     });
@@ -42,11 +50,6 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Conversation not found." },
         { status: 404 },
-      );
-    if (!isGeminiConfigured())
-      return NextResponse.json(
-        { error: "Talk is temporarily unavailable. Please try again later." },
-        { status: 503 },
       );
     const existing = await prisma.message.findUnique({
       where: { id: input.requestId },
@@ -83,25 +86,38 @@ export async function POST(req: Request) {
         content: input.text,
       },
     });
+    // Without the language service (not configured, or it fails), answer from the restaurant's own data instead.
+    const fromFacts = async () => {
+      const answer = await answerFromFacts(input.restaurantId, access.userId, input.text);
+      return { text: answer.text, sources: [], activity: answer.activity, needsConnection: [] };
+    };
     let reply: Awaited<ReturnType<typeof runLiveTalk>>;
-    try {
-      reply = await runLiveTalk(access.restaurant, [
-        ...history.reverse().map((message) => ({
-          role:
-            message.role === "USER"
-              ? ("user" as const)
-              : ("assistant" as const),
-          content: message.content,
-        })),
-        { role: "user", content: input.text },
-      ]);
-    } catch {
-      reply = {
-        text: "I couldn't complete that request. Nothing was sent or changed. Please try again.",
-        sources: [],
-        activity: [],
-        needsConnection: [],
-      };
+    if (!isGeminiConfigured()) {
+      reply = await fromFacts();
+    } else {
+      try {
+        reply = await runLiveTalk(
+          access.restaurant,
+          [
+            ...history.reverse().map((message) => ({
+              role:
+                message.role === "USER"
+                  ? ("user" as const)
+                  : ("assistant" as const),
+              content: message.content,
+            })),
+            { role: "user", content: input.text },
+          ],
+          access.userId,
+        );
+      } catch {
+        reply = await fromFacts().catch(() => ({
+          text: "I couldn't complete that request. Nothing was sent or changed. Please try again.",
+          sources: [],
+          activity: [],
+          needsConnection: [],
+        }));
+      }
     }
     const [message] = await prisma.$transaction([
       prisma.message.create({

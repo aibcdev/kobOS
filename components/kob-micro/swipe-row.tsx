@@ -14,6 +14,8 @@ type SwipeRowProps = {
   actions: SwipeAction[];
   onAction: (id: string) => void;
   className?: string;
+  /** Set false when the children already show these actions as buttons (e.g. an approval card). */
+  fallbackButtons?: boolean;
 };
 
 const swipeQuery = "(max-width: 767px) and (prefers-reduced-motion: no-preference)";
@@ -32,7 +34,7 @@ export function SwipeRow(props: SwipeRowProps) {
   return <SwipeRowContent key={String(enabled)} {...props} enabled={enabled} />;
 }
 
-function SwipeRowContent({ children, actions, onAction, className, enabled }: SwipeRowProps & { enabled: boolean }) {
+function SwipeRowContent({ children, actions, onAction, className, enabled, fallbackButtons = true }: SwipeRowProps & { enabled: boolean }) {
   const [offset, setOffset] = useState(0);
   const tray = useRef<HTMLDivElement>(null);
   const gesture = useRef<{ id: number; x: number; y: number; horizontal: boolean } | null>(null);
@@ -117,7 +119,10 @@ function SwipeRowContent({ children, actions, onAction, className, enabled }: Sw
           {children}
         </div>
       </div>
-      {actions.length ? (
+      {actions.length && !fallbackButtons && canSwipe ? (
+        <p className="mt-2 px-1 text-[0.65rem] text-muted">Or swipe left on the card</p>
+      ) : null}
+      {actions.length && fallbackButtons ? (
         <div className="mt-3 flex flex-wrap gap-2 px-1">
           {actions.map((action) => (
             <button key={action.id} type="button"
