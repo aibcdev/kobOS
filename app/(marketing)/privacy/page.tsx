@@ -18,8 +18,8 @@ export default function PrivacyPage() {
       <p className="mt-2 text-sm text-[#2c2c2c]/55">Last updated: {UPDATED}</p>
       <p className="mt-6 text-sm leading-relaxed text-[#2c2c2c]/80">
         This Privacy Policy explains how <strong>KOB</strong> (&quot;we&quot;, &quot;us&quot;) handles personal data when you
-        visit <strong>trykob.com</strong>, run a free online scan, create an account, or use the AI restaurant manager
-        (Talk, listings, reviews, invoices, operational memory, and related tools). Guest phone answering is not live
+        visit <strong>trykob.com</strong>, run a free online scan, create an account, or use the KOB restaurant manager
+        (messages, listings, reviews, invoices, house rules and related tools). Guest phone answering is not live
         yet; when it launches we will process call data as described below.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-[#2c2c2c]/80">
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Restaurant operations</strong> — public listing and website data, invoices and supplier lines you
-            send or connect, house rules and operational memory, Talk messages, and (when you connect them) POS or
+            send or connect, house rules, messages with KOB, and (when you connect them) POS or
             reservation records.
           </li>
           <li>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
             we do not store full card numbers on our servers.
           </li>
           <li>
-            <strong>How you found us</strong> — optional answers on the free scan or signup (search, an AI assistant, referral, ads) and, if you choose, the prompt you used. We use this to see which guides AI systems cite, not to sell your data.
+            <strong>How you found us</strong> — optional answers on the free scan or signup (search, an AI assistant, referral, ads) and, if you choose, the prompt you used. We use this to understand how owners find us, not to sell your data.
           </li>
           <li>
             <strong>Technical data</strong> — IP address, device/browser type, approximate location derived from IP,

@@ -15,7 +15,7 @@ export default function DataManagementPage() {
         <p className="mt-2 text-sm text-muted">Last updated: {UPDATED}</p>
         <p className="mt-6 text-ink">
           This policy explains how <strong>KOB</strong> handles restaurant operations data —
-          listings, Talk, house rules, kitchen materials, and connected tools — for independent
+          listings, messages with KOB, house rules, kitchen materials, and connected tools — for independent
           restaurants and cafés. It sits alongside our{" "}
           <Link href="/privacy" className="underline">
             Privacy policy
@@ -37,7 +37,7 @@ export default function DataManagementPage() {
         <Section title="1. What this covers">
           <p>
             Data created or connected when you run KOB for a room: guest-facing hours and reviews,
-            Talk messages and approvals, house rules, invoice photos, weather city, website URL,
+            messages with KOB and approvals, house rules, invoice photos, weather city, website URL,
             email brief address, and status of free or partner integrations.
           </p>
         </Section>

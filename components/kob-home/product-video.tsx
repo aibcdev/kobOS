@@ -7,8 +7,8 @@ export function ProductVideo() {
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
         KOB watches the listing, writes into Google and the site, drafts reviews
-        in your tone, and flags invoice surprises. You choose what goes on
-        autopilot.
+        in your tone, and flags invoice surprises. You decide what KOB can take
+        care of without asking.
       </p>
       <ul className="mt-8 grid gap-3 sm:grid-cols-2">
         <li className="rounded-[1.75rem] bg-cream px-5 py-4 text-sm text-ink">
@@ -37,7 +37,7 @@ export function ProductVideo() {
             playsInline
             preload="metadata"
           >
-            <source src="/video/kob-what-is.mp4" type="video/mp4" />
+            <source src="/video/kob-demo-60s.mp4" type="video/mp4" />
           </video>
         </div>
       </div>

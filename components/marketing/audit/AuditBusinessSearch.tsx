@@ -478,7 +478,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
       {placesOn === false ? (
         <p className="mb-6 rounded-2xl border border-[var(--color-hairline)] bg-[var(--color-surface-cream)] px-5 py-3.5 text-left text-sm leading-relaxed text-[var(--color-muted)]">
           <span className="font-medium text-[var(--color-ink)]">Tip:</span> Paste your website URL below—we&apos;ll
-          still run your full AI report.
+          still put together your full report.
         </p>
       ) : null}
 

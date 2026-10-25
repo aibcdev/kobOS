@@ -20,7 +20,7 @@ export default function ResourcesHubPage() {
       <SaasPageHero
         eyebrow="Best-of · compare · buyer guides"
         title="Resources"
-        description="Quotable guides for independent restaurant owners: best X for Z, software vs agency, and free audit paths — written to be useful in search and AI answers."
+        description="Quotable guides for independent restaurant owners: best X for Z, software vs agency, and free audit paths — written to be genuinely useful to owners."
       />
 
       <SaasSection className="bg-[#fbf8f5]">

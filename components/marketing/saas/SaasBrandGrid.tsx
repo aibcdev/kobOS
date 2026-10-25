@@ -50,14 +50,14 @@ export function SaasBrandGrid() {
               <span className="rounded bg-white/10 px-2 py-1 font-mono-brand text-xs font-semibold uppercase tracking-widest text-[#088924]">
                 02 // CONVERSION ENGINE
               </span>
-              <h3 className="font-heading mt-3 text-2xl font-semibold tracking-tight">AI Smart upsells automatically increase ticket value</h3>
+              <h3 className="font-heading mt-3 text-2xl font-semibold tracking-tight">Smart upsells increase ticket value</h3>
               <p className="mt-3 text-xs text-white/80 md:text-sm">
                 Intelligent recommendation algorithms prompt orders dynamically, driving higher average order value naturally.
               </p>
             </div>
 
             <div className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-md">
-              <div className="font-mono-brand text-[10px] font-semibold uppercase tracking-wider text-white/60">AI UPSELL TRIGGERED</div>
+              <div className="font-mono-brand text-[10px] font-semibold uppercase tracking-wider text-white/60">UPSELL SUGGESTED</div>
               <div className="flex items-center justify-between text-xs">
                 <span>Add Chocolate Chip Cookie?</span>
                 <button

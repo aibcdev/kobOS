@@ -74,7 +74,7 @@ export default function BrandingFeaturePage() {
       <SaasSection className="border-t border-[#2c2c2c]/10 bg-[#f9f3ed] text-center">
         <h2 className="mb-6 font-head text-3xl font-medium text-[#2c2c2c]">Your brand. Your design. Your decision.</h2>
         <p className="mx-auto mb-10 max-w-2xl text-[#2c2c2c]/75">
-          KOB pairs AI drafts with your guardrails so teams can ship faster without losing what makes the venue special.
+          KOB pairs drafts with your house rules so teams can ship faster without losing what makes the venue special.
         </p>
         <Link
           href="/pricing"

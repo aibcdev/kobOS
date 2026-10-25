@@ -16,7 +16,7 @@ const STATIC_PATHS = [
   "/features/online-ordering",
   "/features/delivery",
   "/features/branding",
-  "/features/ai-menu",
+  "/features/menu",
   "/about",
   "/roadmap",
   "/privacy",

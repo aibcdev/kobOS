@@ -128,7 +128,7 @@ export function AuditScoresAndBenchmark({
         {pending && scoresReady ? (
           <p className="mt-2 text-sm text-[#666666]">
             {pendingText || pendingMedia
-              ? `Refining with AI benchmark${pendingMedia ? " + image review" : ""}… `
+              ? `Refining the benchmark${pendingMedia ? " + image review" : ""}… `
               : ""}
             Numbers may tick up as analysis completes.
           </p>

@@ -26,7 +26,7 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "founding",
     name: "Founding",
-    badge: "AI restaurant manager",
+    badge: "Your restaurant manager",
     priceMonthly: 99,
     priceNote: `USD · per location / month · founding (${FOUNDING_PRICES.GB.label} in the UK)`,
     description:
@@ -49,7 +49,7 @@ export const OWNER_COMPARISON = {
   eyebrow: "Keep your website and your till.",
   headline: "Keep your website and your till.",
   subline:
-    "KOB is the AI restaurant manager around the tools you already have. Owner.com sells a full stack. You do not have to swap your till to get a morning list.",
+    "KOB is the manager that works alongside the tools you already have. Owner.com sells a full stack. You do not have to swap your till to get a morning list.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   footnote:
@@ -62,7 +62,7 @@ export const OWNER_COMPARISON = {
       kobWins: true,
     },
     {
-      label: "AI manager (Talk + approve)",
+      label: "Manager (you approve)",
       kob: "Yes",
       owner: "Product modules",
       kobWins: true,
@@ -120,7 +120,7 @@ export const pricingIncludedFeatures = (priceLabel: string) => [
   },
   {
     title: "You approve first",
-    detail: "Nothing goes public without your yes. KOB only marks a job done after it can see the change.",
+    detail: "Nothing goes public until you say yes, and KOB only acts on its own where you've allowed it.",
   },
   {
     title: FREE_TRIAL_LABEL,
@@ -138,7 +138,7 @@ export const pricingFaq = (priceLabel: string) => [
     a: "No. Everything starts on Ask me. Refunds, discounts and replies to bad reviews always wait for you.",
   },
   {
-    q: "What if the AI writes something wrong?",
+    q: "What if a draft is wrong?",
     a: "Every draft is editable. KOB does not promise refunds, admit fault, or mention health or legal issues in a reply.",
   },
   {
@@ -147,7 +147,7 @@ export const pricingFaq = (priceLabel: string) => [
   },
   {
     q: "Do I need to change my website, till or booking system?",
-    a: "No. KOB works with what you have.",
+    a: "No. KOB is the manager that works alongside the tools you already have. We don't replace your till or ordering.",
   },
   {
     q: "What do I need to connect?",
