@@ -1,0 +1,68 @@
+{
+  "provider": "elevenlabs",
+  "model": "eleven_v3",
+  "speed": "1.0",
+  "voice_settings": {
+    "stability": 0.78,
+    "similarity_boost": 0.8
+  },
+  "lines": [
+    {
+      "id": "01",
+      "start": 0.0,
+      "text": "You didn't open a restaurant to manage Google."
+    },
+    {
+      "id": "02",
+      "start": 3.0,
+      "text": "Guests still pick where to eat online."
+    },
+    {
+      "id": "03",
+      "start": 7.5,
+      "text": "Unanswered review. Wrong hours. A booking page stuck on last Christmas."
+    },
+    {
+      "id": "04",
+      "start": 17.3,
+      "text": "That quietly costs you a table."
+    },
+    {
+      "id": "05",
+      "start": 20.2,
+      "text": "Cob does the work. You approve."
+    },
+    {
+      "id": "06",
+      "start": 26.5,
+      "text": "A review comes in. It drafts the reply. You tap yes. It checks Google."
+    },
+    {
+      "id": "07",
+      "start": 35.7,
+      "text": "A health complaint always waits for you."
+    },
+    {
+      "id": "08",
+      "start": 40.6,
+      "text": "Wrong hours, broken pages — lined up."
+    },
+    {
+      "id": "09",
+      "start": 44.9,
+      "text": "Every week, exactly what it did."
+    },
+    {
+      "id": "10",
+      "start": 48.9,
+      "text": "Your restaurant, handled. Try cob dot com."
+    }
+  ],
+  "bgm": {
+    "mode": "retrieve",
+    "query": "calm modern minimal underscore, warm piano and soft plucks, light pulse, premium product film",
+    "blob": "KOB does the restaurant admin work. You just approve. Nothing goes live without your OK.",
+    "arc": "PAS with Demo Loop (hook → pain → product intro → demo cycle 1 → demo cycle 2 → trust → demo cycle 3 → report → brand outro)"
+  },
+  "voice": "JBFqnCBsd6RMkjVDRZzb"
+}

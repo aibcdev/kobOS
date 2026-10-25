@@ -78,7 +78,7 @@ export function CreateWorkspace() {
           type="submit"
           className="min-h-11 rounded-full bg-espresso px-5 py-3 text-paper disabled:opacity-50"
         >
-          {busy ? "Creating…" : "Open Talk"}
+          {busy ? "Creating…" : "Open KOB"}
         </button>
       </form>
     </main>

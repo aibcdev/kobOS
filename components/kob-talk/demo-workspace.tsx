@@ -680,7 +680,7 @@ function KobChat() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask KOB anything about your restaurant…"
+            placeholder="Tell KOB what you need…"
             className="h-10 min-w-0 flex-1 border-0 bg-transparent text-base text-espresso outline-none placeholder:text-muted"
             aria-label="Message KOB"
           />

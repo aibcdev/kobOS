@@ -87,7 +87,7 @@ export function TalkOrb({ className }: { className?: string }) {
           <div
             className="fixed inset-0 z-[80] flex items-end justify-center bg-espresso/40 p-4 sm:items-center sm:p-6"
             role="dialog"
-            aria-label="Talk to KOB"
+            aria-label="See how KOB works"
           >
             <button
               type="button"
@@ -181,11 +181,11 @@ export function TalkOrb({ className }: { className?: string }) {
         type="button"
         onClick={() => setOpen(true)}
         className="group mx-auto flex flex-col items-center bg-transparent p-0 text-center"
-        aria-label="Talk to KOB"
+        aria-label="See how KOB works"
       >
         <GreenOrb size="hero" working={open} />
         <span className="mt-5 inline-flex h-11 items-center rounded-full bg-paper/90 px-5 text-sm font-medium text-espresso backdrop-blur-sm group-hover:bg-paper">
-          Talk to KOB
+          See how KOB works
         </span>
       </button>
       {dialog}

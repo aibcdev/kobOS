@@ -19,7 +19,7 @@ export function Serving() {
         ))}
       </div>
       <p className="mt-8 text-sm text-muted">
-        You choose what KOB can handle automatically.
+        You decide what KOB can take care of without asking.
       </p>
     </section>
   );

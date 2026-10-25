@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #ffffff; }
+      #root { width: 100%; height: 100%; position: relative; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+    <div id="f01-hook" data-composition-id="f01-hook" data-composition-src="compositions/frames/01-hook.html" data-start="0.00" data-duration="3" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f02-two-worlds" data-composition-id="f02-two-worlds" data-composition-src="compositions/frames/02-two-worlds.html" data-start="3.00" data-duration="4.5" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f03-find" data-composition-id="f03-find" data-composition-src="compositions/frames/03-what-they-find.html" data-start="7.50" data-duration="9.8" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f04-cost" data-composition-id="f04-cost" data-composition-src="compositions/frames/04-cost.html" data-start="17.30" data-duration="2.9" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f05-meet" data-composition-id="f05-meet" data-composition-src="compositions/frames/05-meet-kob.html" data-start="20.20" data-duration="6.3" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f06-review" data-composition-id="f06-review" data-composition-src="compositions/frames/06-review-loop.html" data-start="26.50" data-duration="9.2" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f07-sensitive" data-composition-id="f07-sensitive" data-composition-src="compositions/frames/07-sensitive.html" data-start="35.70" data-duration="4.9" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f08-fixes" data-composition-id="f08-fixes" data-composition-src="compositions/frames/08-fixes.html" data-start="40.60" data-duration="4.3" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f09-week" data-composition-id="f09-week" data-composition-src="compositions/frames/09-your-week.html" data-start="44.90" data-duration="4" data-track-index="1" data-width="1920" data-height="1080"></div>
+    <div id="f10-close" data-composition-id="f10-close" data-composition-src="compositions/frames/10-close.html" data-start="48.90" data-duration="11.1" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <audio id="vo" src="assets/voice/george-take.wav" data-start="0" data-duration="60" data-track-index="10" data-volume="1"></audio>
+      <audio id="bgm" src="assets/bgm/bed-60.wav" data-start="0" data-duration="60" data-track-index="11" data-volume="0.16"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.set({}, {}, 60);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

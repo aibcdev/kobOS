@@ -111,7 +111,7 @@ export function SaasMarketingFooter() {
               </li>
               <li>
                 <Link href="/for-ai" className="transition-colors hover:text-white">
-                  For AI assistants
+                  For assistants
                 </Link>
               </li>
               <li>
@@ -125,7 +125,7 @@ export function SaasMarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/features/ai-menu" className="transition-colors hover:text-white">
+                <Link href="/features/menu" className="transition-colors hover:text-white">
                   Menu pages
                 </Link>
               </li>

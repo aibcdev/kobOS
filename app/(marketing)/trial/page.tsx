@@ -8,7 +8,7 @@ import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { FREE_TRIAL_LABEL, TRIAL_DAYS, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
 
 export const metadata: Metadata = {
-  title: `${FREE_TRIAL_LABEL} | KOB — The AI Restaurant Manager`,
+  title: `${FREE_TRIAL_LABEL} | KOB — The Restaurant Manager for Owners`,
   description:
     `${TRIAL_DAYS_FREE}. No card. KOB drafts review replies and listing fixes. You approve. Nothing goes public without your yes.`,
 };

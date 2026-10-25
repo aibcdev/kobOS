@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
         destination: "/app",
         permanent: false,
       },
+      {
+        source: "/features/ai-menu",
+        destination: "/features/menu",
+        permanent: true,
+      },
     ];
   },
   images: {

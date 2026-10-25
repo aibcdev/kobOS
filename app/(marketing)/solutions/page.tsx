@@ -6,7 +6,7 @@ import { SaasSection } from "@/components/marketing/saas/SaasSection";
 export const metadata: Metadata = {
   title: "Solutions | KOB",
   description:
-    "KOB for full-service restaurants, cafés, and independents with two to five sites. You approve. KOB checks it is live.",
+    "Help for full-service restaurants, cafés and small groups: more guests, better reviews and less admin, whatever kind of place you run.",
 };
 
 const SOLUTIONS = [
@@ -39,7 +39,7 @@ export default function SolutionsHubPage() {
       <SaasPageHero
         eyebrow="Solutions"
         title="The manager, for how you run the room."
-        description="Full-service, café, or two to five sites. KOB does not take on chains."
+        description="Full-service, café or a few sites: KOB's free check-up shows what's keeping guests away and what to fix first."
       />
 
       <SaasSection className="bg-bone">

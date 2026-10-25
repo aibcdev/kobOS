@@ -166,7 +166,7 @@ export function ChatWorkspace({
         <div className="flex-1 overflow-y-auto px-4 py-6">
           {messages.length === 0 && !streaming ? (
             <p className="type-body-md text-center text-[var(--color-muted)]">
-              Ask KOB anything — reviews, posts, campaigns, bookings…
+              Tell KOB what you need — reviews, posts, campaigns, bookings…
 
             </p>
           ) : null}

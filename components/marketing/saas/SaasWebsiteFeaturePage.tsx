@@ -19,7 +19,7 @@ const WEBSITE_FAQ = [
   },
   {
     q: "How is this different from a template builder?",
-    a: "Pages are built for hospitality conversion—menus, ordering, local SEO, and ongoing fixes from your AI visibility scan.",
+    a: "Pages are built for hospitality conversion—menus, ordering, local SEO, and ongoing fixes from your restaurant check-up.",
   },
   {
     q: "What if I already use a delivery app?",
@@ -47,7 +47,7 @@ export function SaasWebsiteFeaturePage() {
       <SaasBenefitTabs
         eyebrow="Built to grow"
         title="Your site keeps working for you after launch"
-        subtitle="SEO, ordering, and AI priorities stay aligned as your business changes."
+        subtitle="SEO, ordering, and your weekly priorities stay aligned as your business changes."
         tabs={WEBSITE_GROWTH_TABS}
         variant="pills"
       />

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service · KOB",
-  description: "Terms governing use of trykob.com, the AI restaurant manager, scans, accounts, and subscriptions.",
+  description: "Terms governing use of trykob.com, the KOB restaurant manager service, scans, accounts and subscriptions.",
 };
 
 const UPDATED = "17 September 2026";
@@ -30,7 +30,7 @@ export default function TermsPage() {
       </p>
 
       <Section title="1. What KOB provides">
-        <p>KOB is an AI restaurant manager. Depending on your plan, the Service may include:</p>
+        <p>KOB is a restaurant management service. Depending on your plan, the Service may include:</p>
         <ul>
           <li>Free online scans of public website and listing signals</li>
           <li>Talk: drafts and actions for hours, reviews, invoices, weather prep, and house rules</li>
@@ -38,8 +38,8 @@ export default function TermsPage() {
           <li>KOB Phone (guest answering) is Coming next and is not live until we say so in the product</li>
         </ul>
         <p className="mt-3">
-          Features may change. AI output is not legal, allergen, or financial advice. KOB does not guarantee rankings,
-          waste reduction percentages, hours saved, or revenue. You choose which jobs run on autopilot.
+          Features may change. Drafts and suggestions from KOB are not legal, allergen or financial advice. KOB does not guarantee rankings,
+          waste reduction percentages, hours saved, or revenue. You choose which jobs KOB may complete without asking.
         </p>
       </Section>
 
@@ -67,7 +67,7 @@ export default function TermsPage() {
       <Section title="4. Approvals and publish control">
         <p>
           Where the Service prepares drafts or suggested actions, <strong>you remain responsible</strong> for reviewing
-          what goes live unless you have put that job on autopilot in the product. Guest phone answering is not live
+          what goes live unless you have allowed KOB to complete that job without asking. Guest phone answering is not live
           today. When it launches, callers will be told they are speaking with an AI assistant and that the call may be
           recorded. KOB will not collect card details on a call.
         </p>
