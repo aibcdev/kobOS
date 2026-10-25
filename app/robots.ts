@@ -24,6 +24,11 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/studio", "/api/", "/login", "/signup", "/review/"],
       },
       {
+        userAgent: "OAI-SearchBot",
+        allow: "/",
+        disallow: ["/studio", "/api/", "/login", "/signup", "/review/"],
+      },
+      {
         userAgent: "ChatGPT-User",
         allow: "/",
         disallow: ["/studio", "/api/", "/login", "/signup", "/review/"],

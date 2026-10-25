@@ -5,10 +5,11 @@
 # Production builds run `prisma migrate deploy` before `next build`; previews share the
 # prod DATABASE_URL, so they must not. Migrations land before the new code, so keep them
 # additive (the old code must still run against the migrated schema).
+# After the build, scripts/build-markdown.mjs writes public/*.md, llms.txt and llms-full.txt from the rendered pages.
 
 [build]
   publish = ".next"
-  command = "if [ \"$CONTEXT\" = \"production\" ]; then npx prisma migrate deploy; fi && npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build"
+  command = "if [ \"$CONTEXT\" = \"production\" ]; then npx prisma migrate deploy; fi && npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build && node scripts/build-markdown.mjs"
 
 [build.environment]
   SECRETS_SCAN_ENABLED = "false"

@@ -78,6 +78,6 @@ async function route(request: NextRequest): Promise<NextResponse> {
 export const config = {
   matcher: [
     // Skip static assets including plain-text audit dumps under /public
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt|html|css|js|map|ico|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt|md|html|css|js|map|ico|woff2?)$).*)",
   ],
 };

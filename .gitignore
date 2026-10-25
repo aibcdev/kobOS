@@ -59,3 +59,10 @@ combined.log
 # Playwright
 /test-results/
 /playwright-report/
+
+# Generated at build time from the rendered pages (scripts/build-markdown.mjs)
+/public/*.md
+/public/features/*.md
+/public/resources/*.md
+/public/llms.txt
+/public/llms-full.txt
