@@ -7,6 +7,7 @@ import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import {
   FEATURE_STATUS,
   PUBLIC_FEATURES,
+  POSTING,
   READINESS_LABEL,
   type FeatureReadiness,
 } from "@/lib/marketing/feature-status";
@@ -14,19 +15,10 @@ import {
 export const metadata: Metadata = {
   title: "Product | KOB — The Restaurant Manager for Owners",
   description:
-    "KOB checks your Google listing, reviews and website, drafts the fixes, and waits for your yes. Then it checks the change went live.",
+    "KOB checks your Google listing, reviews and website and drafts the fixes. You approve, tap once, and post. Nothing goes out without your OK.",
 };
 
 const ORDER: FeatureReadiness[] = ["live", "beta", "gated", "roadmap"];
-
-const CONNECTING = [
-  "Square",
-  "Epos Now",
-  "Zettle",
-  "ResDiary",
-  "Xero",
-  "QuickBooks",
-];
 
 export default async function ProductHubPage() {
   const price = await getVisitorFoundingPrice();
@@ -42,7 +34,7 @@ export default async function ProductHubPage() {
         variant="inset"
         eyebrow="Product"
         title="A manager for your restaurant — not another piece of software to learn."
-        description="You tap approve. KOB checks the change is live. Keep your website, your till and your booking system."
+        description="KOB drafts. You approve, tap once, and post. Keep your website and your booking system."
       >
         <SaasPrimaryCta href="/onboard">Find my restaurant</SaasPrimaryCta>
       </SaasPageHero>
@@ -64,10 +56,8 @@ export default async function ProductHubPage() {
             </section>
           ))}
           <section>
-            <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Connecting</h3>
-            <p className="mt-4 text-ink">
-              {CONNECTING.join(", ")}. Listed here until each one is live. No logos until then.
-            </p>
+            <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Posting to Google</h3>
+            <p className="mt-4 text-ink">{POSTING.status}.</p>
           </section>
         </div>
         <p className="mt-10 text-center text-sm text-muted">

@@ -7,7 +7,6 @@ const TOOLS_NOW = [
 ];
 
 const TOOLS_SOON = [
-  { name: "Till / POS", color: "#5f6368", bg: "#f1f3f4" },
   { name: "Bookings", color: "#5f6368", bg: "#f1f3f4" },
   { name: "WhatsApp", color: "#25D366", bg: "#e7f8ee" },
   { name: "Delivery apps", color: "#5f6368", bg: "#f1f3f4" },
@@ -20,8 +19,8 @@ export function Employee() {
         KOB isn’t a dashboard. KOB is an employee who uses your tools.
       </h2>
       <p className="mt-5 max-w-xl text-lg text-ink">
-        KOB watches the listing, writes into Google and the site, drafts reviews
-        in your tone, and flags invoice surprises before they hit the till.
+        KOB watches the listing, drafts fixes for Google and the site, drafts reviews
+        in your tone, and flags invoice surprises before they hit your margins.
         You do not sit in KOB. KOB sits in the tools you already have.
       </p>
 
@@ -58,8 +57,8 @@ export function Employee() {
             ))}
           </ul>
           <p className="mt-6 text-ink">
-            The till and the booker come later. KOB does not replace them. KOB
-            uses them — with your yes.
+            The booker comes later. KOB does not replace it. KOB uses it — with
+            your yes.
           </p>
           <p className="mt-4 text-xs text-muted">
             Example venues use Langosteria* colours for clarity — not a customer claim.

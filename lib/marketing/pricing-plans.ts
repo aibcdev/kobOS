@@ -2,6 +2,7 @@
 
 import { FREE_TRIAL_LABEL, TRIAL_LABEL } from "@/lib/billing/offer";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
+import { POSTING, POSTING_FAQ } from "@/lib/marketing/feature-status";
 
 export type PricingTierId = "founding";
 
@@ -30,7 +31,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceMonthly: 99,
     priceNote: `USD · per location / month · founding (${FOUNDING_PRICES.GB.label} in the UK)`,
     description:
-      "KOB checks your Google listing, reviews and website, drafts the fixes, and waits for your yes.",
+      "KOB checks your Google listing, reviews and website and drafts the fixes. You approve, tap once, and post.",
     stripeTier: "pro",
     highlight: true,
   },
@@ -46,14 +47,14 @@ export type ComparisonRow = {
 /** Structured KOB vs Owner.com — honest labels only */
 export const OWNER_COMPARISON = {
   competitor: "Owner.com",
-  eyebrow: "Keep your website and your till.",
-  headline: "Keep your website and your till.",
+  eyebrow: "Keep the tools you already have.",
+  headline: "Keep the tools you already have.",
   subline:
-    "KOB is the manager that works alongside the tools you already have. Owner.com sells a full stack. You do not have to swap your till to get a morning list.",
+    "KOB is the manager that works alongside the tools you already have. Owner.com sells a full stack. You do not have to swap anything to get a morning brief.",
   ownerFlexNote: "$249/mo + 5% per order",
   ownerFlatNote: "$499/mo flat",
   footnote:
-    "*Owner.com public pricing as of 20 Oct 2026 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only. Guest phone answering is on the roadmap, not in the founding plan.",
+    "*Owner.com public pricing as of 20 Oct 2026 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only.",
   rows: [
     {
       label: "Monthly",
@@ -68,19 +69,13 @@ export const OWNER_COMPARISON = {
       kobWins: true,
     },
     {
-      label: "Guest phone answering",
-      kob: "On the roadmap",
-      owner: "Owner product",
-      kobWins: false,
-    },
-    {
       label: "Free public scan before you pay",
       kob: "Yes — about 1 minute",
       owner: "Demo-led sales",
       kobWins: true,
     },
     {
-      label: "Replace POS / ordering stack",
+      label: "Replace your ordering stack",
       kob: "No — we don’t",
       owner: "Yes — core offer",
       kobWins: true,
@@ -104,11 +99,19 @@ export const pricingIncludedFeatures = (priceLabel: string) => [
   {
     title: "Reviews, drafted in your voice",
     detail:
-      "A reply for each new Google review. Bad, sensitive or legal-sounding reviews always wait for you. You copy the reply into Google until posting is live.",
+      `${POSTING.reviews} Bad, sensitive or legal-sounding reviews always wait for you.`,
   },
   {
     title: "Google listing, kept right",
-    detail: "Hours and holiday closures checked against your website. One tap when they disagree.",
+    detail: `Hours and holiday closures checked against your website. ${POSTING.listing}`,
+  },
+  {
+    title: "Morning brief",
+    detail: "What needs you today, in two minutes.",
+  },
+  {
+    title: "More reviews",
+    detail: POSTING.reviewKit,
   },
   {
     title: "Website, checked like a guest",
@@ -120,7 +123,7 @@ export const pricingIncludedFeatures = (priceLabel: string) => [
   },
   {
     title: "You approve first",
-    detail: "Nothing goes public until you say yes, and KOB only acts on its own where you've allowed it.",
+    detail: `${POSTING.control} Automatic posting is coming soon.`,
   },
   {
     title: FREE_TRIAL_LABEL,
@@ -133,25 +136,26 @@ export const pricingIncludedFeatures = (priceLabel: string) => [
 ];
 
 export const pricingFaq = (priceLabel: string) => [
+  POSTING_FAQ,
   {
     q: "Will KOB post anything without me?",
-    a: "No. Everything starts on Ask me. Refunds, discounts and replies to bad reviews always wait for you.",
+    a: `No. ${POSTING.control} Refunds, discounts and replies to bad reviews always wait for you.`,
   },
   {
     q: "What if a draft is wrong?",
     a: "Every draft is editable. KOB does not promise refunds, admit fault, or mention health or legal issues in a reply.",
   },
   {
-    q: "How does KOB know it worked?",
-    a: "After you approve, KOB re-reads Google or your website. It marks the job done only when it can see the change.",
+    q: "How do I know what's done?",
+    a: "Every reply and fix shows where it stands: drafted, approved, or posted by you. Your morning brief shows what still needs you.",
   },
   {
-    q: "Do I need to change my website, till or booking system?",
-    a: "No. KOB is the manager that works alongside the tools you already have. We don't replace your till or ordering.",
+    q: "Do I need to change my website or booking system?",
+    a: "No. KOB is the manager that works alongside the tools you already have.",
   },
   {
     q: "What do I need to connect?",
-    a: "Nothing, to see the first findings. To fix Google, connect your Google Business Profile. Invoices are optional.",
+    a: "Nothing, to see the first findings. Paste in your Google reviews and KOB drafts the replies. Invoices are optional.",
   },
   {
     q: "Which countries?",
@@ -167,6 +171,6 @@ export const pricingFaq = (priceLabel: string) => [
   },
   {
     q: "How is KOB different from Owner.com?",
-    a: "Owner.com sells website, ordering, app and marketing as a full stack. KOB keeps your website and your till, and checks the change went live after you approve.",
+    a: "Owner.com sells website, ordering, app and marketing as a full stack. KOB keeps the tools you already have, drafts the work, and you post it in one tap.",
   },
 ];

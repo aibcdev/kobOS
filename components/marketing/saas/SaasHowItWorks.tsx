@@ -16,7 +16,7 @@ const STEP_VISUALS = [
     kind: "approve" as const,
     rows: [
       { label: "2 new reviews to reply", action: "Review" },
-      { label: "Draft holiday social post", action: "Review" },
+      { label: "Draft holiday Google post", action: "Review" },
       { label: "Confirm opening hours", action: "Review" },
     ],
   },

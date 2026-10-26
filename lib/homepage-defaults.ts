@@ -10,7 +10,7 @@ import { marketingCopy } from "@/lib/marketing/copy";
 export const defaultSiteMeta = {
   title: "KOB — The Restaurant Manager for Owners",
   description:
-    `KOB is the manager that looks after your reviews, Google listing, social posts and offers, so more guests walk through the door. You just tap approve. ${TRIAL_LABEL}, no card, no contract.`,
+    `KOB is the manager that looks after your reviews and Google listing, so more guests walk through the door. KOB drafts, you approve and post in one tap. ${TRIAL_LABEL}, no card, no contract.`,
 } as const;
 
 export const DEFAULT_HERO_IMAGE =

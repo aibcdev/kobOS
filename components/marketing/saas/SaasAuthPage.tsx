@@ -22,13 +22,13 @@ export function SaasAuthPage({ defaultMode = "signin" }: { defaultMode?: "signin
             {(isSignUp
               ? [
                   "Google, reviews, hours, invoices",
-                  "You decide what KOB can take care of without asking",
-                  "Phone answering is Coming soon",
+                  "KOB drafts. You approve, tap once, and post",
+                  "Nothing goes out without your OK",
                 ]
               : [
                   "Open KOB for your restaurant",
                   "Hours, reviews, and invoices in one place",
-                  "Nothing live on Google until the job is verified",
+                  "Nothing goes out without your OK",
                 ]
             ).map((bullet) => (
               <li key={bullet} className="flex gap-2">

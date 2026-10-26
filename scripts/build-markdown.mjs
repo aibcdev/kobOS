@@ -27,7 +27,7 @@ const PORT = Number(process.env.MARKDOWN_PORT || 3457);
 const SKIPPED = new Set(["/go/audit"]);
 
 const SUMMARY =
-  "KOB is the restaurant manager for independent restaurants and cafés. It takes the day-to-day admin off the owner's plate — replying to reviews, keeping the Google listing and menus right, and following up with guests — and nothing goes out until the owner approves it. 7-day free trial, no card needed.";
+  "KOB is the restaurant manager for independent restaurants and cafés. It reads your reviews and drafts the replies, drafts fixes to your Google listing, and sends a morning brief of what needs you today. You approve, tap once, and post. Nothing goes out without your OK. 7-day free trial, no card.";
 
 export const markdownPathFor = (p) => (p === "/" ? "/index.md" : `${p.replace(/\/$/, "")}.md`);
 

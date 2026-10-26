@@ -5,6 +5,7 @@ import { FOUNDING_PRICE_LINE, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { trialPromise } from "@/lib/billing/trial-days";
+import { POSTING } from "@/lib/marketing/feature-status";
 import {
   LAUNCH_PRICING,
   OWNER_COMPARISON,
@@ -17,7 +18,7 @@ import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 export const metadata: Metadata = {
   title: "Pricing | KOB — The Restaurant Manager for Owners",
   description:
-    `Founding price per location — ${FOUNDING_PRICE_LINE}. ${TRIAL_DAYS_FREE}, no card. You approve. KOB checks it is live.`,
+    `Founding price per location — ${FOUNDING_PRICE_LINE}. ${TRIAL_DAYS_FREE}, no card. KOB drafts, you approve and post in one tap.`,
 };
 
 export default async function PricingPage() {
@@ -37,7 +38,7 @@ export default async function PricingPage() {
           </span>
           <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">Your restaurant manager</h2>
           <p className="mt-2 text-sm text-ink">
-            Reviews, your Google listing and your website. You tap approve. KOB checks the change went live.
+            Reviews, your Google listing and your website. KOB drafts. You approve, tap once, and post. {POSTING.control}
           </p>
           <p className="mt-6 flex flex-wrap items-baseline gap-x-2">
             <span className="font-heading text-5xl font-semibold tracking-tight text-[#094413]">{price.label}</span>
@@ -56,7 +57,7 @@ export default async function PricingPage() {
           </p>
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-muted">
-          Keep your website and your till. Owner.com public pricing as of 19 Oct 2026:{" "}
+          Keep the tools you already have. Owner.com public pricing as of 19 Oct 2026:{" "}
           {OWNER_COMPARISON.ownerFlexNote}; {OWNER_COMPARISON.ownerFlatNote}.
         </p>
       </section>

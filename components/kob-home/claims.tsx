@@ -14,7 +14,7 @@ const CLAIMS = [
   },
   {
     title: "Capture more revenue",
-    body: "KOB is built to catch missed calls, bookings, and guest chances. Phone answering is Coming soon.",
+    body: "KOB is built to catch bookings and guest chances you would otherwise miss.",
   },
 ];
 

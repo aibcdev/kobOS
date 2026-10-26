@@ -35,7 +35,7 @@ export function DemoPage() {
         eyebrow="Book a call"
         variant="inset"
         title="See the morning list on your restaurant."
-        description="We walk through reviews, your Google listing, website mistakes and supplier prices. KOB does not replace your till. The self-serve scan is on the audit page if you would rather start alone."
+        description="We walk through reviews, your Google listing, website mistakes and supplier prices. KOB drafts, you approve and post in one tap. The self-serve scan is on the audit page if you would rather start alone."
       >
         <SaasPrimaryCta href="#demo-form">Book a call</SaasPrimaryCta>
         <SaasSecondaryCta href="/audit">Free scan</SaasSecondaryCta>

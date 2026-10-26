@@ -3,25 +3,21 @@ import Link from "next/link";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { trialPromise } from "@/lib/billing/trial-days";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
-import { FEATURE_STATUS, homepageFeatures, type FeatureReadiness } from "@/lib/marketing/feature-status";
+import { FEATURE_STATUS, homepageFeatures, POSTING, POSTING_FAQ } from "@/lib/marketing/feature-status";
 import { consentedProof, show180SiteProof } from "@/lib/marketing/proof";
 
 const GBP = FOUNDING_PRICES.GB.label;
 const USD = FOUNDING_PRICES.US.label;
 
-function reviewReplyAction(status: FeatureReadiness): string {
-  return status === "live" ? "Reply live on Google" : "Copy reply · Open in Google";
-}
-
 const MORNING = [
   {
     title: "Google says you close at 4pm. Your website says 5pm.",
-    action: "Fix Google to 5pm",
-    result: "Checked live on Google",
+    action: "Approve 5pm · Open Google",
+    result: "Updated in a tap",
   },
   {
     title: "2★ review from Sam, unanswered.",
-    action: reviewReplyAction(FEATURE_STATUS.reviewReplyPost),
+    action: "Approve, copy & open Google",
     result: "Draft ready. No refund. No admission of fault.",
   },
   {
@@ -46,25 +42,26 @@ const CONTROL = [
 function faq(priceLabel: string) {
   const trial = trialPromise();
   return [
+    POSTING_FAQ,
     {
       q: "Will KOB post anything without me?",
-      a: "No. Everything starts on Ask me. You can switch a job to Trusted later. Refunds, discounts and replies to bad reviews always wait for you.",
+      a: `No. ${POSTING.control} Refunds, discounts and replies to bad reviews always wait for you.`,
     },
     {
       q: "What if a draft is wrong?",
       a: "Every draft is editable. KOB does not promise refunds, admit fault, or mention health or legal issues in a reply. Reviews like that are always held for you.",
     },
     {
-      q: "How does KOB know it worked?",
-      a: "After you approve, KOB re-reads Google or your website. It only marks the job done when it can see the change. If it cannot confirm, it tells you.",
+      q: "How do I know what's done?",
+      a: "Every reply and fix shows where it stands: drafted, approved, or posted by you. Your morning brief shows what still needs you.",
     },
     {
-      q: "Do I need to change my website, till or booking system?",
+      q: "Do I need to change my website or booking system?",
       a: "No. KOB works with what you have.",
     },
     {
       q: "What do I need to connect?",
-      a: "Nothing, to see the first findings. To fix Google, connect your Google Business Profile with one sign-in. Invoices are optional.",
+      a: "Nothing, to see the first findings. Paste in your Google reviews and KOB drafts the replies. Invoices are optional.",
     },
     {
       q: "Which countries?",
@@ -113,9 +110,9 @@ export async function SiteHome() {
               Every review answered. Every listing right. You just tap approve.
             </h1>
             <p className="mt-5 max-w-md text-lg text-paper/85">
-              KOB checks your Google listing, reviews and website every morning, drafts the fixes, and
-              waits for your yes. Then it checks the change actually went live. No new website. No new
-              till. No agency.
+              KOB checks your Google listing, reviews and website every morning and drafts the replies
+              and fixes. You approve, tap once, and post. Nothing goes out without your OK. No new
+              website. No agency.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -166,10 +163,10 @@ export async function SiteHome() {
         <h2 className="font-display text-headline font-medium">What is KOB?</h2>
         <p className="mt-4 text-ink">
           KOB is the restaurant manager for independent restaurants and cafés. It checks your Google
-          listing, reviews and website every morning, drafts the fixes, and waits for your yes — then
-          checks the change went live. Choose KOB if you want to keep your website, till and booking
+          listing, reviews and website every morning, drafts the replies and fixes, and waits for your
+          yes. You approve, tap once, and post. Choose KOB if you want to keep your website and booking
           system. Choose Owner.com if you want a full branded suite. Choose an agency if you want someone
-          else to run campaigns end to end. KOB does not replace your till or ordering.
+          else to run campaigns end to end.
         </p>
       </section>
 
@@ -200,17 +197,17 @@ export async function SiteHome() {
           </div>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">2</p>
-            <h2 className="font-display mt-3 text-title font-medium">Get your morning list</h2>
+            <h2 className="font-display mt-3 text-title font-medium">Get your morning brief</h2>
             <p className="mt-3 text-ink">
-              A short list of what is wrong, with the fix already drafted. Reply, correct, update.
+              What needs you today, in two minutes, with every reply and fix already drafted.
             </p>
           </div>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">3</p>
-            <h2 className="font-display mt-3 text-title font-medium">Tap approve. KOB checks it is live</h2>
+            <h2 className="font-display mt-3 text-title font-medium">Approve, tap once, post</h2>
             <p className="mt-3 text-ink">
-              Nothing goes public without your yes. It is not marked done until KOB has seen the change
-              on Google or your site.
+              {POSTING.control} KOB copies the words and opens Google for you. You paste and press
+              Post. Automatic posting is coming soon.
             </p>
           </div>
         </div>
@@ -235,7 +232,7 @@ export async function SiteHome() {
         <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
           <h2 className="font-display text-headline font-medium">You decide what KOB is allowed to do</h2>
           <p className="mt-4 text-ink">
-            For each job, pick Ask me (the default), Trusted, or Never. Start on Ask me for everything.
+            Every job starts on Ask me. Some are locked, so KOB always asks or never does them.
           </p>
           <table className="mt-8 w-full text-left text-sm">
             <thead>
@@ -257,16 +254,13 @@ export async function SiteHome() {
       </section>
 
       <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
-        <h2 className="font-display text-headline font-medium">
-          Keep your website, your till and your booking system
-        </h2>
+        <h2 className="font-display text-headline font-medium">Keep your website and your booking system</h2>
         <p className="mt-4 text-ink">
-          KOB works around them. Google Business Profile is ready now. Square, Epos Now, Zettle,
-          ResDiary, Xero and QuickBooks are being connected.
+          KOB works around them. Google Business Profile: {POSTING.status}.
         </p>
         <p className="mt-4 text-ink">
-          Not for you if you want a new website, an ordering app, or a new till. Others do that well.
-          KOB is for owners who want what they already have to work properly.
+          Not for you if you want a new website or an ordering app. Others do that well. KOB is for
+          owners who want what they already have to work properly.
         </p>
       </section>
 

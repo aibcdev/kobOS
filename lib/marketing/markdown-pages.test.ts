@@ -74,7 +74,7 @@ describe("Markdown copies of public pages", () => {
     const home = { path: "/", title: "Your restaurant's new manager", description: "Reviews, Google listing, posts and offers.", markdown: "# Home\n" };
     const terms = { path: "/terms", title: "Terms", description: "", markdown: "# Terms\n" };
     const txt = llmsTxt([home, page, terms]);
-    expect(txt.split("\n").slice(0, 3)).toEqual(["# KOB", "", expect.stringMatching(/^> KOB is the restaurant manager .*approves it\. 7-day free trial, no card needed\.$/)]);
+    expect(txt.split("\n").slice(0, 3)).toEqual(["# KOB", "", expect.stringMatching(/^> KOB is the restaurant manager .*You approve, tap once, and post\. Nothing goes out without your OK\. 7-day free trial, no card\.$/)]);
     expect(txt).toContain("## Main pages\n\n- [Your restaurant's new manager](https://trykob.com/index.md): Reviews, Google listing, posts and offers.\n- [Pricing](https://trykob.com/pricing.md): One price per location. 7 days free, no card.");
     expect(txt).toContain("## Optional\n\n- [Terms](https://trykob.com/terms.md)");
     const full = llmsFullTxt([home, page]);
