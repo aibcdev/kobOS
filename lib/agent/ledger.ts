@@ -10,7 +10,8 @@ export const TRANSITIONS: Record<OsActionStatus, readonly OsActionStatus[]> = {
   DETECTED: ["PROPOSED", "FAILED"],
   PROPOSED: ["AWAITING_APPROVAL", "APPROVED", "REJECTED", "FAILED"],
   AWAITING_APPROVAL: ["APPROVED", "REJECTED", "FAILED"],
-  APPROVED: ["EXECUTING", "REJECTED", "FAILED"],
+  // APPROVED → DONE_BY_OWNER: assisted mode, the owner posted it on Google themselves.
+  APPROVED: ["EXECUTING", "REJECTED", "FAILED", "DONE_BY_OWNER"],
   // EXECUTING → VERIFIED is the "already correct" short-circuit: the precheck found the desired state.
   EXECUTING: ["EXECUTED", "VERIFIED", "FAILED"],
   EXECUTED: ["VERIFYING", "FAILED", "ROLLED_BACK"],
@@ -19,9 +20,10 @@ export const TRANSITIONS: Record<OsActionStatus, readonly OsActionStatus[]> = {
   FAILED: [],
   REJECTED: [],
   ROLLED_BACK: [],
+  DONE_BY_OWNER: [],
 };
 
-export const TERMINAL: readonly OsActionStatus[] = ["VERIFIED", "FAILED", "REJECTED", "ROLLED_BACK"];
+export const TERMINAL: readonly OsActionStatus[] = ["VERIFIED", "FAILED", "REJECTED", "ROLLED_BACK", "DONE_BY_OWNER"];
 
 export class LedgerTransitionError extends Error {
   constructor(
@@ -190,6 +192,46 @@ export async function approve(actionId: string, approvedBy: string): Promise<OsA
     data: { approvedBy, approvedAt: new Date() },
     auditKind: "action.approved",
     auditPayload: { by: approvedBy },
+  });
+}
+
+/**
+ * Assisted mode: the owner says they posted the approved change on Google themselves. Kept apart from VERIFIED,
+ * which means KOB read it back from Google. Saying it twice is a no-op.
+ */
+export async function markDoneByOwner(actionId: string, by: string): Promise<OsAction> {
+  const current = await getAction(actionId);
+  if (current?.status === "DONE_BY_OWNER") return current;
+  return transition(actionId, ["APPROVED"], "DONE_BY_OWNER", {
+    data: { executionCompletedAt: new Date() },
+    auditKind: "action.done_by_owner",
+    auditPayload: { by },
+  });
+}
+
+/** The text the owner can edit before approving, per action type. */
+export const EDITABLE_FIELD: Partial<Record<string, "replyText" | "description" | "summary">> = {
+  "gbp.review.reply": "replyText",
+  "gbp.profile.description.update": "description",
+  "gbp.post.create": "summary",
+};
+
+/** The owner edits the drafted words before approving. Only while it still waits for them. */
+export async function editProposalText(actionId: string, by: string, text: string): Promise<OsAction> {
+  const current = await getAction(actionId);
+  if (!current) throw new LedgerTransitionError(actionId, "missing", "AWAITING_APPROVAL");
+  const field = EDITABLE_FIELD[current.actionType];
+  if (!field) throw new Error(`${current.actionType} has no editable text`);
+  const payload = ActionPayload.parse({ ...(current.proposedPayload as Record<string, unknown>), [field]: text.trim() });
+  return prisma.$transaction(async (tx) => {
+    const res = await tx.osAction.updateMany({
+      where: { id: actionId, status: { in: ["AWAITING_APPROVAL", "PROPOSED"] } },
+      data: { proposedPayload: payload as Prisma.InputJsonValue, ownerFacingSummary: text.trim().slice(0, 2000) },
+    });
+    const row = await tx.osAction.findUniqueOrThrow({ where: { id: actionId } });
+    if (res.count === 0) throw new LedgerTransitionError(actionId, row.status, "AWAITING_APPROVAL");
+    await audit(tx, row, "action.edited", { by, field });
+    return row;
   });
 }
 

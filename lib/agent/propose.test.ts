@@ -3,6 +3,8 @@ import { describeDb, seedRestaurant } from "@/tests/helpers/db";
 
 vi.hoisted(() => {
   if (process.env.TEST_DATABASE_URL) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+  // These tests cover automatic posting (GBP_LIVE on); assisted mode has its own tests.
+  process.env.GBP_LIVE = "1";
 });
 const send = vi.hoisted(() => vi.fn());
 vi.mock("@/inngest/client", () => ({ inngest: { send } }));

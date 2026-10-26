@@ -7,6 +7,7 @@ import { nightsProfile, setMenuPrice, setNights, spendPerHead, type Weekday } fr
 
 /** Talk's day codes (MON…) are the same three letters the nights profile uses. */
 const WEEKDAY_TO_NIGHT: Record<string, Weekday> = { MON: "MON", TUE: "TUE", WED: "WED", THU: "THU", FRI: "FRI", SAT: "SAT", SUN: "SUN" };
+import { publishMode } from "@/lib/agent/publish-mode";
 import { draftReplyForReview, type ReplyDraft } from "@/lib/agent/review-reply";
 import { DAYS, LISTING_FACT, lastSnapshot, sameHours, saveWebsiteHours, websiteHours, type Day, type HoursPeriod, type ListingSnapshot } from "@/lib/connectors/gbp/listing";
 import { proposeHoursUpdate } from "@/lib/connectors/gbp/listing-sync";
@@ -58,7 +59,9 @@ function replyBlock(d: ReplyDraft): string {
   const who = d.reviewer ? `${d.reviewer}'s ${stars(d.rating)} review` : `the ${stars(d.rating)} review`;
   const where =
     d.placed === "approval"
-      ? "It's waiting in Needs you. Nothing is posted until you approve it, and KOB checks Google shows it afterwards."
+      ? d.assisted
+        ? "It's ready in Needs you. Tap Approve, copy & open Google, then paste it and press Post."
+        : "It's waiting in Needs you. Nothing is posted until you approve it, and KOB checks Google shows it afterwards."
       : `Draft — not posted. ${d.reason ?? ""}`.trim();
   return `Here's a reply to ${who}:\n\n"${d.text}"\n\n${where}`;
 }
@@ -390,7 +393,11 @@ async function postReplyNow(c: Ctx): Promise<FactAnswer> {
   return {
     intent: "post_reply",
     text: replies.length
-      ? `${plural(replies.length, "reply", "replies")} ${replies.length === 1 ? "is" : "are"} waiting: ${replies.map((r) => r.title).join("; ")}. Approve the one you want in Needs you and KOB posts it to Google, then checks it's showing.`
+      ? `${plural(replies.length, "reply", "replies")} ${replies.length === 1 ? "is" : "are"} waiting: ${replies.map((r) => r.title).join("; ")}. ${
+          (await publishMode(c.restaurantId)) === "assisted"
+            ? "Open it in Needs you and tap Approve, copy & open Google — then paste it and press Post."
+            : "Approve the one you want in Needs you and KOB posts it to Google, then checks it's showing."
+        }`
       : "There's no reply waiting to post. Ask me to reply to a review first; you'll approve the exact wording before it goes to Google.",
     activity: [{ label: "Checked Needs you", status: "complete" }],
   };

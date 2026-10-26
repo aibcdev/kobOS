@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppPageShell } from "@/components/actions/app-page-shell";
+import { AddReviews } from "@/components/reviews/add-reviews";
+import { publishMode } from "@/lib/agent/publish-mode";
 import { loadOwnerContext } from "@/lib/agent/owner-context";
 import { periodStart, reviewSummary } from "@/lib/kob/talk/restaurant-facts";
 import { googleReviewLink, reviewAskMessage, reviewQrSvg } from "@/lib/reviews/review-kit";
@@ -16,7 +18,8 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
 
   const now = new Date();
   const weekStart = periodStart("week", timezone, now);
-  const [link, thisWeek, lastWeek] = await Promise.all([
+  const [mode, link, thisWeek, lastWeek] = await Promise.all([
+    publishMode(id),
     googleReviewLink(id),
     reviewSummary(id, weekStart, now),
     reviewSummary(id, new Date(weekStart.getTime() - 7 * 86_400_000), weekStart),
@@ -32,6 +35,22 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
           new review{thisWeek.count === 1 ? "" : "s"} · last week {lastWeek.count} · {thisWeek.unrepliedTotal} waiting for a reply
         </p>
       </section>
+
+      {mode === "assisted" ? (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium">Add your Google reviews</h2>
+          <p className="text-sm text-muted">Paste a review and KOB drafts the reply. You approve it, tap once, and post it on Google.</p>
+          <AddReviews restaurantId={id} restaurantQuery={restaurantQuery} />
+        </section>
+      ) : (
+        // Reviews come in from Google by themselves; this is only for the odd one that's missing.
+        <details className="text-sm">
+          <summary className="min-h-11 cursor-pointer content-center text-muted underline">Missing a review?</summary>
+          <div className="mt-3">
+            <AddReviews restaurantId={id} restaurantQuery={restaurantQuery} />
+          </div>
+        </details>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium">Get more reviews from happy guests</h2>

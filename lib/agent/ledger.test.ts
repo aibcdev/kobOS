@@ -35,6 +35,14 @@ describe("transition table", () => {
     for (const s of TERMINAL) expect(TRANSITIONS[s].filter((t) => t !== "ROLLED_BACK")).toEqual([]);
   });
 
+  it("an approved action can be posted by the owner, and that is final", () => {
+    expect(canTransition("APPROVED", "DONE_BY_OWNER")).toBe(true);
+    expect(canTransition("AWAITING_APPROVAL", "DONE_BY_OWNER")).toBe(false);
+    expect(canTransition("EXECUTING", "DONE_BY_OWNER")).toBe(false);
+    expect(TERMINAL).toContain("DONE_BY_OWNER");
+    expect(TRANSITIONS.DONE_BY_OWNER).toEqual([]);
+  });
+
   it("scores risk from the registry (spec examples)", () => {
     expect(riskFor("gbp.review.reply")).toBe(18);
     expect(riskFor("gbp.hours.regular.update")).toBe(39);
@@ -115,6 +123,26 @@ describeDb("ledger on Postgres", () => {
       "action.verifying",
       "action.verified",
     ]);
+  });
+
+  it("assisted: approve → posted by owner, kept apart from VERIFIED; saying it twice is a no-op", async () => {
+    const a = await ledger.createProposal({ restaurantId, title: "x", payload: reply("kob-review:r6") });
+    await expect(ledger.markDoneByOwner(a.id, "owner")).rejects.toBeInstanceOf(ledger.LedgerTransitionError);
+    await ledger.approve(a.id, "owner");
+    const done = await ledger.markDoneByOwner(a.id, "owner");
+    expect(done.status).toBe("DONE_BY_OWNER");
+    expect(done.executionCompletedAt).not.toBeNull();
+    expect((await ledger.markDoneByOwner(a.id, "owner")).status).toBe("DONE_BY_OWNER");
+    expect(await kinds(a.id)).toEqual(["action.proposed", "action.approved", "action.done_by_owner"]);
+    expect(await ledger.claim(a.id)).toBeNull();
+  });
+
+  it("the owner's edit replaces the drafted words only while it waits", async () => {
+    const a = await ledger.createProposal({ restaurantId, title: "x", payload: reply("kob-review:r7") });
+    const edited = await ledger.editProposalText(a.id, "owner", "  Thank you, Sam!  ");
+    expect((edited.proposedPayload as { replyText: string }).replyText).toBe("Thank you, Sam!");
+    await ledger.approve(a.id, "owner");
+    await expect(ledger.editProposalText(a.id, "owner", "Too late")).rejects.toBeInstanceOf(ledger.LedgerTransitionError);
   });
 
   it("reject is terminal and can't be approved afterwards", async () => {

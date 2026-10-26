@@ -5,6 +5,8 @@ import { describeDb, seedRestaurant } from "@/tests/helpers/db";
 
 vi.hoisted(() => {
   if (process.env.TEST_DATABASE_URL) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+  // These tests cover automatic posting (GBP_LIVE on); assisted mode has its own tests.
+  process.env.GBP_LIVE = "1";
 });
 
 const NOW = new Date("2026-10-19T12:00:00Z");
@@ -100,6 +102,9 @@ const rows: Row[] = [
     "AUTO",
     "grant",
   ],
+  ["assisted: no Google connection still waits for the owner", ctx({ assisted: true, connectorHealthy: false }), "ASK", "assisted"],
+  ["assisted: an ALWAYS grant never auto-runs", ctx({ assisted: true, grants: [grant()] }), "ASK", "assisted"],
+  ["assisted: role is still checked", ctx({ assisted: true, teamRole: "MEMBER", actionType: "gbp.hours.regular.update", risk: 39 }), "DENY", "role"],
 ];
 
 describe("policy.decide (Spec 1 §7.7)", () => {

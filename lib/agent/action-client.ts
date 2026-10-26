@@ -22,4 +22,9 @@ export const actionsApi = {
     call(`/api/actions/${id}/approve`, input),
   reject: (id: string, reason: string) => call(`/api/actions/${id}/reject`, { reason }),
   undo: (id: string) => call(`/api/actions/${id}/undo`, {}),
+  /** Assisted mode: the owner posted it on Google themselves. */
+  posted: (id: string) => call(`/api/actions/${id}/posted`, {}),
+  edit: (id: string, text: string) => call(`/api/actions/${id}/edit`, { text }),
+  /** Fire-and-forget: where owners drop off in the assisted flow. */
+  assistEvent: (id: string, event: "copied" | "opened_google") => void call(`/api/actions/${id}/assist-event`, { event }).catch(() => undefined),
 };

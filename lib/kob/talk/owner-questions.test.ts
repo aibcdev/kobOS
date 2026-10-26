@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
   if (process.env.TEST_DATABASE_URL) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+  // These tests cover automatic posting (GBP_LIVE on); assisted mode has its own tests.
+  process.env.GBP_LIVE = "1";
 });
 // No language service: every answer must come from the restaurant's own data.
 vi.mock("@/lib/ai/gemini-config", () => ({

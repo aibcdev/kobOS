@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { PostCard } from "@/components/actions/post-card";
 import { ApprovalCard } from "@/components/kob-talk/cards/approval-card";
 import type { ActionView } from "@/lib/agent/access";
 import type { ChiefOfStaffTaskDto, TodayBriefPayload } from "@/lib/chief-of-staff/types";
@@ -82,12 +83,15 @@ export function TodayHome({
   // chief-of-staff task API.
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/actions?restaurantId=${encodeURIComponent(restaurant.id)}&status=needs_you&limit=20`, { cache: "no-store" })
-      .then((res) => (res.ok ? (res.json() as Promise<{ actions: ActionView[] }>) : { actions: [] }))
-      .then((data) => {
-        if (!cancelled) setReplies(data.actions.filter((a) => a.actionType.startsWith("gbp.")));
-      })
-      .catch(() => undefined);
+    const load = (status: string) =>
+      fetch(`/api/actions?restaurantId=${encodeURIComponent(restaurant.id)}&status=${status}&limit=20`, { cache: "no-store" })
+        .then((res) => (res.ok ? (res.json() as Promise<{ actions: ActionView[] }>) : { actions: [] }))
+        .then((data) => data.actions)
+        .catch(() => [] as ActionView[]);
+    // Waiting for a yes, plus (assisted mode) approved and waiting to be pasted into Google.
+    void Promise.all([load("needs_you"), load("ready_to_post")]).then(([waiting, ready]) => {
+      if (!cancelled) setReplies([...waiting, ...ready].filter((a) => a.actionType.startsWith("gbp.")));
+    });
     return () => {
       cancelled = true;
     };
@@ -116,6 +120,7 @@ export function TodayHome({
     [brief, replies.length],
   );
   const repliesWaiting = replies.filter((a) => a.status === "AWAITING_APPROVAL").length;
+  const readyToPost = replies.filter((a) => a.assist && a.status === "APPROVED").length;
   const remaining = shown.filter((t) => !outcomes[t.id]).length + repliesWaiting;
   const approvedToday = brief
     ? brief.tasks.filter((t) => t.status === "APPROVED").length +
@@ -276,15 +281,28 @@ export function TodayHome({
         <section aria-labelledby="today-replies" className="space-y-3">
           <h2 id="today-replies" className="text-sm font-medium">
             Waiting for your yes on Google
+            {readyToPost ? (
+              <span className="ml-2 rounded-full bg-espresso px-2 py-0.5 text-xs text-paper" data-testid="ready-to-post">
+                Ready to post: {readyToPost}
+              </span>
+            ) : null}
           </h2>
           <ul className="space-y-3">
             {replies.map((a) => (
               <li key={a.id}>
-                <ApprovalCard
-                  action={a}
-                  detailHref={`/app/actions/${a.id}?r=${encodeURIComponent(restaurant.id)}`}
-                  onSettled={(view) => setReplies((all) => all.map((x) => (x.id === view.id ? view : x)))}
-                />
+                {a.assist ? (
+                  <PostCard
+                    action={a}
+                    detailHref={`/app/actions/${a.id}?r=${encodeURIComponent(restaurant.id)}`}
+                    onSettled={(view) => setReplies((all) => all.map((x) => (x.id === view.id ? view : x)))}
+                  />
+                ) : (
+                  <ApprovalCard
+                    action={a}
+                    detailHref={`/app/actions/${a.id}?r=${encodeURIComponent(restaurant.id)}`}
+                    onSettled={(view) => setReplies((all) => all.map((x) => (x.id === view.id ? view : x)))}
+                  />
+                )}
               </li>
             ))}
           </ul>

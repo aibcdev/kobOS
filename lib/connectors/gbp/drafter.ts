@@ -42,7 +42,7 @@ export function draftPrompt(input: DraftInput): { system: string; user: string }
     `Restaurant: ${input.restaurantName}`,
     `Tone: ${input.voice?.trim() || "Warm, confident hospitality; concise and human."}`,
     `Reviewer first name: ${first || "(none given)"}`,
-    `Stars: ${input.rating} of 5`,
+    `Stars: ${input.rating > 0 ? `${input.rating} of 5` : "not given"}`,
     "<untrusted_review>",
     fenceSafe(input.reviewText.trim() || "(no text, rating only)"),
     "</untrusted_review>",
@@ -82,6 +82,9 @@ export function templateReviewReply(input: Pick<DraftInput, "restaurantName" | "
   const team = `The ${input.restaurantName} team`;
   if (input.rating >= 4)
     return `${hi} for the kind words and for taking the time to leave a review. We're really glad you enjoyed your visit and we look forward to welcoming you back soon. ${team}`;
+  // A review the owner pasted without its stars: thank them without guessing whether it was good or bad.
+  if (input.rating <= 0)
+    return `${hi} for taking the time to share your feedback. We read every review, and if anything wasn't right we'd like to hear about it directly. We hope to welcome you back soon. ${team}`;
   if (input.rating === 3)
     return `${hi} for the honest feedback. We'd love to hear a little more about what would have made your visit better, so please get in touch with us directly. ${team}`;
   return `${hi} for telling us about this, and we're sorry your visit fell short. That isn't the experience we want for anyone. Please get in touch with us directly so we can look into it properly. ${team}`;

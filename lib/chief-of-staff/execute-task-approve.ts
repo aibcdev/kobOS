@@ -65,7 +65,9 @@ async function approveReviewTask(task: ChiefOfStaffTask, userId: string | null):
       task: updated,
       actionId: draft.actionId!,
       contentId: draft.contentId,
-      message: "Your reply is ready. Check the wording and approve it — KOB then posts it to Google and checks it's showing.",
+      message: draft.assisted
+        ? "Your reply is ready. Check the wording, then tap Approve, copy & open Google and paste it in."
+        : "Your reply is ready. Check the wording and approve it — KOB then posts it to Google and checks it's showing.",
       nextHref: `/app/actions/${draft.actionId}`,
     };
   }

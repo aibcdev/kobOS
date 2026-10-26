@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SwipeRow } from "@/components/kob-micro";
+import { PostCard } from "@/components/actions/post-card";
 import { ApprovalCard } from "@/components/kob-talk/cards/approval-card";
 import type { ActionView } from "@/lib/agent/access";
 import { actionsApi } from "@/lib/agent/action-client";
@@ -39,21 +40,33 @@ export function NeedsYouList({ actions, restaurantQuery }: { actions: ActionView
             actions={
               a.status === "AWAITING_APPROVAL"
                 ? [
-                    ...(a.requiresSlide ? [] : [{ id: "approve", label: "Approve", tone: "primary" as const }]),
+                    // Assisted items are approved on the card, where the tap also copies the words and opens Google.
+                    ...(a.requiresSlide || a.assist ? [] : [{ id: "approve", label: "Approve", tone: "primary" as const }]),
                     { id: "skip", label: "Skip", tone: "muted" as const },
                   ]
                 : []
             }
             onAction={(id) => void quick(a, id)}
           >
-            <ApprovalCard
-              action={a}
-              detailHref={`/app/actions/${a.id}${restaurantQuery}`}
-              onSettled={(view) => {
-                if (view.status === "REJECTED") setItems((all) => all.filter((x) => x.id !== view.id));
-                else setItems((all) => all.map((x) => (x.id === view.id ? view : x)));
-              }}
-            />
+            {a.assist ? (
+              <PostCard
+                action={a}
+                detailHref={`/app/actions/${a.id}${restaurantQuery}`}
+                onSettled={(view) => {
+                  if (view.status === "REJECTED") setItems((all) => all.filter((x) => x.id !== view.id));
+                  else setItems((all) => all.map((x) => (x.id === view.id ? view : x)));
+                }}
+              />
+            ) : (
+              <ApprovalCard
+                action={a}
+                detailHref={`/app/actions/${a.id}${restaurantQuery}`}
+                onSettled={(view) => {
+                  if (view.status === "REJECTED") setItems((all) => all.filter((x) => x.id !== view.id));
+                  else setItems((all) => all.map((x) => (x.id === view.id ? view : x)));
+                }}
+              />
+            )}
           </SwipeRow>
         </li>
       ))}
