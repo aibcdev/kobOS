@@ -187,3 +187,39 @@ Copy the `https://….ngrok-free.app` URL. If login or Google Places fail, tempo
 - Supabase **Redirect URLs** to `https://<ngrok-host>/auth/callback`
 
 No deploy required — tunnel only forwards to your machine.
+
+## Deploy previews
+
+Every pull request gets a Netlify deploy preview. Previews never run migrations, but by default they read the
+**same environment variables as production**, so a preview of unreviewed code talks to the live database, live
+Stripe and live email. Give previews their own values once:
+
+1. Netlify → **kobkob** → Site configuration → **Environment variables**.
+2. For each variable below, choose **Edit** → **Different value for each deploy context**, and set the
+   **Deploy Previews** (and **Branch deploys**) value:
+
+   | Variable | Preview value |
+   |---|---|
+   | `DATABASE_URL` | a separate staging Postgres (e.g. a second Supabase project) |
+   | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | the staging Supabase project |
+   | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe **test mode** keys |
+   | `RESEND_API_KEY` | leave empty (owner emails are then recorded as `DRY_RUN`, never sent) |
+   | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `INTEGRATION_ENC_KEY` | a test OAuth client and its own key |
+   | `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` | the Inngest staging environment |
+   | `GBP_LIVE` | unset |
+
+3. Run the staging database's migrations once: `DATABASE_URL=<staging url> npx prisma migrate deploy`.
+
+Until this is done, open previews only for copy and design checks, and don't sign up, start a trial or pay on them.
+
+## Before a release with migrations
+
+Production builds run `prisma migrate deploy`, so a merge to `main` changes the live schema.
+
+1. Supabase → Database → **Backups**: confirm a recent backup exists (or take one).
+2. `npx prisma migrate status` against production (read-only) lists exactly the migrations you expect to be pending.
+3. After the deploy, `GET /api/ops/health` with `Authorization: Bearer $OPS_STATUS_SECRET` lists any missing
+   production env vars by name (`missingEnv`) and whether Google writes are on (`gbpLive`).
+
+Netlify publishes a successful production build automatically only while **Auto publishing** is unlocked
+(Deploys page). When it's locked, builds succeed but the live site stays on the pinned deploy.
