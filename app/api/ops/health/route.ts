@@ -40,6 +40,7 @@ export async function GET(req: Request) {
     stripeOk = false;
   }
 
+  // Names only, never values. Missing ones make a feature quietly do nothing in production.
   const requiredEnv = [
     "DATABASE_URL",
     "NEXT_PUBLIC_SUPABASE_URL",
@@ -50,10 +51,17 @@ export async function GET(req: Request) {
     "OPS_ALERT_EMAIL",
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
-    "STRIPE_PRICE_STARTER",
     "STRIPE_PRICE_PRO",
     "GOOGLE_PLACES_API_KEY",
     "CRON_SECRET",
+    // Google connection (reviews, listing) and the tokens it stores
+    "GOOGLE_OAUTH_CLIENT_ID",
+    "GOOGLE_OAUTH_CLIENT_SECRET",
+    "INTEGRATION_ENC_KEY",
+    "PII_HASH_KEY",
+    // Drafting (without it: template replies, fact-only Talk) and owner emails (without it: logged as DRY_RUN)
+    "GEMINI_API_KEY",
+    "RESEND_API_KEY",
   ];
   const missingEnv = requiredEnv.filter((key) => !process.env[key]?.trim());
   const heartbeatState = Object.fromEntries(
@@ -82,6 +90,8 @@ export async function GET(req: Request) {
         places: Boolean(process.env.GOOGLE_PLACES_API_KEY),
       },
       missingEnv,
+      // Google writes stay off until Business Profile API access is approved and this is set.
+      gbpLive: ["1", "true"].includes(process.env.GBP_LIVE?.trim().toLowerCase() ?? ""),
       outbound: { queueReady, delivery, suppressed },
       audits: { stuck: stuckAudits },
       heartbeats: heartbeatState,

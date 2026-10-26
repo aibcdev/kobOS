@@ -2,8 +2,9 @@
 # Production publish is Git-only (aibcdev/kobOS main). Never `netlify deploy --prod`
 # to site kobkob / trykob.com — that is how BELLY overwrote the live domain.
 # Netlify's built-in Next.js runtime owns the output directory.
-# Production builds run `prisma migrate deploy` before `next build`; previews share the
-# prod DATABASE_URL, so they must not. Migrations land before the new code, so keep them
+# Production builds run `prisma migrate deploy` before `next build`; previews never migrate. Previews must also
+# never point at production data — give DATABASE_URL and the other secrets a Deploy Previews value in Netlify
+# (docs/DEPLOYMENT.md, "Deploy previews"). Migrations land before the new code, so keep them
 # additive (the old code must still run against the migrated schema).
 # After the build, scripts/build-markdown.mjs writes public/*.md, llms.txt and llms-full.txt from the rendered pages.
 
@@ -12,8 +13,9 @@
   command = "if [ \"$CONTEXT\" = \"production\" ]; then npx prisma migrate deploy; fi && npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build && node scripts/build-markdown.mjs"
 
 [build.environment]
-  SECRETS_SCAN_ENABLED = "false"
-  SECRETS_SCAN_OMIT_KEYS = "NETLIFY_PRODUCTION_URL,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SITE_URL,OUTBOUND_MODE,GEMINI_MODEL,AUDIT_RATE_LIMIT_WINDOW_SEC,AUDIT_RATE_LIMIT_MAX_REQUESTS,RESEND_AUTH_FROM_EMAIL,RESEND_FROM_EMAIL,OUTBOUND_UK_CITIES,OUTBOUND_SALES_MODE,PLACES_AUTOCOMPLETE_REGIONS,OUTBOUND_REVIEW_MIN,OUTBOUND_REVIEW_MAX,OUTBOUND_MAX_QUALIFY_SCORE,OUTBOUND_UK_DAILY_CAP,AUDIT_BROWSERBASE_ASYNC,CRON_SECRET"
+  # Secret scanning stays on. NEXT_PUBLIC_* values are public by design (they ship in the browser bundle).
+  # CRON_SECRET was already exempt before this; review whether it still needs to be.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,NEXT_PUBLIC_UI_PREVIEW,NETLIFY_PRODUCTION_URL,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SITE_URL,OUTBOUND_MODE,GEMINI_MODEL,AUDIT_RATE_LIMIT_WINDOW_SEC,AUDIT_RATE_LIMIT_MAX_REQUESTS,RESEND_AUTH_FROM_EMAIL,RESEND_FROM_EMAIL,OUTBOUND_UK_CITIES,OUTBOUND_SALES_MODE,PLACES_AUTOCOMPLETE_REGIONS,OUTBOUND_REVIEW_MIN,OUTBOUND_REVIEW_MAX,OUTBOUND_MAX_QUALIFY_SCORE,OUTBOUND_UK_DAILY_CAP,AUDIT_BROWSERBASE_ASYNC,CRON_SECRET"
   NODE_OPTIONS = "--max-old-space-size=4096"
 
 [functions."audit-drain"]
