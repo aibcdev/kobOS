@@ -35,6 +35,7 @@ export function capabilityLabel(c: ReadinessChecks, fallback: CapabilityLabel = 
  */
 export function ownerFacingStatus(status: string, failureCode?: string | null): string {
   if (status === "VERIFIED") return "Done";
+  if (status === "DONE_BY_OWNER") return "Posted by you.";
   if (status === "EXECUTED" || status === "VERIFYING") return "Sent — waiting for confirmation.";
   if (status === "FAILED") {
     if (!failureCode || failureCode === "AUTH" || failureCode === "DENIED_NEEDS_CONNECTION") return "Needs reconnect.";

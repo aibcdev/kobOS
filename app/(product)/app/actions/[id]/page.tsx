@@ -2,7 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { ActionTimeline } from "@/components/actions/action-timeline";
 import { AppPageShell } from "@/components/actions/app-page-shell";
 import { ApprovalCard } from "@/components/kob-talk/cards/approval-card";
-import { actionView } from "@/lib/agent/access";
+import { PostCard } from "@/components/actions/post-card";
+import { viewWithAssist } from "@/lib/agent/assist";
 import { loadOwnerContext } from "@/lib/agent/owner-context";
 import { prisma } from "@/lib/db/prisma";
 
@@ -33,13 +34,13 @@ export default async function ActionDetailPage({
   });
   if (!action) notFound();
 
-  const view = actionView(action);
+  const view = await viewWithAssist(action);
   const evidence = action.evidence.filter((e) => e.evidenceType !== "policy.subject");
   const before = action.rollbackPayload as Record<string, unknown> | null;
 
   return (
     <AppPageShell title={action.title} subtitle={ctx.restaurant.name} restaurantQuery={restaurantQuery}>
-      <ApprovalCard action={view} />
+      {view.assist ? <PostCard action={view} /> : <ApprovalCard action={view} />}
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium text-muted">What changes</h2>

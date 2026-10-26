@@ -1,22 +1,24 @@
 import type { OsActionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { actionView } from "@/lib/agent/access";
+import { viewsWithAssist } from "@/lib/agent/assist";
 import { assertRestaurantMembership } from "@/lib/api/restaurant-access";
 import { requireApiUser } from "@/lib/auth/api-session";
 import { prisma } from "@/lib/db/prisma";
 
 const STATUS_FILTER: Record<string, OsActionStatus[] | undefined> = {
   open: ["DETECTED", "PROPOSED", "AWAITING_APPROVAL", "APPROVED", "EXECUTING", "EXECUTED", "VERIFYING"],
+  // Approved, waiting for the owner to post it on Google (assisted mode).
+  ready_to_post: ["APPROVED"],
   needs_you: ["AWAITING_APPROVAL"],
-  verified: ["VERIFIED"],
+  verified: ["VERIFIED", "DONE_BY_OWNER"],
   failed: ["FAILED"],
   all: undefined,
 };
 
 const query = z.object({
   restaurantId: z.string().min(1).max(64),
-  status: z.enum(["open", "needs_you", "verified", "failed", "all"]).default("open"),
+  status: z.enum(["open", "needs_you", "ready_to_post", "verified", "failed", "all"]).default("open"),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
@@ -39,5 +41,7 @@ export async function GET(req: Request) {
     orderBy: { createdAt: "desc" },
     take: limit,
   });
-  return NextResponse.json({ actions: actions.map(actionView) });
+  const views = await viewsWithAssist(actions);
+  // "Ready to post" means approved and waiting on the owner's hand, not approved and on its way to Google.
+  return NextResponse.json({ actions: status === "ready_to_post" ? views.filter((v) => v.assist) : views });
 }

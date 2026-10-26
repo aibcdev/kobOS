@@ -1077,6 +1077,8 @@ model CustomerReview {
   reviewedAt        DateTime?
   replied           Boolean          @default(false)
   relationshipScore Int              @default(0)
+  /// Link to the review on Google, when the owner pasted one (reviews added by hand).
+  sourceUrl         String?
   restaurant        Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   replies           ReviewReply[]
   themeTags         ReviewThemeTag[]
@@ -1836,6 +1838,8 @@ enum OsActionStatus {
   FAILED
   REJECTED
   ROLLED_BACK
+  /// Approved, then posted by the owner on Google (assisted mode). Google hasn't confirmed it; VERIFIED is that.
+  DONE_BY_OWNER
 
   @@schema("public")
 }

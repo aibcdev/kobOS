@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { actionView, loadActionForUser } from "@/lib/agent/access";
+import { loadActionForUser } from "@/lib/agent/access";
+import { viewWithAssist } from "@/lib/agent/assist";
 import { requireApiUser } from "@/lib/auth/api-session";
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -8,5 +9,5 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const found = await loadActionForUser(session.userId, (await ctx.params).id);
   if (!found) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ action: actionView(found.action) });
+  return NextResponse.json({ action: await viewWithAssist(found.action) });
 }

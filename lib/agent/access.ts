@@ -1,6 +1,7 @@
 import type { OsAction, TeamMember } from "@prisma/client";
 import { ACTION_TYPE_SPECS, isActionType } from "@/lib/agent/action-types";
 import { prisma } from "@/lib/db/prisma";
+import type { Assist } from "@/lib/agent/assist";
 import { ownerFacingStatus } from "@/lib/os/gates";
 
 /** The action and the caller's membership, or null when either is missing (callers answer 404, never 403). */
@@ -38,6 +39,8 @@ export type ActionView = {
   /** VERIFIED, inside the undo window, with an inverse to run. */
   undoable: boolean;
   failureReason: string | null;
+  /** Set when the owner posts this on Google by hand (assisted mode); see lib/agent/assist.ts. */
+  assist?: Assist | null;
 };
 
 export function actionView(a: OsAction): ActionView {

@@ -33,6 +33,8 @@ test.describe("approval card", () => {
     const restaurant = await prisma.restaurant.create({ data: { name: `E2E Bistro ${suffix}`, slug: `e2e-${suffix}` } });
     restaurantId = restaurant.id;
     await prisma.teamMember.create({ data: { userId: PREVIEW_USER_ID, restaurantId, role: "OWNER" } });
+    // This covers automatic posting; assisted-posting.spec.ts covers GBP_LIVE off.
+    await prisma.featureFlagOverride.create({ data: { restaurantId, name: "GBP_LIVE", enabled: true } });
     const action = await prisma.osAction.create({
       data: {
         restaurantId,

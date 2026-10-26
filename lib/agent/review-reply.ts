@@ -1,6 +1,7 @@
 import type { CustomerReview } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { proposeAction } from "@/lib/agent/propose";
+import { LOCAL_REVIEW_PREFIX, publishMode } from "@/lib/agent/publish-mode";
 import type { PolicyDeps } from "@/lib/agent/policy";
 import { draftReviewReplyOrTemplate, type Generate } from "@/lib/connectors/gbp/drafter";
 import { reviewSubject, reviewTaskKey } from "@/lib/connectors/gbp/review-subject";
@@ -15,6 +16,8 @@ export type ReplyDraft = {
   /** "approval": waiting in Needs you; "chat_only": shown here because Google isn't connected or the review isn't from Google. */
   placed: "approval" | "chat_only";
   actionId: string | null;
+  /** The owner posts it on Google themselves after approving (assisted mode). */
+  assisted: boolean;
   reason: string | null;
 };
 
@@ -53,13 +56,18 @@ export async function draftReplyForReview(
   );
   const contentId = await saveReplyDraft(restaurantId, review.id, text);
   const base = { reviewId: review.id, contentId, rating: review.rating, reviewer: review.reviewerName?.trim().split(/\s+/)[0] ?? null, text };
-  const google = await googleConnection(restaurantId);
-  if (review.source !== "GOOGLE" || !review.externalReviewId)
-    return { ...base, placed: "chat_only", actionId: null, reason: "This review isn't from Google, so it can't be posted from KOB." };
-  if (google.state !== "connected")
-    return { ...base, placed: "chat_only", actionId: null, reason: "Connect your Google listing so KOB can post replies after you approve them." };
+  if (review.source !== "GOOGLE")
+    return { ...base, placed: "chat_only", actionId: null, assisted: false, reason: "This review isn't from Google, so there's nowhere on Google to post the reply." };
+  // Assisted mode: the owner approves, copies and posts it; no Google connection is needed, and a review the owner
+  // pasted in (no Google id yet) gets a local one.
+  const assisted = (await publishMode(restaurantId)) === "assisted";
+  if (!assisted) {
+    const google = await googleConnection(restaurantId);
+    if (!review.externalReviewId || google.state !== "connected")
+      return { ...base, placed: "chat_only", actionId: null, assisted, reason: "Connect your Google listing so KOB can post replies after you approve them." };
+  }
 
-  const name = review.externalReviewId;
+  const name = review.externalReviewId ?? `${LOCAL_REVIEW_PREFIX}${review.id}`;
   const { action } = await proposeAction(
     {
       restaurantId,
@@ -77,6 +85,6 @@ export async function draftReplyForReview(
     opts.policy,
   );
   if (action.status === "FAILED")
-    return { ...base, placed: "chat_only", actionId: null, reason: action.failureReason ?? "It couldn't be added to your approvals." };
-  return { ...base, placed: "approval", actionId: action.id, reason: null };
+    return { ...base, placed: "chat_only", actionId: null, assisted, reason: action.failureReason ?? "It couldn't be added to your approvals." };
+  return { ...base, placed: "approval", actionId: action.id, assisted, reason: null };
 }

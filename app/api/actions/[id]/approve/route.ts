@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { actionView, loadActionForUser, SLIDE_RISK } from "@/lib/agent/access";
+import { viewWithAssist } from "@/lib/agent/assist";
+import { isAssisted, publishMode } from "@/lib/agent/publish-mode";
 import { sendActionApproved } from "@/lib/agent/events";
 import { assertGrantable, GrantError, grantFromApproval } from "@/lib/agent/grants";
 import { approve, fail, getAction, LedgerTransitionError } from "@/lib/agent/ledger";
@@ -64,6 +66,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     throw e;
   }
   await grantFromApproval(approved, session.userId, scope, limits);
-  await sendActionApproved(approved);
-  return NextResponse.json({ action: actionView(approved) });
+  // Assisted mode: the owner posts it on Google themselves, so nothing is handed to the executor.
+  const mode = await publishMode(approved.restaurantId);
+  if (!isAssisted(approved, mode)) await sendActionApproved(approved);
+  return NextResponse.json({ action: await viewWithAssist(approved) });
 }

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppPageShell } from "@/components/actions/app-page-shell";
 import { NeedsYouList } from "@/components/actions/needs-you-list";
-import { actionView } from "@/lib/agent/access";
+import { viewsWithAssist } from "@/lib/agent/assist";
 import { loadOwnerContext } from "@/lib/agent/owner-context";
 import { prisma } from "@/lib/db/prisma";
 
@@ -14,16 +14,28 @@ export default async function NeedsYouPage({ searchParams }: { searchParams: Pro
   if (ctx.kind === "no-restaurant") redirect("/app");
   const restaurantQuery = typeof params.r === "string" ? `?r=${encodeURIComponent(params.r)}` : "";
 
-  const actions = await prisma.osAction.findMany({
-    where: { restaurantId: ctx.restaurant.id, status: { in: ["AWAITING_APPROVAL", "PROPOSED"] } },
-    // Riskiest first, then whatever expires soonest.
-    orderBy: [{ riskScore: "desc" }, { expiresAt: "asc" }],
-    take: 50,
-  });
+  const [waiting, approved] = await Promise.all([
+    prisma.osAction.findMany({
+      where: { restaurantId: ctx.restaurant.id, status: { in: ["AWAITING_APPROVAL", "PROPOSED"] } },
+      // Riskiest first, then whatever expires soonest.
+      orderBy: [{ riskScore: "desc" }, { expiresAt: "asc" }],
+      take: 50,
+    }),
+    prisma.osAction.findMany({ where: { restaurantId: ctx.restaurant.id, status: "APPROVED" }, orderBy: { approvedAt: "asc" }, take: 50 }),
+  ]);
+  const views = await viewsWithAssist(waiting);
+  // Approved but not yet pasted into Google (assisted mode).
+  const ready = (await viewsWithAssist(approved)).filter((v) => v.assist);
 
   return (
     <AppPageShell title="Needs you" subtitle={ctx.restaurant.name} restaurantQuery={restaurantQuery} active="/app/needs-you">
-      <NeedsYouList actions={actions.map(actionView)} restaurantQuery={restaurantQuery} />
+      {ready.length ? (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium">Ready to post: {ready.length}</h2>
+          <NeedsYouList actions={ready} restaurantQuery={restaurantQuery} />
+        </section>
+      ) : null}
+      <NeedsYouList actions={views} restaurantQuery={restaurantQuery} />
     </AppPageShell>
   );
 }

@@ -1,6 +1,7 @@
 import type { OsAction, OsPermissionGrant, Prisma } from "@prisma/client";
 import { ACTION_TYPE_SPECS, isActionType, type ActionType, type Connector } from "@/lib/agent/action-types";
 import { prisma } from "@/lib/db/prisma";
+import { isAssisted, publishMode } from "@/lib/agent/publish-mode";
 import { flag } from "@/lib/flags";
 import { utcOffsetMinutesAt } from "@/lib/geo/timezone";
 import { LEGACY_ACTION_KEY, osRoleFor, roleAllows } from "@/lib/os/permissions";
@@ -21,7 +22,8 @@ export type PolicyResult = {
     | "reliability"
     | "cost_cap"
     | "grant"
-    | "no_grant";
+    | "no_grant"
+    | "assisted";
   risk: number;
   grantId?: string;
   /** `web` = must be confirmed in the web app (risk ≥ 76). */
@@ -50,6 +52,8 @@ export type PolicyContext = {
   reliability: { score: number; sampleN: number } | null;
   costCapReached: boolean;
   now: Date;
+  /** Assisted mode: the owner posts it on Google by hand, so it always waits for them and needs no connection. */
+  assisted?: boolean;
 };
 
 /** New workflows stay at `suggest` until they have this many verified runs. */
@@ -82,9 +86,11 @@ export function matchingGrant(ctx: PolicyContext): GrantView | null {
 /** Spec 1 §7.7 steps 1–9. First match wins. Pure: everything it needs is in `ctx`. */
 export function decide(ctx: PolicyContext): PolicyResult {
   const { risk } = ctx;
-  if (!ctx.connectorHealthy) return { decision: "DENY", reason: "needs_connection", risk };
+  if (!ctx.connectorHealthy && !ctx.assisted) return { decision: "DENY", reason: "needs_connection", risk };
   if (!roleAllows(osRoleFor(ctx.teamRole), ctx.actionType)) return { decision: "DENY", reason: "role", risk };
   if (ctx.neverRule) return { decision: "DENY", reason: "rule", risk };
+  // Nothing goes out by itself when the owner is the one who posts it.
+  if (ctx.assisted) return { decision: "ASK", reason: "assisted", risk };
   if ((ctx.subject.severity ?? 0) >= 2 || ctx.subject.safety) return { decision: "ASK", reason: "safety", risk };
   if (risk >= 76) return { decision: "ASK", reason: "high_risk", risk, confirm: "web" };
 
@@ -199,6 +205,7 @@ export async function loadPolicyContext(action: OsAction, deps: PolicyDeps = {})
       ACTION_TYPE_SPECS[actionType].connector,
       action.proposedPayload,
     ),
+    assisted: isAssisted(action, await publishMode(action.restaurantId)),
     // Scheduled / event-driven proposals act for the owner; requests from a person use their role.
     teamRole: member?.role ?? (action.requestedByUserId ? "MEMBER" : "OWNER"),
     neverRule: rules > 0,

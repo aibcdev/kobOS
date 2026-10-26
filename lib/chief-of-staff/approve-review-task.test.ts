@@ -5,6 +5,8 @@ import { fakeFetch, fixture } from "@/tests/helpers/fake-fetch";
 
 vi.hoisted(() => {
   if (process.env.TEST_DATABASE_URL) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+  // These tests cover automatic posting (GBP_LIVE on); assisted mode has its own tests.
+  process.env.GBP_LIVE = "1";
   process.env.INTEGRATION_ENC_KEY ??= Buffer.alloc(32, 7).toString("base64");
 });
 // No language service: the reply must still be drafted (safe template), never "being prepared" forever.
