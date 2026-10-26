@@ -18,7 +18,7 @@ export const ownerProductPillars = [
     title: "Booking & ordering paths",
     headline: "Make it obvious how to book or order — on the site you already have.",
     description:
-      "Confusing buttons and buried menus lose guests. Your scan flags what's hard to find. We do not replace your POS, kitchen tablet, or branded ordering app.",
+      "Confusing buttons and buried menus lose guests. Your scan flags what's hard to find. We do not replace your kitchen tablet or branded ordering app.",
     honesty:
       "If you need first-party ordering, a branded app, and a kitchen tablet, compare Owner.com. KOB is for listing, reviews, hours, and conversion leaks first.",
     href: "/features/online-ordering",

@@ -57,7 +57,7 @@ export function Loop() {
       <p className="mt-10 text-sm font-medium text-espresso">What KOB takes on</p>
       <p className="mt-2 max-w-xl text-sm text-muted">
         Reviews, Google hours, the website, invoices, and weather prep.
-        You decide what KOB can take care of without asking. Phone answering is Coming soon.
+        Nothing goes out without your OK.
       </p>
     </section>
   );

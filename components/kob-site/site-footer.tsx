@@ -27,7 +27,7 @@ export function SiteFooter() {
             <KobWordmark />
           </Link>
           <p className="mt-5 text-[1.05rem] font-medium leading-snug">
-            You approve. KOB checks it is live.
+            KOB drafts. You approve and post in one tap.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             The restaurant manager for independent restaurants and cafés. One to five locations.
@@ -91,9 +91,9 @@ export function SiteFooter() {
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© {new Date().getFullYear()} KOB · trykob.com</p>
           <p>
-            You approve. KOB checks it is live.{" "}
+            Nothing goes out without your OK.{" "}
             <Link href="/roadmap" className="underline underline-offset-2">
-              KOB Phone is on the roadmap.
+              What&apos;s coming next.
             </Link>
           </p>
         </div>

@@ -69,7 +69,7 @@ export default function DataManagementPage() {
               Paid partners (till, bookings, WhatsApp Business, delivery) only when you connect them
               later — under their terms
             </li>
-            <li>We do not replace your till or publish hours without your yes</li>
+            <li>We do not publish hours or anything else without your yes</li>
           </ul>
         </Section>
 

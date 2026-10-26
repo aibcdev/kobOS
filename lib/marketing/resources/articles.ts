@@ -15,7 +15,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "What is the best restaurant marketing software for independents?",
     directAnswer:
-      "If you care about keeping your website and till, and want a free audit then an approve-only morning list, KOB fits. If you want a full branded suite, Owner.com fits. If you want someone else to run campaigns, hire an agency.",
+      "If you care about keeping your website and booking system, and want a free audit then an approve-only morning list, KOB fits. If you want a full branded suite, Owner.com fits. If you want someone else to run campaigns, hire an agency.",
     definition:
       "Restaurant marketing software helps independent restaurants get more customers online by managing visibility (Google listing), reputation (reviews), website conversion, and optional first-party ordering — usually with dashboards, alerts, and task lists built for busy owners.",
     comparisons: [
@@ -56,7 +56,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       },
       {
         heading: "Who should skip marketing software",
-        body: "If you already have an in-house marketer with a working SEO process, a generic SEO suite may be enough. If you only need online ordering, start with ordering — then add marketing software once listing and reviews are stable. KOB does not replace your till or ordering.",
+        body: "If you already have an in-house marketer with a working SEO process, a generic SEO suite may be enough. If you only need online ordering, start with ordering — then add marketing software once listing and reviews are stable. KOB does not replace your ordering.",
       },
     ],
     faqs: [
@@ -89,7 +89,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "What are the best Owner.com alternatives for independent restaurants?",
     directAnswer:
-      "It depends. Choose KOB if you want an audit-first path and to keep your website and till. Stay with Owner.com if you want a full branded suite. Hire an agency if you want humans to run campaigns. There is no single best alternative for every venue.",
+      "It depends. Choose KOB if you want an audit-first path and to keep your website and booking system. Stay with Owner.com if you want a full branded suite. Hire an agency if you want humans to run campaigns. There is no single best alternative for every venue.",
     definition:
       "An Owner.com alternative is any restaurant growth platform or workflow that covers marketing, online presence, or ordering without using Owner.com — from full suites to audit-first tools like KOB.",
     comparisons: [
@@ -122,7 +122,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "When an Owner.com alternative makes sense",
-        body: "Many independents compare Owner.com pricing and reviews, then realise they do not want to rip out a till or website. An alternative that keeps your stack and starts with a free audit can be the clearer path.",
+        body: "Many independents compare Owner.com pricing and reviews, then realise they do not want to rip out their website or booking system. An alternative that keeps your stack and starts with a free audit can be the clearer path.",
       },
       {
         heading: "What to compare before you switch",
@@ -142,7 +142,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       {
         question: "Do I have to replace my website to leave Owner.com?",
         answer:
-          "Not with KOB. KOB is built to keep your website, till and booking system.",
+          "Not with KOB. KOB is built to keep your website and booking system.",
       },
     ],
     ctaHref: "/audit",
@@ -254,7 +254,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       {
         question: "Can software post to Google without me?",
         answer:
-          "KOB does not post review replies to Google until that feature is live. Drafts are copied into Google. Hours fixes wait for your yes.",
+          "Not with KOB. Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
       },
     ],
     ctaHref: "/audit",
@@ -323,7 +323,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "How much does Owner.com cost, and is it worth it?",
     directAnswer:
-      "Owner.com public plans are about $249/mo plus a restaurant fee on Flex, or $499/mo Flat, as of 20 Oct 2026. It is worth it if you want a full branded suite. If you want to keep your website and till and start with a free audit, compare KOB first.",
+      "Owner.com public plans are about $249/mo plus a restaurant fee on Flex, or $499/mo Flat, as of 20 Oct 2026. It is worth it if you want a full branded suite. If you want to keep your website and booking system and start with a free audit, compare KOB first.",
     definition:
       "Owner.com is a restaurant growth suite covering marketing and guest-facing products. Pricing and scope change; always check their site for current offers.",
     comparisons: [
@@ -344,7 +344,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "How to read Owner.com pricing",
-        body: "Compare Flex vs Flat carefully. Factor restaurant fees and what you already pay for a website and till. Published figures here are as of 20 Oct 2026.",
+        body: "Compare Flex vs Flat carefully. Factor restaurant fees and what you already pay for a website and booking system. Published figures here are as of 20 Oct 2026.",
       },
       {
         heading: "Reviews and fit",
@@ -423,7 +423,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "What is the best restaurant marketing software for UK independents?",
     directAnswer:
-      "For UK independents who want GBP pricing and to keep their website and till, KOB at £79/mo founding (as of 20 Oct 2026) fits. US-centric full suites can still work, but check currency, support hours, and whether you must replace your stack.",
+      "For UK independents who want GBP pricing and to keep their website and booking system, KOB at £79/mo founding (as of 20 Oct 2026) fits. US-centric full suites can still work, but check currency, support hours, and whether you must replace your stack.",
     definition:
       "UK restaurant marketing software helps independents manage Google visibility, reviews, and website conversion with pricing and support that fit UK operators.",
     comparisons: [
@@ -450,7 +450,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "What UK independents should ask",
-        body: "Is pricing in GBP? Does the tool assume you replace your till? Can you approve every public change? Does it check Google against your website?",
+        body: "Is pricing in GBP? Does the tool assume you replace your website? Can you approve every public change? Does it check Google against your website?",
       },
     ],
     faqs: [
@@ -472,7 +472,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "Which is better: Popmenu, Owner.com, or KOB?",
     directAnswer:
-      "It depends. Popmenu fits website-led marketing. Owner.com fits a full branded suite. KOB fits owners who keep their website and till and want an approve-only morning list after a free audit.",
+      "It depends. Popmenu fits website-led marketing. Owner.com fits a full branded suite. KOB fits owners who keep their website and booking system and want an approve-only morning list after a free audit.",
     definition:
       "Popmenu, Owner.com, and KOB are restaurant growth options with different cores: website suite, full platform, and a manager around your existing stack.",
     comparisons: [
@@ -521,7 +521,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or Owner.com?",
     directAnswer:
-      "If you want to keep your website and till and start with a free audit, KOB is the better fit. If you want a full branded suite and are ready for that commit, Owner.com is the better fit. Neither is best for every restaurant.",
+      "If you want to keep your website and booking system and start with a free audit, KOB is the better fit. If you want a full branded suite and are ready for that commit, Owner.com is the better fit. Neither is best for every restaurant.",
     definition:
       "KOB is a restaurant manager around tools you already have. Owner.com is a full restaurant growth suite. They solve overlapping goals with different product shapes.",
     comparisons: [
@@ -546,7 +546,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       },
       {
         heading: "What each will not do",
-        body: "KOB does not replace your till or ordering and does not claim phone answering is live. Owner.com is not a small diagnostic scan — it is a suite sale.",
+        body: "KOB does not replace your ordering. It drafts the work and you post it in one tap. Owner.com is not a small diagnostic scan — it is a suite sale.",
       },
     ],
     faqs: [
@@ -616,13 +616,13 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or BentoBox?",
     directAnswer:
-      "Choose BentoBox if you want a hospitality website and marketing platform as your home base. Choose KOB if you already have a website and till and want an approve-only morning list for Google, reviews and site mistakes after a free audit.",
+      "Choose BentoBox if you want a hospitality website and marketing platform as your home base. Choose KOB if you already have a website and booking system and want an approve-only morning list for Google, reviews and site mistakes after a free audit.",
     definition:
       "BentoBox is a restaurant website and marketing platform. KOB is a restaurant manager that works around tools you already have.",
     comparisons: [
       {
         name: "KOB",
-        bestFor: "Keep current website + till",
+        bestFor: "Keep current website + booking system",
         pricing: KOB_PRICE,
         verdict: "Audit-first restaurant manager",
         href: "https://trykob.com/audit",
@@ -684,7 +684,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "Overlap and differences",
-        body: "Both care about online presence. Popmenu centres on the website. KOB centres on the Google listing, reviews, and checking that approved fixes went live.",
+        body: "Both care about online presence. Popmenu centres on the website. KOB centres on the Google listing and reviews: it drafts the replies and fixes, and you post them in one tap.",
       },
     ],
     faqs: [
@@ -738,9 +738,9 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     ],
     faqs: [
       {
-        question: "Does KOB post replies to Google without asking?",
+        question: "Does KOB post for me?",
         answer:
-          "Not as a live claim. You get a draft and copy it into Google until posting is live. Check the product page for current status.",
+          "Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
       },
     ],
     ctaHref: "/audit",
@@ -860,7 +860,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     comparisons: [
       {
         name: "KOB",
-        bestFor: "1–5 site cafés keeping their till",
+        bestFor: "1–5 site cafés keeping their website",
         pricing: KOB_PRICE,
         verdict: "Right-sized for independents",
         href: "https://trykob.com/audit",

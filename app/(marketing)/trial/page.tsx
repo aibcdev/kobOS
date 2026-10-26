@@ -6,40 +6,45 @@ import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { SaasPageHero, SaasPrimaryCta, SaasSecondaryCta } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { FREE_TRIAL_LABEL, TRIAL_DAYS, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
+import { POSTING } from "@/lib/marketing/feature-status";
 
 export const metadata: Metadata = {
   title: `${FREE_TRIAL_LABEL} | KOB — The Restaurant Manager for Owners`,
   description:
-    `${TRIAL_DAYS_FREE}. No card. KOB drafts review replies and listing fixes. You approve. Nothing goes public without your yes.`,
+    `${TRIAL_DAYS_FREE}. No card. KOB drafts review replies and listing fixes. You approve and post in one tap. Nothing goes out without your OK.`,
 };
 
 const INCLUDED = [
   {
     title: "Reviews",
     detail:
-      "A draft reply for each new Google review, in your voice. Bad reviews always wait for you. You copy the reply into Google until posting is live.",
+      `${POSTING.reviews} Bad reviews always wait for you.`,
   },
   {
     title: "Google listing",
-    detail: "Hours and holiday closures checked against your website. One tap when they disagree.",
+    detail: `Hours and holiday closures checked against your website. ${POSTING.listing}`,
   },
   {
     title: "Website",
     detail: "Wrong hours, broken booking buttons, placeholder text. In beta.",
   },
   {
-    title: "Prep notes",
-    detail: "Beta, if your till is connected. If it is not, KOB says so.",
+    title: "Morning brief",
+    detail: "What needs you today, in two minutes.",
+  },
+  {
+    title: "More reviews",
+    detail: POSTING.reviewKit,
   },
 ];
 
 const steps = (priceLabel: string) => [
   { n: "01", title: "Find your restaurant", body: "No card. KOB reads the public listing, reviews and website." },
-  { n: "02", title: "Get the morning list", body: "A short list of what is wrong, with the fix already drafted." },
+  { n: "02", title: "Get the morning brief", body: "What needs you today, with every reply and fix already drafted." },
   {
     n: "03",
-    title: "Tap approve",
-    body: `Nothing goes public without your yes. After the week, founding is ${priceLabel} a location if you stay.`,
+    title: "Approve, tap once, post",
+    body: `${POSTING.control} After the week, founding is ${priceLabel} a location if you stay.`,
   },
 ];
 
@@ -52,7 +57,7 @@ export default async function TrialPage() {
         variant="inset"
         eyebrow={trial}
         title={`Try KOB free for ${TRIAL_DAYS} days. No card.`}
-        description="Start with reviews and your Google listing. You approve every public change."
+        description="Start with reviews and your Google listing. You approve every change and post it in one tap."
       >
         <SaasPrimaryCta href="/onboard">Find my restaurant</SaasPrimaryCta>
         <SaasSecondaryCta href="/login?mode=signup">I already have an account</SaasSecondaryCta>
@@ -82,7 +87,6 @@ export default async function TrialPage() {
             <ul className="mt-6 space-y-2 text-sm text-paper/85">
               <li>No card to start</li>
               <li>{trial}</li>
-              <li>Phone answering is on the roadmap, not in this trial</li>
             </ul>
             <Link
               href="/onboard"

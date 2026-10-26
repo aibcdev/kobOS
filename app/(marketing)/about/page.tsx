@@ -12,8 +12,8 @@ export default function AboutPage() {
       <h1 className="font-display mt-3 text-headline font-medium">KOB</h1>
       <p className="mt-6 text-ink">
         KOB is the restaurant manager for independent restaurants and cafés, one to five
-        locations. Nothing goes public without your yes. After you approve, KOB checks the change
-        is live.
+        locations. KOB drafts the replies and fixes. You approve, tap once, and post. Nothing goes
+        out without your OK.
       </p>
       {/* Founder name, phone and registered address are not invented here. */}
       <p className="mt-4 text-ink">

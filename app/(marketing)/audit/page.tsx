@@ -36,7 +36,7 @@ export default function AuditPage() {
         </p>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#2c2c2c]/70">
           After the scan, KOB proposes a short approve-only list — hours, photos, review replies, Google listing
-          gaps — not a replatform of your POS or ordering stack.
+          gaps — not a replatform of your website or ordering.
         </p>
         <ul className="mx-auto mt-8 grid max-w-3xl gap-3 sm:grid-cols-2">
           {[

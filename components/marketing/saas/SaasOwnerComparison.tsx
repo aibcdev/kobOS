@@ -15,15 +15,14 @@ const BENEFITS = [
   "Approve before anything public",
   "$99 founding (£79 UK) · per location",
   "7-day free trial · no card",
-  "No POS swap",
-  "Phone answering is on the roadmap",
+  "Nothing to swap out",
+  "One-tap posting (automatic posting coming soon)",
 ] as const;
 
 const HOME_ROWS = OWNER_COMPARISON.rows.filter((row) =>
   [
     "Monthly",
     "Manager (you approve)",
-    "Guest phone answering",
     "Free public scan before you pay",
     "7-day free trial",
     "Long-term contract",
