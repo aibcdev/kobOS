@@ -24,7 +24,7 @@ const PUBLIC = path.join(ROOT, "public");
 const SITE = (process.env.MARKDOWN_SITE_URL || "https://trykob.com").replace(/\/$/, "");
 const STRICT = process.env.MARKDOWN_STRICT === "1";
 const PORT = Number(process.env.MARKDOWN_PORT || 3457);
-const SKIPPED = new Set(["/go/audit"]);
+const SKIPPED = new Set(["/go/audit", "/scan"]);
 
 const SUMMARY =
   "KOB is the restaurant manager for independent restaurants and cafés. It reads your reviews and drafts the replies, drafts fixes to your Google listing, and sends a morning brief of what needs you today. You approve, tap once, and post. Nothing goes out without your OK. 7-day free trial, no card.";

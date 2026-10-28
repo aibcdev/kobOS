@@ -12,22 +12,21 @@ export const MARKDOWN_STATIC_PATHS = [
   "/trial",
   "/demo",
   "/solutions",
-  "/audit",
   "/features/website",
   "/features/online-ordering",
   "/features/delivery",
   "/features/branding",
-  "/features/ai-menu",
   "/features/menu",
   "/about",
   "/roadmap",
   "/privacy",
   "/terms",
+  "/data-management",
   "/for-ai",
 ] as const;
 
 /** Sitemap paths that are redirects or forms, not readable pages. */
-export const MARKDOWN_SKIPPED_PATHS = ["/go/audit"] as const;
+export const MARKDOWN_SKIPPED_PATHS = ["/go/audit", "/scan"] as const;
 
 const STATIC = new Set<string>(MARKDOWN_STATIC_PATHS);
 

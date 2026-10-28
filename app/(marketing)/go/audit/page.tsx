@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
 import { SaasAuditWhatWeCheck } from "@/components/marketing/saas/SaasAuditWhatWeCheck";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
@@ -9,21 +10,12 @@ import { marketingCopy } from "@/lib/marketing/copy";
  * Dedicated Google Ads / paid landing for the free restaurant audit.
  * Canonical product path remains /audit — this URL is for campaigns only.
  */
-export const metadata: Metadata = {
-  title: "Free restaurant marketing audit · KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Free restaurant marketing audit",
   description:
-    "Free scan of your restaurant website, Google listing, and reviews. See where guests drop off — then get a clear list of what to fix. No card.",
-  openGraph: {
-    title: "Free restaurant marketing audit · KOB",
-    description:
-      "Free scan of your website, Google listing, and reviews. See what’s costing you customers online.",
-    url: "https://trykob.com/go/audit",
-  },
-  alternates: {
-    canonical: "https://trykob.com/audit",
-  },
-  robots: { index: true, follow: true },
-};
+    "Free scan of your restaurant website, Google listing, and reviews. See where guests drop off, then get a clear list of what to fix. No card.",
+  path: "/go/audit",
+});
 
 const INSIGHTS = marketingCopy.auditInsights;
 

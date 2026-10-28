@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
+import { JsonLd, softwareJsonLd } from "@/lib/seo/structured-data";
 import Link from "next/link";
 import { SaasPageHero, SaasPrimaryCta } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
@@ -12,11 +14,12 @@ import {
   type FeatureReadiness,
 } from "@/lib/marketing/feature-status";
 
-export const metadata: Metadata = {
-  title: "Product | KOB — The Restaurant Manager for Owners",
+export const metadata: Metadata = pageMetadata({
+  title: "Product: what KOB does for your restaurant",
   description:
     "KOB checks your Google listing, reviews and website and drafts the fixes. You approve, tap once, and post. Nothing goes out without your OK.",
-};
+  path: "/product",
+});
 
 const ORDER: FeatureReadiness[] = ["live", "beta", "gated", "roadmap"];
 
@@ -30,6 +33,7 @@ export default async function ProductHubPage() {
 
   return (
     <>
+      <JsonLd data={softwareJsonLd()} />
       <SaasPageHero
         variant="inset"
         eyebrow="Product"

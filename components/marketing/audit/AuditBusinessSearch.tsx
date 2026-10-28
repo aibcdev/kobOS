@@ -147,13 +147,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
   const [websiteOverride, setWebsiteOverride] = useState("");
   const [urlPasteMode, setUrlPasteMode] = useState(false);
   const [siteScope, setSiteScope] = useState<"one" | "multiple">("one");
-  const [instagram, setInstagram] = useState("");
-  const [facebook, setFacebook] = useState("");
-  const [tiktok, setTiktok] = useState("");
   const [googleBusinessUrl, setGoogleBusinessUrl] = useState("");
-  const [sampleImageUrl1, setSampleImageUrl1] = useState("");
-  const [sampleImageUrl2, setSampleImageUrl2] = useState("");
-  const [sampleImageUrl3, setSampleImageUrl3] = useState("");
   const [heardFrom, setHeardFrom] = useState<HeardFromPayload>({});
   const [alert, setAlert] = useState<AuditUserMessage | null>(null);
   const [loading, setLoading] = useState(false);
@@ -270,18 +264,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
       setLoading(true);
       setAlert(null);
       try {
-        const userSocial =
-          instagram.trim() || facebook.trim() || tiktok.trim() || googleBusinessUrl.trim()
-            ? {
-                instagram: instagram.trim() || undefined,
-                facebook: facebook.trim() || undefined,
-                tiktok: tiktok.trim() || undefined,
-                googleBusinessUrl: googleBusinessUrl.trim() || undefined,
-              }
-            : undefined;
-        const sampleUrls = [sampleImageUrl1, sampleImageUrl2, sampleImageUrl3]
-          .map((s) => s.trim())
-          .filter(Boolean);
+        const userSocial = googleBusinessUrl.trim() ? { googleBusinessUrl: googleBusinessUrl.trim() } : undefined;
 
         const placePayload =
           usePlaceGeo && details
@@ -305,7 +288,6 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
             discovery,
             attribution: { ...readBrowserAttribution(), ...heardFrom },
             ...(placePayload ? { place: placePayload } : {}),
-            ...(sampleUrls.length ? { userImageUrls: sampleUrls.slice(0, 3) } : {}),
           }),
         });
 
@@ -354,13 +336,7 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
     },
     [
       siteScope,
-      instagram,
-      facebook,
-      tiktok,
       googleBusinessUrl,
-      sampleImageUrl1,
-      sampleImageUrl2,
-      sampleImageUrl3,
       router,
       mapsOn,
       details,
@@ -678,16 +654,8 @@ export function AuditBusinessSearch({ variant = "full" }: { variant?: "full" | "
               </label>
             </div>
           </fieldset>
-          <p className="text-xs text-[var(--color-muted-medium)]">Social &amp; sample images (optional)</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input className={fieldClass} placeholder="Instagram" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
-            <input className={fieldClass} placeholder="Facebook" value={facebook} onChange={(e) => setFacebook(e.target.value)} />
-            <input className={fieldClass} placeholder="TikTok" value={tiktok} onChange={(e) => setTiktok(e.target.value)} />
-            <input className={fieldClass} placeholder="Google Business Profile URL" value={googleBusinessUrl} onChange={(e) => setGoogleBusinessUrl(e.target.value)} />
-            <input className={`${fieldClass} sm:col-span-2`} placeholder="Sample image URL 1" value={sampleImageUrl1} onChange={(e) => setSampleImageUrl1(e.target.value)} />
-            <input className={fieldClass} placeholder="Sample image URL 2" value={sampleImageUrl2} onChange={(e) => setSampleImageUrl2(e.target.value)} />
-            <input className={fieldClass} placeholder="Sample image URL 3" value={sampleImageUrl3} onChange={(e) => setSampleImageUrl3(e.target.value)} />
-          </div>
+          <p className="text-xs text-[var(--color-muted-medium)]">Google listing (optional)</p>
+          <input className={fieldClass} placeholder="Google Business Profile URL" value={googleBusinessUrl} onChange={(e) => setGoogleBusinessUrl(e.target.value)} />
         </div>
       </details>
       ) : null}

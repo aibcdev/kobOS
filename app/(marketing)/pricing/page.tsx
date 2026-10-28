@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { canonicalUrl, pageMetadata } from "@/lib/seo/page-metadata";
+import { ORGANIZATION_ID } from "@/lib/seo/structured-data";
 import Link from "next/link";
 
 import { FOUNDING_PRICE_LINE, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
@@ -15,19 +17,61 @@ import {
 import { SaasFaqAccordion } from "@/components/marketing/saas/SaasFaqAccordion";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 
-export const metadata: Metadata = {
-  title: "Pricing | KOB — The Restaurant Manager for Owners",
+export const metadata: Metadata = pageMetadata({
+  title: "Pricing: One Price Per Location",
   description:
     `Founding price per location — ${FOUNDING_PRICE_LINE}. ${TRIAL_DAYS_FREE}, no card. KOB drafts, you approve and post in one tap.`,
-};
+  path: "/pricing",
+});
+
+/** Offer and FAQPage data for search engines, built from the same prices and FAQ the page shows. */
+function pricingJsonLd(faq: { q: string; a: string }[]) {
+  const url = canonicalUrl("/pricing");
+  const offer = (price: number, currency: string, area: string) => ({
+    "@type": "Offer",
+    name: `KOB founding plan (${area})`,
+    price: String(price),
+    priceCurrency: currency,
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: String(price),
+      priceCurrency: currency,
+      unitText: "per location per month",
+      billingDuration: "P1M",
+    },
+    eligibleRegion: area === "UK" ? { "@type": "Country", name: "United Kingdom" } : undefined,
+    availability: "https://schema.org/InStock",
+    url,
+    seller: { "@id": ORGANIZATION_ID },
+    itemOffered: { "@type": "Service", name: "KOB restaurant manager", provider: { "@id": ORGANIZATION_ID } },
+  });
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      offer(FOUNDING_PRICES.US.amount, "USD", "outside the UK"),
+      offer(FOUNDING_PRICES.GB.amount, "GBP", "UK"),
+      {
+        "@type": "FAQPage",
+        "@id": `${url}#faq`,
+        mainEntity: faq.map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: { "@type": "Answer", text: item.a },
+        })),
+      },
+    ],
+  };
+}
 
 export default async function PricingPage() {
   const price = await getVisitorFoundingPrice();
+  const faq = pricingFaq(price.label);
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingJsonLd(faq)) }} />
       <SaasPageHero
         eyebrow="Pricing"
-        title="One price. One manager. Per location."
+        title="Pricing: one price per location"
         description={`${LAUNCH_PRICING.label}. ${trialPromise()}. ${FOUNDING_PRICES.GB.label} in the UK, ${FOUNDING_PRICES.US.label} elsewhere.`}
       />
 
@@ -57,8 +101,13 @@ export default async function PricingPage() {
           </p>
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-muted">
-          Keep the tools you already have. Owner.com public pricing as of 19 Oct 2026:{" "}
-          {OWNER_COMPARISON.ownerFlexNote}; {OWNER_COMPARISON.ownerFlatNote}.
+          Keep the tools you already have. Owner.com public pricing as of {OWNER_COMPARISON.checkedOn}:{" "}
+          {OWNER_COMPARISON.ownerFlexNote}; {OWNER_COMPARISON.ownerFlatNote}; guests pay a 5% order support fee on
+          both (
+          <a href={OWNER_COMPARISON.sourceUrl} className="underline underline-offset-2" rel="noopener" target="_blank">
+            source
+          </a>
+          ).
         </p>
       </section>
 
@@ -80,7 +129,7 @@ export default async function PricingPage() {
 
       <section className="px-6 py-16 md:py-20">
         <div className="mx-auto max-w-3xl">
-          <SaasFaqAccordion title="FAQ" items={pricingFaq(price.label)} />
+          <SaasFaqAccordion title="FAQ" items={faq} />
         </div>
       </section>
     </>

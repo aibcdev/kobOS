@@ -10,20 +10,20 @@ import { SaasTrustBand } from "./SaasTrustBand";
 
 const WEBSITE_FAQ = [
   {
+    q: "Does KOB build or host my website?",
+    a: "No. KOB checks the website you already have, the way a guest would, and tells you what to fix: wrong hours, a broken booking button, placeholder text, a dead menu link.",
+  },
+  {
     q: "Do I need a developer?",
-    a: "No. KOB builds and hosts your site. You approve content; we handle structure, speed, and SEO basics.",
+    a: "Not for most fixes. KOB says exactly what to change in plain English, and you or whoever looks after your site makes the change.",
   },
   {
-    q: "Can I keep my domain?",
-    a: "Yes. Point your existing domain to KOB or we help you connect a new one during setup.",
+    q: "Can I keep my website and domain?",
+    a: "Yes. KOB works with the website and booking system you already have.",
   },
   {
-    q: "How is this different from a template builder?",
-    a: "Pages are built for hospitality conversion—menus, ordering, local SEO, and ongoing fixes from your restaurant check-up.",
-  },
-  {
-    q: "What if I already use a delivery app?",
-    a: "Keep apps for discovery. KOB gives you a direct channel so repeat guests order on your brand—not a marketplace.",
+    q: "Does KOB check Google against my website?",
+    a: "Yes. Every morning KOB compares your Google hours, holiday hours and description with your website, and drafts the fix when they disagree. You approve and update it in a tap.",
   },
 ] as const;
 
@@ -39,15 +39,15 @@ export function SaasWebsiteFeaturePage() {
       <SaasBenefitTabs
         eyebrow="How KOB helps"
         title="Never miss a beat online"
-        subtitle="Reviews, holidays, hours, and posts—handled with tasks you approve in one tap."
+        subtitle="Reviews, holidays, hours and posts, drafted for you to approve and post in one tap."
         tabs={WEBSITE_SALES_TABS}
         variant="underline"
       />
 
       <SaasBenefitTabs
-        eyebrow="Built to grow"
-        title="Your site keeps working for you after launch"
-        subtitle="SEO, ordering, and your weekly priorities stay aligned as your business changes."
+        eyebrow="Every morning"
+        title="Stop small things slipping"
+        subtitle="KOB keeps checking your site and Google listing as things change, so guests see the right hours and menu."
         tabs={WEBSITE_GROWTH_TABS}
         variant="pills"
       />

@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import Link from "next/link";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
-export const metadata: Metadata = {
-  title: "Solutions | KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Solutions",
   description:
     "Help for full-service restaurants, cafés and small groups: more guests, better reviews and less admin, whatever kind of place you run.",
-};
+  path: "/solutions",
+});
 
 const SOLUTIONS = [
   {

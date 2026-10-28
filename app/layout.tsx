@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Caveat, DM_Sans, Instrument_Serif } from "next/font/google";
 import { defaultSiteMeta } from "@/lib/homepage-defaults";
+import { canonicalOrigin } from "@/lib/seo/page-metadata";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 import "./kob-employee.css";
@@ -25,7 +26,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getSiteUrl()),
+  // Share images and canonicals always point at the production site, even from previews.
+  metadataBase: new URL(canonicalOrigin()),
   title: defaultSiteMeta.title,
   description: defaultSiteMeta.description,
   robots: { index: true, follow: true },

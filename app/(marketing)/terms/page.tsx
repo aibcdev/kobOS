@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Terms of Service · KOB",
-  description: "Terms governing use of trykob.com, the KOB restaurant manager service, scans, accounts and subscriptions.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
+  description:
+    "Terms governing use of trykob.com, the KOB restaurant manager service, scans, accounts and subscriptions.",
+  path: "/terms",
+});
 
-const UPDATED = "17 September 2026";
+const UPDATED = "28 October 2026";
 
 export default function TermsPage() {
   return (
@@ -35,7 +38,6 @@ export default function TermsPage() {
           <li>Free online scans of public website and listing signals</li>
           <li>Talk: drafts and actions for hours, reviews, invoices, weather prep, and house rules</li>
           <li>Optional credits for human-fulfilled work (website, SEO, brand) as described in-product</li>
-          <li>KOB Phone (guest answering) is Coming next and is not live until we say so in the product</li>
         </ul>
         <p className="mt-3">
           Features may change. Drafts and suggestions from KOB are not legal, allergen or financial advice. KOB does not guarantee rankings,
@@ -54,7 +56,7 @@ export default function TermsPage() {
 
       <Section title="3. Free scans and leads">
         <p>
-          Free scans may require an email and phone number to unlock the full report. You agree we may contact you about
+          Free scans may require an email and contact number to unlock the full report. You agree we may contact you about
           your report, trial, or plan using those details, consistent with our{" "}
           <Link href="/privacy" className="font-medium text-espresso underline underline-offset-2">
             Privacy Policy
@@ -67,9 +69,7 @@ export default function TermsPage() {
       <Section title="4. Approvals and publish control">
         <p>
           Where the Service prepares drafts or suggested actions, <strong>you remain responsible</strong> for reviewing
-          what goes live unless you have allowed KOB to complete that job without asking. Guest phone answering is not live
-          today. When it launches, callers will be told they are speaking with an AI assistant and that the call may be
-          recorded. KOB will not collect card details on a call.
+          what goes live unless you have allowed KOB to complete that job without asking.
         </p>
       </Section>
 
@@ -112,8 +112,8 @@ export default function TermsPage() {
 
       <Section title="9. Third-party services">
         <p>
-          The Service integrates with third parties (for example Google Places, email, payments, AI providers, and — when
-          Phone is live — voice/telephony such as ElevenLabs). Their terms and privacy policies apply to their
+          The Service integrates with third parties (for example Google Places, email, payments, and third-party
+          processing providers). Their terms and privacy policies apply to their
           processing. We are not responsible for outages or changes by those providers.
         </p>
       </Section>

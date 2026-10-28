@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy · KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
   description:
     "How KOB collects, uses, and protects personal data for the restaurant manager on trykob.com.",
-};
+  path: "/privacy",
+});
 
-const UPDATED = "17 September 2026";
+const UPDATED = "28 October 2026";
 
 export default function PrivacyPage() {
   return (
@@ -19,8 +21,7 @@ export default function PrivacyPage() {
       <p className="mt-6 text-sm leading-relaxed text-[#2c2c2c]/80">
         This Privacy Policy explains how <strong>KOB</strong> (&quot;we&quot;, &quot;us&quot;) handles personal data when you
         visit <strong>trykob.com</strong>, run a free online scan, create an account, or use the KOB restaurant manager
-        (messages, listings, reviews, invoices, house rules and related tools). Guest phone answering is not live
-        yet; when it launches we will process call data as described below.
+        (messages, listings, reviews, invoices, house rules and related tools).
       </p>
       <p className="mt-3 text-sm leading-relaxed text-[#2c2c2c]/80">
         If you have questions, email{" "}
@@ -47,14 +48,8 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Restaurant operations</strong> — public listing and website data, invoices and supplier lines you
-            send or connect, house rules, messages with KOB, and (when you connect them) POS or
+            send or connect, house rules, messages with KOB, and (when you connect them) sales or
             reservation records.
-          </li>
-          <li>
-            <strong>Future voice / phone (not live today)</strong> — if KOB Phone launches: call audio, transcripts,
-            caller numbers, booking and order details from the call, and recording notices. Voice providers such as
-            ElevenLabs and LLM processors may act as processors or subprocessors under contract. Callers will be told
-            they are speaking with an AI assistant and that the call may be recorded.
           </li>
           <li>
             <strong>Account &amp; usage data</strong> — sign-in events, task approvals, drafts, credit balance, service
@@ -65,7 +60,7 @@ export default function PrivacyPage() {
             we do not store full card numbers on our servers.
           </li>
           <li>
-            <strong>How you found us</strong> — optional answers on the free scan or signup (search, an AI assistant, referral, ads) and, if you choose, the prompt you used. We use this to understand how owners find us, not to sell your data.
+            <strong>How you found us</strong> — optional answers on the free scan or signup (search, a chat assistant, referral, ads) and, if you choose, the prompt you used. We use this to understand how owners find us, not to sell your data.
           </li>
           <li>
             <strong>Technical data</strong> — IP address, device/browser type, approximate location derived from IP,
@@ -86,8 +81,8 @@ export default function PrivacyPage() {
           <li>Comply with law and enforce our Terms of Service</li>
         </ul>
         <p className="mt-3">
-          We do <strong>not</strong> sell your personal data. We do not use your scan content to train public third-party
-          AI models for unrelated commercial products.
+          We do <strong>not</strong> sell your personal data. We do not use your scan content to train third-party
+          models for unrelated commercial products.
         </p>
       </Section>
 
@@ -119,8 +114,7 @@ export default function PrivacyPage() {
           <li>Email delivery (for example Resend)</li>
           <li>Payments (Stripe)</li>
           <li>Maps / Places data (Google) when you search for or enrich a restaurant listing</li>
-          <li>AI providers used to generate scores, summaries, or drafts inside the product</li>
-          <li>Voice / telephony providers (for example ElevenLabs) if KOB Phone is enabled for your location</li>
+          <li>Third-party processing providers used to generate scores, summaries, or drafts inside the product</li>
         </ul>
         <p className="mt-3">
           We may also disclose data if required by law, to protect rights and safety, or as part of a business transfer

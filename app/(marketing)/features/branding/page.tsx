@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,11 +10,12 @@ import {
 } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
-export const metadata: Metadata = {
-  title: "Photos and brand on your listing | KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Photos and brand on your Google listing",
   description:
     "KOB scores photos, pages, and reviews so your Google listing and site match the room. We do not launch a guest mobile app.",
-};
+  path: "/features/branding",
+});
 
 export default function BrandingFeaturePage() {
   return (

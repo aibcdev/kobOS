@@ -1,5 +1,7 @@
 import Link from "next/link";
-import type { ResourceArticle } from "@/lib/marketing/resources";
+import { articlePath, type ResourceArticle } from "@/lib/marketing/resources";
+import { canonicalUrl } from "@/lib/seo/page-metadata";
+import { ORGANIZATION_ID } from "@/lib/seo/structured-data";
 
 const shell = "mx-auto max-w-[83rem] px-6 md:px-12";
 
@@ -9,7 +11,7 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
       <header className="border-b border-[#2c2c2c]/5 bg-[#fbf8f5] py-14 md:py-20">
         <div className={shell}>
           <p className="font-mono-brand text-xs font-semibold uppercase tracking-[0.12em] text-[#088924]">
-            Resources · Best-of / compare
+            {article.comparisons.length ? "Guides · Compare" : "Guides · How to"}
           </p>
           <h1 className="font-heading mt-4 max-w-4xl text-balance text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[#2c2c2c] md:text-[3.15rem]">
             {article.title}
@@ -36,6 +38,7 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
             <p className="font-body mt-4 text-base leading-relaxed text-[#2c2c2c]/80">{article.definition}</p>
           </section>
 
+          {article.comparisons.length ? (
           <section>
             <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">Comparison</h2>
             <div className="mt-6 overflow-x-auto rounded-2xl border border-[#2c2c2c]/10">
@@ -61,6 +64,7 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
               </table>
             </div>
           </section>
+          ) : null}
 
           {article.sections.map((section) => (
             <section key={section.heading}>
@@ -68,6 +72,21 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
               <p className="font-body mt-4 text-base leading-relaxed text-[#2c2c2c]/80">{section.body}</p>
             </section>
           ))}
+
+          {article.sources?.length ? (
+            <section>
+              <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">Sources</h2>
+              <ul className="font-body mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[#2c2c2c]/75">
+                {article.sources.map((source) => (
+                  <li key={source.href}>
+                    <a href={source.href} rel="noopener" target="_blank" className="text-[#088924] underline-offset-2 hover:underline">
+                      {source.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           <section>
             <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">FAQ</h2>
@@ -84,7 +103,7 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
           <div className="rounded-3xl bg-[#094413] px-6 py-8 text-[#fbf8f5] md:px-8">
             <p className="font-heading text-xl font-semibold">{article.ctaLabel}</p>
             <p className="mt-2 max-w-xl text-sm text-white/70">
-              Free scan of website, Google listing, and reviews — about a minute, no card.
+              KOB drafts your review replies and Google listing fixes. You approve, tap once, and post.
             </p>
             <Link
               href={article.ctaHref}
@@ -92,6 +111,19 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
             >
               {article.ctaLabel}
             </Link>
+            <p className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/80">
+              {article.ctaHref !== "/trial" ? (
+                <Link href="/trial" className="underline underline-offset-2 hover:text-white">
+                  Try KOB free for 7 days
+                </Link>
+              ) : null}
+              <Link href="/product" className="underline underline-offset-2 hover:text-white">
+                See what KOB does
+              </Link>
+              <Link href="/pricing" className="underline underline-offset-2 hover:text-white">
+                Pricing
+              </Link>
+            </p>
           </div>
         </div>
 
@@ -103,14 +135,14 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
             <ul className="mt-3 space-y-2 text-[#2c2c2c]/75">
               <li>{article.questionH2}</li>
               <li>Definition</li>
-              <li>Comparison</li>
+              {article.comparisons.length ? <li>Comparison</li> : null}
               {article.sections.map((s) => (
                 <li key={s.heading}>{s.heading}</li>
               ))}
               <li>FAQ</li>
             </ul>
             <Link href="/resources" className="mt-6 inline-block font-medium text-[#088924] hover:underline">
-              ← All resources
+              ← All guides
             </Link>
           </nav>
         </aside>
@@ -119,26 +151,27 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
   );
 }
 
-export function resourceArticleJsonLd(article: ResourceArticle, canonicalUrl: string) {
+export function resourceArticleJsonLd(article: ResourceArticle, pageUrl: string) {
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Article",
-        "@id": `${canonicalUrl}#article`,
+        "@id": `${pageUrl}#article`,
         headline: article.title,
         description: article.description,
         datePublished: article.publishedAt,
         dateModified: article.updatedAt,
-        mainEntityOfPage: canonicalUrl,
-        author: { "@type": "Organization", name: "KOB" },
-        publisher: { "@type": "Organization", name: "KOB", url: "https://trykob.com" },
+        mainEntityOfPage: pageUrl,
+        author: { "@type": "Organization", name: "KOB", url: canonicalUrl("/") },
+        publisher: { "@id": ORGANIZATION_ID },
+        image: `${canonicalUrl(articlePath(article.slug))}/opengraph-image`,
       },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Resources", item: "https://trykob.com/resources" },
-          { "@type": "ListItem", position: 2, name: article.title, item: canonicalUrl },
+          { "@type": "ListItem", position: 1, name: "Guides", item: canonicalUrl("/resources") },
+          { "@type": "ListItem", position: 2, name: article.title, item: pageUrl },
         ],
       },
       {

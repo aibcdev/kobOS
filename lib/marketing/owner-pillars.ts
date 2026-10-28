@@ -18,9 +18,9 @@ export const ownerProductPillars = [
     title: "Booking & ordering paths",
     headline: "Make it obvious how to book or order — on the site you already have.",
     description:
-      "Confusing buttons and buried menus lose guests. Your scan flags what's hard to find. We do not replace your kitchen tablet or branded ordering app.",
+      "Confusing buttons and buried menus lose guests. Your scan flags what's hard to find and KOB tells you what to change. KOB does not take orders.",
     honesty:
-      "If you need first-party ordering, a branded app, and a kitchen tablet, compare Owner.com. KOB is for listing, reviews, hours, and conversion leaks first.",
+      "If you need your own ordering system or a branded app, compare Owner.com. KOB is for your listing, reviews, hours and website mistakes.",
     href: "/features/online-ordering",
     ownerPath: "/online-ordering",
   },
@@ -29,7 +29,7 @@ export const ownerProductPillars = [
     title: "Listings & hours",
     headline: "Wrong hours cost covers.",
     description:
-      "Bank holidays, seasonal hours, delivery-zone copy on your listing—KOB reminds you early and drafts updates before guests notice. This is not a courier network or marketplace.",
+      "Bank holidays, seasonal hours and listing details—KOB checks Google against your website every morning and drafts the fix before guests notice. You approve and update it in a tap.",
     honesty:
       "KOB does not run delivery logistics. We keep Google hours and listing details accurate so guests show up when you are actually open.",
     href: "/features/delivery",

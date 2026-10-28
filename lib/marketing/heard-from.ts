@@ -2,7 +2,7 @@
 
 export const HEARD_FROM_OPTIONS = [
   { value: "google", label: "Google search" },
-  { value: "chatgpt", label: "ChatGPT" },
+  { value: "chatgpt", label: "A chat assistant" },
   { value: "claude", label: "Claude" },
   { value: "gemini", label: "Gemini" },
   { value: "perplexity", label: "Perplexity" },

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import Link from "next/link";
 
 import { trialPromise } from "@/lib/billing/trial-days";
@@ -8,11 +9,12 @@ import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { FREE_TRIAL_LABEL, TRIAL_DAYS, TRIAL_DAYS_FREE } from "@/lib/billing/offer";
 import { POSTING } from "@/lib/marketing/feature-status";
 
-export const metadata: Metadata = {
-  title: `${FREE_TRIAL_LABEL} | KOB — The Restaurant Manager for Owners`,
+export const metadata: Metadata = pageMetadata({
+  title: FREE_TRIAL_LABEL,
   description:
     `${TRIAL_DAYS_FREE}. No card. KOB drafts review replies and listing fixes. You approve and post in one tap. Nothing goes out without your OK.`,
-};
+  path: "/trial",
+});
 
 const INCLUDED = [
   {

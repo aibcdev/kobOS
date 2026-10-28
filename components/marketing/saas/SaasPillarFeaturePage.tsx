@@ -17,7 +17,7 @@ const PILLAR_IMAGES: Record<OwnerProductPillar["slug"], { src: string; alt: stri
   },
   "online-ordering": {
     src: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=85",
-    alt: "Guest ordering on phone",
+    alt: "Guest checking a restaurant menu on a mobile",
   },
   delivery: {
     src: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=85",
@@ -34,18 +34,18 @@ function pillarBulletsFor(slug: OwnerProductPillar["slug"]): SaasCardItem[] {
     website: [
       { title: "Free scan first", description: "See what guests notice on your site before you spend on a redesign." },
       { title: "Daily fix list", description: "Photos, speed, and menu clarity—added to your morning tasks." },
-      { title: "Mobile matters", description: "Most guests check on a phone. We flag what looks off." },
+      { title: "Mobile matters", description: "Most guests check on their mobile. We flag what looks off." },
       { title: "Plain language", description: "No SEO jargon—just what to change and why." },
     ],
     "online-ordering": [
       { title: "Clear book/order buttons", description: "Guests should not hunt for how to reserve or order." },
       { title: "Menu visibility", description: "If the menu is hard to find, we add a task to fix it." },
-      { title: "Matches how you operate", description: "Pickup, dine-in, delivery—whatever you actually offer." },
+      { title: "Matches how you operate", description: "Your buttons should point guests to what you actually offer." },
       { title: "Tied to your scan", description: "Issues from your report become tasks—not a separate product pitch." },
     ],
     delivery: [
       { title: "Hours that stay current", description: "Bank holidays and seasonal changes flagged early." },
-      { title: "Listing accuracy", description: "Google hours and delivery info guests rely on." },
+      { title: "Listing accuracy", description: "Google hours, holiday hours and details guests rely on." },
       { title: "Holiday reminders", description: "Draft posts and closure notes before the busy weekend." },
       { title: "One less app to check", description: "Tasks land in the same daily list as reviews and posts." },
     ],

@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import Link from "next/link";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { articlePath, listResourceArticles } from "@/lib/marketing/resources";
 
-export const metadata: Metadata = {
-  title: "Resources | KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Guides for restaurant owners",
   description:
-    "Best-of and comparison guides for restaurant owners — marketing software, Owner.com alternatives, UK independents, and free SEO audits.",
-  alternates: { canonical: "https://trykob.com/resources" },
-  robots: { index: true, follow: true },
-};
+    "Guides and comparisons for restaurant owners: replying to Google reviews, keeping hours right, marketing software and Owner.com alternatives.",
+  path: "/resources",
+});
 
 export default function ResourcesHubPage() {
   const articles = listResourceArticles();

@@ -8,7 +8,15 @@ const PRODUCT = [
   { href: "/#how", label: "How it works" },
   { href: "/roadmap", label: "Roadmap" },
   { href: "/about", label: "About" },
-  { href: "/resources", label: "Resources" },
+  { href: "/resources", label: "All guides" },
+];
+
+const GUIDES = [
+  { href: "/resources/how-to-reply-to-bad-google-reviews-restaurants", label: "Replying to bad reviews" },
+  { href: "/resources/restaurant-review-reply-templates", label: "Review reply templates" },
+  { href: "/resources/keep-google-hours-and-menu-up-to-date-restaurants", label: "Keeping Google hours right" },
+  { href: "/resources/kob-vs-owner-com-which-is-better", label: "KOB vs Owner.com" },
+  { href: "/resources/birdeye-alternative-for-independent-restaurants", label: "Birdeye alternative" },
 ];
 
 const LEGAL = [
@@ -20,7 +28,7 @@ const LEGAL = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-cream text-espresso">
-      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.6fr_1fr_1fr_1fr] lg:gap-16 lg:py-20">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:gap-12 lg:py-20">
         <div className="max-w-sm">
           <Link href="/" className="inline-flex items-center gap-2.5" aria-label="KOB home">
             <GreenOrb size="sm" className="!size-7" />
@@ -44,6 +52,19 @@ export function SiteFooter() {
           <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Product</p>
           <ul className="mt-4 space-y-3 text-sm">
             {PRODUCT.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="text-espresso hover:opacity-70">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav aria-label="Guides">
+          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Guides</p>
+          <ul className="mt-4 space-y-3 text-sm">
+            {GUIDES.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="text-espresso hover:opacity-70">
                   {item.label}
