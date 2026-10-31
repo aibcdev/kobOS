@@ -1,5 +1,6 @@
 import type { AiPersonality } from "@prisma/client";
 import { geminiJsonCompletion, isGeminiConfigured } from "@/lib/ai/gemini-config";
+import { readyToPasteLine, staleReadyToPost } from "@/lib/agent/assist";
 import { buildAuditTasksForRestaurant, fetchLatestLinkedAudit } from "@/lib/chief-of-staff/build-audit-tasks";
 import { morningBriefAiSchema } from "@/lib/chief-of-staff/morning-brief-schema";
 import type { TaskDraftInput, TodayBriefSummary } from "@/lib/chief-of-staff/types";
@@ -62,6 +63,9 @@ async function factTasks(
   );
   const replies = approvals.filter((a) => a.kind === "gbp.review.reply").length;
   if (replies) needToKnow.push(`${replies} review repl${replies === 1 ? "y is" : "ies are"} drafted and waiting for your yes.`);
+  // Approved a day or more ago but not posted yet (the owner posts by hand until Google posting is on).
+  const ready = readyToPasteLine((await staleReadyToPost(restaurant.id, now)).map((r) => r.kind));
+  if (ready) needToKnow.push(ready);
   const unanswered = await prisma.customerReview.findMany({
     where: { restaurantId: restaurant.id, replied: false, reviewedAt: { gte: new Date(now.getTime() - 14 * 86_400_000) } },
     orderBy: [{ rating: "asc" }, { reviewedAt: "desc" }],

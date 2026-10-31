@@ -91,7 +91,7 @@ export async function sendWelcome(restaurantId: string): Promise<SendOutcome> {
   );
 }
 
-/** The morning brief: what's waiting for approval and today's list. Skipped on a day with nothing for the owner. */
+/** The morning brief: what's waiting for approval, what's approved but not posted yet, and today's list. Skipped on a day with nothing for the owner. */
 export async function sendDailyBrief(restaurantId: string, now: Date = new Date()): Promise<SendOutcome & { empty?: boolean }> {
   const v = await venue(restaurantId);
   const { ensureTodayBrief } = await import("@/lib/chief-of-staff/ensure-today-brief");
@@ -102,11 +102,13 @@ export async function sendDailyBrief(restaurantId: string, now: Date = new Date(
     take: 10,
     select: { id: true, title: true },
   });
+  const { staleReadyToPost } = await import("@/lib/agent/assist");
+  const readyToPost = await staleReadyToPost(restaurantId, now);
   const tasks = brief.tasks.filter((t) => t.status === "PENDING").map((t) => t.title);
   const needToKnow = brief.summary.needToKnow ?? [];
-  if (!approvals.length && !tasks.length) return { kind: "daily_brief", sent: 0, skipped: 0, dryRun: 0, empty: true };
+  if (!approvals.length && !readyToPost.length && !tasks.length) return { kind: "daily_brief", sent: 0, skipped: 0, dryRun: 0, empty: true };
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: v.timezone }).format(now);
-  return sendOwnerEmail(v, "daily_brief", `brief:${restaurantId}:${day}`, dailyBriefEmail({ name: v.name, greeting: brief.greeting, needToKnow, approvals, tasks, links: v.links }));
+  return sendOwnerEmail(v, "daily_brief", `brief:${restaurantId}:${day}`, dailyBriefEmail({ name: v.name, greeting: brief.greeting, needToKnow, approvals, readyToPost, tasks, links: v.links }));
 }
 
 export async function sendWeeklySummary(restaurantId: string, now: Date = new Date()): Promise<SendOutcome> {

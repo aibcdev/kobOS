@@ -37,6 +37,23 @@ describe("owner email copy", () => {
     expect(ALL[1].subject).toBe("Godfather: 2 things for you today");
   });
 
+  it("links each approved-but-not-posted change straight to its card", () => {
+    const e = T.dailyBriefEmail({
+      name: "Godfather",
+      greeting: "Good morning.",
+      needToKnow: ["2 replies are ready to paste."],
+      approvals: [],
+      readyToPost: [{ id: "b1", title: "Reply to Sam's 2-star review" }, { id: "b2", title: "Reply to Ana's 5-star review" }],
+      tasks: [],
+      links: L,
+    });
+    expect(e.subject).toBe("Godfather: 2 things for you today");
+    expect(e.text).toContain("Approved, ready to paste into Google (2):");
+    expect(e.html).toContain("https://app.test/app/actions/b1?r=r1");
+    expect(e.html).toContain("https://app.test/app/actions/b2?r=r1");
+    expect(bannedWordsIn(e.text)).toEqual([]);
+  });
+
   it("escapes names", () => {
     expect(T.welcomeEmail({ name: `Harbour & Rye <b>`, trialEnds: "x", price: "£79", links: L }).html).toContain("Harbour &amp; Rye &lt;b&gt;");
   });
@@ -96,6 +113,43 @@ describeDb("30 days of owner emails", () => {
       }
     }
   }
+
+  it("a reply approved yesterday but never posted shows in the brief and the email, linked to its card", async () => {
+    delete process.env.GBP_LIVE; // assisted: the owner posts by hand
+    const { captureTransport, useTransport } = await import("./transport");
+    const cap = captureTransport();
+    useTransport(cap.transport);
+    const r = await venue("Paste Test", "GB", "Europe/London");
+    const now = new Date(START.getTime() + 2 * DAY);
+    const reply = async (name: string, approvedAgoHours: number) => {
+      const review = await prisma.customerReview.create({
+        data: { restaurantId: r.id, source: "OTHER", reviewerName: name, rating: 2, body: "Slow.", reviewedAt: new Date(now.getTime() - 3 * DAY) },
+      });
+      return prisma.osAction.create({
+        data: {
+          restaurantId: r.id,
+          actionType: "gbp.review.reply",
+          title: `Reply to ${name}'s 2-star review`,
+          status: "APPROVED",
+          approvedAt: new Date(now.getTime() - approvedAgoHours * 3_600_000),
+          connector: "GBP",
+          taskKey: `review:kob-review:${review.id}`,
+          proposedPayload: { actionType: "gbp.review.reply", reviewId: `kob-review:${review.id}`, replyText: "Sorry about the wait, Sam." },
+        },
+      });
+    };
+    const old = await reply("Sam", 25);
+    const fresh = await reply("Ana", 2);
+
+    const { staleReadyToPost } = await import("@/lib/agent/assist");
+    expect((await staleReadyToPost(r.id, now)).map((a) => a.id)).toEqual([old.id]);
+
+    await (await import("./owner")).sendDailyBrief(r.id, now);
+    const brief = cap.sent.find((m) => m.subject.startsWith("Paste Test:"))!;
+    expect(brief.text).toContain("1 reply is ready to paste.");
+    expect(brief.text).toContain(`https://app.test/app/actions/${old.id}?r=${r.id}`);
+    expect(brief.text).not.toContain(fresh.id);
+  }, 60_000);
 
   it("Godfather never adds a card: welcome, daily briefs, the day-5 reminder and the trial-ended email, then quiet", async () => {
     const { captureTransport, useTransport } = await import("./transport");

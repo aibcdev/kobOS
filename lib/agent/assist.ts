@@ -106,3 +106,36 @@ export async function viewsWithAssist(actions: OsAction[]): Promise<ActionView[]
   for (const id of new Set(actions.map((a) => a.restaurantId))) modes.set(id, await publishMode(id));
   return Promise.all(actions.map((a) => viewWithAssist(a, modes.get(a.restaurantId))));
 }
+
+/** How long an approved change can wait for "I've posted it" before the morning brief mentions it. */
+export const READY_NUDGE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+export type ReadyToPost = { id: string; title: string; kind: Assist["kind"] };
+
+/** Approved at least 24 hours ago, still not marked posted, and posted by hand (assisted mode). Oldest first. */
+export async function staleReadyToPost(restaurantId: string, now: Date = new Date()): Promise<ReadyToPost[]> {
+  const approved = await prisma.osAction.findMany({
+    where: { restaurantId, status: "APPROVED", approvedAt: { lte: new Date(now.getTime() - READY_NUDGE_AFTER_MS) } },
+    orderBy: { approvedAt: "asc" },
+    take: 20,
+  });
+  if (!approved.length) return [];
+  const mode = await publishMode(restaurantId);
+  const out: ReadyToPost[] = [];
+  for (const a of approved) {
+    const assist = await assistFor(a, mode);
+    if (assist) out.push({ id: a.id, title: a.title, kind: assist.kind });
+  }
+  return out;
+}
+
+/** "2 replies are ready to paste." plus a line for listing changes; null when nothing is waiting. */
+export function readyToPasteLine(kinds: Assist["kind"][]): string | null {
+  const replies = kinds.filter((k) => k === "review_reply").length;
+  const listing = kinds.length - replies;
+  const parts = [
+    replies ? `${replies} repl${replies === 1 ? "y is" : "ies are"} ready to paste.` : "",
+    listing ? `${listing} listing change${listing === 1 ? " is" : "s are"} ready to update on Google.` : "",
+  ].filter(Boolean);
+  return parts.length ? parts.join(" ") : null;
+}
