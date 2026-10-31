@@ -58,7 +58,7 @@ export function SaasMarketingHeader() {
         <div className="flex items-center gap-3 md:gap-5">
           <MarketingAuthNav compact />
           <Link
-            href="/signup"
+            href="/onboard"
             className="hidden items-center justify-center rounded-full bg-[var(--color-forest)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--color-forest-mid)] sm:inline-flex"
           >
             {START_FREE_TRIAL}
@@ -92,7 +92,7 @@ export function SaasMarketingHeader() {
           <hr className="border-[#2c2c2c]/10" />
           <MarketingAuthNav mobile onNavigate={() => setMobileMenuOpen(false)} />
           <Link
-            href="/signup"
+            href="/onboard"
             onClick={() => setMobileMenuOpen(false)}
             className="block rounded-full bg-[var(--color-forest)] py-3 text-center text-sm font-semibold text-white"
           >

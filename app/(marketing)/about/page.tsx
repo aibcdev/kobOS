@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata: Metadata = {
-  title: "About | KOB",
-  description: "KOB is the restaurant manager for independent restaurants and cafés.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "About KOB",
+  description:
+    "KOB is the restaurant manager for independent restaurants and cafés. It drafts review replies and Google listing fixes, and you approve and post them in one tap.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

@@ -196,7 +196,7 @@ export function TodayHome({
             Run the free check on your website and Google listing. Your fixes land here.
           </p>
           <Link
-            href="/audit"
+            href="/scan"
             className="mt-3 inline-flex min-h-11 items-center rounded-full bg-espresso px-4 text-paper"
           >
             Run the free check

@@ -51,10 +51,13 @@ export const OWNER_COMPARISON = {
   headline: "Keep the tools you already have.",
   subline:
     "KOB is the manager that works alongside the tools you already have. Owner.com sells a full stack. You do not have to swap anything to get a morning brief.",
-  ownerFlexNote: "$249/mo + 5% per order",
-  ownerFlatNote: "$499/mo flat",
+  ownerFlexNote: "Flexible $249/mo + 5% restaurant fee per order",
+  ownerFlatNote: "Flat Rate $499/mo",
+  /** Checked 28 Oct 2026. Guests also pay a 5% order support fee on both plans. */
+  sourceUrl: "https://www.owner.com/pricing",
+  checkedOn: "28 Oct 2026",
   footnote:
-    "*Owner.com public pricing as of 20 Oct 2026 (Flex $249/mo + 5% restaurant fee; Flat $499/mo). Competitor names used for comparison only.",
+    "*Owner.com public pricing as of 28 Oct 2026 (Flexible $249/mo + 5% restaurant fee; Flat Rate $499/mo; guests pay a 5% order support fee on both), from owner.com/pricing. Competitor names used for comparison only.",
   rows: [
     {
       label: "Monthly",

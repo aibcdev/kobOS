@@ -38,7 +38,7 @@ export function DemoPage() {
         description="We walk through reviews, your Google listing, website mistakes and supplier prices. KOB drafts, you approve and post in one tap. The self-serve scan is on the audit page if you would rather start alone."
       >
         <SaasPrimaryCta href="#demo-form">Book a call</SaasPrimaryCta>
-        <SaasSecondaryCta href="/audit">Free scan</SaasSecondaryCta>
+        <SaasSecondaryCta href="/scan">Free scan</SaasSecondaryCta>
       </SaasPageHero>
 
       <SaasSection className="bg-bone pb-12 pt-0 md:pb-16 md:pt-0">

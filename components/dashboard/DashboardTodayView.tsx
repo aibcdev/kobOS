@@ -154,7 +154,7 @@ export function DashboardTodayView({
           </p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0">
-          <Link href="/audit" className={`${appBtnSecondary} w-full no-underline sm:w-auto`}>
+          <Link href="/scan" className={`${appBtnSecondary} w-full no-underline sm:w-auto`}>
             Run visibility audit
           </Link>
           <Link

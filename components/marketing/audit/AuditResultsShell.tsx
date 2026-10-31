@@ -19,7 +19,7 @@ export function AuditResultsShell({
             <p className="truncate font-head text-lg font-semibold text-[var(--color-ink)]">{restaurantName}</p>
           </div>
           <Link
-            href="/audit"
+            href="/scan"
             className="shrink-0 text-sm font-medium text-[var(--color-primary)] underline-offset-2 hover:underline"
           >
             New scan

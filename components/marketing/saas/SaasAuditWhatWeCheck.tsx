@@ -35,7 +35,7 @@ export function SaasAuditWhatWeCheck() {
         </ul>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href="/audit"
+            href="/scan"
             className="inline-flex h-11 items-center rounded-full bg-[var(--color-forest)] px-5 text-sm font-semibold text-white hover:bg-[var(--color-forest-mid)]"
           >
             {marketingCopy.cta.freeScan} on /audit

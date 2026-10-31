@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import { permanentRedirect } from "next/navigation";
 import { SaasAuthPage } from "@/components/marketing/saas/SaasAuthPage";
 import { TRIAL_DAYS_FREE } from "@/lib/billing/offer";
 
-export const metadata: Metadata = {
-  title: "Start | KOB",
-  description: `Find your restaurant. ${TRIAL_DAYS_FREE}. No card.`,
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Start your free trial",
+  description:
+    `Find your restaurant and start KOB. ${TRIAL_DAYS_FREE}. No card.`,
+  path: "/signup",
+  noindex: true,
+});
 
 /**
  * With a `next` (e.g. onboarding's "/onboard?resume=1"), this is the account step: show sign-up on this same URL so

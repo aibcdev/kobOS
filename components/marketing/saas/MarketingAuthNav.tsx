@@ -47,7 +47,7 @@ export function MarketingAuthNav({
     return (
       <div className={wrap}>
         <Link
-          href="/dashboard"
+          href="/app"
           onClick={onNavigate}
           className={`text-sm font-medium text-[var(--color-forest)] underline-offset-4 transition-colors hover:underline ${mobile ? "rounded-full border border-[#2c2c2c]/10 py-2 text-center" : ""}`}
         >
@@ -88,7 +88,7 @@ export function MarketingAuthNav({
         Sign in
       </Link>
       <Link
-        href="/signup"
+        href="/onboard"
         onClick={onNavigate}
         className={`inline-flex items-center justify-center rounded-full bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-forest)] ${mobile ? "w-full" : ""}`}
       >

@@ -42,7 +42,7 @@ export function TaskFeedColumn({
         ) : (
           <p className="text-sm text-[#888]">
             No tasks yet.{" "}
-            <Link href="/audit" className="font-medium text-[var(--color-primary)] underline underline-offset-2">
+            <Link href="/scan" className="font-medium text-[var(--color-primary)] underline underline-offset-2">
               Run a scan for {restaurantName}
             </Link>
           </p>

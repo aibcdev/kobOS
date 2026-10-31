@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessSearch";
 import { SaasAuditWhatWeCheck } from "@/components/marketing/saas/SaasAuditWhatWeCheck";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { marketingCopy } from "@/lib/marketing/copy";
 
-export const metadata: Metadata = {
-  title: "Free restaurant audit · KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Free restaurant audit",
   description:
     "Free scan of your restaurant website, Google listing, and reviews for UK independents. See where guests drop off. No card.",
-};
+  path: "/audit",
+  noindex: true,
+});
 
 const INSIGHTS = marketingCopy.auditInsights;
 

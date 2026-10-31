@@ -56,6 +56,7 @@ const POSTING_DENY: [string, RegExp][] = [
   ["tills", /\btills?\b/],
   ["POS", /\bPOS\b/],
   ["phone answering", /KOB Phone|phone answering/i],
+  ["GPT / LLM wording", /GPT|\bLLMs?\b|[Aa]rtificial intelligence/],
 ];
 
 describe("marketing claims", () => {

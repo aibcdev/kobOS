@@ -56,7 +56,7 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
               </Link>
             </nav>
           </div>
-          <Link href="/dashboard" className="text-sm text-[var(--color-muted)] no-underline hover:text-[var(--color-ink)]">
+          <Link href="/app" className="text-sm text-[var(--color-muted)] no-underline hover:text-[var(--color-ink)]">
             ← Owner dashboard
           </Link>
         </div>

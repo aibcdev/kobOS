@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import { SaasPillarFeaturePage } from "@/components/marketing/saas/SaasPillarFeaturePage";
 import { ownerProductPillars } from "@/lib/marketing/owner-pillars";
 
 const pillar = ownerProductPillars.find((p) => p.slug === "delivery")!;
 
-export const metadata: Metadata = {
-  title: "Google hours and listings | KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Google hours and listings, kept right",
   description:
-    "KOB reminds you to fix hours, holidays, and listing details guests use before they visit. Not a delivery marketplace.",
-};
+    "KOB checks your Google hours, holiday hours and listing details against your website every morning and drafts the fix. You approve and update it in a tap. Not a delivery service.",
+  path: "/features/delivery",
+});
 
 export default function DeliveryFeaturePage() {
   return <SaasPillarFeaturePage pillar={pillar} />;

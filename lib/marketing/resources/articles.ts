@@ -1,8 +1,10 @@
 import type { ResourceArticle } from "./types";
 
 const KOB_PRICE = "£79/mo UK · $99/mo elsewhere (founding, as of 20 Oct 2026); 7-day trial, no card";
-const OWNER_PRICE = "Flex $249/mo + 5% restaurant fee; Flat $499/mo (public, as of 20 Oct 2026)";
-const UPDATED = "2026-10-20";
+const OWNER_PRICE = "Flexible $249/mo + 5% restaurant fee; Flat Rate $499/mo; guests pay a 5% order support fee on both (owner.com/pricing, 28 Oct 2026)";
+const UPDATED = "2026-10-28";
+/** The guides added in the 28 Oct 2026 SEO pass. */
+const NEW = "2026-10-28";
 
 /** Seed Best-X / comparison library (Groberman + Cal.com-style coverage for AI citation). */
 export const RESOURCE_ARTICLES: ResourceArticle[] = [
@@ -76,7 +78,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Owner.com suits venues that want a full branded suite. Simpler tools or KOB fit owners who want diagnosis and approve-only tasks before a big platform commit.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["best-of", "restaurant-marketing-software", "independents"],
   },
@@ -145,7 +147,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Not with KOB. KOB is built to keep your website and booking system.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["owner-com", "alternatives", "compare"],
   },
@@ -203,7 +205,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. The public scan does not require a card.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["audit", "seo", "free"],
   },
@@ -257,7 +259,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Not with KOB. Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Check my Google listing",
     tags: ["gbp", "google-listing", "restaurants"],
   },
@@ -310,7 +312,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Yes. Many owners use software for listing and reviews, and an agency for paid media.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["agency", "software", "compare"],
   },
@@ -323,7 +325,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     updatedAt: UPDATED,
     questionH2: "How much does Owner.com cost, and is it worth it?",
     directAnswer:
-      "Owner.com public plans are about $249/mo plus a restaurant fee on Flex, or $499/mo Flat, as of 20 Oct 2026. It is worth it if you want a full branded suite. If you want to keep your website and booking system and start with a free audit, compare KOB first.",
+      "Owner.com public plans are $249/mo plus a 5% restaurant fee on Flexible, or $499/mo on Flat Rate, as of 28 Oct 2026 (owner.com/pricing). Guests also pay a 5% order support fee on both. It is worth it if you want a full branded suite. If you want to keep your website and booking system and start with a free audit, compare KOB first.",
     definition:
       "Owner.com is a restaurant growth suite covering marketing and guest-facing products. Pricing and scope change; always check their site for current offers.",
     comparisons: [
@@ -344,7 +346,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "How to read Owner.com pricing",
-        body: "Compare Flex vs Flat carefully. Factor restaurant fees and what you already pay for a website and booking system. Published figures here are as of 20 Oct 2026.",
+        body: "Compare Flexible vs Flat Rate carefully. Factor restaurant fees, the guest order support fee, and what you already pay for a website and booking system. Published figures here are as of 28 Oct 2026.",
       },
       {
         heading: "Reviews and fit",
@@ -358,7 +360,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Sometimes. Compare total monthly cost including fees. Agencies and suites solve different jobs.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Compare with a free audit",
     tags: ["owner-com", "pricing", "reviews"],
   },
@@ -410,7 +412,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Usually no. Ads amplify a broken listing.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "See what guests see",
     tags: ["customers", "online", "growth"],
   },
@@ -459,7 +461,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Yes. The UK is a primary market. Founding price is £79/mo per location as of 20 Oct 2026.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free UK restaurant audit",
     tags: ["uk", "independents", "best-of"],
   },
@@ -508,7 +510,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. KOB does not replace your website.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["popmenu", "owner-com", "compare"],
   },
@@ -542,7 +544,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "Price and trial",
-        body: "KOB founding is £79/mo in the UK and $99 elsewhere, as of 20 Oct 2026, with a 7-day trial and no card. Owner.com Flex and Flat public prices are higher; confirm on their site.",
+        body: "KOB founding is £79/mo in the UK and $99 elsewhere, as of 20 Oct 2026, with a 7-day trial and no card. Owner.com Flexible and Flat Rate public prices are higher; confirm on owner.com/pricing.",
       },
       {
         heading: "What each will not do",
@@ -555,7 +557,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Yes. Run the free audit on your public listing and site. Nothing replaces your current stack until you choose to.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["kob", "owner-com", "compare"],
   },
@@ -602,7 +604,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. KOB flags website mistakes and helps keep the listing right. It does not replace your site.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Check listing and website",
     tags: ["gbp", "website", "compare"],
   },
@@ -650,7 +652,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. KOB does not replace your website platform.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["bentobox", "compare", "kob"],
   },
@@ -693,7 +695,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Yes. KOB is designed to work with the website you already have.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["popmenu", "compare", "kob"],
   },
@@ -743,7 +745,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "See unanswered reviews",
     tags: ["reviews", "best-of"],
   },
@@ -792,7 +794,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. Hours fixes wait for your yes by default.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Check my hours",
     tags: ["gbp", "hours", "best-of"],
   },
@@ -841,7 +843,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. It tells you what to fix first. Redesign when the structure is beyond repair.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Audit my restaurant website",
     tags: ["website", "audit", "compare"],
   },
@@ -890,7 +892,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "No. It is built for independent restaurants and cafés.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free café audit",
     tags: ["cafes", "best-of"],
   },
@@ -939,7 +941,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Yes. Ask who owns the Google listing and who replies to reviews so work is not duplicated.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["owner-com", "agency", "compare"],
   },
@@ -988,8 +990,314 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         answer: "Yes. India is in the supported country list. Founding price follows the non-UK rate as of 20 Oct 2026.",
       },
     ],
-    ctaHref: "/audit",
+    ctaHref: "/go/audit",
     ctaLabel: "Run free restaurant audit",
     tags: ["india", "independents", "best-of"],
+  },
+  {
+    slug: "how-to-reply-to-bad-google-reviews-restaurants",
+    title: "How to Reply to Bad Google Reviews: A Guide for Restaurants",
+    description:
+      "How restaurant owners should reply to 1–3★ Google reviews: what to say, what never to say, when to take it offline, and how to stay calm in public.",
+    publishedAt: NEW,
+    updatedAt: NEW,
+    questionH2: "How should a restaurant reply to a bad Google review?",
+    directAnswer:
+      "Reply within a few days, thank the guest by name, say sorry for how the visit felt without admitting legal fault, give one specific fix or reason, and invite them to contact you directly. Keep it short and calm, because the people reading it are your next guests, not just the reviewer.",
+    definition:
+      "A reply to a bad review is a public note under the guest’s review on your Google Business Profile. Everyone who finds you on Google Search and Maps can read it, so it works as much for future guests as for the person who wrote the review.",
+    comparisons: [],
+    sections: [
+      {
+        heading: "Why the reply matters more than the review",
+        body: "A single bad review rarely stops someone booking. A defensive or missing reply often does. Guests scanning your listing look for how you handle problems: a calm, specific reply shows the room is run by someone who cares. Silence or an argument shows the opposite.",
+      },
+      {
+        heading: "The five-part reply",
+        body: "1. Thank them by first name. 2. Say sorry for how the visit felt (“I’m sorry the wait spoiled your evening”). 3. Give one specific fact or fix (“we’ve added a second person on the pass on Fridays”). 4. Invite them back to talk directly, with an email or the manager’s name. 5. Sign off with your name. Four or five sentences is plenty.",
+      },
+      {
+        heading: "What never to put in a public reply",
+        body: "Don’t argue about facts, quote the bill, or share anything about the guest’s visit they didn’t mention. Don’t promise refunds or vouchers in public, which invites copycat complaints. Don’t admit fault on anything that sounds like illness, injury, allergy or discrimination: say you take it seriously and ask them to contact you directly, then deal with it privately.",
+      },
+      {
+        heading: "Fake or unfair reviews",
+        body: "If a review breaks Google’s rules (for example it’s from someone who never visited, or it’s abusive), you can report it from your Google Business Profile. Reply politely anyway while you wait. A short “We can’t find a booking or visit that matches this; please get in touch so we can look into it” reads well to everyone else.",
+      },
+      {
+        heading: "How KOB helps",
+        body: "KOB reads your reviews and drafts each reply in your voice, following these rules. Angry, sensitive or legal-sounding reviews always wait for you. You approve the reply, tap once, and post it on Google. Nothing goes out without your OK.",
+      },
+    ],
+    faqs: [
+      {
+        question: "How fast should I reply to a bad review?",
+        answer: "Within a few days. A quick, calm reply shows guests you’re paying attention. Waiting weeks makes the reply look like an afterthought.",
+      },
+      {
+        question: "Should I offer a refund in my reply?",
+        answer: "Not in public. Invite the guest to contact you directly and sort out any refund or voucher privately.",
+      },
+      {
+        question: "Can I delete a bad Google review?",
+        answer: "No. You can report a review that breaks Google’s policies, but only Google can remove it. A good reply is the part you control.",
+      },
+      {
+        question: "Does KOB post replies for me?",
+        answer: "Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
+      },
+    ],
+    ctaHref: "/onboard",
+    ctaLabel: "See what KOB finds on your restaurant",
+    tags: ["guide", "reviews", "google-business-profile"],
+  },
+  {
+    slug: "restaurant-review-reply-templates",
+    title: "Restaurant Review Reply Templates (Good, Bad and Mixed)",
+    description:
+      "Copy-and-adapt reply templates for restaurant Google reviews: 5★ thank-yous, mixed 3★ reviews, 1–2★ complaints, and reviews that mention allergies or illness.",
+    publishedAt: NEW,
+    updatedAt: NEW,
+    questionH2: "What should a restaurant write when replying to a review?",
+    directAnswer:
+      "Use a short template as a starting point, then change at least one line so it mentions something specific from the review. Templates keep the tone right; the specific line is what makes it sound like you.",
+    definition:
+      "A review reply template is a reusable outline for answering a type of review (glowing, mixed, angry or sensitive) that you adapt with the guest’s name and one detail from what they wrote.",
+    comparisons: [],
+    sections: [
+      {
+        heading: "5★ review",
+        body: "“Thank you, [name]! So glad you enjoyed the [dish they mentioned]. [Chef/team name] will be chuffed to hear it. See you again soon. [Your name]”",
+      },
+      {
+        heading: "4★ review with a small niggle",
+        body: "“Thanks for coming in, [name], and for the kind words about [what they liked]. You’re right about [the niggle]; we’ve [what you changed]. Hope to see you back. [Your name]”",
+      },
+      {
+        heading: "3★ mixed review",
+        body: "“Thank you for the honest review, [name]. Glad [what went well] hit the spot, and sorry [what went wrong] let the evening down. We’ve [specific fix]. If you’d like to tell me more, I’m at [email]. [Your name]”",
+      },
+      {
+        heading: "1–2★ complaint",
+        body: "“[Name], I’m sorry your visit felt like this. That’s not what we want anyone to leave with. I’d like to hear more and put it right: please email me at [email]. [Your name], [role]”",
+      },
+      {
+        heading: "Review mentioning illness, allergy or injury",
+        body: "“[Name], thank you for telling us. We take this very seriously and want to look into it properly. Please contact me directly at [email] so we can talk it through. [Your name], [role]” Keep it to that; don’t discuss details in public.",
+      },
+      {
+        heading: "How KOB helps",
+        body: "KOB drafts each reply from your own tone and house rules, so you’re not starting from a blank template every time. You approve it, tap once, and post it on Google.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Is it OK to use the same reply for every review?",
+        answer: "No. Identical replies look automated and guests notice. Change at least one line to mention something from the review.",
+      },
+      {
+        question: "Should I reply to reviews with no text, just stars?",
+        answer: "A one-line thank-you is enough for a star-only review. It still shows future guests that someone reads them.",
+      },
+      {
+        question: "Who should sign the reply?",
+        answer: "The owner or manager, by first name. A real name reads warmer than “The Team”.",
+      },
+    ],
+    ctaHref: "/onboard",
+    ctaLabel: "See what KOB finds on your restaurant",
+    tags: ["guide", "reviews", "templates"],
+  },
+  {
+    slug: "keep-google-hours-and-menu-up-to-date-restaurants",
+    title: "How to Keep Your Google Hours and Menu Up to Date",
+    description:
+      "A simple routine for restaurants to keep Google Business Profile hours, holiday hours and menu links right, so guests don’t turn up to a closed door.",
+    publishedAt: NEW,
+    updatedAt: NEW,
+    questionH2: "How do restaurants keep Google hours and menus accurate?",
+    directAnswer:
+      "Treat your website as the source of truth, check Google against it every week, add special hours before every bank holiday or closure, and fix any mismatch the same day. Most wrong-hours problems come from forgetting holidays or from edits other people suggest to your listing.",
+    definition:
+      "Your Google Business Profile is the listing guests see on Google Search and Maps. It holds your regular hours, special (holiday) hours, menu link, contact number, address and photos, and many guests check it instead of your website.",
+    comparisons: [],
+    sections: [
+      {
+        heading: "A weekly two-minute check",
+        body: "Once a week, open your listing and your website side by side. Check opening hours for every day, the menu link, and whether any updates were suggested to your listing. Fix anything that doesn’t match straight away.",
+      },
+      {
+        heading: "Add special hours before every holiday",
+        body: "Bank holidays, Christmas, refurb closures and private events are where listings go wrong. Add special hours in your Google Business Profile a couple of weeks ahead, so Google shows “Holiday hours” instead of your normal week.",
+      },
+      {
+        heading: "Keep one source of truth",
+        body: "Decide where hours are changed first (usually your website), then copy them to Google, booking pages and delivery apps the same day. When different places disagree, guests trust none of them.",
+      },
+      {
+        heading: "Menus: link, don’t upload once and forget",
+        body: "Link Google to the menu page on your own site rather than an old PDF. When dishes or prices change, you update one page and Google stays right.",
+      },
+      {
+        heading: "How KOB helps",
+        body: "KOB checks your Google listing against your website every morning. When hours, holiday hours or your description disagree, it drafts the fix for you. You approve and update it in a tap.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Why do my Google hours keep changing?",
+        answer: "Guests and Google itself can suggest edits to your listing. Check for suggested updates every week and reject the wrong ones.",
+      },
+      {
+        question: "How far ahead should I add holiday hours?",
+        answer: "A couple of weeks before the date, so the listing is right when guests start planning.",
+      },
+      {
+        question: "Do I need to update my menu on Google separately?",
+        answer: "If Google links to a menu page on your site, update that page and Google follows. If you uploaded a menu or photos to Google, update those too.",
+      },
+    ],
+    ctaHref: "/onboard",
+    ctaLabel: "See what KOB finds on your restaurant",
+    tags: ["guide", "google-business-profile", "hours"],
+  },
+  {
+    slug: "birdeye-alternative-for-independent-restaurants",
+    title: "Birdeye Alternative for Independent Restaurants",
+    description:
+      "Birdeye vs KOB for independent restaurants: who each is built for, how review replies and listings work, and published pricing, with sources.",
+    publishedAt: NEW,
+    updatedAt: NEW,
+    questionH2: "Is there a simpler Birdeye alternative for an independent restaurant?",
+    directAnswer:
+      "Birdeye is built for multi-location brands across many industries and doesn’t publish its prices. KOB is built for independent restaurants with one to five sites, at a published $99/mo (£79 in the UK) per location: it drafts review replies and Google listing fixes, and you approve and post them in one tap.",
+    definition:
+      "Both are review and listing tools. Birdeye covers reputation, listings and customer experience for multi-location brands. KOB is a restaurant manager for independents that drafts the work and waits for the owner’s OK.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Independent restaurants and cafés, one to five sites",
+        pricing: KOB_PRICE,
+        verdict: "Drafts replies and listing fixes; you approve and post in one tap",
+        href: "https://trykob.com/pricing",
+      },
+      {
+        name: "Birdeye",
+        bestFor: "Multi-location brands (restaurants, healthcare, dental, automotive, retail)",
+        pricing: "Not published; quote by number of locations (birdeye.com/pricing, 28 Oct 2026)",
+        verdict: "Broad platform; replies can post on their own or wait for approval",
+        href: "https://birdeye.com/pricing/",
+      },
+    ],
+    sources: [
+      { label: "Birdeye pricing page: no published prices, quote by location count (checked 28 Oct 2026)", href: "https://birdeye.com/pricing/" },
+      { label: "Birdeye reviews: review response agent “posts on its own, or holds for approval” (checked 28 Oct 2026)", href: "https://birdeye.com/reviews/" },
+      { label: "Birdeye listings: Google, Facebook, Apple, Yelp and Bing; outdated-hours fixes (checked 28 Oct 2026)", href: "https://birdeye.com/listings/" },
+      { label: "KOB pricing", href: "https://trykob.com/pricing" },
+    ],
+    sections: [
+      {
+        heading: "Who each is built for",
+        body: "Birdeye markets itself to multi-location brands and lists many industries, restaurants among them. KOB is only for independent restaurants and cafés, so the morning brief, reply rules and listing checks are written for a dining room.",
+      },
+      {
+        heading: "Review replies",
+        body: "Birdeye’s review response agent can post replies on its own or hold them for approval, depending on how you set it up. KOB drafts every reply in your voice and holds angry, sensitive or legal-sounding reviews for you; you approve, tap once, and post.",
+      },
+      {
+        heading: "Listings",
+        body: "Birdeye connects to Google, Facebook, Apple, Yelp and Bing and flags outdated hours. KOB focuses on your Google listing: it checks hours, holiday hours and your description against your website every morning and drafts the fix.",
+      },
+      {
+        heading: "Price",
+        body: "Birdeye doesn’t publish prices; you request a quote by location count. KOB’s founding price is published: $99/mo per location (£79 in the UK), with a 7-day free trial and no card.",
+      },
+    ],
+    faqs: [
+      {
+        question: "How much does Birdeye cost?",
+        answer: "Birdeye doesn’t publish prices. Its pricing page asks for your number of locations and then quotes (checked 28 Oct 2026).",
+      },
+      {
+        question: "Does KOB post replies for me?",
+        answer: "Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
+      },
+      {
+        question: "Which should a single-site restaurant choose?",
+        answer: "If you want a broad platform and expect to grow into many locations, talk to Birdeye. If you want a published price and a short morning list for one restaurant, try KOB free for 7 days.",
+      },
+    ],
+    ctaHref: "/trial",
+    ctaLabel: "Try KOB free for 7 days",
+    tags: ["alternative", "birdeye", "reviews"],
+  },
+  {
+    slug: "yext-alternative-for-independent-restaurants",
+    title: "Yext Alternative for Independent Restaurants",
+    description:
+      "Yext vs KOB for independent restaurants: enterprise listings across 200+ publishers vs a Google-first manager with a published price, with sources.",
+    publishedAt: NEW,
+    updatedAt: NEW,
+    questionH2: "Is Yext right for an independent restaurant, or is there a simpler alternative?",
+    directAnswer:
+      "Yext describes itself as built for enterprises and multi-location brands, with custom annual pricing and listings on 200-plus publishers. For an independent restaurant that mainly needs Google reviews answered and Google hours right, KOB is simpler: $99/mo (£79 in the UK) per location, 7 days free, and you approve and post every change.",
+    definition:
+      "Yext is an enterprise platform for brand listings, reviews and search. KOB is a restaurant manager for independents that drafts review replies and Google listing fixes for the owner to approve.",
+    comparisons: [
+      {
+        name: "KOB",
+        bestFor: "Independent restaurants and cafés, one to five sites",
+        pricing: KOB_PRICE,
+        verdict: "Google-first; drafts replies and fixes, you post in one tap",
+        href: "https://trykob.com/pricing",
+      },
+      {
+        name: "Yext",
+        bestFor: "Enterprises and multi-location brands",
+        pricing: "Custom; billed annually, no free tier (yext.com FAQ, 28 Oct 2026)",
+        verdict: "Listings on 200+ publishers; heavier commitment",
+        href: "https://www.yext.com/knowledge-center/yext-faq",
+      },
+    ],
+    sources: [
+      { label: "Yext FAQ: custom pricing, billed annually, no free tier, 200+ publishers, built for enterprises (checked 28 Oct 2026)", href: "https://www.yext.com/knowledge-center/yext-faq" },
+      { label: "Yext reviews: drafted replies, templates, and optional automatic responses (checked 28 Oct 2026)", href: "https://www.yext.com/platform/reviews" },
+      { label: "KOB pricing", href: "https://trykob.com/pricing" },
+    ],
+    sections: [
+      {
+        heading: "Who each is built for",
+        body: "Yext says it is built for serious enterprises and multi-location brands, and points small businesses to resellers. KOB is built only for independent restaurants and cafés with one to five sites.",
+      },
+      {
+        heading: "Listings",
+        body: "Yext syncs listings to 200-plus publishers, including Google, Apple, Facebook, Bing and Yelp. KOB focuses on the listing most guests check, Google: it compares your hours, holiday hours and description with your website every morning and drafts the fix.",
+      },
+      {
+        heading: "Review replies",
+        body: "Yext offers drafted replies, templates and rules, and can send responses automatically; its FAQ lists review response as an add-on. KOB drafts each reply in your voice and holds sensitive reviews for you. You approve, tap once, and post.",
+      },
+      {
+        heading: "Price and commitment",
+        body: "Yext pricing is custom and billed annually, with no free tier. KOB is $99/mo per location (£79 in the UK), month to month, with a 7-day free trial and no card.",
+      },
+    ],
+    faqs: [
+      {
+        question: "How much does Yext cost?",
+        answer: "Yext says its pricing is custom, based on locations, products and contract length, and billed annually (checked 28 Oct 2026). It doesn’t publish a single price.",
+      },
+      {
+        question: "Do I need listings on 200 sites?",
+        answer: "Most independent restaurants get the bulk of listing traffic from Google. Start by getting Google right; add wider listings later if you grow.",
+      },
+      {
+        question: "Does KOB post replies for me?",
+        answer: "Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",
+      },
+    ],
+    ctaHref: "/trial",
+    ctaLabel: "Try KOB free for 7 days",
+    tags: ["alternative", "yext", "listings"],
   },
 ];

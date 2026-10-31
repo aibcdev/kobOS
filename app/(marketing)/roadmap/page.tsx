@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata: Metadata = {
-  title: "Roadmap | KOB",
-  description: "What KOB is building next. None of this is live on the homepage.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Roadmap",
+  description:
+    "What KOB is building next, and what is not live yet.",
+  path: "/roadmap",
+});
 
 const ITEMS = [
-  { title: "KOB Phone", detail: "Guest answering. Not live." },
+  { title: "Automatic posting to Google", detail: "Coming once Google finishes approving our access. Until then you post in one tap." },
   { title: "Direct ordering", detail: "Not live. KOB does not replace your ordering." },
   { title: "Win-back", detail: "Not live." },
   { title: "Waste Eye", detail: "Measured waste. Not live." },

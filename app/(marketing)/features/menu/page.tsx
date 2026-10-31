@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,11 +10,12 @@ import {
 } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
-export const metadata: Metadata = {
-  title: "Menu pages and listing photos | KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Menu pages and listing photos",
   description:
     "KOB flags weak menus and photos on your current site and Google listing. We do not replace a full digital-menu CMS or upsell engine.",
-};
+  path: "/features/menu",
+});
 
 export default function MenuFeaturePage() {
   return (
@@ -70,7 +72,7 @@ export default function MenuFeaturePage() {
           See what guests see on your menu pages and listing, then approve a short list.
         </p>
         <Link
-          href="/audit"
+          href="/scan"
           className="inline-flex h-12 items-center rounded-full bg-[#fbf8f5] px-8 text-sm font-medium text-[#094413] transition-colors hover:bg-[#f9f3ed]"
         >
           Back to product overview

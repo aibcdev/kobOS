@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,11 +10,12 @@ import {
 } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 
-export const metadata: Metadata = {
-  title: "Photos and brand on your listing | KOB",
+export const metadata: Metadata = pageMetadata({
+  title: "Photos and brand on your Google listing",
   description:
     "KOB scores photos, pages, and reviews so your Google listing and site match the room. We do not launch a guest mobile app.",
-};
+  path: "/features/branding",
+});
 
 export default function BrandingFeaturePage() {
   return (
@@ -25,7 +27,7 @@ export default function BrandingFeaturePage() {
         variant="warm"
       >
         <SaasPrimaryCta href="/demo">Get started</SaasPrimaryCta>
-        <SaasSecondaryCta href="/audit">Free scan</SaasSecondaryCta>
+        <SaasSecondaryCta href="/scan">Free scan</SaasSecondaryCta>
       </SaasPageHero>
 
       <SaasSection className="border-b border-[#2c2c2c]/5 bg-[#fbf8f5] pb-10 md:pb-14 pt-0 -mt-[1px]">

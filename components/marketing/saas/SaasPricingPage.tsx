@@ -133,7 +133,7 @@ export async function SaasPricingPage() {
         <p className="mx-auto mt-3 max-w-lg text-sm text-[#2c2c2c]/70">{marketingCopy.auditSubline}</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-[#2c2c2c]/55">{marketingCopy.closingSuggestive}</p>
         <Link
-          href="/audit"
+          href="/scan"
           className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#094413] px-8 text-sm font-semibold text-[#fbf8f5] hover:bg-[#088924]"
         >
           {marketingCopy.cta.aiReport}

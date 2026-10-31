@@ -1,4 +1,4 @@
-/** Marketing resources: “Best X / X vs Z” articles for SEO + AI Overview citation. */
+/** Marketing resources: how-to guides and “Best X / X vs Z” comparisons for owners and search. */
 
 export type ResourceFaq = { question: string; answer: string };
 
@@ -20,12 +20,14 @@ export type ResourceArticle = {
   updatedAt: string;
   /** First H2: buyer question in plain English (AEO / Meta Muse). */
   questionH2: string;
-  /** One-sentence answer AI can quote — appears first under questionH2. */
+  /** One-sentence answer that can be quoted on its own — appears first under questionH2. */
   directAnswer: string;
   /** Short definition block. */
   definition: string;
-  /** Comparison table rows (best-of / vs). */
+  /** Comparison table rows (best-of / vs). Empty for how-to guides; the table is then left out. */
   comparisons: ResourceComparisonRow[];
+  /** Where each competitor fact comes from: their own pages, with the date checked. */
+  sources?: Array<{ label: string; href: string }>;
   /** Modular sections with H2 + short paragraphs. */
   sections: Array<{ heading: string; body: string }>;
   faqs: ResourceFaq[];

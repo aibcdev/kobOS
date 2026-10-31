@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
       {
         source: "/audit",
         destination: "/scan",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/dashboard",

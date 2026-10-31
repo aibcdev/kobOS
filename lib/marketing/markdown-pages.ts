@@ -12,18 +12,16 @@ export const MARKDOWN_STATIC_PATHS = [
   "/trial",
   "/demo",
   "/solutions",
-  "/audit",
   "/features/website",
   "/features/online-ordering",
   "/features/delivery",
   "/features/branding",
-  "/features/ai-menu",
   "/features/menu",
   "/about",
   "/roadmap",
   "/privacy",
   "/terms",
-  "/for-ai",
+  "/data-management",
 ] as const;
 
 /** Sitemap paths that are redirects or forms, not readable pages. */

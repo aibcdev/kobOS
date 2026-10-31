@@ -38,7 +38,7 @@ export function SaasMarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/audit" className="transition-colors hover:text-white">
+                <Link href="/scan" className="transition-colors hover:text-white">
                   Free audit
                 </Link>
               </li>

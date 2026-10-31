@@ -4,12 +4,8 @@ import {
   ResourceArticleView,
   resourceArticleJsonLd,
 } from "@/components/marketing/resources/ResourceArticleView";
-import {
-  getResourceArticle,
-  listResourceSlugs,
-  resourceArticleUrl,
-} from "@/lib/marketing/resources";
-import { getSiteUrl } from "@/lib/site-url";
+import { articlePath, getResourceArticle, listResourceSlugs } from "@/lib/marketing/resources";
+import { canonicalUrl, pageMetadata } from "@/lib/seo/page-metadata";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -20,21 +16,11 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = getResourceArticle(slug);
-  if (!article) return { title: "Resources | KOB" };
-  const canonical = resourceArticleUrl(slug, getSiteUrl());
+  if (!article) return { title: "Guides | KOB" };
+  const meta = pageMetadata({ title: article.title, description: article.description, path: articlePath(slug), type: "article", ownShareImage: true });
   return {
-    title: `${article.title} | KOB`,
-    description: article.description,
-    alternates: { canonical },
-    openGraph: {
-      title: article.title,
-      description: article.description,
-      url: canonical,
-      type: "article",
-      publishedTime: article.publishedAt,
-      modifiedTime: article.updatedAt,
-    },
-    robots: { index: true, follow: true },
+    ...meta,
+    openGraph: { ...meta.openGraph, type: "article", publishedTime: article.publishedAt, modifiedTime: article.updatedAt },
   };
 }
 
@@ -42,7 +28,7 @@ export default async function ResourceArticlePage({ params }: Props) {
   const { slug } = await params;
   const article = getResourceArticle(slug);
   if (!article) notFound();
-  const canonical = resourceArticleUrl(slug, getSiteUrl());
+  const canonical = canonicalUrl(articlePath(slug));
   const jsonLd = resourceArticleJsonLd(article, canonical);
 
   return (
