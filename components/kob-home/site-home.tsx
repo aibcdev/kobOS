@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { trialPromise } from "@/lib/billing/trial-days";
 import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
-import { FEATURE_STATUS, homepageFeatures, POSTING, POSTING_FAQ } from "@/lib/marketing/feature-status";
+import { FEATURE_STATUS, homepageFeatures, POSTING, POSTING_FAQ, SOUNDS_LIKE_ME_FAQ } from "@/lib/marketing/feature-status";
 import { consentedProof, show180SiteProof } from "@/lib/marketing/proof";
 
 const GBP = FOUNDING_PRICES.GB.label;
@@ -43,6 +43,7 @@ function faq(priceLabel: string) {
   const trial = trialPromise();
   return [
     POSTING_FAQ,
+    SOUNDS_LIKE_ME_FAQ,
     {
       q: "Will KOB post anything without me?",
       a: `No. ${POSTING.control} Refunds, discounts and replies to bad reviews always wait for you.`,

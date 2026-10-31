@@ -2,7 +2,7 @@
 
 import { FREE_TRIAL_LABEL, TRIAL_LABEL } from "@/lib/billing/offer";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
-import { POSTING, POSTING_FAQ } from "@/lib/marketing/feature-status";
+import { POSTING, POSTING_FAQ, SOUNDS_LIKE_ME_FAQ } from "@/lib/marketing/feature-status";
 
 export type PricingTierId = "founding";
 
@@ -140,6 +140,7 @@ export const pricingIncludedFeatures = (priceLabel: string) => [
 
 export const pricingFaq = (priceLabel: string) => [
   POSTING_FAQ,
+  SOUNDS_LIKE_ME_FAQ,
   {
     q: "Will KOB post anything without me?",
     a: `No. ${POSTING.control} Refunds, discounts and replies to bad reviews always wait for you.`,

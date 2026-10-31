@@ -130,27 +130,25 @@ export function specificTopFixCopy(
   const missingSignals = Math.max(schemaishIssues.length, attributeGapCount);
 
   if (/respond to google reviews|unanswered/.test(lower)) {
+    // Places API doesn't say which reviews have an owner reply, so never put a number on "unanswered".
     if (reviewCount != null && reviewCount >= 5) {
-      // Places API does not expose reply rate — estimate unanswered from weak trust score.
-      const trust = payload.restaurantScores?.reviews ?? 55;
-      const unanswered = Math.max(
-        3,
-        Math.min(reviewCount, Math.round(reviewCount * (trust < 50 ? 0.22 : trust < 65 ? 0.12 : 0.06))),
-      );
       return {
-        title: `Respond to ${unanswered.toLocaleString("en-GB")} unanswered reviews`,
-        detail: `Your listing has ${reviewCount.toLocaleString("en-GB")} Google reviews — guests notice silence`,
+        title: "Reply to your Google reviews",
+        detail: `Your listing has ${reviewCount.toLocaleString("en-GB")} Google reviews. Guests read the replies too`,
       };
     }
     return { title, detail: fix.detail || "Guests trust places that reply" };
   }
 
   if (/help google understand|restaurant attributes|schema|structured/.test(lower)) {
-    const n = Math.max(2, missingSignals || schemaishIssues.length || 3);
-    return {
-      title: `Google is missing ${n} important restaurant attributes`,
-      detail: "Categories, hours, and structured details help you win the local pack",
-    };
+    // Only a count the scan actually found.
+    if (missingSignals > 0) {
+      return {
+        title: `Google is missing ${missingSignals} restaurant detail${missingSignals === 1 ? "" : "s"}`,
+        detail: "Categories, hours, and structured details help you win the local pack",
+      };
+    }
+    return { title, detail: fix.detail || "Categories, hours, and structured details help you win the local pack" };
   }
 
   if (/update google photos|photos \+ posts|photo/.test(lower)) {
