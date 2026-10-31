@@ -64,21 +64,28 @@ export function dailyBriefEmail(p: {
   greeting: string;
   needToKnow: string[];
   approvals: { id: string; title: string }[];
+  /** Approved but not posted yet (the owner pastes these into Google). Each links to its card. */
+  readyToPost?: { id: string; title: string }[];
   tasks: string[];
   links: Links;
 }): Email {
+  const ready = p.readyToPost ?? [];
   const blocks: Block[] = [{ kind: "p", text: p.greeting }];
   if (p.needToKnow.length) blocks.push({ kind: "list", items: p.needToKnow.map((t) => ({ text: t })) });
   if (p.approvals.length) {
     blocks.push({ kind: "p", text: `Ready for your yes (${p.approvals.length}):` });
     blocks.push({ kind: "list", items: p.approvals.slice(0, 8).map((a) => ({ text: a.title, href: p.links.action(a.id) })) });
   }
+  if (ready.length) {
+    blocks.push({ kind: "p", text: `Approved, ready to paste into Google (${ready.length}):` });
+    blocks.push({ kind: "list", items: ready.slice(0, 8).map((a) => ({ text: a.title, href: p.links.action(a.id) })) });
+  }
   if (p.tasks.length) {
     blocks.push({ kind: "p", text: "Also on today's list:" });
     blocks.push({ kind: "list", items: p.tasks.slice(0, 6).map((t) => ({ text: t })) });
   }
   blocks.push({ kind: "button", text: "Open today's list", href: p.links.app });
-  const count = p.approvals.length + p.tasks.length;
+  const count = p.approvals.length + ready.length + p.tasks.length;
   const e = render(`${p.name}: ${count} thing${count === 1 ? "" : "s"} for you today`, blocks);
   return e;
 }
