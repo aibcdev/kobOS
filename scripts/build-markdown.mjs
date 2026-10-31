@@ -85,12 +85,13 @@ export function pageToMarkdown(html, pagePath) {
 function section(p) {
   if (p === "/privacy" || p === "/terms") return "Optional";
   if (p.startsWith("/features/")) return "Features";
+  if (p.startsWith("/tools/")) return "Free tools";
   if (p === "/resources" || p.startsWith("/resources/")) return "Guides and comparisons";
   return "Main pages";
 }
 
 export function llmsTxt(pages) {
-  const order = ["Main pages", "Features", "Guides and comparisons", "Optional"];
+  const order = ["Main pages", "Features", "Free tools", "Guides and comparisons", "Optional"];
   const lines = ["# KOB", "", `> ${SUMMARY}`, ""];
   for (const name of order) {
     const items = pages.filter((p) => section(p.path) === name);
@@ -104,6 +105,28 @@ export function llmsTxt(pages) {
 
 export function llmsFullTxt(pages) {
   return [`# KOB`, "", `> ${SUMMARY}`, "", ...pages.map((p) => `---\n\n${p.markdown}`)].join("\n");
+}
+
+// ---- Copy check ---------------------------------------------------------------------------------
+
+/**
+ * The words public copy must never use (lib/marketing/copy-rules.ts, kept in step by markdown-pages.test.ts), checked
+ * on what llms.txt and llms-full.txt actually say. The file names themselves ("llms.txt") don't count.
+ */
+export const LLMS_BANNED = [
+  ["AI", /\bAI\b/i],
+  ["artificial intelligence", /artificial intelligence/i],
+  ["LLM", /\bLLMs?\b(?!\.txt|-full\.txt)/i],
+  ["GPT", /\bGPT\b/i],
+  ["ChatGPT", /ChatGPT/i],
+  ["phone", /\bphones?\b/i],
+  ["POS", /\bPOS\b/i],
+  ["point of sale", /point[- ]of[- ]sale/i],
+  ["auto-post", /auto-?post|automatically post|posts? automatically/i],
+];
+
+export function llmsBannedHits(text) {
+  return LLMS_BANNED.filter(([, re]) => re.test(text)).map(([label]) => label);
 }
 
 // ---- Build --------------------------------------------------------------------------------------
@@ -153,8 +176,15 @@ async function main() {
         failed.push(`${p} (${e instanceof Error ? e.message : e})`);
       }
     }
-    await writeFile(path.join(PUBLIC, "llms.txt"), llmsTxt(pages));
-    await writeFile(path.join(PUBLIC, "llms-full.txt"), llmsFullTxt(pages));
+    const index = llmsTxt(pages);
+    const full = llmsFullTxt(pages);
+    const banned = llmsBannedHits(`${index}\n${full}`);
+    if (banned.length) {
+      const where = pages.filter((p) => llmsBannedHits(p.markdown).length).map((p) => `${p.path} (${llmsBannedHits(p.markdown).join(", ")})`);
+      throw new Error(`banned wording in llms output: ${banned.join(", ")}${where.length ? ` on ${where.join("; ")}` : ""}`);
+    }
+    await writeFile(path.join(PUBLIC, "llms.txt"), index);
+    await writeFile(path.join(PUBLIC, "llms-full.txt"), full);
     console.log(`[markdown] ${pages.length} pages → public/*.md, llms.txt, llms-full.txt${failed.length ? `; ${failed.length} failed: ${failed.join(", ")}` : ""}`);
   } finally {
     server.stop();
@@ -166,8 +196,10 @@ async function main() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(async (e) => {
     console.error(`[markdown] skipped: ${e instanceof Error ? e.message : e}`);
+    // Banned wording is a copy bug, not a flaky build: fail loudly so it never ships.
+    if (String(e).includes("banned wording")) process.exitCode = 1;
     // Never ship a stale hand-written copy: without a fresh build there are no Markdown files at all.
     await Promise.all(["llms.txt", "llms-full.txt"].map((f) => rm(path.join(PUBLIC, f), { force: true })));
-    process.exit(STRICT ? 1 : 0);
+    process.exit(process.exitCode || (STRICT ? 1 : 0));
   });
 }

@@ -14,6 +14,7 @@ import {
   pricingFaq,
   pricingIncludedFeatures,
 } from "@/lib/marketing/pricing-plans";
+import { RelatedGuideLinks } from "@/components/marketing/resources/RelatedGuideLinks";
 import { SaasFaqAccordion } from "@/components/marketing/saas/SaasFaqAccordion";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 
@@ -130,6 +131,7 @@ export default async function PricingPage() {
       <section className="px-6 py-16 md:py-20">
         <div className="mx-auto max-w-3xl">
           <SaasFaqAccordion title="FAQ" items={faq} />
+          <RelatedGuideLinks path="/pricing" className="mt-10" />
         </div>
       </section>
     </>

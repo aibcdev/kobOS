@@ -35,6 +35,22 @@ export type ResourceArticle = {
   ctaHref: string;
   ctaLabel: string;
   tags: string[];
+  /** 2–3 sentences shown first, under the title ("In short"). */
+  tldr?: string;
+  /** Existing pages that should link here. Rendered on those pages by RelatedGuideLinks. */
+  linkFrom?: Array<{ path: string; anchor: string }>;
+  /** A free tool that goes with the guide, shown under the direct answer. */
+  tool?: { href: string; label: string };
+  /** Not rendered. How the article was researched: chat-assistant queries captured by hand, results reviewed. */
+  research?: {
+    chatQueries?: string[];
+    serpUrlsReviewed?: string[];
+    capturedAt?: string; // YYYY-MM-DD
+  };
+  /** A real example from Akeem, Tim or a customer who agreed to it. Never written for them. */
+  firsthand?: { body: string; source: "akeem" | "tim" | "customer-with-permission" };
+  /** Drafts are visible in dev only: not routed, not in the sitemap or llms.txt. Defaults to published. */
+  status?: "draft" | "published";
 };
 
 export function articlePath(slug: string): string {

@@ -1,4 +1,5 @@
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
+import { BRAND } from "@/lib/marketing/brand-facts";
 import { canonicalUrl } from "@/lib/seo/page-metadata";
 
 export const ORGANIZATION_ID = `${canonicalUrl("/")}#organization`;
@@ -12,10 +13,11 @@ export function organizationJsonLd() {
       {
         "@type": "Organization",
         "@id": ORGANIZATION_ID,
-        name: "KOB",
+        name: BRAND.productName,
+        alternateName: BRAND.listingName,
         url: canonicalUrl("/"),
-        email: "hello@trykob.com",
-        description: "The restaurant manager for independent restaurants and cafés.",
+        email: BRAND.contactEmail,
+        description: BRAND.shortDescription,
       },
       {
         "@type": "WebSite",

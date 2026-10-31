@@ -44,7 +44,7 @@ const rel = (f: string) => path.relative(root, f);
  * venue uses, and the Talk demo matches what a visitor types, so those are exempt.
  */
 const EXEMPT =
-  /\/(privacy|terms|data-management|roadmap)\/page\.tsx$|lib\/marketing\/audit-discovery\.ts$|components\/kob-home\/talk-test\.tsx$/;
+  /\/(privacy|terms|data-management|roadmap)\/page\.tsx$|lib\/marketing\/audit-discovery\.ts$|components\/kob-home\/talk-test\.tsx$|lib\/marketing\/copy-rules\.ts$/;
 const POSTING_DENY: [string, RegExp][] = [
   ["'went live' / 'is live' verification claims", /\b(went|is) live\b/],
   ["'re-reads Google'", /re-reads Google/i],
@@ -71,7 +71,8 @@ describe("marketing claims", () => {
   });
 
   it("the markdown/llms summary says the same thing", () => {
-    const summary = readFileSync(path.join(root, "scripts/build-markdown.mjs"), "utf8");
+    // The summary text, not the whole script (its banned-word list names the words on purpose).
+    const summary = readFileSync(path.join(root, "scripts/build-markdown.mjs"), "utf8").match(/const SUMMARY =\s*"([^"]+)"/)?.[1] ?? "";
     for (const [, pattern] of POSTING_DENY) expect(summary).not.toMatch(pattern);
     expect(summary).toMatch(/You approve, tap once, and post/);
   });

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { monthlyAdminHours } from "@/lib/marketing/tools/review-time";
 
 /**
  * What reviews and Google admin cost the owner in time, from their own numbers. No benchmark is assumed: every input
@@ -12,7 +14,7 @@ export function TimeCostCalculator({ priceLabel, currency }: { priceLabel: strin
   const [adminHoursPerWeek, setAdminHoursPerWeek] = useState(2);
   const [hourValue, setHourValue] = useState(20);
 
-  const hours = (reviews * minutesPerReply) / 60 + (adminHoursPerWeek * 52) / 12;
+  const hours = monthlyAdminHours({ reviews, minutesPerReply, locations: 1, weeklyListingMinutes: adminHoursPerWeek * 60 });
   const worth = Math.round(hours * hourValue);
   const field = (label: string, value: number, set: (n: number) => void, step = 1) => (
     <label className="flex flex-col justify-between gap-1 text-sm">
@@ -49,6 +51,11 @@ export function TimeCostCalculator({ priceLabel, currency }: { priceLabel: strin
       </p>
       <p className="mt-2 text-sm text-[#2c2c2c]/70">
         With KOB, the replies and fixes arrive drafted every morning. You check them, tap once, and post.
+      </p>
+      <p className="mt-2 text-sm">
+        <Link href="/tools/review-time-calculator" className="text-[#088924] underline underline-offset-2">
+          More than one location? Work out your time
+        </Link>
       </p>
     </div>
   );

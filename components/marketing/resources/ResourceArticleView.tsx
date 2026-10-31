@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RelatedGuideLinks } from "@/components/marketing/resources/RelatedGuideLinks";
 import { articlePath, type ResourceArticle } from "@/lib/marketing/resources";
 import { canonicalUrl } from "@/lib/seo/page-metadata";
 import { ORGANIZATION_ID } from "@/lib/seo/structured-data";
@@ -16,6 +17,12 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
           <h1 className="font-heading mt-4 max-w-4xl text-balance text-[2.5rem] font-bold leading-[1.05] tracking-tight text-[#2c2c2c] md:text-[3.15rem]">
             {article.title}
           </h1>
+          {article.tldr ? (
+            <div className="mt-6 max-w-2xl rounded-2xl border border-[#088924]/25 bg-white px-5 py-4" data-testid="article-tldr">
+              <p className="font-mono-brand text-xs font-semibold uppercase tracking-[0.12em] text-[#088924]">In short</p>
+              <p className="font-body mt-2 text-base leading-relaxed text-[#2c2c2c]">{article.tldr}</p>
+            </div>
+          ) : null}
           <p className="font-body mt-6 max-w-2xl text-base leading-relaxed text-[#2c2c2c]/75">
             {article.description}
           </p>
@@ -31,6 +38,13 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
           <section className="rounded-3xl border border-[#088924]/20 bg-[#088924]/5 px-6 py-6 md:px-8">
             <h2 className="font-heading text-lg font-semibold text-[#094413]">{article.questionH2}</h2>
             <p className="font-body mt-3 text-base leading-relaxed text-[#2c2c2c]">{article.directAnswer}</p>
+            {article.tool ? (
+              <p className="mt-4 text-sm">
+                <Link href={article.tool.href} className="font-medium text-[#088924] underline underline-offset-2">
+                  {article.tool.label}
+                </Link>
+              </p>
+            ) : null}
           </section>
 
           <section>
@@ -66,11 +80,19 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
           </section>
           ) : null}
 
-          {article.sections.map((section) => (
-            <section key={section.heading}>
-              <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">{section.heading}</h2>
-              <p className="font-body mt-4 text-base leading-relaxed text-[#2c2c2c]/80">{section.body}</p>
-            </section>
+          {article.sections.map((section, i) => (
+            <div key={section.heading} className="space-y-10">
+              <section>
+                <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">{section.heading}</h2>
+                <p className="font-body mt-4 text-base leading-relaxed text-[#2c2c2c]/80">{section.body}</p>
+              </section>
+              {i === 0 && article.firsthand ? (
+                <section className="rounded-3xl border border-[#2c2c2c]/10 bg-[#fbf8f5] px-6 py-6 md:px-8">
+                  <h2 className="font-heading text-lg font-semibold text-[#2c2c2c]">From our work with restaurants</h2>
+                  <p className="font-body mt-3 text-base leading-relaxed text-[#2c2c2c]/80">{article.firsthand.body}</p>
+                </section>
+              ) : null}
+            </div>
           ))}
 
           {article.sources?.length ? (
@@ -141,6 +163,7 @@ export function ResourceArticleView({ article }: { article: ResourceArticle }) {
               ))}
               <li>FAQ</li>
             </ul>
+            <RelatedGuideLinks path={articlePath(article.slug)} className="mt-6 border-t border-[#2c2c2c]/10 pt-5" />
             <Link href="/resources" className="mt-6 inline-block font-medium text-[#088924] hover:underline">
               ← All guides
             </Link>

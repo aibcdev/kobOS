@@ -1,31 +1,7 @@
 import type { MetadataRoute } from "next";
 import { listResourceArticles, articlePath } from "@/lib/marketing/resources";
 import { getSiteUrl } from "@/lib/site-url";
-
-/**
- * Each public page and the date its content (or title/description) last changed. Update the date when you change the
- * page; search engines use it to decide when to re-crawl, so build time would be wrong.
- */
-const STATIC_PAGES: Record<string, string> = {
-  "/": "2026-10-28",
-  "/resources": "2026-10-28",
-  "/product": "2026-10-28",
-  "/pricing": "2026-10-28",
-  "/trial": "2026-10-28",
-  "/demo": "2026-10-28",
-  "/solutions": "2026-10-28",
-  "/go/audit": "2026-10-28",
-  "/features/website": "2026-10-28",
-  "/features/online-ordering": "2026-10-28",
-  "/features/delivery": "2026-10-28",
-  "/features/branding": "2026-10-28",
-  "/features/menu": "2026-10-28",
-  "/about": "2026-10-28",
-  "/roadmap": "2026-10-28",
-  "/privacy": "2026-10-28",
-  "/terms": "2026-10-28",
-  "/data-management": "2026-10-28",
-};
+import { STATIC_PAGES } from "@/lib/seo/static-pages";
 
 function sitemapBaseUrl(): string {
   const env = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.NETLIFY_PRODUCTION_URL?.trim();

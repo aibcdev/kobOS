@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
-import { llmsFullTxt, llmsTxt, markdownPathFor as scriptPathFor, pageToMarkdown } from "@/scripts/build-markdown.mjs";
+import { LLMS_BANNED, llmsBannedHits, llmsFullTxt, llmsTxt, markdownPathFor as scriptPathFor, pageToMarkdown } from "@/scripts/build-markdown.mjs";
+import { HARD_RULE_BANS } from "./copy-rules";
 import { MARKDOWN_SKIPPED_PATHS, markdownPathFor } from "./markdown-pages";
 
 const sitemapPaths = () => sitemap().map((e) => new URL(e.url).pathname.replace(/\/$/, "") || "/");
@@ -80,5 +81,12 @@ describe("Markdown copies of public pages", () => {
     const full = llmsFullTxt([home, page]);
     expect(full).toContain("# Pricing");
     expect(full).toContain("# Home");
+  });
+
+  it("the llms.txt word check uses the same words as the copy rules, and ignores the file names", () => {
+    const labels = HARD_RULE_BANS.map((b) => b.label);
+    for (const [label] of LLMS_BANNED) expect(labels).toContain(label);
+    expect(llmsBannedHits("See /llms.txt and /llms-full.txt. KOB drafts replies; you post them.")).toEqual([]);
+    expect(llmsBannedHits("Our AI posts automatically")).toEqual(["AI", "auto-post"]);
   });
 });
