@@ -401,6 +401,55 @@ async function searchTextPlaces(
   return json.places ?? [];
 }
 
+/** What a prospect's Google listing shows, for the per-prospect Google health check. */
+export async function placesHealthCheckFields(
+  placeId: string,
+): Promise<import("@/lib/outbound/health-check").GoogleListingFacts | null> {
+  const key = getApiKey();
+  if (!key || !placeId.trim()) return null;
+  const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId.trim())}`, {
+    headers: {
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask":
+        "id,displayName,formattedAddress,businessStatus,rating,userRatingCount,reviews,photos,regularOpeningHours,websiteUri,googleMapsUri",
+    },
+  });
+  if (!res.ok) {
+    console.warn("[places] health check HTTP", res.status);
+    return null;
+  }
+  const json = (await res.json()) as {
+    id?: string;
+    displayName?: { text?: string };
+    formattedAddress?: string;
+    businessStatus?: string;
+    rating?: number;
+    userRatingCount?: number;
+    reviews?: Array<{ rating?: number; publishTime?: string; text?: { text?: string } }>;
+    photos?: unknown[];
+    regularOpeningHours?: { weekdayDescriptions?: string[] };
+    websiteUri?: string;
+    googleMapsUri?: string;
+  };
+  return {
+    placeId: json.id ?? placeId,
+    name: json.displayName?.text ?? "",
+    address: json.formattedAddress ?? null,
+    businessStatus: json.businessStatus ?? null,
+    rating: json.rating ?? null,
+    reviewCount: json.userRatingCount ?? null,
+    sampleReviews: (json.reviews ?? []).map((r) => ({
+      rating: r.rating ?? null,
+      publishTime: r.publishTime ?? null,
+      text: (r.text?.text ?? "").trim().slice(0, 200),
+    })),
+    photoCount: json.photos?.length ?? 0,
+    hours: json.regularOpeningHours?.weekdayDescriptions ?? [],
+    websiteUri: json.websiteUri ?? null,
+    mapsUri: json.googleMapsUri ?? null,
+  };
+}
+
 /** Name + city text search when the website host does not match a Places websiteUri. */
 export async function placesFindByNameAndCity(
   restaurantName: string,

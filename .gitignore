@@ -66,3 +66,6 @@ combined.log
 /public/resources/*.md
 /public/llms.txt
 /public/llms-full.txt
+
+# Per-prospect Google health checks (prospect data, keep local)
+/tmp/health-checks/

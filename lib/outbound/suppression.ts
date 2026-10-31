@@ -14,7 +14,7 @@ export async function isOutboundSuppressed(email: string): Promise<boolean> {
 
 export async function suppressOutboundEmail(input: {
   email: string;
-  reason: "unsubscribe" | "bounce" | "complaint" | "manual";
+  reason: "unsubscribe" | "bounce" | "complaint" | "manual" | "no_mail_server";
   source: string;
   providerMessageId?: string | null;
 }): Promise<void> {

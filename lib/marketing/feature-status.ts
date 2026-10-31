@@ -43,6 +43,17 @@ export const POSTING = {
   status: "One-tap posting (automatic posting coming soon)",
 } as const;
 
+export const SOUNDS_LIKE_ME_FAQ = {
+  q: "Will the replies sound like me?",
+  a: "KOB drafts in your tone and follows your house rules. Every draft is editable, and angry or sensitive reviews always wait for you.",
+} as const;
+
+/** The two worries owners raise before trying KOB, answered the same way on every page. */
+export const OWNER_QUESTIONS = [
+  SOUNDS_LIKE_ME_FAQ,
+  { q: "Will anything go out without me?", a: `No. ${POSTING.control} You approve each reply and fix, then post it in one tap.` },
+] as const;
+
 export const POSTING_FAQ = {
   q: "Does KOB post for me?",
   a: "Right now KOB drafts everything and you post it with one tap, so you stay in control. Automatic posting is coming once Google finishes approving our access.",

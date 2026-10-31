@@ -61,6 +61,8 @@
     "resend:doctor": "dotenv -e .env -e .env.local -- bash -c 'export PATH=\"$HOME/.resend/bin:$PATH\" && resend doctor'",
     "resend:test-outbound": "dotenv -e .env -e .env.local -- npx tsx scripts/resend-test-outbound.ts",
     "outbound:ab-backfill": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-ab-backfill.ts",
+    "outbound:health-check": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-health-check.ts",
+    "outbound:funnel": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-funnel-report.ts",
     "outbound:volume": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-volume-enrich.ts",
     "outbound:rescue-icp": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-rescue-icp.ts",
     "outbound:verify-pending": "dotenv -e .env -e .env.local -- npx tsx scripts/outbound-verify-pending.ts",

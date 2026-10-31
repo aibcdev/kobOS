@@ -4,11 +4,14 @@ import { AuditBusinessSearch } from "@/components/marketing/audit/AuditBusinessS
 import { SaasAuditWhatWeCheck } from "@/components/marketing/saas/SaasAuditWhatWeCheck";
 import { SaasPageHero } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
+import { TimeCostCalculator } from "@/components/marketing/audit/TimeCostCalculator";
+import { getVisitorFoundingPrice } from "@/lib/billing/visitor-region";
 import { marketingCopy } from "@/lib/marketing/copy";
+import { OWNER_QUESTIONS } from "@/lib/marketing/feature-status";
 
 /**
- * Dedicated Google Ads / paid landing for the free restaurant audit.
- * Canonical product path remains /audit — this URL is for campaigns only.
+ * The free restaurant audit: the one indexed audit page (/audit redirects to the /scan search box, which is noindex).
+ * Also the landing for ads and outbound emails.
  */
 export const metadata: Metadata = pageMetadata({
   title: "Free restaurant marketing audit",
@@ -19,7 +22,8 @@ export const metadata: Metadata = pageMetadata({
 
 const INSIGHTS = marketingCopy.auditInsights;
 
-export default function GoAuditAdsLandingPage() {
+export default async function GoAuditAdsLandingPage() {
+  const price = await getVisitorFoundingPrice();
   return (
     <>
       <SaasPageHero
@@ -59,6 +63,23 @@ export default function GoAuditAdsLandingPage() {
             </li>
           ))}
         </ul>
+      </SaasSection>
+
+      <SaasSection className="bg-[#fbf8f5]">
+        <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+          <TimeCostCalculator priceLabel={price.label} currency={price.currency === "gbp" ? "£" : "$"} />
+          <div className="rounded-3xl border border-[#2c2c2c]/10 bg-white p-6 md:p-8">
+            <h2 className="font-heading text-2xl font-semibold text-[#2c2c2c]">Two questions owners ask</h2>
+            <dl className="mt-6 space-y-5">
+              {OWNER_QUESTIONS.map((item) => (
+                <div key={item.q}>
+                  <dt className="font-medium text-[#2c2c2c]">{item.q}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-[#2c2c2c]/75">{item.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
       </SaasSection>
 
       <SaasSection className="bg-[#f9f3ed]">

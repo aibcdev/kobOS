@@ -2,7 +2,8 @@ import { OutboundLeadStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { normalizeOutboundEmail } from "@/lib/outbound/outbound-send-dedupe";
 import { sendOutboundEmailViaResend } from "@/lib/outbound/send-resend-outbound-email";
-import { isOutboundSuppressed } from "@/lib/outbound/suppression";
+import { mailServerStatus } from "@/lib/outbound/mail-server";
+import { isOutboundSuppressed, suppressOutboundEmail } from "@/lib/outbound/suppression";
 
 export async function sendApprovedOutboundLead(
   leadId: string,
@@ -23,6 +24,11 @@ export async function sendApprovedOutboundLead(
   }
   if (await isOutboundSuppressed(email)) {
     return { sent: false, reason: "suppressed" };
+  }
+  // A domain that can't take mail would bounce and hurt the sender's reputation; suppress it instead.
+  if ((await mailServerStatus(email)) === "no") {
+    await suppressOutboundEmail({ email, reason: "no_mail_server", source: "send-approved-lead" });
+    return { sent: false, reason: "no_mail_server" };
   }
 
   const idempotencyKey = `outbound-lead-${lead.id}`;
