@@ -15,7 +15,6 @@ const STATIC_PAGES: Record<string, string> = {
   "/demo": "2026-10-28",
   "/solutions": "2026-10-28",
   "/go/audit": "2026-10-28",
-  "/scan": "2026-10-28",
   "/features/website": "2026-10-28",
   "/features/online-ordering": "2026-10-28",
   "/features/delivery": "2026-10-28",
@@ -26,7 +25,6 @@ const STATIC_PAGES: Record<string, string> = {
   "/privacy": "2026-10-28",
   "/terms": "2026-10-28",
   "/data-management": "2026-10-28",
-  "/for-ai": "2026-10-28",
 };
 
 function sitemapBaseUrl(): string {

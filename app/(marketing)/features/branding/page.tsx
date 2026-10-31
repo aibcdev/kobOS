@@ -27,7 +27,7 @@ export default function BrandingFeaturePage() {
         variant="warm"
       >
         <SaasPrimaryCta href="/demo">Get started</SaasPrimaryCta>
-        <SaasSecondaryCta href="/audit">Free scan</SaasSecondaryCta>
+        <SaasSecondaryCta href="/scan">Free scan</SaasSecondaryCta>
       </SaasPageHero>
 
       <SaasSection className="border-b border-[#2c2c2c]/5 bg-[#fbf8f5] pb-10 md:pb-14 pt-0 -mt-[1px]">

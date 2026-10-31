@@ -25,7 +25,7 @@ export function AuditDbUnavailable() {
         </div>
         <div className="flex flex-col gap-3 px-6 py-6 sm:flex-row sm:justify-center">
           <Link
-            href="/audit"
+            href="/scan"
             className="inline-flex h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 text-sm font-semibold text-white no-underline hover:bg-[var(--color-accent)]"
           >
             Try again

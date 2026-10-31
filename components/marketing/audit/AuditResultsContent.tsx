@@ -220,7 +220,7 @@ export function AuditResultsContent({
                 Open dashboard · shop services
               </Link>
               <Link
-                href="/audit"
+                href="/scan"
                 className="inline-flex min-h-11 items-center px-2 text-sm text-[var(--color-muted)] underline"
               >
                 New scan

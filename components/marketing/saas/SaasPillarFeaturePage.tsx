@@ -100,7 +100,7 @@ export function SaasPillarFeaturePage({ pillar }: { pillar: OwnerProductPillar }
   return (
     <>
       <SaasSplitHero eyebrow={pillar.title} title={pillar.headline} description={pillar.description} image={img.src} imageAlt={img.alt}>
-        <SaasPrimaryCta href="/audit">{marketingCopy.cta.aiReport}</SaasPrimaryCta>
+        <SaasPrimaryCta href="/scan">{marketingCopy.cta.aiReport}</SaasPrimaryCta>
         <SaasSecondaryCta href="/demo">{marketingCopy.cta.freeDemo}</SaasSecondaryCta>
       </SaasSplitHero>
 
@@ -116,7 +116,7 @@ export function SaasPillarFeaturePage({ pillar }: { pillar: OwnerProductPillar }
         <h2 className="font-heading mb-4 text-2xl font-semibold md:text-3xl">{marketingCopy.losingSalesOnline}</h2>
         <p className="mx-auto mb-8 max-w-xl text-white/90">{marketingCopy.useAiToFix}</p>
         <Link
-          href="/audit"
+          href="/scan"
           className="inline-flex h-12 items-center rounded-full bg-[#fbf8f5] px-8 text-sm font-medium text-[#094413] transition-colors hover:bg-white"
         >
           {marketingCopy.cta.aiReport}

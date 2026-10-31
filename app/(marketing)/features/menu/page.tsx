@@ -72,7 +72,7 @@ export default function MenuFeaturePage() {
           See what guests see on your menu pages and listing, then approve a short list.
         </p>
         <Link
-          href="/audit"
+          href="/scan"
           className="inline-flex h-12 items-center rounded-full bg-[#fbf8f5] px-8 text-sm font-medium text-[#094413] transition-colors hover:bg-[#f9f3ed]"
         >
           Back to product overview

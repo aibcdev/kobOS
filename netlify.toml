@@ -11,6 +11,19 @@
   publish = ".next"
   command = "if [ \"$CONTEXT\" = \"production\" ]; then npx prisma migrate deploy; fi && npx prisma generate && if [ \"$NETLIFY\" = \"true\" ]; then npm install --no-save --os=linux --cpu=x64 sharp@0.34.5; fi && npx next build && node scripts/build-markdown.mjs"
 
+# One hop to the canonical host: www (http or https) goes straight to https://trykob.com.
+[[redirects]]
+  from = "http://www.trykob.com/*"
+  to = "https://trykob.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.trykob.com/*"
+  to = "https://trykob.com/:splat"
+  status = 301
+  force = true
+
 [build.environment]
   SECRETS_SCAN_ENABLED = "false"
   SECRETS_SCAN_OMIT_KEYS = "NETLIFY_PRODUCTION_URL,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SITE_URL,OUTBOUND_MODE,GEMINI_MODEL,AUDIT_RATE_LIMIT_WINDOW_SEC,AUDIT_RATE_LIMIT_MAX_REQUESTS,RESEND_AUTH_FROM_EMAIL,RESEND_FROM_EMAIL,OUTBOUND_UK_CITIES,OUTBOUND_SALES_MODE,PLACES_AUTOCOMPLETE_REGIONS,OUTBOUND_REVIEW_MIN,OUTBOUND_REVIEW_MAX,OUTBOUND_MAX_QUALIFY_SCORE,OUTBOUND_UK_DAILY_CAP,AUDIT_BROWSERBASE_ASYNC,CRON_SECRET"

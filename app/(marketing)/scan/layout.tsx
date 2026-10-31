@@ -7,6 +7,8 @@ export const metadata: Metadata = pageMetadata({
   description:
     "Search for your restaurant and get a free scan of your Google listing, reviews and website. No card.",
   path: "/scan",
+  // A search box that hands off to /onboard; /go/audit is the indexed free-audit page.
+  noindex: true,
 });
 
 export default function Layout({ children }: { children: ReactNode }) {

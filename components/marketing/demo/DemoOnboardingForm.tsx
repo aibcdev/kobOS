@@ -177,7 +177,7 @@ export function DemoOnboardingForm() {
           }
         }
 
-        router.push("/audit");
+        router.push("/scan");
       } catch {
         setError("Something went wrong. Try again.");
       } finally {
@@ -331,7 +331,7 @@ export function DemoOnboardingForm() {
           Privacy Policy
         </Link>
         . Prefer self-serve?{" "}
-        <Link href="/audit" className="font-medium text-[var(--color-primary)] underline">
+        <Link href="/scan" className="font-medium text-[var(--color-primary)] underline">
           Run a free scan
         </Link>
         .

@@ -22,7 +22,7 @@ export default function ForAiPage() {
         title="KOB is the restaurant manager for independent restaurants."
         description="We check the Google listing, reviews and website and draft the replies and fixes. The owner approves, taps once, and posts. Start with a free audit. No card."
       >
-        <SaasPrimaryCta href="/audit">Run free restaurant audit</SaasPrimaryCta>
+        <SaasPrimaryCta href="/scan">Run free restaurant audit</SaasPrimaryCta>
       </SaasPageHero>
 
       <SaasSection className="bg-[#fbf8f5]">
@@ -75,7 +75,7 @@ export default function ForAiPage() {
             <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-[#2c2c2c]/80">
               <li>
                 Free audit:{" "}
-                <Link href="/audit" className="text-[#088924] underline-offset-2 hover:underline">
+                <Link href="/scan" className="text-[#088924] underline-offset-2 hover:underline">
                   trykob.com/audit
                 </Link>
               </li>
