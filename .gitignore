@@ -64,6 +64,7 @@ combined.log
 /public/*.md
 /public/features/*.md
 /public/resources/*.md
+/public/tools/*.md
 /public/llms.txt
 /public/llms-full.txt
 
