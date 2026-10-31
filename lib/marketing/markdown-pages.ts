@@ -22,6 +22,9 @@ export const MARKDOWN_STATIC_PATHS = [
   "/privacy",
   "/terms",
   "/data-management",
+  "/press",
+  "/tools/review-time-calculator",
+  "/tools/review-reply-templates",
 ] as const;
 
 /** Sitemap paths that are redirects or forms, not readable pages. */

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo/page-metadata";
 import { JsonLd, softwareJsonLd } from "@/lib/seo/structured-data";
 import Link from "next/link";
+import { RelatedGuideLinks } from "@/components/marketing/resources/RelatedGuideLinks";
 import { SaasPageHero, SaasPrimaryCta } from "@/components/marketing/saas/SaasPageHero";
 import { SaasSection } from "@/components/marketing/saas/SaasSection";
 import { trialPromise } from "@/lib/billing/trial-days";
@@ -74,6 +75,7 @@ export default async function ProductHubPage() {
             Roadmap
           </Link>
         </p>
+        <RelatedGuideLinks path="/product" className="mx-auto mt-10 max-w-3xl" />
       </SaasSection>
     </>
   );

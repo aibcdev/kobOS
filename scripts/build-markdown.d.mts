@@ -3,3 +3,5 @@ export function markdownPathFor(path: string): string;
 export function pageToMarkdown(html: string, pagePath: string): Omit<MarkdownPage, "path">;
 export function llmsTxt(pages: MarkdownPage[]): string;
 export function llmsFullTxt(pages: MarkdownPage[]): string;
+export const LLMS_BANNED: Array<[string, RegExp]>;
+export function llmsBannedHits(text: string): string[];

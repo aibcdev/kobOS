@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GreenOrb } from "@/components/kob-home/green-orb";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
+import { BRAND } from "@/lib/marketing/brand-facts";
 
 const PRODUCT = [
   { href: "/product", label: "Product" },
@@ -19,6 +20,12 @@ const GUIDES = [
   { href: "/resources/birdeye-alternative-for-independent-restaurants", label: "Birdeye alternative" },
 ];
 
+const TOOLS = [
+  { href: "/tools/review-time-calculator", label: "Review time calculator" },
+  { href: "/tools/review-reply-templates", label: "Review reply picker" },
+  { href: "/press", label: "For writers" },
+];
+
 const LEGAL = [
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -28,7 +35,7 @@ const LEGAL = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-cream text-espresso">
-      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:gap-12 lg:py-20">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr] lg:gap-12 lg:py-20">
         <div className="max-w-sm">
           <Link href="/" className="inline-flex items-center gap-2.5" aria-label="KOB home">
             <GreenOrb size="sm" className="!size-7" />
@@ -74,6 +81,19 @@ export function SiteFooter() {
           </ul>
         </nav>
 
+        <nav aria-label="Free tools">
+          <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Free tools</p>
+          <ul className="mt-4 space-y-3 text-sm">
+            {TOOLS.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="text-espresso hover:opacity-70">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         <div>
           <p className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">Built for</p>
           <p className="mt-4 text-sm leading-relaxed">
@@ -96,8 +116,8 @@ export function SiteFooter() {
             ))}
           </ul>
           <p className="mt-6 text-sm">
-            <a href="mailto:hello@trykob.com" className="underline underline-offset-2">
-              hello@trykob.com
+            <a href={`mailto:${BRAND.contactEmail}`} className="underline underline-offset-2">
+              {BRAND.contactEmail}
             </a>
           </p>
           <p className="mt-3 text-sm">

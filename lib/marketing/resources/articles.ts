@@ -2,24 +2,25 @@ import type { ResourceArticle } from "./types";
 
 const KOB_PRICE = "£79/mo UK · $99/mo elsewhere (founding, as of 20 Oct 2026); 7-day trial, no card";
 const OWNER_PRICE = "Flexible $249/mo + 5% restaurant fee; Flat Rate $499/mo; guests pay a 5% order support fee on both (owner.com/pricing, 28 Oct 2026)";
+const OWNER_SOURCE = { label: "Owner.com pricing (checked 28 Oct 2026)", href: "https://www.owner.com/pricing" };
 const UPDATED = "2026-10-28";
 /** The guides added in the 28 Oct 2026 SEO pass. */
 const NEW = "2026-10-28";
 
-/** Seed Best-X / comparison library (Groberman + Cal.com-style coverage for AI citation). */
+/** Seed Best-X / comparison library (Groberman + Cal.com-style coverage for search and assistant citation). */
 export const RESOURCE_ARTICLES: ResourceArticle[] = [
   {
     slug: "best-restaurant-marketing-software-for-independents",
     title: "Best Restaurant Marketing Software for Independents (2026)",
     description:
-      "Compare the best restaurant marketing software for independent owners — free audits, Google listings, reviews, and daily tasks without an agency.",
+      "Compare the best restaurant marketing software for independent owners: free audits, Google listings, reviews, and daily tasks without an agency.",
     publishedAt: "2026-08-03",
     updatedAt: UPDATED,
     questionH2: "What is the best restaurant marketing software for independents?",
     directAnswer:
       "If you care about keeping your website and booking system, and want a free audit then an approve-only morning list, KOB fits. If you want a full branded suite, Owner.com fits. If you want someone else to run campaigns, hire an agency.",
     definition:
-      "Restaurant marketing software helps independent restaurants get more customers online by managing visibility (Google listing), reputation (reviews), website conversion, and optional first-party ordering — usually with dashboards, alerts, and task lists built for busy owners.",
+      "Restaurant marketing software helps independent restaurants get more customers online by managing visibility (Google listing), reputation (reviews), website conversion, and optional first-party ordering, usually with dashboards, alerts, and task lists built for busy owners.",
     comparisons: [
       {
         name: "KOB",
@@ -47,6 +48,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Powerful but not restaurant-owner UX",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "What independent restaurants actually need",
@@ -58,7 +60,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       },
       {
         heading: "Who should skip marketing software",
-        body: "If you already have an in-house marketer with a working SEO process, a generic SEO suite may be enough. If you only need online ordering, start with ordering — then add marketing software once listing and reviews are stable. KOB does not replace your ordering.",
+        body: "If you already have an in-house marketer with a working SEO process, a generic SEO suite may be enough. If you only need online ordering, start with ordering, then add marketing software once listing and reviews are stable. KOB does not replace your ordering.",
       },
     ],
     faqs: [
@@ -73,7 +75,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
           "Yes if it saves you hours each week and fills tables. Start free; upgrade only when the daily task list is clearly driving bookings.",
       },
       {
-        question: "Owner.com vs simpler tools — which is better?",
+        question: "Owner.com vs simpler tools: which is better?",
         answer:
           "Owner.com suits venues that want a full branded suite. Simpler tools or KOB fit owners who want diagnosis and approve-only tasks before a big platform commit.",
       },
@@ -86,14 +88,14 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "owner-com-alternatives-compared",
     title: "Owner.com Alternatives: Best Options Compared (2026)",
     description:
-      "Looking past Owner.com? Compare Owner.com alternatives for restaurant marketing, websites, and Google visibility — including free audits.",
+      "Looking past Owner.com? Compare Owner.com alternatives for restaurant marketing, websites, and Google visibility, including free audits.",
     publishedAt: "2026-08-03",
     updatedAt: UPDATED,
     questionH2: "What are the best Owner.com alternatives for independent restaurants?",
     directAnswer:
       "It depends. Choose KOB if you want an audit-first path and to keep your website and booking system. Stay with Owner.com if you want a full branded suite. Hire an agency if you want humans to run campaigns. There is no single best alternative for every venue.",
     definition:
-      "An Owner.com alternative is any restaurant growth platform or workflow that covers marketing, online presence, or ordering without using Owner.com — from full suites to audit-first tools like KOB.",
+      "An Owner.com alternative is any restaurant growth platform or workflow that covers marketing, online presence, or ordering without using Owner.com, from full suites to audit-first tools like KOB.",
     comparisons: [
       {
         name: "KOB",
@@ -121,6 +123,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Flexible; quality varies by agency",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "When an Owner.com alternative makes sense",
@@ -162,7 +165,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     directAnswer:
       "If you want a guest-facing check of website, Google listing and reviews in owner language, KOB’s free audit fits. Generic site crawlers fit marketers who already know SEO. Neither replaces a full SEO agency engagement.",
     definition:
-      "A free restaurant SEO audit tool scans public signals — site pages, Google Business Profile, reviews — and lists fixes. It should not invent rankings or savings.",
+      "A free restaurant SEO audit tool scans public signals (site pages, Google Business Profile, reviews) and lists fixes. It should not invent rankings or savings.",
     comparisons: [
       {
         name: "KOB free audit",
@@ -343,6 +346,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         href: "https://trykob.com/audit",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "How to read Owner.com pricing",
@@ -381,7 +385,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         name: "Listing + review hygiene",
         bestFor: "Almost every independent",
         pricing: "Time or tools like KOB",
-        verdict: "Highest leverage first step",
+        verdict: "Highest-impact first step",
       },
       {
         name: "Paid ads",
@@ -396,6 +400,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Bigger project",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "Start with what guests already see",
@@ -418,9 +423,9 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
   },
   {
     slug: "best-restaurant-marketing-software-uk-independents",
-    title: "Best Restaurant Marketing Software for UK Independents (2026)",
+    title: "Best Restaurant Marketing Software for UK Independents",
     description:
-      "Best restaurant marketing software for UK independent restaurants and cafés — pricing in GBP, Google listing focus, no US-only suite assumption.",
+      "Best restaurant marketing software for UK independent restaurants and cafés: pricing in GBP, Google listing focus, no US-only suite assumption.",
     publishedAt: "2026-08-03",
     updatedAt: UPDATED,
     questionH2: "What is the best restaurant marketing software for UK independents?",
@@ -449,6 +454,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Strong relationships; ask for listing hygiene",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "What UK independents should ask",
@@ -469,7 +475,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "popmenu-vs-owner-com-vs-kob",
     title: "Popmenu vs Owner.com vs KOB: Which Is Better?",
     description:
-      "Popmenu vs Owner.com vs KOB compared for independent restaurants — websites, marketing suites, and audit-first tools.",
+      "Popmenu vs Owner.com vs KOB compared for independent restaurants: websites, marketing suites, and audit-first tools.",
     publishedAt: "2026-08-03",
     updatedAt: UPDATED,
     questionH2: "Which is better: Popmenu, Owner.com, or KOB?",
@@ -498,6 +504,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Biggest platform commit",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "How to decide in one afternoon",
@@ -518,7 +525,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "kob-vs-owner-com-which-is-better",
     title: "KOB vs Owner.com: Which Is Better?",
     description:
-      "KOB vs Owner.com for independent restaurants — honest comparison of price, stack swap, and approve-only work.",
+      "KOB vs Owner.com for independent restaurants: an honest comparison of price, stack swap, and approve-only work.",
     publishedAt: "2026-08-03",
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or Owner.com?",
@@ -541,6 +548,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Full platform depth",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "Price and trial",
@@ -548,7 +556,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       },
       {
         heading: "What each will not do",
-        body: "KOB does not replace your ordering. It drafts the work and you post it in one tap. Owner.com is not a small diagnostic scan — it is a suite sale.",
+        body: "KOB does not replace your ordering. It drafts the work and you post it in one tap. Owner.com is not a small diagnostic scan. It is a suite sale.",
       },
     ],
     faqs: [
@@ -595,7 +603,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       },
       {
         heading: "Signs you need a rebuild",
-        body: "Mobile site unusable, menu PDF only and broken, booking permanently 404. Fix those — then return to daily listing checks.",
+        body: "Mobile site unusable, menu PDF only and broken, booking permanently 404. Fix those, then return to daily listing checks.",
       },
     ],
     faqs: [
@@ -608,12 +616,12 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     ctaLabel: "Check listing and website",
     tags: ["gbp", "website", "compare"],
   },
-  // ——— 8 new Cal.com-style comparison pages ———
+  // Comparison pages
   {
     slug: "kob-vs-bentobox-which-is-better",
     title: "KOB vs BentoBox: Which Is Better?",
     description:
-      "KOB vs BentoBox for independent restaurants — a manager around your stack vs website-led hospitality platform.",
+      "KOB vs BentoBox for independent restaurants: a manager around your stack vs website-led hospitality platform.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or BentoBox?",
@@ -660,7 +668,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "kob-vs-popmenu-which-is-better",
     title: "KOB vs Popmenu: Which Is Better?",
     description:
-      "KOB vs Popmenu for independent restaurants — approve-only restaurant manager vs website and marketing suite.",
+      "KOB vs Popmenu for independent restaurants: approve-only restaurant manager vs website and marketing suite.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "Which is better, KOB or Popmenu?",
@@ -703,7 +711,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "best-restaurant-review-management-tools",
     title: "Best Restaurant Review Management Tools (2026)",
     description:
-      "Compare the best restaurant review management tools for independents — draft replies, hold angry reviews, and stay on Google.",
+      "Compare the best restaurant review management tools for independents: draft replies, hold angry reviews, and stay on Google.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "What is the best restaurant review management tool?",
@@ -735,7 +743,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "What good review tools never do",
-        body: "They should not invent refunds, admit legal fault, or auto-post angry replies. KOB locks refunds and 1–2★ replies on Always ask.",
+        body: "They should not invent refunds, admit legal fault, or send angry replies before the owner has seen them. KOB locks refunds and 1–2★ replies on Always ask.",
       },
     ],
     faqs: [
@@ -753,7 +761,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "best-tools-to-keep-google-listing-hours-accurate",
     title: "Best Tools to Keep Google Listing Hours Accurate (2026)",
     description:
-      "Tools that catch Google Business Profile hours mismatches against your restaurant website — before guests arrive at the wrong time.",
+      "Tools that catch Google Business Profile hours mismatches against your restaurant website, before guests arrive at the wrong time.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "What is the best way to keep Google listing hours accurate?",
@@ -851,7 +859,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "best-restaurant-marketing-software-for-cafes",
     title: "Best Restaurant Marketing Software for Cafés (2026)",
     description:
-      "Best marketing software for independent cafés — Google listing, reviews, and website checks without a full restaurant suite.",
+      "Best marketing software for independent cafés: Google listing, reviews, and website checks without a full restaurant suite.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "What is the best marketing software for cafés?",
@@ -880,6 +888,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Misses Google hours and reviews",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "Café-specific pitfalls",
@@ -900,7 +909,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     slug: "owner-com-vs-agency-for-independents",
     title: "Owner.com vs Agency for Independents (2026)",
     description:
-      "Owner.com vs a marketing agency for independent restaurants — suite commit vs human retainer, and where an audit-first tool fits.",
+      "Owner.com vs a marketing agency for independent restaurants: suite commit vs human retainer, and where an audit-first tool fits.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "Is Owner.com or a marketing agency better for independents?",
@@ -929,6 +938,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         href: "https://trykob.com/audit",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "A practical sequence",
@@ -947,9 +957,9 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
   },
   {
     slug: "best-restaurant-marketing-software-for-india-independents",
-    title: "Best Restaurant Marketing Software for India Independents (2026)",
+    title: "Best Restaurant Marketing Software for India Independents",
     description:
-      "Best restaurant marketing software for independent restaurants in India — Google listing, reviews, and honest pricing.",
+      "Best restaurant marketing software for independent restaurants in India: Google listing, reviews, and honest pricing.",
     publishedAt: UPDATED,
     updatedAt: UPDATED,
     questionH2: "What is the best restaurant marketing software for India independents?",
@@ -978,6 +988,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Check support hours and currency",
       },
     ],
+    sources: [OWNER_SOURCE],
     sections: [
       {
         heading: "What to verify before you buy",
@@ -1001,6 +1012,12 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       "How restaurant owners should reply to 1–3★ Google reviews: what to say, what never to say, when to take it offline, and how to stay calm in public.",
     publishedAt: NEW,
     updatedAt: NEW,
+    tldr:
+      "Reply within a few days, thank the guest, apologise for how the visit felt without admitting legal fault, and invite them to get in touch directly. Keep it short and calm, because your next guests read the reply too.",
+    linkFrom: [
+      { path: "/product", anchor: "How to reply to a bad Google review" },
+      { path: "/resources/restaurant-review-reply-templates", anchor: "Guide: replying to bad Google reviews" },
+    ],
     questionH2: "How should a restaurant reply to a bad Google review?",
     directAnswer:
       "Reply within a few days, thank the guest by name, say sorry for how the visit felt without admitting legal fault, give one specific fix or reason, and invite them to contact you directly. Keep it short and calm, because the people reading it are your next guests, not just the reviewer.",
@@ -1058,6 +1075,12 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       "Copy-and-adapt reply templates for restaurant Google reviews: 5★ thank-yous, mixed 3★ reviews, 1–2★ complaints, and reviews that mention allergies or illness.",
     publishedAt: NEW,
     updatedAt: NEW,
+    tldr:
+      "Start from a short template for the type of review, then change at least one line so it mentions something the guest actually wrote. The template keeps the tone right, and the specific line makes it sound like you.",
+    linkFrom: [
+      { path: "/resources/how-to-reply-to-bad-google-reviews-restaurants", anchor: "Review reply templates for good, bad and mixed reviews" },
+    ],
+    tool: { href: "/tools/review-reply-templates", label: "Use the reply picker: choose a star rating and a theme, then copy a reply to adapt" },
     questionH2: "What should a restaurant write when replying to a review?",
     directAnswer:
       "Use a short template as a starting point, then change at least one line so it mentions something specific from the review. Templates keep the tone right; the specific line is what makes it sound like you.",
@@ -1115,6 +1138,11 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       "A simple routine for restaurants to keep Google Business Profile hours, holiday hours and menu links right, so guests don’t turn up to a closed door.",
     publishedAt: NEW,
     updatedAt: NEW,
+    tldr:
+      "Treat your website as the source of truth and check Google against it every week. Add special hours before every bank holiday or closure, and fix any mismatch the same day.",
+    linkFrom: [
+      { path: "/product", anchor: "Keeping your Google hours and menu up to date" },
+    ],
     questionH2: "How do restaurants keep Google hours and menus accurate?",
     directAnswer:
       "Treat your website as the source of truth, check Google against it every week, add special hours before every bank holiday or closure, and fix any mismatch the same day. Most wrong-hours problems come from forgetting holidays or from edits other people suggest to your listing.",
@@ -1168,6 +1196,11 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       "Birdeye vs KOB for independent restaurants: who each is built for, how review replies and listings work, and published pricing, with sources.",
     publishedAt: NEW,
     updatedAt: NEW,
+    tldr:
+      "Birdeye is built for multi-location brands and doesn't publish its prices. KOB is built for independent restaurants with one to five sites, at a published price per location, and you approve every reply before it posts.",
+    linkFrom: [
+      { path: "/pricing", anchor: "Birdeye alternative for independent restaurants" },
+    ],
     questionH2: "Is there a simpler Birdeye alternative for an independent restaurant?",
     directAnswer:
       "Birdeye is built for multi-location brands across many industries and doesn’t publish its prices. KOB is built for independent restaurants with one to five sites, at a published $99/mo (£79 in the UK) per location: it drafts review replies and Google listing fixes, and you approve and post them in one tap.",
@@ -1238,6 +1271,11 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       "Yext vs KOB for independent restaurants: enterprise listings across 200+ publishers vs a Google-first manager with a published price, with sources.",
     publishedAt: NEW,
     updatedAt: NEW,
+    tldr:
+      "Yext is built for enterprises, with custom annual pricing and listings on 200-plus publishers. For an independent restaurant that mainly needs Google reviews answered and hours right, KOB is simpler and has a published price.",
+    linkFrom: [
+      { path: "/pricing", anchor: "Yext alternative for independent restaurants" },
+    ],
     questionH2: "Is Yext right for an independent restaurant, or is there a simpler alternative?",
     directAnswer:
       "Yext describes itself as built for enterprises and multi-location brands, with custom annual pricing and listings on 200-plus publishers. For an independent restaurant that mainly needs Google reviews answered and Google hours right, KOB is simpler: $99/mo (£79 in the UK) per location, 7 days free, and you approve and post every change.",

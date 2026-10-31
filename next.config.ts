@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { REDIRECTS } from "./lib/marketing/redirects";
 
 const nextConfig: NextConfig = {
   // Keep worker count low — this machine hit spawn EAGAIN with ~11 workers.
@@ -11,34 +12,7 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   async redirects() {
-    return [
-      // Aliases → dedicated Google Ads audit landing
-      {
-        source: "/ads/audit",
-        destination: "/go/audit",
-        permanent: false,
-      },
-      {
-        source: "/google/audit",
-        destination: "/go/audit",
-        permanent: false,
-      },
-      {
-        source: "/audit",
-        destination: "/scan",
-        permanent: true,
-      },
-      {
-        source: "/dashboard",
-        destination: "/app",
-        permanent: false,
-      },
-      {
-        source: "/features/ai-menu",
-        destination: "/features/menu",
-        permanent: true,
-      },
-    ];
+    return REDIRECTS;
   },
   images: {
     remotePatterns: [
