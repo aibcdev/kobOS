@@ -66,3 +66,6 @@ combined.log
 /public/resources/*.md
 /public/llms.txt
 /public/llms-full.txt
+
+# Search Console exports stay local (seo/REPORT.md)
+/seo/gsc/raw/*.csv
