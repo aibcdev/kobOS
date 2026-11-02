@@ -1,0 +1,48 @@
+# SITE CONFIG for the long-tail programme (LONGTAIL_SEO_OPUS.md section 0). Filled in 2 Nov 2026 from code and the live site.
+site_name: "KOB"
+domain: "https://trykob.com"
+one_line_pitch: "KOB is the restaurant manager for independent owners: it watches your Google listing, drafts review replies and listing fixes, and you approve and post in one tap."
+audiences: ["independent restaurant and cafe owners (US)", "UK independents"]
+seed_keywords: ["restaurant review replies", "google business profile for restaurants", "restaurant marketing software"]
+competitors: ["Owner.com", "Popmenu", "BentoBox"]
+live_pages:   # returned 200 on trykob.com on 2 Nov 2026 (production = main@34131ce). Recheck before posting.
+  - "/"
+  - "/product"
+  - "/pricing"
+  - "/trial"
+  - "/audit"
+  - "/go/audit"
+  - "/resources"
+  - "/resources/<any slug in lib/marketing/resources/articles.ts on main>"   # all 19 returned 200
+not_targets:  # live, but KOB doesn't sell this; never point a post here
+  - "/features/online-ordering"
+  - "/features/delivery"
+dead_pages:   # 404 on production until PR #63 merges and deploys
+  - "/tools/review-time-calculator"
+  - "/tools/review-reply-templates"
+  - "/press"
+stack: "Next.js App Router on Netlify. Guides are data in lib/marketing/resources/articles.ts; the TL;DR box is the answer box."
+brand:
+  colours: ["TO CONFIRM"]
+  logo_path: "TO CONFIRM (no logo files in the repo; components/kob-brand/kob-mark.tsx is the in-app mark)"
+  voice: "Plain, warm restaurant-manager English. Never AI, bot, automated, agent. No phone or POS wording."
+facts:
+  - "Price: $99/month, £79/month in the UK (source: lib/billing/regional-pricing.ts)"
+  - "Trial: 7-day free trial, no card (source: lib/billing/offer.ts)"
+  - "Reviews: KOB reads your reviews and drafts the replies. You approve, tap once, and post. (source: lib/marketing/feature-status.ts POSTING)"
+  - "Angry, sensitive or legal-sounding reviews always wait for you (source: feature-status.ts)"
+  - "Listing: hours, holiday closures and details checked against your website every morning (source: feature-status.ts)"
+  - "Morning brief: what needs you today, in two minutes (source: feature-status.ts)"
+  - "Review kit: review link and QR table cards (source: feature-status.ts)"
+  - "Control: nothing goes out without your OK (source: feature-status.ts)"
+  - "Free audit: about a minute, no card; checks website, Google listing and reviews (source: trykob.com/go/audit)"
+  - "Automatic posting to Google: Coming soon, NOT live. Never claim it."
+  - "Owner.com fee: TO CONFIRM; cite https://www.owner.com/pricing with the date checked"
+platforms:
+  x: "TO CONFIRM"
+  linkedin: "TO CONFIRM"
+  youtube: "TO CONFIRM"
+  facebook: "TO CONFIRM"
+  instagram: "TO CONFIRM"
+gsc_access: "TO CONFIRM"
+utm_source_map: { x: "x", linkedin: "linkedin", youtube: "youtube", facebook: "facebook", instagram: "instagram" }
