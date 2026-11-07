@@ -84,6 +84,13 @@ function emptyToUndef(s: string | undefined) {
   return t ? t : undefined;
 }
 
+/** Our own scripts send `x-kob-internal: 1` so their scans never count as visitors. */
+export const INTERNAL_AUDIT_HEADER = "x-kob-internal";
+
+export function auditOriginFromHeaders(headers: Headers): "visitor" | "internal" {
+  return headers.get(INTERNAL_AUDIT_HEADER) === "1" ? "internal" : "visitor";
+}
+
 export function parseAuditStartBody(body: unknown) {
   return auditStartBodySchema.safeParse(body);
 }
@@ -222,6 +229,7 @@ export async function handleAuditStart(req: Request) {
         landingPath: attr?.landingPath || null,
         heardFrom: heard.heardFrom || null,
         aiPrompt: heard.aiPrompt || null,
+        origin: auditOriginFromHeaders(req.headers),
       },
     });
 

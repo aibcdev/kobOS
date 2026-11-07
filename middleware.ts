@@ -41,7 +41,8 @@ async function route(request: NextRequest): Promise<NextResponse> {
     path.startsWith("/api/inbound/") ||
     path.startsWith("/api/stripe/status") ||
     path.startsWith("/api/gemini/status") ||
-    path.startsWith("/api/auth/status")
+    path.startsWith("/api/auth/status") ||
+    path === "/api/visit"
   ) {
     return NextResponse.next();
   }

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { appCardSurface } from "@/lib/app-ui-classes";
 import { loadAcquisitionFunnel } from "@/lib/ops/acquisition-funnel";
+import { loadRecentActivity } from "@/lib/ops/recent-activity";
 
 export const metadata: Metadata = {
   title: "Ops · Acquisition funnel · KOB",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function OpsFunnelPage() {
-  const f = await loadAcquisitionFunnel();
+  const [f, recent] = await Promise.all([loadAcquisitionFunnel(), loadRecentActivity(48)]);
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-10">
@@ -26,6 +27,51 @@ export default async function OpsFunnelPage() {
       <p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">
         KOB B2B Search since {new Date(f.since).toLocaleString()}. {f.adsNote}
       </p>
+
+      <section className={`mt-8 ${appCardSurface}`}>
+        <h2 className="text-base font-semibold text-[var(--color-ink)]">Last 48 hours</h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Visits are counted per UTC day from {recent.visitsSinceDay}, with no cookies. Outbound audits are KOB
+          prospecting, not visitors.
+        </p>
+        <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-3">
+          {[
+            ["Visits started", recent.visits.entries, `${recent.visits.views} page views`],
+            [
+              "Audits by visitors",
+              recent.audits.visitor,
+              `${recent.audits.outbound} outbound · ${recent.audits.internal} internal`,
+            ],
+            ["New accounts", recent.newAccounts, `${recent.auditEmails} audit emails · ${recent.trialsStarted} trials`],
+          ].map(([label, value, note]) => (
+            <div key={label}>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-medium)]">{label}</dt>
+              <dd className="mt-1 font-head text-3xl font-semibold tabular-nums text-[var(--color-ink)]">{value}</dd>
+              <dd className="text-xs text-[var(--color-muted)]">{note}</dd>
+            </div>
+          ))}
+        </dl>
+        {recent.visits.topSources.length || recent.visits.topPages.length ? (
+          <div className="mt-4 grid gap-4 text-sm text-[var(--color-muted)] sm:grid-cols-2">
+            <ul>
+              {recent.visits.topSources.map((s) => (
+                <li key={s.source} className="flex justify-between gap-2">
+                  <span>{s.source}</span>
+                  <span className="tabular-nums">{s.entries}</span>
+                </li>
+              ))}
+            </ul>
+            <ul>
+              {recent.visits.topPages.map((p) => (
+                <li key={p.path} className="flex justify-between gap-2">
+                  <span className="truncate">{p.path}</span>
+                  <span className="tabular-nums">{p.views}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className={appCardSurface}>
@@ -81,6 +127,11 @@ export default async function OpsFunnelPage() {
                     {a.fromAds ? (
                       <span className="ml-2 text-[10px] font-semibold uppercase text-amber-800">
                         Ads
+                      </span>
+                    ) : null}
+                    {a.origin === "outbound" || a.origin === "internal" ? (
+                      <span className="ml-2 text-[10px] font-semibold uppercase text-[var(--color-muted-medium)]">
+                        {a.origin}
                       </span>
                     ) : null}
                   </span>

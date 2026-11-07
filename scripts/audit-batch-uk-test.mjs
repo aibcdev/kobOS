@@ -143,7 +143,7 @@ async function placeDetails(placeId) {
 async function startAudit({ websiteUrl, place }) {
   const r = await fetch(`${base}/api/audit/start`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-kob-internal": "1" },
     body: JSON.stringify({ websiteUrl, siteScope: "one", place }),
   });
   const text = await r.text();

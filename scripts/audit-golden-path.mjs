@@ -104,7 +104,7 @@ const startBody = {
 
 const startRes = await fetch(`${base}/api/audit/start`, {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json", "x-kob-internal": "1" },
   body: JSON.stringify(startBody),
 });
 
