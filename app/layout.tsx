@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Caveat, DM_Sans, Instrument_Serif } from "next/font/google";
+import { VisitBeacon } from "@/components/marketing/VisitBeacon";
 import { defaultSiteMeta } from "@/lib/homepage-defaults";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
@@ -62,7 +63,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full bg-[var(--color-surface-soft)] text-[var(--color-body)]">{children}</body>
+      <body className="min-h-full bg-[var(--color-surface-soft)] text-[var(--color-body)]">
+        {children}
+        <VisitBeacon />
+      </body>
     </html>
   );
 }

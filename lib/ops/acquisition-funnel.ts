@@ -23,6 +23,7 @@ export type AcquisitionFunnelSnapshot = {
     createdAt: string;
     fromAds: boolean;
     utmCampaign: string | null;
+    origin: string | null;
   }>;
   recentTrials: Array<{
     restaurantId: string;
@@ -87,6 +88,7 @@ export async function loadAcquisitionFunnel(
           utmMedium: true,
           utmCampaign: true,
           gclid: true,
+          origin: true,
         },
       }),
       prisma.marketingFunnelEvent.findMany({
@@ -133,6 +135,7 @@ export async function loadAcquisitionFunnel(
         gclid: a.gclid ?? undefined,
       }),
       utmCampaign: a.utmCampaign,
+      origin: a.origin,
     })),
     recentTrials: trials.map((t) => ({
       restaurantId: t.id,

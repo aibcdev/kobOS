@@ -122,6 +122,7 @@ export async function ensureOutboundAudit(
     data: {
       ...row,
       slug,
+      origin: "outbound",
     },
   });
 

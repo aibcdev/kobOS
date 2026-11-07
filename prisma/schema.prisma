@@ -1517,6 +1517,11 @@ model VisibilityAudit {
    * Prompt they used in ChatGPT / Claude / Gemini / Perplexity
    */
   aiPrompt              String?     @db.Text
+  /**
+   * Who started it: visitor (the free scan on the site), outbound (KOB auditing a prospect), internal (our own scripts).
+   * Null on old rows nothing could classify.
+   */
+  origin                String?
   processingAttempts    Int         @default(0)
   processingStartedAt   DateTime?
   processingCompletedAt DateTime?
@@ -1530,6 +1535,22 @@ model VisibilityAudit {
   @@index([utmCampaign, createdAt])
   @@index([gclid])
   @@index([heardFrom, createdAt])
+  @@index([origin, createdAt])
+  @@schema("public")
+}
+
+/// Marketing page views per UTC day. No cookies, no IP, no visitor id: just counts.
+model SiteVisitDay {
+  day     DateTime @db.Date
+  path    String
+  /// utm_source, else a referrer bucket (google, chatgpt, linkedin…), "direct", or "internal" for clicks within the site.
+  source  String
+  views   Int      @default(0)
+  /// Views that started a visit (the first page loaded, not a click within the site).
+  entries Int      @default(0)
+
+  @@id([day, path, source])
+  @@index([day])
   @@schema("public")
 }
 
