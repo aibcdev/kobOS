@@ -14,6 +14,10 @@ const WEBSITE_FAQ = [
     a: "No. KOB checks the website you already have, the way a guest would, and tells you what to fix: wrong hours, a broken booking button, placeholder text, a dead menu link.",
   },
   {
+    q: "Can KOB do website or SEO work for me?",
+    a: "Yes, as an optional extra. Credits pay for website and SEO work done by people, separate from the monthly plan. You agree the scope and timing when you ask. The monthly plan keeps and checks the site you already have.",
+  },
+  {
     q: "Do I need a developer?",
     a: "Not for most fixes. KOB says exactly what to change in plain English, and you or whoever looks after your site makes the change.",
   },

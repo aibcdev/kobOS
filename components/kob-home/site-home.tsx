@@ -1,3 +1,4 @@
+import { AVAILABILITY } from "@/lib/marketing/brand-facts";
 import Image from "next/image";
 import Link from "next/link";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
@@ -66,7 +67,7 @@ function faq(priceLabel: string) {
     },
     {
       q: "Which countries?",
-      a: "The UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa.",
+      a: AVAILABILITY.where,
     },
     {
       q: "What does it cost after the trial?",
@@ -153,8 +154,7 @@ export async function SiteHome() {
       </section>
 
       <p className="mx-auto max-w-3xl px-5 py-8 text-center text-sm text-muted sm:px-8">
-        Built for 1–5 site independents in the UK, US, Ireland, Canada, Australia, New Zealand, India
-        and South Africa.
+        Built for independents with one to five locations, in every country.
         {show180
           ? " Tested across a 180-restaurant hospitality group."
           : null}
@@ -295,8 +295,7 @@ export async function SiteHome() {
           <p className="mt-6 font-display text-5xl font-medium tracking-tight">{price.label}</p>
           <p className="mt-2 text-muted">per location / month · founding · your region</p>
           <p className="mt-4 text-ink">
-            {GBP} / month in the UK. {USD} / month in the US, Canada, Australia and New Zealand, as of 20
-            Oct 2026.
+            {GBP} / month in the UK. {USD} / month everywhere else.
           </p>
           <p className="mt-3 text-ink">
             Founding rate, locked while you stay subscribed. {trial}. Month to month. No contract.

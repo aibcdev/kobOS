@@ -1,5 +1,6 @@
 /** KOB public pricing — founding manager offer (canonical). Amounts by region live in `lib/billing/regional-pricing`. */
 
+import { AVAILABILITY } from "@/lib/marketing/brand-facts";
 import { FREE_TRIAL_LABEL, TRIAL_LABEL } from "@/lib/billing/offer";
 import { FOUNDING_PRICES } from "@/lib/billing/regional-pricing";
 import { POSTING, POSTING_FAQ, SOUNDS_LIKE_ME_FAQ } from "@/lib/marketing/feature-status";
@@ -163,11 +164,15 @@ export const pricingFaq = (priceLabel: string) => [
   },
   {
     q: "Which countries?",
-    a: "The UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa.",
+    a: AVAILABILITY.where,
   },
   {
     q: "What does it cost after the trial?",
     a: `${priceLabel} per location per month at the founding rate (${FOUNDING_PRICES.GB.label} UK, ${FOUNDING_PRICES.US.label} elsewhere). No contract. If you do not add a card, the trial ends.`,
+  },
+  {
+    q: "More than five locations?",
+    a: AVAILABILITY.groups,
   },
   {
     q: "Who is behind KOB?",

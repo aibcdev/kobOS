@@ -8,6 +8,14 @@ import { POSTING } from "@/lib/marketing/feature-status";
  * listingName: the briefs ask for "Kob Business" on third-party listings (G2 already uses it), while
  * kob-outbound/listing-facts.md says "KOB". Akeem to confirm; change it here only.
  */
+/** Where KOB is sold. Akeem, 10 Nov 2026: every country. Prices: £79 in the UK, $99 everywhere else (regional-pricing.ts). */
+export const AVAILABILITY = {
+  where: "Every country. Any restaurant on Google Maps can start.",
+  priceNote: "£79 / month in the UK. $99 / month everywhere else.",
+  /** Group pricing exists above five locations but has no published figure (Akeem, 10 Nov 2026). */
+  groups: "There is a group price for more than five locations. Email hello@trykob.com.",
+} as const;
+
 export const BRAND = {
   productName: "KOB",
   listingName: "Kob Business",

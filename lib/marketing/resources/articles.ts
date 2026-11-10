@@ -1,8 +1,11 @@
 import type { ResourceArticle } from "./types";
 
-const KOB_PRICE = "£79/mo UK · $99/mo elsewhere (founding, as of 20 Oct 2026); 7-day trial, no card";
-const OWNER_PRICE = "Flexible $249/mo + 5% restaurant fee; Flat Rate $499/mo; guests pay a 5% order support fee on both (owner.com/pricing, 28 Oct 2026)";
-const OWNER_SOURCE = { label: "Owner.com pricing (checked 28 Oct 2026)", href: "https://www.owner.com/pricing" };
+const KOB_PRICE = "£79/mo UK · $99/mo elsewhere (founding, as of 10 Nov 2026); 7-day trial, no card";
+const OWNER_PRICE = "Flexible $249/mo + 5% restaurant fee; Flat Rate $499/mo; guests pay a 5% order support fee on both (owner.com/pricing, rechecked 10 Nov 2026)";
+const OWNER_SOURCE = { label: "Owner.com pricing (rechecked 10 Nov 2026)", href: "https://www.owner.com/pricing" };
+/** Popmenu's published plans, from get.popmenu.com/pricing as given in the 10 Nov 2026 audit. */
+const POPMENU_PRICE = "Starter $179/mo · Essentials $299/mo · Premier $499/mo (get.popmenu.com/pricing, 10 Nov 2026)";
+const POPMENU_SOURCE = { label: "Popmenu pricing (checked 10 Nov 2026)", href: "https://get.popmenu.com/pricing" };
 const UPDATED = "2026-10-28";
 /** The guides added in the 28 Oct 2026 SEO pass. */
 const NEW = "2026-10-28";
@@ -113,7 +116,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       {
         name: "Popmenu",
         bestFor: "Venues that want website + marketing modules together",
-        pricing: "Quoted plans (as of 20 Oct 2026)",
+        pricing: POPMENU_PRICE,
         verdict: "Strong website-led suite; compare scope vs price",
       },
       {
@@ -123,7 +126,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Flexible; quality varies by agency",
       },
     ],
-    sources: [OWNER_SOURCE],
+    sources: [OWNER_SOURCE, POPMENU_SOURCE],
     sections: [
       {
         heading: "When an Owner.com alternative makes sense",
@@ -494,7 +497,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       {
         name: "Popmenu",
         bestFor: "Website + marketing modules",
-        pricing: "Quoted (as of 20 Oct 2026)",
+        pricing: POPMENU_PRICE,
         verdict: "Strong if you want a new site",
       },
       {
@@ -504,7 +507,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
         verdict: "Biggest platform commit",
       },
     ],
-    sources: [OWNER_SOURCE],
+    sources: [OWNER_SOURCE, POPMENU_SOURCE],
     sections: [
       {
         heading: "How to decide in one afternoon",
@@ -552,7 +555,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     sections: [
       {
         heading: "Price and trial",
-        body: "KOB founding is £79/mo in the UK and $99 elsewhere, as of 20 Oct 2026, with a 7-day trial and no card. Owner.com Flexible and Flat Rate public prices are higher; confirm on owner.com/pricing.",
+        body: "KOB founding is £79/mo in the UK and $99 elsewhere, with a 7-day trial and no card. That $99 is about 60% less than Owner.com's $249 Flexible plan, and KOB charges no 5% fee on your orders. Owner.com also offers Flat Rate at $499/mo (owner.com/pricing, rechecked 10 Nov 2026).",
       },
       {
         heading: "What each will not do",
@@ -562,7 +565,7 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
     faqs: [
       {
         question: "Can I try KOB without switching from Owner.com?",
-        answer: "Yes. Run the free audit on your public listing and site. Nothing replaces your current stack until you choose to.",
+        answer: "Yes. Run the free audit on your Google listing and reviews. Nothing replaces your current stack until you choose to.",
       },
     ],
     ctaHref: "/go/audit",
@@ -687,10 +690,11 @@ export const RESOURCE_ARTICLES: ResourceArticle[] = [
       {
         name: "Popmenu",
         bestFor: "Website + marketing together",
-        pricing: "Quoted plans (as of 20 Oct 2026)",
+        pricing: POPMENU_PRICE,
         verdict: "Full website-led product",
       },
     ],
+    sources: [POPMENU_SOURCE],
     sections: [
       {
         heading: "Overlap and differences",
