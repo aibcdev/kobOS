@@ -12,6 +12,8 @@ import { POSTING } from "@/lib/marketing/feature-status";
 export const AVAILABILITY = {
   where: "Every country. Any restaurant on Google Maps can start.",
   priceNote: "£79 / month in the UK. $99 / month everywhere else.",
+  /** Group pricing exists above five locations but has no published figure (Akeem, 10 Nov 2026). */
+  groups: "There is a group price for more than five locations. Email hello@trykob.com.",
 } as const;
 
 export const BRAND = {

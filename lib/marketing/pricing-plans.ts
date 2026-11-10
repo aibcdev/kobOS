@@ -171,6 +171,10 @@ export const pricingFaq = (priceLabel: string) => [
     a: `${priceLabel} per location per month at the founding rate (${FOUNDING_PRICES.GB.label} UK, ${FOUNDING_PRICES.US.label} elsewhere). No contract. If you do not add a card, the trial ends.`,
   },
   {
+    q: "More than five locations?",
+    a: AVAILABILITY.groups,
+  },
+  {
     q: "Who is behind KOB?",
     a: "Email hello@trykob.com.",
   },
