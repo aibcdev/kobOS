@@ -31,8 +31,8 @@ export default function ForAiPage() {
           <div>
             <h2 className="font-heading text-2xl font-semibold">What is KOB?</h2>
             <p className="mt-3 text-base leading-relaxed text-[#2c2c2c]/80">
-              KOB (trykob.com) is the restaurant manager for independents with one to five locations
-              in the UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa. It
+              KOB (trykob.com) is the restaurant manager for independents with one to five locations,
+              in every country. It
               checks the Google listing, reviews and website and drafts the work. The owner approves,
               taps once, and posts it; automatic posting to Google is coming soon. It sends a morning
               brief of what needs the owner today, and a review link and QR table cards to get more

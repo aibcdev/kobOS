@@ -1,3 +1,4 @@
+import { AVAILABILITY } from "@/lib/marketing/brand-facts";
 import Link from "next/link";
 import { GreenOrb } from "@/components/kob-home/green-orb";
 import { KobWordmark } from "@/components/kob-brand/kob-mark";
@@ -100,7 +101,7 @@ export function SiteFooter() {
             Independent restaurants and cafés. One to five locations.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            The UK, Ireland, the US, Canada, Australia, New Zealand, India and South Africa.
+            {AVAILABILITY.where}
           </p>
         </div>
 
