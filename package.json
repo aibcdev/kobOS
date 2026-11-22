@@ -89,7 +89,8 @@
     "ads:cheap-clicks": "python3 ads/create_kob_b2b_campaign.py --plan ads/kob-cheap-clicks-plan.json --customer-id 2075308048 --budget 10 --cpc 0.25 --enable",
     "ads:free-audit-csv": "python3 ads/apply_free_audit_gtm_v1.py --export-csv",
     "ads:free-audit-apply": "python3 ads/apply_free_audit_gtm_v1.py",
-    "seo:shortlist": "npx tsx scripts/seo-shortlist.ts"
+    "seo:shortlist": "npx tsx scripts/seo-shortlist.ts",
+    "seo:pack": "dotenv -e .env -e .env.local -- npx tsx scripts/seo-pack.ts"
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.74",
