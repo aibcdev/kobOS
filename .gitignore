@@ -69,3 +69,6 @@ combined.log
 
 # Search Console exports stay local (seo/REPORT.md)
 /seo/gsc/raw/*.csv
+# The data pack's private parts stay local: Search Console data and visit counts. The crawl and report are committed.
+/seo/pack/gsc-*.csv
+/seo/pack/landing.csv
